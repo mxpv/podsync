@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Podsync.Services;
 using Podsync.Services.Links;
+using Podsync.Services.Videos.YouTube;
 
 namespace Podsync
 {
@@ -16,6 +18,12 @@ namespace Podsync
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
+
+            if (env.IsDevelopment())
+            {
+                builder.AddUserSecrets();
+            }
+
             Configuration = builder.Build();
         }
 
@@ -24,8 +32,11 @@ namespace Podsync
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<PodsyncConfiguration>(Configuration.GetSection("Podsync"));
+
             // Register core services
             services.AddSingleton<ILinkService, LinkService>();
+            services.AddSingleton<IYouTubeClient, YouTubeClient>();
 
             // Add framework services.
             services.AddMvc();
@@ -51,9 +62,7 @@ namespace Podsync
 
             app.UseMvc(routes =>
             {
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
+                routes.MapRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
         }
     }
