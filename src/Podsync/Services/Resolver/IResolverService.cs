@@ -5,6 +5,6 @@ namespace Podsync.Services.Resolver
 {
     public interface IResolverService
     {
-        Task<Uri> Resolve(Uri videoUrl, FileType fileType = FileType.Video, Quality quality = Quality.High);
+        Task<Uri> Resolve(Uri videoUrl, ResolveType resolveType = ResolveType.VideoHigh);
     }
 }

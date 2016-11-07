@@ -8,13 +8,14 @@ namespace Podsync.Services.Resolver
     {
         private static readonly int WaitTimeout = (int)TimeSpan.FromSeconds(5).TotalMilliseconds;
 
-        public async Task<Uri> Resolve(Uri videoUrl, FileType fileType, Quality quality)
+        public async Task<Uri> Resolve(Uri videoUrl, ResolveType resolveType)
         {
-            var format = SelectFormat(fileType, quality);
+            var format = SelectFormat(resolveType);
 
             using (var proc = new Process())
             {
                 var startInfo = proc.StartInfo;
+
                 startInfo.FileName = "youtube-dl";
                 startInfo.Arguments = $"-f {format} -g {videoUrl}";
 
@@ -44,34 +45,21 @@ namespace Podsync.Services.Resolver
             }
         }
 
-        private static string SelectFormat(FileType fileType, Quality quality)
+        private static string SelectFormat(ResolveType resolveType)
         {
-            if (fileType == FileType.Video)
+            switch (resolveType)
             {
-                if (quality == Quality.High)
-                {
+                case ResolveType.VideoHigh:
                     return "bestvideo";
-                }
-
-                if (quality == Quality.Low)
-                {
+                case ResolveType.VideoLow:
                     return "worstvideo";
-                }
-            }
-            else if (fileType == FileType.Audio)
-            {
-                if (quality == Quality.High)
-                {
+                case ResolveType.AudioHigh:
                     return "bestaudio";
-                }
-
-                if (quality == Quality.Low)
-                {
+                case ResolveType.AudioLow:
                     return "worstaudio";
-                }
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(resolveType), "Unsupported format", null);
             }
-
-            throw new ArgumentException("Unsupported format");
         }
     }
 }
