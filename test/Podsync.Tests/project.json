@@ -12,6 +12,7 @@
         },
         "Moq": "4.6.38-alpha",
         "Podsync": "1.0.0-*",
+        "System.Xml.XmlSerializer": "4.0.11",
         "xunit": "2.2.0-beta2-build3300"
     },
 
