@@ -50,9 +50,9 @@ namespace Podsync.Services.Resolver
             switch (resolveType)
             {
                 case ResolveType.VideoHigh:
-                    return "bestvideo";
+                    return "best";
                 case ResolveType.VideoLow:
-                    return "worstvideo";
+                    return "worst";
                 case ResolveType.AudioHigh:
                     return "bestaudio";
                 case ResolveType.AudioLow:

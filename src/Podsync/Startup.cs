@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Podsync.Services;
 using Podsync.Services.Links;
+using Podsync.Services.Resolver;
 using Podsync.Services.Videos.YouTube;
 
 namespace Podsync
@@ -15,8 +16,8 @@ namespace Podsync
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
+                .AddJsonFile("appsettings.json", true, true)
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", true)
                 .AddEnvironmentVariables();
 
             if (env.IsDevelopment())
@@ -37,6 +38,7 @@ namespace Podsync
             // Register core services
             services.AddSingleton<ILinkService, LinkService>();
             services.AddSingleton<IYouTubeClient, YouTubeClient>();
+            services.AddSingleton<IResolverService, YtdlWrapper>();
 
             // Add framework services.
             services.AddMvc();
