@@ -3,5 +3,7 @@
     public class PodsyncConfiguration
     {
         public string YouTubeApiKey { get; set; }
+
+        public string RedisConnectionString { get; set; }
     }
 }

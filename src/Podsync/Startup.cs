@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Podsync.Services;
 using Podsync.Services.Links;
 using Podsync.Services.Resolver;
+using Podsync.Services.Storage;
 using Podsync.Services.Videos.YouTube;
 
 namespace Podsync
@@ -39,6 +40,7 @@ namespace Podsync
             services.AddSingleton<ILinkService, LinkService>();
             services.AddSingleton<IYouTubeClient, YouTubeClient>();
             services.AddSingleton<IResolverService, YtdlWrapper>();
+            services.AddSingleton<IStorageService, RedisStorage>();
 
             // Add framework services.
             services.AddMvc();
