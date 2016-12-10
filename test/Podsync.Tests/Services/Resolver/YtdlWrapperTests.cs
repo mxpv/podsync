@@ -27,5 +27,11 @@ namespace Podsync.Tests.Services.Resolver
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () => await _resolver.Resolve(new Uri(url)));
             Assert.NotEmpty(ex.Message);
         }
+
+        [Fact]
+        public void VersionTest()
+        {
+            Assert.NotNull(_resolver.Version);
+        }
     }
 }

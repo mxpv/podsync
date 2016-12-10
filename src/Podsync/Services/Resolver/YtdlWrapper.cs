@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Podsync.Services.Resolver
@@ -8,22 +9,37 @@ namespace Podsync.Services.Resolver
     {
         private static readonly int WaitTimeout = (int)TimeSpan.FromSeconds(5).TotalMilliseconds;
 
+        public YtdlWrapper()
+        {
+            try
+            {
+                using (var proc = new Process())
+                {
+                    FillStartInfo(proc.StartInfo, "--version");
+
+                    proc.Start();
+                    proc.WaitForExit(WaitTimeout);
+
+                    var stdout = proc.StandardOutput.ReadToEndAsync().GetAwaiter().GetResult();
+                    Version = stdout;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new FileNotFoundException("Failed to execute youtube-dl executable", "youtube-dl", ex);
+            }
+        }
+
+        public string Version { get; }
+
+
         public async Task<Uri> Resolve(Uri videoUrl, ResolveType resolveType)
         {
             var format = SelectFormat(resolveType);
 
             using (var proc = new Process())
             {
-                var startInfo = proc.StartInfo;
-
-                startInfo.FileName = "youtube-dl";
-                startInfo.Arguments = $"-f {format} -g {videoUrl}";
-
-                startInfo.UseShellExecute = false;
-                startInfo.CreateNoWindow = true;
-
-                startInfo.RedirectStandardOutput = true;
-                startInfo.RedirectStandardError = true;
+                FillStartInfo(proc.StartInfo, $"-f {format} -g {videoUrl}");
 
                 proc.Start();
 
@@ -43,6 +59,18 @@ namespace Podsync.Services.Resolver
                 var errout = await proc.StandardError.ReadToEndAsync();
                 throw new InvalidOperationException(errout);
             }
+        }
+
+        private static void FillStartInfo(ProcessStartInfo startInfo, string arguments)
+        {
+            startInfo.FileName = "youtube-dl";
+            startInfo.Arguments = arguments;
+
+            startInfo.UseShellExecute = false;
+            startInfo.CreateNoWindow = true;
+
+            startInfo.RedirectStandardOutput = true;
+            startInfo.RedirectStandardError = true;
         }
 
         private static string SelectFormat(ResolveType resolveType)
