@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using HashidsNet;
 using Microsoft.Extensions.Options;
 using Podsync.Services.Links;
+using Podsync.Services.Resolver;
 using StackExchange.Redis;
 
 namespace Podsync.Services.Storage
@@ -19,6 +20,11 @@ namespace Podsync.Services.Storage
         private const string ProviderField = "provider";
         private const string TypeField = "type";
         private const string IdField = "id";
+        private const string QualityField = "quality";
+        private const string PageSizeField = "pageSize";
+
+        private const ResolveType DefaultQuality = ResolveType.VideoHigh;
+        private const int DefaultPageSize = 50;
 
         private static readonly IHashids HashIds = new Hashids(IdSalt, IdLength);
 
@@ -50,7 +56,9 @@ namespace Podsync.Services.Storage
             {
                 new HashEntry(ProviderField, metadata.Provider.ToString()),
                 new HashEntry(TypeField, metadata.LinkType.ToString()),
-                new HashEntry(IdField, metadata.Id)
+                new HashEntry(IdField, metadata.Id),
+                new HashEntry(QualityField, metadata.Quality.ToString()),
+                new HashEntry(PageSizeField, metadata.PageSize), 
             });
 
             await _db.KeyExpireAsync(id, TimeSpan.FromDays(1));
@@ -67,6 +75,9 @@ namespace Podsync.Services.Storage
 
             var entries = await _db.HashGetAllAsync(key);
 
+            // Expire after 3 month if no use
+            await _db.KeyExpireAsync(key, TimeSpan.FromDays(90));
+
             if (entries.Length == 0)
             {
                 throw new KeyNotFoundException("Invaid key");
@@ -75,9 +86,21 @@ namespace Podsync.Services.Storage
             var metadata = new FeedMetadata
             {
                 Id = entries.Single(x => x.Name == IdField).Value,
-                LinkType = ToEnum<LinkType>(entries.Single(x => x.Name == TypeField).Value),
-                Provider = ToEnum<Provider>(entries.Single(x => x.Name == ProviderField).Value)
+                LinkType = ToEnum<LinkType>(entries.Single(x => x.Name == TypeField)),
+                Provider = ToEnum<Provider>(entries.Single(x => x.Name == ProviderField)),
             };
+
+            if (entries.Length > 3)
+            {
+                metadata.Quality = ToEnum<ResolveType>(entries.Single(x => x.Name == QualityField));
+                metadata.PageSize = (int)entries.Single(x => x.Name == PageSizeField).Value;
+            }
+            else
+            {
+                // Set default values
+                metadata.Quality = DefaultQuality;
+                metadata.PageSize = DefaultPageSize;
+            }
 
             return metadata;
         }
@@ -93,9 +116,9 @@ namespace Podsync.Services.Storage
             return HashIds.EncodeLong(id);
         }
 
-        private static T ToEnum<T>(string key)
+        private static T ToEnum<T>(HashEntry key)
         {
-            return (T)Enum.Parse(typeof(T), key, true);
+            return (T)Enum.Parse(typeof(T), key.Value, true);
         }
     }
 }

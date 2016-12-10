@@ -1,4 +1,5 @@
 ﻿using Podsync.Services.Links;
+using Podsync.Services.Resolver;
 
 namespace Podsync.Services.Storage
 {
@@ -9,5 +10,9 @@ namespace Podsync.Services.Storage
         public LinkType LinkType { get; set; }
 
         public string Id { get; set; }
+
+        public ResolveType Quality { get; set; }
+
+        public int PageSize { get; set; }
     }
 }
