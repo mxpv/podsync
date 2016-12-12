@@ -33,5 +33,12 @@ namespace Podsync.Tests.Services.Resolver
         {
             Assert.NotNull(_resolver.Version);
         }
+
+        [Fact]
+        public async Task ResolveOutputTest()
+        {
+            var downloadUrl = await _resolver.Resolve(new Uri("https://www.youtube.com/watch?v=-csRxRj_zcw&t=45s"), ResolveType.AudioHigh);
+            Assert.True(downloadUrl.IsAbsoluteUri);
+        }
     }
 }

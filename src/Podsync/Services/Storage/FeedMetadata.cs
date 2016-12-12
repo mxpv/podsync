@@ -14,5 +14,7 @@ namespace Podsync.Services.Storage
         public ResolveType Quality { get; set; }
 
         public int PageSize { get; set; }
+
+        public override string ToString() => $"{Provider} ({LinkType}) {Id}";
     }
 }

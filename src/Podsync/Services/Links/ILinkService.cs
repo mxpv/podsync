@@ -7,5 +7,7 @@ namespace Podsync.Services.Links
         LinkInfo Parse(Uri link);
 
         Uri Make(LinkInfo info);
+
+        Uri Download(string feedId, string videoId);
     }
 }

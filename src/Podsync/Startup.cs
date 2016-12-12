@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Podsync.Services;
+using Podsync.Services.Builder;
 using Podsync.Services.Links;
 using Podsync.Services.Resolver;
 using Podsync.Services.Storage;
@@ -41,6 +42,7 @@ namespace Podsync
             services.AddSingleton<IYouTubeClient, YouTubeClient>();
             services.AddSingleton<IResolverService, YtdlWrapper>();
             services.AddSingleton<IStorageService, RedisStorage>();
+            services.AddSingleton<IRssBuilder, CompositeRssBuilder>();
 
             // Add framework services.
             services.AddMvc();

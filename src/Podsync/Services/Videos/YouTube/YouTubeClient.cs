@@ -68,14 +68,25 @@ namespace Podsync.Services.Videos.YouTube
 
         public async Task<IEnumerable<Video>> GetPlaylistItems(PlaylistItemsQuery query)
         {
-            var response = await QueryPlaylistItems(query);
+            var request = _youtube.PlaylistItems.List("id,snippet");
+
+            request.MaxResults = query.Count ?? MaxResults;
+            request.Id = query.Id;
+            request.PlaylistId = query.PlaylistId;
+            request.VideoId = query.VideoId;
+
+            var response = await request.ExecuteAsync();
 
             return response.Items.Select(ConvertPlaylistItem);
         }
 
         public async Task<IEnumerable<string>> GetPlaylistItemIds(PlaylistItemsQuery query)
         {
-            var response = await QueryPlaylistItems(query);
+            var request = _youtube.PlaylistItems.List("id,snippet");
+            request.MaxResults = query.Count ?? MaxResults;
+            request.PlaylistId = query.PlaylistId;
+
+            var response = await request.ExecuteAsync();
 
             return response.Items.Select(x => x.Snippet.ResourceId.VideoId);
         }
@@ -96,18 +107,6 @@ namespace Podsync.Services.Videos.YouTube
             const long ldBytesPerSecond = 100000;
 
             return totalSeconds * (definition == "hd" ? hdBytesPerSecond : ldBytesPerSecond);
-        }
-
-        private Task<PlaylistItemListResponse> QueryPlaylistItems(PlaylistItemsQuery query)
-        {
-            var request = _youtube.PlaylistItems.List("id,snippet");
-
-            request.MaxResults = query.Count ?? MaxResults;
-            request.Id = query.Id;
-            request.PlaylistId = query.PlaylistId;
-            request.VideoId = query.VideoId;
-
-            return request.ExecuteAsync();
         }
 
         private Video ConvertVideo(Google.Apis.YouTube.v3.Data.Video item)

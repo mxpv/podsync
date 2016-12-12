@@ -1,8 +1,10 @@
-﻿namespace Podsync.Services.Feed
+﻿using System;
+
+namespace Podsync.Services.Feed
 {
     public struct MediaContent
     {
-        public string Url { get; set; }
+        public Uri Url { get; set; }
 
         public long Length { get; set; }
 

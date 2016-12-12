@@ -21,6 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{35F181
 		src\Shared\EnumerableExtensions.cs = src\Shared\EnumerableExtensions.cs
 		src\Shared\ListExtensions.cs = src\Shared\ListExtensions.cs
 		src\Shared\StringExtensions.cs = src\Shared\StringExtensions.cs
+		src\Shared\ServiceProviderExtensions.cs = src\Shared\ServiceProviderExtensions.cs
 	EndProjectSection
 EndProject
 Global

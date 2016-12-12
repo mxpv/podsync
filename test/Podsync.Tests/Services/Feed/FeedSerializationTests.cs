@@ -8,7 +8,7 @@ namespace Podsync.Tests.Services.Feed
 {
     public class FeedSerializationTests
     {
-        private const string ImageUrl = "https://yt3.ggpht.com/-OOqFwHRjeMQ/AAAAAAAAAAI/AAAAAAAAAAA/0XQZ2NeGp_0/s88-c-k-no-mo-rj-c0xffffff/photo.jpg";
+        private static readonly Uri ImageUrl = new Uri("https://yt3.ggpht.com/-OOqFwHRjeMQ/AAAAAAAAAAI/AAAAAAAAAAA/0XQZ2NeGp_0/s88-c-k-no-mo-rj-c0xffffff/photo.jpg");
 
         [Fact]
         public void SerializeFeedTest()
@@ -18,11 +18,11 @@ namespace Podsync.Tests.Services.Feed
             var item = new Item
             {
                 Title = "Steve Gillespie - Getting Arrested (Stand up Comedy)",
-                Link = "https://youtube.com/watch?v=Jj22gfTnpAI",
+                Link = new Uri("https://youtube.com/watch?v=Jj22gfTnpAI"),
                 PubDate = DateTime.Parse("Mon, 07 Nov 2016 20:02:26 GMT"),
                 Content = new MediaContent
                 {
-                    Url = "http://podsync.net/download/youtube/Jj22gfTnpAI.mp4",
+                    Url = new Uri("http://podsync.net/download/youtube/Jj22gfTnpAI.mp4"),
                     Length = 52850000,
                     MediaType = "video/mp4"
                 },
@@ -33,7 +33,7 @@ namespace Podsync.Tests.Services.Feed
             {
                 Title = "Laugh Factory",
                 Description = "The best stand up comedy clips online. That's it.",
-                Link = "https://youtube.com/channel/UCxyCzPY2pjAjrxoSYclpuLg",
+                Link = new Uri("https://youtube.com/channel/UCxyCzPY2pjAjrxoSYclpuLg"),
                 LastBuildDate = DateTime.Parse("Tue, 08 Nov 2016 05:55:25 GMT"),
                 PubDate = DateTime.Parse("Mon, 31 Jul 2006 22:18:05 GMT"),
                 Subtitle = "Laugh Factory",

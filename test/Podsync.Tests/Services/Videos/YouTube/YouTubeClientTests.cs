@@ -14,7 +14,8 @@ namespace Podsync.Tests.Services.Videos.YouTube
 
         public YouTubeClientTests()
         {
-            _client = new YouTubeClient(new LinkService(), Options);
+            var linkService = new LinkService(Options);
+            _client = new YouTubeClient(linkService, Options);
         }
 
         [Fact]
@@ -52,7 +53,21 @@ namespace Podsync.Tests.Services.Videos.YouTube
             Assert.Equal("GDC: Postmortems", playlist.Title);
             Assert.Equal(new Uri("https://youtube.com/playlist?list=PL2e4mYbwSTbbiX2uwspn0xiYb8_P_cTAr"), playlist.Link);
             Assert.NotNull(playlist.Thumbnail);
-            Assert.Equal(new DateTime(2015, 06, 29, 16, 58, 34), playlist.PublishedAt);
+
+            Assert.Equal(new DateTime(2015, 06, 29), playlist.PublishedAt.Date);
+        }
+
+        [Fact]
+        public async Task GetPlaylistIdsTest()
+        {
+            var query = new PlaylistItemsQuery
+            {
+                PlaylistId = "PL2e4mYbwSTbbiX2uwspn0xiYb8_P_cTAr",
+                Count = 3
+            };
+
+            var list = await _client.GetPlaylistItemIds(query);
+            Assert.NotEmpty(list);
         }
 
         [Fact]
@@ -75,7 +90,7 @@ namespace Podsync.Tests.Services.Videos.YouTube
             Assert.Equal("Deus Ex: Mankind Divided - Full Soundtrack OST", last.Title);
             Assert.False(string.IsNullOrEmpty(last.Description));
             Assert.Equal(new TimeSpan(0, 1, 57, 28), last.Duration);
-            Assert.Equal(new DateTime(2016, 8, 24, 16, 50, 34), last.PublishedAt);
+            Assert.Equal(new DateTime(2016, 8, 24), last.PublishedAt.Date);
             Assert.Equal(new Uri("https://youtube.com/watch?v=kkcKnWrCZ7k"), last.Link);
             Assert.True(last.Size > 0);
         }

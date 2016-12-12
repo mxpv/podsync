@@ -4,9 +4,14 @@ using Xunit;
 
 namespace Podsync.Tests.Services.Links
 {
-    public class LinkServiceTests
+    public class LinkServiceTests : TestBase
     {
-        private readonly ILinkService _linkService = new LinkService();
+        private readonly ILinkService _linkService;
+
+        public LinkServiceTests()
+        {
+            _linkService = new LinkService(Options);
+        }
 
         [Theory]
         [InlineData("http://youtu.be/jMeC7JFQ6801", Provider.YouTube, LinkType.Video, "jMeC7JFQ6801")]

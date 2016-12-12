@@ -17,11 +17,13 @@ namespace Podsync.Services.Feed
             Items = Enumerable.Empty<Item>();
         }
 
+        public string Guid { get; set; }
+
         public string Title { get; set; }
 
         public string Description { get; set; }
 
-        public string Link { get; set; }
+        public Uri Link { get; set; }
 
         public DateTime LastBuildDate { get; set; }
 
@@ -33,9 +35,9 @@ namespace Podsync.Services.Feed
 
         public string Category { get; set; }
 
-        public string Image { get; set; }
+        public Uri Image { get; set; }
 
-        public string Thumbnail { get; set; }
+        public Uri Thumbnail { get; set; }
 
         public IEnumerable<Item> Items { get; set; }
 
@@ -53,7 +55,7 @@ namespace Podsync.Services.Feed
         {
             writer.WriteElementString("title", Title);
             writer.WriteElementString("description", Description);
-            writer.WriteElementString("link", Link);
+            writer.WriteElementString("link", Link.ToString());
 
             writer.WriteElementString("generator", PodsyncGeneratorName);
 
@@ -81,7 +83,7 @@ namespace Podsync.Services.Feed
             */
 
             writer.WriteStartElement("image", Namespaces.Itunes);
-            writer.WriteAttributeString("href", Image);
+            writer.WriteAttributeString("href", Image.ToString());
             writer.WriteEndElement();
 
             /*
@@ -89,7 +91,7 @@ namespace Podsync.Services.Feed
             */
 
             writer.WriteStartElement("thumbnail", Namespaces.Media);
-            writer.WriteAttributeString("url", Thumbnail);
+            writer.WriteAttributeString("url", Thumbnail.ToString());
             writer.WriteEndElement();
 
             // Items

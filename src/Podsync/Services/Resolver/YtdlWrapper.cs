@@ -78,13 +78,13 @@ namespace Podsync.Services.Resolver
             switch (resolveType)
             {
                 case ResolveType.VideoHigh:
-                    return "best";
+                    return "best[ext=mp4]/low[ext=mp4]";
                 case ResolveType.VideoLow:
-                    return "worst";
+                    return "low[ext=mp4]/best[ext=mp4]";
                 case ResolveType.AudioHigh:
-                    return "bestaudio";
+                    return "bestaudio[ext=webm]/worstaudio[ext=webm]";
                 case ResolveType.AudioLow:
-                    return "worstaudio";
+                    return "worstaudio[ext=webm]/bestaudio[ext=webm]";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(resolveType), "Unsupported format", null);
             }

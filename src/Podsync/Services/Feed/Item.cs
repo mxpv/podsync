@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
@@ -14,7 +13,7 @@ namespace Podsync.Services.Feed
 
         public string Author { get; set; }
 
-        public string Link { get; set; }
+        public Uri Link { get; set; }
 
         public DateTime PubDate { get; set; }
 
@@ -38,7 +37,7 @@ namespace Podsync.Services.Feed
         {
             writer.WriteElementString("title", Title);
             writer.WriteElementString("description", Description);
-            writer.WriteElementString("link", Link);
+            writer.WriteElementString("link", Link.ToString());
             writer.WriteElementString("pubDate", PubDate.ToString("R"));
             writer.WriteElementString("author", Author);
 
@@ -48,7 +47,7 @@ namespace Podsync.Services.Feed
 
             writer.WriteStartElement("guid");
             writer.WriteAttributeString("isPermaLink", "true");
-            writer.WriteString(Link);
+            writer.WriteString(Link.ToString());
             writer.WriteEndElement();
 
             /*
@@ -56,7 +55,7 @@ namespace Podsync.Services.Feed
             */
 
             writer.WriteStartElement("enclosure");
-            writer.WriteAttributeString("url", Content.Url);
+            writer.WriteAttributeString("url", Content.Url.ToString());
             writer.WriteAttributeString("length", Content.Length.ToString());
             writer.WriteAttributeString("type", Content.MediaType);
             writer.WriteEndElement();
@@ -66,7 +65,7 @@ namespace Podsync.Services.Feed
             */
 
             writer.WriteStartElement("content", Namespaces.Media);
-            writer.WriteAttributeString("url", Content.Url);
+            writer.WriteAttributeString("url", Content.Url.ToString());
             writer.WriteAttributeString("fileSize", Content.Length.ToString());
             writer.WriteAttributeString("type", Content.MediaType);
             writer.WriteEndElement();
