@@ -1,38 +1,195 @@
-﻿body {
-    padding-top: 50px;
-    padding-bottom: 20px;
+﻿@import url('https://fonts.googleapis.com/css?family=Ubuntu');
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Ubuntu', sans-serif;
 }
 
-/* Wrapping element */
-/* Set some basic padding to keep content from hitting the edges */
-.body-content {
-    padding-left: 15px;
-    padding-right: 15px;
+a {
+    color: #EB8C11;
+    text-decoration: none;
 }
 
-/* Set widths on the form inputs since otherwise they're 100% wide */
-input,
-select,
-textarea {
-    max-width: 280px;
-}
-
-/* Carousel */
-.carousel-caption p {
-    font-size: 20px;
-    line-height: 1.4;
-}
-
-/* Make .svg files in the carousel display properly in older browsers */
-.carousel-inner .item img[src$=".svg"]
-{
+.background-image {
+    background-image: url('../img/pc_bg.png');
+    -ms-background-repeat: repeat-x;
+    background-repeat: repeat-x;
+    -ms-background-position: center bottom;
+    background-position: center bottom;
+    background-color: #f4eddb;
+    position: absolute;
     width: 100%;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    -webkit-user-select: text;
+    z-index: 0;
 }
 
-/* Hide/rearrange for smaller screens */
-@media screen and (max-width: 767px) {
-  /* Hide captions */
-  .carousel-caption {
-    display: none
-  }
+.footer {
+    background-image: url('../img/pc_footer.png');
+    -ms-background-repeat: space;
+    background-repeat: space;
+    -ms-background-position: center bottom;
+    background-position: center bottom;
+    background-color: #aca496;
+    position: absolute;
+    width: 100%;
+    height: 69px;
+    left: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    -webkit-user-select: text;
+    z-index: 1;
+}
+
+/* Header */
+
+.title {
+    padding: 50px;
+}
+
+.title h1 {
+    margin: 0;
+}
+
+.title p {
+    max-width: 500px;
+}
+
+.login-block {
+    color: #EB8C11;
+    font-size: 1.3em;
+}
+
+.login-block a {
+    margin-right: 0.5em;
+}
+
+/* Main block + input */
+
+.main {
+    text-align: center;
+    padding: 5em 2em 10em;
+    max-width: 860px;
+    width: 90%;
+    margin: 0 auto;
+    padding: 3em 0;
+    text-align: left;
+}
+
+.main-border {
+    border: thin solid #a39c8e;
+    background: #f4ecda;
+}
+
+.main-border input {
+    display: block;
+    background-color: #b9b1a2;
+    border: none;
+    border-bottom: 1px solid #a39c8e;
+    padding: 0.5em;
+    width: calc(100% - 1em);
+    font-size: 2em;
+    line-height: 1;
+    color: #616161;
+}
+
+*:focus {
+    outline: none;
+}
+
+.controls {
+    padding-left: 1em;
+    word-spacing: 0.15em;
+}
+
+.controls a:hover {
+    cursor: pointer;
+}
+
+/* Options */
+.selected-option, a:hover {
+    background: orange;
+    color: whitesmoke;
+    border: 1px orange;
+    -ms-border-radius: 3px;
+    border-radius: 3px;
+}
+
+.locked {
+    -ms-opacity: 0.3;
+    opacity: 0.2;
+}
+
+/* Man image */
+.man {
+    width: 210px;
+    height: 333px;
+    background-image: url('../img/man.png');
+    -ms-background-repeat: no-repeat;
+    background-repeat: no-repeat;
+    -ms-background-position: center bottom;
+    background-position: center bottom;
+    background-color: transparent;
+    position: absolute;
+    bottom: 130px;
+    left: 30%;
+    margin: 0;
+    padding: 0;
+    z-index: -1;
+}
+
+/* Patreon block */
+
+.patreon {
+    background: rgb(171, 163, 149);
+    border: 1px rgb(240, 232, 214) solid;
+    bottom: 5em;
+    float: right;
+    position: absolute;
+    right: 2em;
+    z-index: -1;
+}
+
+/* Placeholder */
+::-webkit-input-placeholder { color: rgb(171, 163, 149); } /* Chrome/Opera/Safari */
+::-moz-placeholder { color: rgb(171, 163, 149); } /* Firefox 19+ */
+:-ms-input-placeholder { color: rgb(171, 163, 149); } /* IE 10+ */
+:-moz-placeholder { color: rgb(171, 163, 149); } /* Firefox 18- */
+
+@media screen and (max-width: 640px) {
+    .background-image {
+        background-image: url('../img/mobile_bg.png')
+    }
+
+    .footer {
+        background-image: url('../img/mobile_footer.png');
+        height: 50px;
+    }
+
+    .title {
+        padding: 20px;
+    }
+
+    .main {
+        padding: 0;
+    }
+
+    .controls {
+        word-spacing: 0;
+        font-size: 1em;
+    }
+
+    .patreon {
+        right: 2em;
+    }
+
+    .man {
+        background-image: none;
+    }
 }
