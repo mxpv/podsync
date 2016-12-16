@@ -2,7 +2,7 @@
 {
     public enum ResolveType
     {
-        VideoHigh,
+        VideoHigh = 0,
         VideoLow,
         AudioHigh,
         AudioLow
