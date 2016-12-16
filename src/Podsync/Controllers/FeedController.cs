@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Threading.Tasks;
@@ -32,24 +33,6 @@ namespace Podsync.Controllers
             _storageService = storageService;
         }
 
-        [HttpGet]
-        [Route("{feedId}")]
-        [ValidateModelState]
-        public async Task<IActionResult> Index([Required] string feedId)
-        {
-            var rss = await _rssBuilder.Query(feedId);
-
-            // Serialize feed to string
-            string body;
-            using (var writer = new StringWriter())
-            {
-                _serializer.Serialize(writer, rss);
-                body = writer.ToString();
-            }
-
-            return Content(body, "text/xml");
-        }
-
         [HttpPost]
         [Route("create")]
         [ValidateModelState]
@@ -67,6 +50,33 @@ namespace Podsync.Controllers
             };
 
             return _storageService.Save(feed);
+        }
+
+        [HttpGet]
+        [Route("{feedId}")]
+        [ValidateModelState]
+        public async Task<IActionResult> Feed([Required] string feedId)
+        {
+            Rss rss;
+
+            try
+            {
+                rss = await _rssBuilder.Query(feedId);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(feedId);
+            }
+
+            // Serialize feed to string
+            string body;
+            using (var writer = new StringWriter())
+            {
+                _serializer.Serialize(writer, rss);
+                body = writer.ToString();
+            }
+
+            return Content(body, "text/xml");
         }
     }
 }
