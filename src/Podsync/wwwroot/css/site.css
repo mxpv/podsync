@@ -87,21 +87,45 @@ a {
     background: #f4ecda;
 }
 
-.main-border input {
-    display: block;
-    background-color: #b9b1a2;
+.input-border {
+    background-color: #e4dac8;
     border: none;
     border-bottom: 1px solid #a39c8e;
-    padding: 0.5em;
-    width: calc(100% - 1em);
+}
+
+.main-border input {
+    border: none;
+    padding: 0.5em 0 0.5em 0.5em;
+    width: calc(100% - 2em);
     font-size: 2em;
     line-height: 1;
     color: #616161;
+    background: transparent;
 }
 
 *:focus {
     outline: none;
 }
+
+/* Input button (arrow) */
+
+.arrow-button {
+    float: right;
+    font-size: 2em;
+    padding-top: 0.5em;
+    padding-right: 0.3em;
+}
+
+.arrow-button a {
+    color: rgb(142, 134, 119);
+}
+
+.arrow-button a:hover {
+    background: none;
+    color: rgb(105, 98, 86);
+}
+
+/* Controls under input */
 
 .controls {
     padding-left: 1em;
