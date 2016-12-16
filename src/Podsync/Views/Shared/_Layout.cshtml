@@ -5,7 +5,15 @@
     <meta charset="utf-8"/>
     <title>Podsync - Turn YouTube channels into podcast feeds</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="css/site.css" />
+
+    <environment Names="Development">
+        <link rel="stylesheet" href="css/site.css" asp-append-version="true" />
+    </environment>
+
+    <environment Names="Staging,Production">
+        <link rel="stylesheet" href="css/site.min.css" asp-append-version="true" />
+    </environment>
+
 </head>
 <body>
 <div class="background-image">
@@ -15,13 +23,28 @@
 </div>
 </div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 <script src="https://use.fontawesome.com/2895b37726.js"></script>
 
+<environment Names="Development">
+    <script src="~/lib/jquery/dist/jquery.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+</environment>
+    
+<environment Names="Staging,Production">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"
+            asp-fallback-src="~/lib/jquery/dist/jquery.min.js"
+            asp-fallback-test="window.jQuery"
+            asp-append-version="true">
+    </script>
+    
+    <script src="~/js/site.min.js" asp-append-version="true">
+    </script>
+</environment>
+
 <script>
-  (function (w,i,d,g,e,t,s) {w[d] = w[d]||[];t= i.createElement(g);
-    t.async=1;t.src=e;s=i.getElementsByTagName(g)[0];s.parentNode.insertBefore(t, s);
-  })(window, document, '_gscq','script','//widgets.getsitecontrol.com/23626/script.js');
+    (function (w,i,d,g,e,t,s) {w[d] = w[d]||[];t= i.createElement(g);
+        t.async=1;t.src=e;s=i.getElementsByTagName(g)[0];s.parentNode.insertBefore(t, s);
+    })(window, document, '_gscq','script','//widgets.getsitecontrol.com/23626/script.js');
 </script>
 
 </body>

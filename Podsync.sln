@@ -7,6 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3EF2294C-C80
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{15355284-4B88-4EF3-B580-20907F343E43}"
 	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
 		global.json = global.json
 	EndProjectSection
 EndProject
@@ -20,8 +21,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{35F181
 	ProjectSection(SolutionItems) = preProject
 		src\Shared\EnumerableExtensions.cs = src\Shared\EnumerableExtensions.cs
 		src\Shared\ListExtensions.cs = src\Shared\ListExtensions.cs
-		src\Shared\StringExtensions.cs = src\Shared\StringExtensions.cs
 		src\Shared\ServiceProviderExtensions.cs = src\Shared\ServiceProviderExtensions.cs
+		src\Shared\StringExtensions.cs = src\Shared\StringExtensions.cs
 	EndProjectSection
 EndProject
 Global
