@@ -1,7 +1,6 @@
 ﻿// Write your Javascript code.
 
 $(function () {
-
     function err(msg) {
         alert(msg);
     }
@@ -42,7 +41,7 @@ $(function () {
     }
 
     function displayLink(link) {
-        alert(link);
+        showModal(link);
     }
 
     /*
@@ -115,6 +114,46 @@ $(function () {
         $('#best-quality, #worst-quality').toggleClass('selected-option');
     }
 
+    /* Modal */
+
+    function closeModal() {
+        $('#modal').hide();
+        $('#url-input').val('');
+        $('.main').show();
+    }
+
+    function showModal(url) {
+        // Hide main block on screen
+        $('.main').hide();
+
+        // Set input URL
+        $('#output-input').val(url);
+
+        // Update 'Open' button link
+        $('#modal-open').attr('href', url);
+
+        // Show dialog itself
+        $('#modal').show();
+
+        // Select modal output text
+        $('#output-input').select();
+    }
+
+    function copyLink() {
+        $('#output-input').select();
+        if (!document.execCommand('copy')) {
+            err('Can\'t copy... Something went wrong...');
+        }
+    }
+
+    function canCopy() {
+        try {
+            return document.queryCommandSupported('copy');
+        } catch (e) {
+            return false;
+        }
+    }
+
     /*
         Attach handlers
     */
@@ -134,6 +173,21 @@ $(function () {
 
     $('#video-format, #audio-format').click(formatSwith);
     $('#best-quality, #worst-quality').click(qualitySwitch);
+
+    $('#close-modal').click(closeModal);
+    $('#modal-copy').click(copyLink);
+
+    if (!canCopy()) {
+        $('#modal-copy').hide();
+    }
+
+    $('body').on('keydown', function (e) {
+        // ESC
+        if ($('#modal').is(':visible') && e.keyCode === 27) {
+            $('#close-modal').click();
+        }
+        e.stopPropagation();
+    });
 
     lockControls(true);
 });
