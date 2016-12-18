@@ -125,6 +125,13 @@ $(function () {
         e.preventDefault();
     });
 
+    $('#url-input').keyup(function (e) {
+        // 'Enter' click
+        if (e.keyCode === 13) {
+            $('#get-link').click();
+        }
+    });
+
     $('#video-format, #audio-format').click(formatSwith);
     $('#best-quality, #worst-quality').click(qualitySwitch);
 
