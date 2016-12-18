@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Podsync.Helpers;
 using Podsync.Services.Links;
 using Podsync.Services.Resolver;
 using Podsync.Services.Storage;
@@ -7,6 +8,7 @@ using Podsync.Services.Storage;
 namespace Podsync.Controllers
 {
     [Route("download")]
+    [HandleException]
     public class DownloadController : Controller
     {
         private readonly IResolverService _resolverService;

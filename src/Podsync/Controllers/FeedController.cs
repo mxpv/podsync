@@ -16,6 +16,7 @@ using Podsync.Services.Storage;
 namespace Podsync.Controllers
 {
     [Route("feed")]
+    [HandleException]
     public class FeedController : Controller
     {
         private const int DefaultPageSize = 50;

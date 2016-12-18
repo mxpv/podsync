@@ -24,12 +24,16 @@ $(function () {
             error: function (xhr, status, error) {
                 if (xhr.status === 400) {
                     // Bad request
-                    var json = JSON.parse(xhr.responseText);
-
                     var text = '';
-                    $.each(json, function (key, value) {
-                        text += value + '\r\n';
-                    });
+
+                    try {
+                        var json = JSON.parse(xhr.responseText);
+                        $.each(json, function (key, value) {
+                            text += value + '\r\n';
+                        });
+                    } catch (e) {
+                        text = xhr.responseText;
+                    } 
 
                     err(text);
                 } else {

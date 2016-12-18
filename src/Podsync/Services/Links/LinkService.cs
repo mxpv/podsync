@@ -173,7 +173,7 @@ namespace Podsync.Services.Links
 
             if (string.IsNullOrWhiteSpace(id) || linkType == LinkType.Unknown || provider == Provider.Unknown)
             {
-                throw new ArgumentException("Failed to parse URL");
+                throw new ArgumentException("This provider is not supported");
             }
             
             return new LinkInfo
