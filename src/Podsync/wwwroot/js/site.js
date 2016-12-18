@@ -8,7 +8,6 @@ $(function () {
     
     function createFeed(data, done) {
         if (!data.url) {
-            err('Please fill the URL field first');
             return;
         }
 
@@ -46,9 +45,57 @@ $(function () {
         alert(link);
     }
 
+    /*
+        Tooltips
+    */
+
+    $(document).on('mouseenter', 'i', function() {
+        var title = $(this).attr('title');
+        if (!title) {
+            return;
+        }
+        $(this).data('tipText', title).removeAttr('title');
+        $('<p class="tooltip"></p>').text(title).appendTo('body').fadeIn('fast');
+    });
+
+    $(document).on('mouseleave', 'i', function() {
+        var text = $(this).data('tipText');
+        $(this).attr('title', text);
+        $('.tooltip').remove();
+    });
+
+    $(document).on('mousemove', 'i', function(e) {
+        var x = e.pageX + 10;
+        var y = e.pageY + 5;
+        $('.tooltip').css({ top: y, left: x });
+    });
+
+    /*
+        Control panel
+    */
+
+    function enableControls(enable) {
+        if (enable) {
+            $('#control-panel')
+                .removeClass('locked');
+            $('#control-icon')
+                .removeClass('fa-question-circle master-tooltip')
+                .addClass('fa-wrench')
+                .removeAttr('title');
+        } else {
+            $('#control-panel').addClass('locked');
+            $('#control-icon')
+                .removeClass('fa-wrench')
+                .addClass('fa-question-circle master-tooltip')
+                .attr('title', 'This features are available for patrons only (please, login with your Patreon account). You may support us and unlock this features');
+        }
+    }
+
     $('#get-link').click(function(e) {
         var url = $('#url-input').val();
         createFeed({ url: url, quality: 'VideoHigh' }, displayLink);
         e.preventDefault();
     });
+
+    enableControls(true);
 });

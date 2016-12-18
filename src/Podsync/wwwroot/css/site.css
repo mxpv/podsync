@@ -186,6 +186,18 @@ a {
 :-ms-input-placeholder { color: rgb(171, 163, 149); } /* IE 10+ */
 :-moz-placeholder { color: rgb(171, 163, 149); } /* Firefox 18- */
 
+/* Tooltips */
+
+.tooltip {
+    display: none;
+    position: absolute;
+    background: rgb(171, 163, 149);
+    border: 1px rgb(244, 236, 218) solid;
+    padding: 10px;
+    color: #4a4030;
+    max-width: 350px;
+}
+
 @media screen and (max-width: 640px) {
     .background-image {
         background-image: url('../img/mobile_bg.png')
