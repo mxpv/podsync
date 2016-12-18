@@ -74,22 +74,50 @@ $(function () {
         Control panel
     */
 
-    function enableControls(enable) {
-        if (enable) {
+    function lockControls(lock) {
+        if (lock) {
+            $('#control-panel').addClass('locked');
+            $('#control-icon')
+                .removeClass('fa-wrench')
+                .addClass('fa-question-circle master-tooltip')
+                .attr('title', 'This features are available for patrons only (please, login with your Patreon account). You may support us and unlock this features');
+        } else {
             $('#control-panel')
                 .removeClass('locked');
             $('#control-icon')
                 .removeClass('fa-question-circle master-tooltip')
                 .addClass('fa-wrench')
                 .removeAttr('title');
-        } else {
-            $('#control-panel').addClass('locked');
-            $('#control-icon')
-                .removeClass('fa-wrench')
-                .addClass('fa-question-circle master-tooltip')
-                .attr('title', 'This features are available for patrons only (please, login with your Patreon account). You may support us and unlock this features');
         }
     }
+
+    function isLocked() {
+        return $('#control-panel').hasClass('locked');
+    }
+
+    /*
+        Handlers
+    */
+
+    function formatSwith() {
+        if (isLocked()) {
+            return;
+        }
+
+        $('#video-format, #audio-format').toggleClass('selected-option');
+    }
+
+    function qualitySwitch() {
+        if (isLocked()) {
+            return;
+        }
+
+        $('#best-quality, #worst-quality').toggleClass('selected-option');
+    }
+
+    /*
+        Attach handlers
+    */
 
     $('#get-link').click(function(e) {
         var url = $('#url-input').val();
@@ -97,5 +125,8 @@ $(function () {
         e.preventDefault();
     });
 
-    enableControls(true);
+    $('#video-format, #audio-format').click(formatSwith);
+    $('#best-quality, #worst-quality').click(qualitySwitch);
+
+    lockControls(true);
 });
