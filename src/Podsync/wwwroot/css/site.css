@@ -72,6 +72,11 @@ a {
 
 /* Main block + input */
 
+.shadow {
+    box-shadow: 0 12px 8px -6px #a79d87;
+    box-shadow: 0 12px 8px -6px rgba(167, 157, 135, 0.4);
+}
+
 .main {
     text-align: center;
     padding: 5em 2em 10em;
@@ -173,7 +178,7 @@ a {
 .patreon {
     background: rgb(171, 163, 149);
     border: 1px rgb(240, 232, 214) solid;
-    bottom: 5em;
+    bottom: 6em;
     float: right;
     position: absolute;
     right: 2em;
