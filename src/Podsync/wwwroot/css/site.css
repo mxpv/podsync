@@ -57,8 +57,10 @@ a {
     margin: 0;
 }
 
-.title p {
+.title h2 {
     max-width: 500px;
+    font-weight: normal;
+    font-size: 1em;
 }
 
 .login-block {
