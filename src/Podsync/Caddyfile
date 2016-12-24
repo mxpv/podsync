@@ -1,0 +1,32 @@
+﻿new.podsync.net
+gzip
+
+errors stdout
+
+ratelimit 2 3 second {
+    /feed
+    /download
+}
+
+proxy / {%REDIRECT_HOST%}:{%REDIRECT_PORT%} {
+    header_upstream Host {host}
+    transparent
+}
+
+tls pavlenko.maksym@gmail.com
+
+header / {
+    # Remove ASP.NET specific headers
+    -Server
+    -X-Powered-By
+    -X-Sourcefiles
+
+    # Enable cross-site filter (XSS) and tell browser to block detected attacks
+    X-XSS-Protection "1; mode=block"
+
+    # Prevent some browsers from MIME-sniffing a response away from the declared Content-Type
+    X-Content-Type-Options "nosniff"
+
+    # Disallow the site to be rendered within a frame (clickjacking protection)
+    X-Frame-Options "DENY"
+}

@@ -1,0 +1,27 @@
+﻿version: '2'
+
+services:
+  app:
+    image: podsync
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - PORT=56247
+    environment:
+      - Podsync:RedisConnectionString=redis
+  redis:
+    image: redis
+    command: redis-server --appendonly yes
+    volumes:
+      - /redis_data:/data
+  caddy:
+    build:
+      context: .
+      dockerfile: Caddy.Dockerfile
+    ports:
+      - 80:80
+      - 443:443
+    environment:
+      - REDIRECT_HOST=app
+      - REDIRECT_PORT=56247

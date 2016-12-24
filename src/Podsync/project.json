@@ -57,7 +57,9 @@
       "Views",
       "Areas/**/Views",
       "appsettings.json",
-      "web.config"
+      "web.config",
+      "Dockerfile",
+      "youtube-dl"
     ]
   },
   "scripts": {

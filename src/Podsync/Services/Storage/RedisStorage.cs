@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using HashidsNet;
 using Microsoft.Extensions.Options;
@@ -28,31 +30,62 @@ namespace Podsync.Services.Storage
 
         private static readonly IHashids HashIds = new Hashids(IdSalt, IdLength);
 
-        private readonly IDatabase _db;
+        private readonly string _cs;
+        private IDatabase _db;
 
         public RedisStorage(IOptions<PodsyncConfiguration> configuration)
         {
-            var cs = configuration.Value.RedisConnectionString;
-            var connection = ConnectionMultiplexer.ConnectAsync(cs).GetAwaiter().GetResult();
+            _cs = configuration.Value.RedisConnectionString;
+        }
 
-            _db = connection.GetDatabase();
+        private IDatabase Db
+        {
+            get { return LazyInitializer.EnsureInitialized(ref _db, () => Connect(_cs).GetAwaiter().GetResult().GetDatabase()); }
+        }
+
+        private static async Task<ConnectionMultiplexer> Connect(string cs)
+        {
+            var options = ConfigurationOptions.Parse(cs);
+
+            try
+            {
+                return await ConnectionMultiplexer.ConnectAsync(options);
+            }
+            catch (PlatformNotSupportedException)
+            {
+                // Can't connect via address on Linux environments, using workaround
+                // See https://github.com/StackExchange/StackExchange.Redis/issues/410#issuecomment-246332140
+                var addressEndpoint = options.EndPoints.SingleOrDefault() as DnsEndPoint;
+                if (addressEndpoint != null)
+                {
+                    var ip = await Dns.GetHostEntryAsync(addressEndpoint.Host);
+                    options.EndPoints.Remove(addressEndpoint);
+                    options.EndPoints.Add(ip.AddressList.First(), addressEndpoint.Port);
+                }
+
+                return await ConnectionMultiplexer.ConnectAsync(options);
+            }
         }
 
         public void Dispose()
         {
-            _db.Multiplexer.Dispose();
+            if (_db != null)
+            {
+                _db.Multiplexer.Dispose();
+                _db = null;
+            }
         }
 
         public Task<TimeSpan> Ping()
         {
-            return _db.PingAsync();
+            return Db.PingAsync();
         }
 
         public async Task<string> Save(FeedMetadata metadata)
         {
             var id = await MakeId();
 
-            await _db.HashSetAsync(id, new[]
+            await Db.HashSetAsync(id, new[]
             {
                 new HashEntry(ProviderField, metadata.Provider.ToString()),
                 new HashEntry(TypeField, metadata.LinkType.ToString()),
@@ -61,7 +94,7 @@ namespace Podsync.Services.Storage
                 new HashEntry(PageSizeField, metadata.PageSize), 
             });
 
-            await _db.KeyExpireAsync(id, TimeSpan.FromDays(1));
+            await Db.KeyExpireAsync(id, TimeSpan.FromDays(1));
 
             return id;
         }
@@ -73,10 +106,10 @@ namespace Podsync.Services.Storage
                 throw new ArgumentException("Feed key can't be empty");
             }
 
-            var entries = await _db.HashGetAllAsync(key);
+            var entries = await Db.HashGetAllAsync(key);
 
             // Expire after 3 month if no use
-            await _db.KeyExpireAsync(key, TimeSpan.FromDays(90));
+            await Db.KeyExpireAsync(key, TimeSpan.FromDays(90));
 
             if (entries.Length == 0)
             {
@@ -107,12 +140,12 @@ namespace Podsync.Services.Storage
 
         public Task ResetCounter()
         {
-            return _db.KeyDeleteAsync(IdKey);
+            return Db.KeyDeleteAsync(IdKey);
         }
 
         public async Task<string> MakeId()
         {
-            var id = await _db.StringIncrementAsync(IdKey);
+            var id = await Db.StringIncrementAsync(IdKey);
             return HashIds.EncodeLong(id);
         }
 
