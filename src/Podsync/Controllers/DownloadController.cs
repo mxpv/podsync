@@ -23,6 +23,7 @@ namespace Podsync.Controllers
         }
         
         // Main video download endpoint, don't forget to reflect any changes in LinkService.Download
+        [HttpGet]
         [Route("{feedId}/{videoId}/")]
         public async Task<IActionResult> Download(string feedId, string videoId)
         {
@@ -31,7 +32,7 @@ namespace Podsync.Controllers
             var url = _linkService.Make(new LinkInfo
             {
                 Provider = metadata.Provider,
-                LinkType = metadata.LinkType,
+                LinkType = LinkType.Video,
                 Id = videoId
             });
 

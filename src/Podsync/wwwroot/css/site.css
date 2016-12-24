@@ -64,12 +64,13 @@ a {
 }
 
 .login-block {
-    color: #EB8C11;
-    font-size: 1.3em;
+    color: #e18712;
+    font-size: 1em;
 }
 
 .login-block a {
-    margin-right: 0.5em;
+    font-size: 1.2em;
+    font-weight: normal;
 }
 
 /* Main block + input */

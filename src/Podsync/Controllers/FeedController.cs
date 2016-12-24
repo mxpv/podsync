@@ -50,6 +50,12 @@ namespace Podsync.Controllers
                 PageSize = request.PageSize ?? DefaultPageSize
             };
 
+            if (!User.EnablePatreonFeatures())
+            {
+                feed.Quality = ResolveType.VideoHigh;
+                feed.PageSize = DefaultPageSize;
+            }
+
             return _storageService.Save(feed);
         }
 

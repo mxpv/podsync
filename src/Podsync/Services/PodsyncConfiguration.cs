@@ -1,4 +1,6 @@
-﻿namespace Podsync.Services
+﻿using Podsync.Services.Patreon;
+
+namespace Podsync.Services
 {
     public class PodsyncConfiguration
     {
@@ -7,5 +9,11 @@
         public string RedisConnectionString { get; set; }
 
         public string BaseUrl { get; set; }
+
+        public string PatreonClientId { get; set; }
+
+        public string PatreonSecret { get; set; }
+
+        public Tokens CreatorTokens { get; set; }
     }
 }

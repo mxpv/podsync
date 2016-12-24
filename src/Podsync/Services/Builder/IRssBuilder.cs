@@ -8,6 +8,6 @@ namespace Podsync.Services.Builder
     {
         Task<Rss> Query(string feedId);
 
-        Task<Rss> Query(FeedMetadata feed);
+        Task<Rss> Query(string feedId, FeedMetadata feed);
     }
 }

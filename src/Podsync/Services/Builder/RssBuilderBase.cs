@@ -20,9 +20,9 @@ namespace Podsync.Services.Builder
         {
             var metadata = await _storageService.Load(feedId);
 
-            return await Query(metadata);
+            return await Query(feedId, metadata);
         }
 
-        public abstract Task<Rss> Query(FeedMetadata metadata);
+        public abstract Task<Rss> Query(string feedId, FeedMetadata metadata);
     }
 }

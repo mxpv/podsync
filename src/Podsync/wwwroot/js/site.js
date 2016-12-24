@@ -77,23 +77,6 @@ $(function () {
         Control panel
     */
 
-    function lockControls(lock) {
-        if (lock) {
-            $('#control-panel').addClass('locked');
-            $('#control-icon')
-                .removeClass('fa-wrench')
-                .addClass('fa-question-circle master-tooltip')
-                .attr('title', 'This features are available for patrons only (please, login with your Patreon account). You may support us and unlock this features');
-        } else {
-            $('#control-panel')
-                .removeClass('locked');
-            $('#control-icon')
-                .removeClass('fa-question-circle master-tooltip')
-                .addClass('fa-wrench')
-                .removeAttr('title');
-        }
-    }
-
     function isLocked() {
         return $('#control-panel').hasClass('locked');
     }
@@ -116,6 +99,17 @@ $(function () {
         }
 
         $('#best-quality, #worst-quality').toggleClass('selected-option');
+    }
+
+    function getQuality() {
+        var isAudio = $('#audio-format').hasClass('selected-option');
+        var isWorst = $('#worst-quality').hasClass('selected-option');
+
+        if (isAudio) {
+            return isWorst ? 'AudioLow' : 'AudioHigh';
+        } else {
+            return isWorst ? 'VideoLow' : 'VideoHigh';
+        }
     }
 
     /* Modal */
@@ -164,7 +158,7 @@ $(function () {
 
     $('#get-link').click(function(e) {
         var url = $('#url-input').val();
-        createFeed({ url: url, quality: 'VideoHigh' }, displayLink);
+        createFeed({ url: url, quality: getQuality() }, displayLink);
         e.preventDefault();
     });
 
@@ -192,6 +186,4 @@ $(function () {
         }
         e.stopPropagation();
     });
-
-    lockControls(true);
 });

@@ -1,4 +1,8 @@
-﻿
+﻿@using Podsync.Helpers
+@{
+    var enableFeatures = User.EnablePatreonFeatures();
+}
+
 <div class="title">
     <h1>Podsync</h1>
     
@@ -8,16 +12,22 @@
     </h2>
 
     <div class="login-block">
-        <h5>Login to unlock Patreon features <i class="fa fa-question-circle" aria-hidden="true"></i></h5>
-        <a href="#">
-            <i class="fa fa-facebook" aria-hidden="true"></i>
-        </a>
-        <a href="#">
-            <i class="fa fa-twitter" aria-hidden="true"></i>
-        </a>
-        <a href="#">
-            <i class="fa fa-google-plus" aria-hidden="true"></i>
-        </a>
+        @if (User.Identity.IsAuthenticated)
+        {
+            <p>
+                Yo, <i class="fa fa-user-circle" aria-hidden="true"></i> @User.GetName() ( <a href="~/logout"><i class="fa fa-sign-out" aria-hidden="true"></i>logout</a>)
+            </p>
+        }
+        else
+        {
+            <h5>
+                <a href="~/login">
+                    Login with Patreon to unlock features
+                    <i class="fa fa-question-circle master-tooltip" aria-hidden="true" title="We have added advanced features for those who supported development. Login with your Patreon account to unlock them.">
+                    </i>
+                </a>
+            </h5>
+        }
     </div>
 </div>
 
@@ -34,11 +44,22 @@
 
         <div class="controls">
             <p>
-                <i id="control-icon" class="fa fa-question-circle" aria-hidden="true"></i>
-                <span id="control-panel" class="locked">
+                @if (enableFeatures)
+                {
+                    <i class="fa fa-wrench" aria-hidden="true"></i>
+                }
+                else
+                {
+                    <i class="fa fa-question-circle master-tooltip"
+                       aria-hidden="true"
+                       title="This features are available for patrons only. You may support us and unlock this features"></i>
+                }
+
+                <span id="control-panel" class="@(!enableFeatures ? "locked" : "")">
                     Selected format <a class="selected-option" id="video-format">video</a> <a id="audio-format">audio</a>,
                     quality <a class="selected-option" id="best-quality">best</a> <a id="worst-quality">worst</a>,
                 </span>
+
                 <span class="locked" style="text-decoration: line-through">
                     <i class="fa fa-question-circle master-tooltip" title="Still under development. We will keep you updated via Patreon's news feed" aria-hidden="true"></i>
                     episode count <a class="selected-option">50</a> <a>100</a> <a>150</a>

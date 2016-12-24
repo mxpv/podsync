@@ -2,6 +2,8 @@
   "dependencies": {
     "Google.Apis.YouTube.v3": "1.16.0.582",
     "Hashids.net": "1.2.2",
+    "Microsoft.AspNetCore.Authentication.Cookies": "1.0.0",
+    "Microsoft.AspNetCore.Authentication.OAuth": "1.0.0",
     "Microsoft.AspNetCore.Diagnostics": "1.0.0",
     "Microsoft.AspNetCore.Mvc": "1.0.0",
     "Microsoft.AspNetCore.Razor.Tools": {

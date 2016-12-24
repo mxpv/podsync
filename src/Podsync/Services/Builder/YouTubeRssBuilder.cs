@@ -24,7 +24,7 @@ namespace Podsync.Services.Builder
 
         public override Provider Provider { get; } = Provider.YouTube;
 
-        public override async Task<Rss> Query(FeedMetadata metadata)
+        public override async Task<Rss> Query(string feedId, FeedMetadata metadata)
         {
             if (metadata.Provider != Provider.YouTube)
             {
@@ -57,7 +57,7 @@ namespace Podsync.Services.Builder
             // Get video descriptions
             var videos = await _youTube.GetVideos(new VideoQuery { Id = string.Join(",", ids) });
 
-            channel.Items = videos.Select(x => MakeItem(x, metadata));
+            channel.Items = videos.Select(x => MakeItem(x, feedId, metadata));
 
             var rss = new Rss
             {
@@ -103,7 +103,7 @@ namespace Podsync.Services.Builder
             };
         }
 
-        private Item MakeItem(Video video, FeedMetadata feed)
+        private Item MakeItem(Video video, string feedId, FeedMetadata feed)
         {
             return new Item
             {
@@ -116,7 +116,7 @@ namespace Podsync.Services.Builder
                 {
                     Length = video.Size,
                     MediaType = SelectMediaType(feed.Quality),
-                    Url = _linkService.Download(feed.Id, video.VideoId)
+                    Url = _linkService.Download(feedId, video.VideoId)
                 }
             };
         }
