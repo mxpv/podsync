@@ -53,7 +53,7 @@ namespace Podsync.Services.Links
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .ToArray();
 
-            var host = link.Host.ToLowerInvariant().TrimStart("www.");
+            var host = link.Host.ToLowerInvariant().TrimStart("www.").TrimStart("m.");
 
             if (host == "youtu.be")
             {

@@ -282,3 +282,9 @@ a {
         width: 90%;
     }
 }
+
+@media screen and (max-height: 640px) {
+    .patreon {
+        display: none;
+    }
+}

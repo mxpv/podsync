@@ -144,9 +144,13 @@ $(function () {
         }
     }
 
+    function isMobile() {
+        return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    }
+
     function canCopy() {
         try {
-            return document.queryCommandSupported('copy');
+            return document.queryCommandSupported('copy') && !isMobile();
         } catch (e) {
             return false;
         }
