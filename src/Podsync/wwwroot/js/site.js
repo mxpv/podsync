@@ -16,10 +16,10 @@ $(function () {
             method: 'POST',
             data: JSON.stringify(data),
             contentType: 'application/json; charset=utf-8',
-            success: function (feedId) {
-                var proto = $(location).attr('protocol');
-                var host = $(location).attr('host');
-                done(proto + '//' + host + '/feed/' + feedId);
+            success: function (feedLink) {
+                // HACK: remove quotes
+                feedLink = JSON.parse(feedLink);
+                done(feedLink);
             },
             error: function (xhr, status, error) {
                 if (xhr.status === 400) {

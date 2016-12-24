@@ -37,7 +37,7 @@ namespace Podsync.Controllers
         [HttpPost]
         [Route("create")]
         [ValidateModelState]
-        public Task<string> Create([FromBody] CreateFeedRequest request)
+        public async Task<Uri> Create([FromBody] CreateFeedRequest request)
         {
             var linkInfo = _linkService.Parse(new Uri(request.Url));
 
@@ -56,11 +56,12 @@ namespace Podsync.Controllers
                 feed.PageSize = DefaultPageSize;
             }
 
-            return _storageService.Save(feed);
+            var feedId = await _storageService.Save(feed);
+            return _linkService.Feed(feedId);
         }
 
         [HttpGet]
-        [Route("{feedId}")]
+        [Route("~/{feedId:length(4, 6)}")]
         [ValidateModelState]
         public async Task<IActionResult> Feed([Required] string feedId)
         {

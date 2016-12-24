@@ -206,5 +206,10 @@ namespace Podsync.Services.Links
         {
             return new Uri(_baseUrl, $"download/{feedId}/{videoId}/");
         }
+
+        public Uri Feed(string feedId)
+        {
+            return new Uri(_baseUrl, feedId);
+        }
     }
 }

@@ -10,6 +10,8 @@ services:
         - PORT=56247
     environment:
       - Podsync:RedisConnectionString=redis
+    env_file:
+      - ~/podsync.env
   redis:
     image: redis
     command: redis-server --appendonly yes

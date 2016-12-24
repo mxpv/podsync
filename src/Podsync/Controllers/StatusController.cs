@@ -19,6 +19,8 @@ namespace Podsync.Controllers
             _resolverService = resolverService;
         }
 
+        [HttpGet]
+        [Route("~/status")]
         public async Task<string> Index()
         {
             var storageStatus = ErrorStatus;
