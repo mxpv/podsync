@@ -14,6 +14,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <SchemaVersion>2.0</SchemaVersion>
+    <ApplicationInsightsResourceId>/subscriptions/6ced39ae-0008-4531-bf42-4c517d4fb309/resourcegroups/podsync_group/providers/microsoft.insights/components/podsync</ApplicationInsightsResourceId>
   </PropertyGroup>
   <ItemGroup>
     <DnxInvisibleContent Include=".bowerrc" />

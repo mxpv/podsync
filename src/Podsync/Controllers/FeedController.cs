@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Podsync.Helpers;
 using Podsync.Services;
@@ -27,12 +29,14 @@ namespace Podsync.Controllers
         private readonly IRssBuilder _rssBuilder;
         private readonly ILinkService _linkService;
         private readonly IStorageService _storageService;
+        private readonly TelemetryClient _telemetry;
 
-        public FeedController(IRssBuilder rssBuilder, ILinkService linkService, IStorageService storageService)
+        public FeedController(IRssBuilder rssBuilder, ILinkService linkService, IStorageService storageService, TelemetryClient telemetry)
         {
             _rssBuilder = rssBuilder;
             _linkService = linkService;
             _storageService = storageService;
+            _telemetry = telemetry;
         }
 
         [HttpPost]
@@ -51,14 +55,36 @@ namespace Podsync.Controllers
                 PageSize = request.PageSize ?? DefaultPageSize
             };
 
-            if (!User.EnablePatreonFeatures())
+            // Check if user eligible for Patreon features
+            var enablePatreonFeatures = User.EnablePatreonFeatures();
+            if (!enablePatreonFeatures)
             {
                 feed.Quality = ResolveType.VideoHigh;
                 feed.PageSize = DefaultPageSize;
             }
 
             var feedId = await _storageService.Save(feed);
-            return _linkService.Feed(Request.GetBaseUrl(), feedId);
+            var url = _linkService.Feed(Request.GetBaseUrl(), feedId);
+
+            // Report metrics
+            var properties = new Dictionary<string, string>
+            {
+                ["Provider"] = linkInfo.Provider.ToString(),
+                ["Patreon"] = enablePatreonFeatures.ToString(),
+                ["Format"] = feed.Quality == ResolveType.AudioHigh || feed.Quality == ResolveType.AudioLow ? "Audio" : "Video",
+                ["Quality"] = feed.Quality == ResolveType.AudioHigh || feed.Quality == ResolveType.VideoHigh ? "Hight" : "Low",
+                ["PageSize"] = feed.PageSize.ToString()
+            };
+
+            if (User.Identity.IsAuthenticated)
+            {
+                properties.Add("User", User.GetClaim(ClaimTypes.NameIdentifier));
+                properties.Add("Email", User.GetClaim(ClaimTypes.Email));
+            }
+
+            _telemetry.TrackEvent("CreateFeed", properties);
+
+            return url;
         }
 
         [HttpGet]
@@ -89,6 +115,9 @@ namespace Podsync.Controllers
                 _serializer.Serialize(writer, rss);
                 body = writer.ToString();
             }
+
+            // Report metrics
+            _telemetry.TrackEvent("GetFeed");
 
             return Content(body, "application/rss+xml; charset=UTF-8");
         }

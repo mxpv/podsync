@@ -32,6 +32,7 @@ namespace Podsync
             if (env.IsDevelopment())
             {
                 builder.AddUserSecrets();
+                builder.AddApplicationInsightsSettings(true);
             }
 
             Configuration = builder.Build();
@@ -56,6 +57,7 @@ namespace Podsync
             services.AddAuthentication(config => config.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme);
 
             // Add framework services
+            services.AddApplicationInsightsTelemetry(Configuration);
             services.AddMvc();
         }
 
@@ -64,6 +66,9 @@ namespace Podsync
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
+
+            app.UseApplicationInsightsRequestTelemetry();
+            app.UseApplicationInsightsExceptionTelemetry();
 
             if (env.IsDevelopment())
             {
