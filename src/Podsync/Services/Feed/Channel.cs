@@ -8,6 +8,7 @@ using Shared;
 
 namespace Podsync.Services.Feed
 {
+    [XmlRoot("channel")]
     public class Channel : IXmlSerializable
     {
         private const string PodsyncGeneratorName = "Podsync Generator";
@@ -41,6 +42,10 @@ namespace Podsync.Services.Feed
 
         public IEnumerable<Item> Items { get; set; }
 
+        public bool Explicit { get; set; }
+
+        public Uri AtomLink { get; set; }
+
         public XmlSchema GetSchema()
         {
             return null;
@@ -69,6 +74,16 @@ namespace Podsync.Services.Feed
 
             writer.WriteElementString("subtitle", Namespaces.Itunes, Title);
             writer.WriteElementString("summary", Namespaces.Itunes, Summary);
+            writer.WriteElementString("explicit", Namespaces.Itunes, Explicit ? "yes" : "no");
+
+            if (AtomLink != null)
+            {
+                writer.WriteStartElement("link", Namespaces.Atom);
+                writer.WriteAttributeString("href", AtomLink.ToString());
+                writer.WriteAttributeString("rel", "self");
+                writer.WriteAttributeString("type", "application/rss+xml");
+                writer.WriteEndElement();
+            }
 
             /*
                 <itunes:category text="TV & Film"/>

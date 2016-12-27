@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.IO;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,9 +8,11 @@ using Podsync.Helpers;
 using Podsync.Services;
 using Podsync.Services.Builder;
 using Podsync.Services.Feed;
+using Podsync.Services.Feed.Internal;
 using Podsync.Services.Links;
 using Podsync.Services.Resolver;
 using Podsync.Services.Storage;
+using Shared;
 
 namespace Podsync.Controllers
 {
@@ -57,7 +58,7 @@ namespace Podsync.Controllers
             }
 
             var feedId = await _storageService.Save(feed);
-            return _linkService.Feed(feedId);
+            return _linkService.Feed(Request.GetBaseUrl(), feedId);
         }
 
         [HttpGet]
@@ -69,22 +70,27 @@ namespace Podsync.Controllers
 
             try
             {
-                rss = await _rssBuilder.Query(feedId);
+                rss = await _rssBuilder.Query(Request.GetBaseUrl(), feedId);
             }
             catch (KeyNotFoundException)
             {
                 return NotFound(feedId);
             }
 
+            // Set atom link to this feed
+            // See https://validator.w3.org/feed/docs/warning/MissingAtomSelfLink.html
+            var selfLink = new Uri($"{Request.Scheme}://{Request.Host}{Request.Path}");
+            rss.Channels.ForEach(x => x.AtomLink = selfLink);
+
             // Serialize feed to string
             string body;
-            using (var writer = new StringWriter())
+            using (var writer = new Utf8StringWriter())
             {
                 _serializer.Serialize(writer, rss);
                 body = writer.ToString();
             }
 
-            return Content(body, "text/xml");
+            return Content(body, "application/rss+xml; charset=UTF-8");
         }
     }
 }

@@ -21,11 +21,11 @@ namespace Podsync.Services.Builder
             get { throw new NotSupportedException(); }
         }
 
-        public override Task<Rss> Query(string feedId, FeedMetadata feed)
+        public override Task<Rss> Query(Uri baseUrl, string feedId, FeedMetadata feed)
         {
             if (feed.Provider == Provider.YouTube)
             {
-                return _youTubeBuilder.Query(feedId, feed);
+                return _youTubeBuilder.Query(baseUrl, feedId, feed);
             }
 
             throw new NotSupportedException("Not supported provider");

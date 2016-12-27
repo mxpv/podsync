@@ -5,6 +5,7 @@ using System.Xml.Serialization;
 
 namespace Podsync.Services.Feed
 {
+    [XmlRoot("item")]
     public class Item : IXmlSerializable
     {
         public string Title { get; set; }
@@ -39,7 +40,11 @@ namespace Podsync.Services.Feed
             writer.WriteElementString("description", Description);
             writer.WriteElementString("link", Link.ToString());
             writer.WriteElementString("pubDate", PubDate.ToString("R"));
-            writer.WriteElementString("author", Author);
+
+            if (!string.IsNullOrWhiteSpace(Author))
+            {
+                writer.WriteElementString("author", Author);
+            }
 
             /*
                 <guid isPermaLink="true">https://youtube.com/watch?v=yp202t46OIE</guid>

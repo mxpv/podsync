@@ -24,7 +24,7 @@ namespace Podsync.Controllers
         
         // Main video download endpoint, don't forget to reflect any changes in LinkService.Download
         [HttpGet]
-        [Route("{feedId}/{videoId}/")]
+        [Route("{feedId}/{videoId}.{ext:length(3,3)}")]
         public async Task<IActionResult> Download(string feedId, string videoId)
         {
             var metadata = await _storageService.Load(feedId);

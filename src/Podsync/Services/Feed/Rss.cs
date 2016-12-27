@@ -8,6 +8,7 @@ using Shared;
 
 namespace Podsync.Services.Feed
 {
+    [XmlRoot("rss")]
     public class Rss : IXmlSerializable
     {
         public const string Version = "2.0";
@@ -31,8 +32,6 @@ namespace Podsync.Services.Feed
 
         public void WriteXml(XmlWriter writer)
         {
-            writer.WriteStartElement("rss");
-
             writer.WriteAttributeString("xmlns", "dc", null, Namespaces.Dc);
             writer.WriteAttributeString("xmlns", "content", null, Namespaces.Content);
             writer.WriteAttributeString("xmlns", "atom", null, Namespaces.Atom);
@@ -43,8 +42,6 @@ namespace Podsync.Services.Feed
 
             var serializer = new XmlSerializer(typeof(Channel));
             Channels.ForEach(channel => serializer.Serialize(writer, channel));
-
-            writer.WriteEndElement();
         }
     }
 }

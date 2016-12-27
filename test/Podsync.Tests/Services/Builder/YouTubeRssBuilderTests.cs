@@ -18,7 +18,7 @@ namespace Podsync.Tests.Services.Builder
 
         public YouTubeRssBuilderTests()
         {
-            var linkService = new LinkService(Options);
+            var linkService = new LinkService();
             var client = new YouTubeClient(linkService, Options);
 
             _builder = new YouTubeRssBuilder(linkService, client, _storageService.Object);
@@ -41,7 +41,7 @@ namespace Podsync.Tests.Services.Builder
 
             _storageService.Setup(x => x.Load(feedId)).ReturnsAsync(feed);
 
-            var rss = await _builder.Query(feedId);
+            var rss = await _builder.Query(new Uri("http://localhost:2020"), feedId);
 
             Assert.NotEmpty(rss.Channels);
 

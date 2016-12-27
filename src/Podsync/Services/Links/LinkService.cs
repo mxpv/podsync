@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Options;
 using Shared;
 
 namespace Podsync.Services.Links
@@ -28,13 +27,6 @@ namespace Podsync.Services.Links
                 [LinkType.Info] = "https://player.vimeo.com/video/{0}/config"
             }
         };
-
-        private readonly Uri _baseUrl;
-
-        public LinkService(IOptions<PodsyncConfiguration> configuration)
-        {
-            _baseUrl = new Uri(configuration.Value.BaseUrl ?? "http://localhost");
-        }
 
         public LinkInfo Parse(Uri link)
         {
@@ -202,14 +194,14 @@ namespace Podsync.Services.Links
             }
         }
 
-        public Uri Download(string feedId, string videoId)
+        public Uri Download(Uri baseUrl, string feedId, string videoId, string ext)
         {
-            return new Uri(_baseUrl, $"download/{feedId}/{videoId}/");
+            return new Uri(baseUrl, $"download/{feedId}/{videoId}{ext}");
         }
 
-        public Uri Feed(string feedId)
+        public Uri Feed(Uri baseUrl, string feedId)
         {
-            return new Uri(_baseUrl, feedId);
+            return new Uri(baseUrl, feedId);
         }
     }
 }

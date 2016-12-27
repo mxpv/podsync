@@ -37,27 +37,15 @@ namespace Podsync.Services.Resolver
         {
             var format = SelectFormat(resolveType);
 
-            using (var proc = new Process())
-            {
-                FillStartInfo(proc.StartInfo, $"-f {format} -g {videoUrl}");
-
-                proc.Start();
-
-                if (!proc.WaitForExit(WaitTimeout))
-                {
-                    proc.Kill();
-
-                    throw new InvalidOperationException("Can't resolve URL because of timeout");
-                }
-
-                var stdout = await proc.StandardOutput.ReadToEndAsync();
-                if (Uri.IsWellFormedUriString(stdout, UriKind.Absolute))
-                {
-                    return new Uri(stdout);
-                }
-
-                var errout = await proc.StandardError.ReadToEndAsync();
-                throw new InvalidOperationException(errout);
+            try 
+	        {	        
+		        return await ResolveInternal(videoUrl, format);
+	        }
+	        catch (InvalidOperationException)
+	        {
+                // Give a try one more time, often it helps
+	            await Task.Delay(TimeSpan.FromSeconds(1));
+                return await ResolveInternal(videoUrl, format);
             }
         }
 
@@ -82,11 +70,42 @@ namespace Podsync.Services.Resolver
                 case ResolveType.VideoLow:
                     return "low[ext=mp4]/best[ext=mp4]";
                 case ResolveType.AudioHigh:
-                    return "bestaudio[ext=webm]/worstaudio[ext=webm]";
+                    return "bestaudio[ext=m4a]/worstaudio[ext=m4a]";
                 case ResolveType.AudioLow:
-                    return "worstaudio[ext=webm]/bestaudio[ext=webm]";
+                    return "worstaudio[ext=m4a]/bestaudio[ext=m4a]";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(resolveType), "Unsupported format", null);
+            }
+        }
+
+        private static async Task<Uri> ResolveInternal(Uri videoUrl, string format)
+        {
+            using (var proc = new Process())
+            {
+                FillStartInfo(proc.StartInfo, $"-f {format} -g {videoUrl}");
+
+                proc.Start();
+
+                if (!proc.WaitForExit(WaitTimeout))
+                {
+                    proc.Kill();
+
+                    throw new InvalidOperationException("Can't resolve URL because of timeout");
+                }
+
+                var stdout = await proc.StandardOutput.ReadToEndAsync();
+                if (Uri.IsWellFormedUriString(stdout, UriKind.Absolute))
+                {
+                    return new Uri(stdout);
+                }
+
+                var errout = await proc.StandardError.ReadToEndAsync();
+                if (string.Equals(errout, "ERROR: requested format not available"))
+                {
+                    throw new NotSupportedException(errout);
+                }
+
+                throw new InvalidOperationException(errout);
             }
         }
     }

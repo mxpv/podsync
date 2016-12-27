@@ -24,7 +24,7 @@ namespace Podsync.Services.Builder
 
         public override Provider Provider { get; } = Provider.YouTube;
 
-        public override async Task<Rss> Query(string feedId, FeedMetadata metadata)
+        public override async Task<Rss> Query(Uri baseUrl, string feedId, FeedMetadata metadata)
         {
             if (metadata.Provider != Provider.YouTube)
             {
@@ -57,7 +57,7 @@ namespace Podsync.Services.Builder
             // Get video descriptions
             var videos = await _youTube.GetVideos(new VideoQuery { Id = string.Join(",", ids) });
 
-            channel.Items = videos.Select(x => MakeItem(x, feedId, metadata));
+            channel.Items = videos.Select(youtubeVideo => MakeItem(youtubeVideo, baseUrl, feedId, metadata));
 
             var rss = new Rss
             {
@@ -99,12 +99,19 @@ namespace Podsync.Services.Builder
                 LastBuildDate = DateTime.Now,
                 PubDate = item.PublishedAt,
                 Image = item.Thumbnail,
-                Thumbnail = item.Thumbnail
+                Thumbnail = item.Thumbnail,
+                Category = DefaultItunesCategory
             };
         }
 
-        private Item MakeItem(Video video, string feedId, FeedMetadata feed)
+        private Item MakeItem(Video video, Uri baseUrl, string feedId, FeedMetadata feed)
         {
+            string contentType;
+            string extension;
+            GetMediaInfo(feed.Quality, out contentType, out extension);
+
+            var downloadUri = _linkService.Download(baseUrl, feedId, video.VideoId, extension);
+
             return new Item
             {
                 Title = video.Title,
@@ -115,17 +122,28 @@ namespace Podsync.Services.Builder
                 Content = new MediaContent
                 {
                     Length = video.Size,
-                    MediaType = SelectMediaType(feed.Quality),
-                    Url = _linkService.Download(feedId, video.VideoId)
+                    MediaType = contentType,
+                    Url = downloadUri
                 }
             };
         }
 
-        private static string SelectMediaType(ResolveType resolveType)
+        private static void GetMediaInfo(ResolveType resolveType, out string contentType, out string extension)
         {
-            return resolveType == ResolveType.VideoHigh || resolveType == ResolveType.VideoLow
-                ? "video/mp4"
-                : "audio/webm";
+            if (resolveType == ResolveType.VideoHigh || resolveType == ResolveType.VideoLow)
+            {
+                contentType = "video/mp4";
+                extension = ".mp4";
+            }
+            else if (resolveType == ResolveType.AudioHigh || resolveType == ResolveType.AudioLow)
+            {
+                contentType = "audio/mp4";
+                extension = ".m4a";
+            }
+            else
+            {
+                throw new ArgumentException("Unsupported resolve type");
+            }
         }
     }
 }

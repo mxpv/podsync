@@ -8,8 +8,6 @@ namespace Podsync.Services
 
         public string RedisConnectionString { get; set; }
 
-        public string BaseUrl { get; set; }
-
         public string PatreonClientId { get; set; }
 
         public string PatreonSecret { get; set; }

@@ -8,8 +8,8 @@ namespace Podsync.Services.Links
 
         Uri Make(LinkInfo info);
 
-        Uri Download(string feedId, string videoId);
+        Uri Download(Uri baseUrl, string feedId, string videoId, string ext);
 
-        Uri Feed(string feedId);
+        Uri Feed(Uri baseUrl, string feedId);
     }
 }

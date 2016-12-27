@@ -14,8 +14,7 @@ namespace Podsync.Tests.Services.Videos.YouTube
 
         public YouTubeClientTests()
         {
-            var linkService = new LinkService(Options);
-            _client = new YouTubeClient(linkService, Options);
+            _client = new YouTubeClient(new LinkService(), Options);
         }
 
         [Fact]
