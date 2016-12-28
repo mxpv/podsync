@@ -29,6 +29,8 @@ a {
     z-index: 0;
 }
 
+/* Footer */
+
 .footer {
     background-image: url('../img/pc_footer.png');
     -ms-background-repeat: space;
@@ -45,6 +47,22 @@ a {
     padding: 0;
     -webkit-user-select: text;
     z-index: 1;
+}
+
+.twitter-link {
+    position: absolute;
+    right: 1em;
+    bottom: 0;
+    font-size: 3em;
+}
+
+.twitter-link a {
+    color: rgb(62, 62, 41);
+}
+
+.twitter-link a:hover {
+    color: rgb(33, 33, 26);
+    background: none;
 }
 
 /* Header */
