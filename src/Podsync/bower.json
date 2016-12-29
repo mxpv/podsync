@@ -2,6 +2,7 @@
   "name": "podsync",
   "private": true,
   "dependencies": {
-    "jquery": "2.2.4"
+    "jquery": "2.2.4",
+    "fontawesome": "4.7.0"
   }
 }

@@ -15,11 +15,20 @@
     <link rel="icon" type="image/x-icon" href="@Url.Content("~/favicon.ico")" />
 
     <environment Names="Development">
-        <link rel="stylesheet" href="css/site.css" asp-append-version="true" />
+        <link rel="stylesheet" href="css/site.css" />
+        <link rel="stylesheet" href="lib/fontawesome/css/font-awesome.css" />
     </environment>
 
     <environment Names="Staging,Production">
         <link rel="stylesheet" href="css/site.min.css" asp-append-version="true" />
+        
+        <link rel="stylesheet"
+              href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+              asp-fallback-href="~/lib/fontawesome/css/font-awesome.min.css"
+              asp-fallback-test-class="fa"
+              asp-fallback-test-property="display"
+              asp-fallback-test-value="inline-block"
+              asp-append-version="true" />
     </environment>
     
     @Html.ApplicationInsightsJavaScript(TelemetryConfiguration)
@@ -35,11 +44,9 @@
     </div>
 </div>
 
-<script src="https://use.fontawesome.com/2895b37726.js"></script>
-
 <environment Names="Development">
-    <script src="~/lib/jquery/dist/jquery.js" asp-append-version="true"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/js/site.js"></script>
 </environment>
     
 <environment Names="Staging,Production">
@@ -48,7 +55,7 @@
             asp-fallback-test="window.jQuery"
             asp-append-version="true">
     </script>
-    
+
     <script src="~/js/site.min.js" asp-append-version="true">
     </script>
 </environment>
