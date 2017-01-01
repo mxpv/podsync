@@ -4,6 +4,7 @@ body {
     margin: 0;
     padding: 0;
     font-family: 'Ubuntu', sans-serif;
+    background-color: #f4eddb;
 }
 
 a {
@@ -17,7 +18,6 @@ a {
     background-repeat: repeat-x;
     -ms-background-position: center bottom;
     background-position: center bottom;
-    background-color: #f4eddb;
     position: absolute;
     width: 100%;
     top: 0;
@@ -187,7 +187,7 @@ a {
     background-position: center bottom;
     background-color: transparent;
     position: absolute;
-    bottom: 130px;
+    bottom: 100px;
     left: 30%;
     margin: 0;
     padding: 0;
@@ -304,5 +304,20 @@ a {
 @media screen and (max-height: 640px) {
     .patreon {
         display: none;
+    }
+
+    .man {
+        display: none;
+    }
+}
+
+@media screen and (max-height: 840px) {
+    .title {
+        padding-top: 1em;
+        padding-bottom: 0;
+    }
+
+    .main {
+        padding-top: 0;
     }
 }
