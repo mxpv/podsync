@@ -82,7 +82,7 @@ namespace Podsync.Services.Resolver
         {
             using (var proc = new Process())
             {
-                FillStartInfo(proc.StartInfo, $"-f {format} -g {videoUrl}");
+                FillStartInfo(proc.StartInfo, $"-f {format} -g {videoUrl} --no-check-certificate");
 
                 proc.Start();
 
