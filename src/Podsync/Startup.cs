@@ -1,5 +1,7 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Builder;
@@ -9,7 +11,6 @@ using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Podsync.Helpers;
 using Podsync.Services;
 using Podsync.Services.Builder;
 using Podsync.Services.Links;
@@ -20,6 +21,7 @@ using Podsync.Services.Videos.YouTube;
 
 namespace Podsync
 {
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class Startup
     {
         public Startup(IHostingEnvironment env)
@@ -126,6 +128,14 @@ namespace Podsync
 
                         var amountCents = user.Pledges.Sum(x => x.AmountCents);
                         context.Identity.AddClaim(new Claim(PatreonConstants.AmountDonated, amountCents.ToString()));
+
+                        var telemetry = app.ApplicationServices.GetService<TelemetryClient>();
+                        telemetry.TrackEvent("Login", new Dictionary<string, string>
+                        {
+                            ["Email"] = user.Email,
+                            ["Url"] = user.Url,
+                            ["Donated"] = amountCents.ToString()
+                        });
                     }
                 }
             });
