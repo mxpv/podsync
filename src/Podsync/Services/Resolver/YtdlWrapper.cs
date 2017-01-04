@@ -7,7 +7,8 @@ namespace Podsync.Services.Resolver
 {
     public class YtdlWrapper : IResolverService
     {
-        private static readonly int WaitTimeout = (int)TimeSpan.FromSeconds(5).TotalMilliseconds;
+        private static readonly int ProcessWaitTimeout = (int)TimeSpan.FromSeconds(30).TotalMilliseconds;
+        private static readonly TimeSpan WaitTimeoutBetweenFailedCalls = TimeSpan.FromSeconds(15);
 
         public YtdlWrapper()
         {
@@ -18,7 +19,7 @@ namespace Podsync.Services.Resolver
                     FillStartInfo(proc.StartInfo, "--version");
 
                     proc.Start();
-                    proc.WaitForExit(WaitTimeout);
+                    proc.WaitForExit(ProcessWaitTimeout);
 
                     var stdout = proc.StandardOutput.ReadToEndAsync().GetAwaiter().GetResult();
                     Version = stdout;
@@ -44,7 +45,7 @@ namespace Podsync.Services.Resolver
 	        catch (InvalidOperationException)
 	        {
                 // Give a try one more time, often it helps
-	            await Task.Delay(TimeSpan.FromSeconds(1));
+	            await Task.Delay(WaitTimeoutBetweenFailedCalls);
                 return await ResolveInternal(videoUrl, format);
             }
         }
@@ -86,7 +87,7 @@ namespace Podsync.Services.Resolver
 
                 proc.Start();
 
-                if (!proc.WaitForExit(WaitTimeout))
+                if (!proc.WaitForExit(ProcessWaitTimeout))
                 {
                     proc.Kill();
 
