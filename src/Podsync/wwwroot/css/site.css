@@ -51,7 +51,7 @@ a {
 
 .twitter-link {
     position: absolute;
-    right: 1em;
+    right: 2em;
     bottom: 0;
     font-size: 3em;
 }
@@ -303,7 +303,8 @@ a {
 
 @media screen and (max-height: 640px) {
     .patreon {
-        display: none;
+        width: 300px;
+        bottom: 4em;
     }
 
     .man {
