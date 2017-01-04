@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Podsync.Helpers;
@@ -39,7 +41,22 @@ namespace Podsync.Controllers
                 Id = videoId
             });
 
-            var redirectUrl = await _resolverService.Resolve(url, metadata.Quality);
+            Uri redirectUrl;
+
+            try
+            {
+                redirectUrl = await _resolverService.Resolve(url, metadata.Quality);
+            }
+            catch (Exception ex)
+            {
+                _telemetry.TrackException(ex, new Dictionary<string, string>
+                {
+                    ["FeedId"] = feedId,
+                    ["VideoId"] = videoId
+                });
+
+                return BadRequest("Could nou resolve URL");
+            }
 
             // Report metrics
             _telemetry.TrackEvent("Download");
