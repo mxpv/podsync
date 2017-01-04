@@ -1,29 +1,24 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Medallion.Shell;
 
 namespace Podsync.Services.Resolver
 {
     public class YtdlWrapper : IResolverService
     {
-        private static readonly int ProcessWaitTimeout = (int)TimeSpan.FromSeconds(30).TotalMilliseconds;
+        private static readonly TimeSpan ProcessWaitTimeout = TimeSpan.FromSeconds(30);
         private static readonly TimeSpan WaitTimeoutBetweenFailedCalls = TimeSpan.FromSeconds(15);
+
+        private const string Ytdl = "youtube-dl";
 
         public YtdlWrapper()
         {
             try
             {
-                using (var proc = new Process())
-                {
-                    FillStartInfo(proc.StartInfo, "--version");
-
-                    proc.Start();
-                    proc.WaitForExit(ProcessWaitTimeout);
-
-                    var stdout = proc.StandardOutput.ReadToEndAsync().GetAwaiter().GetResult();
-                    Version = stdout;
-                }
+                var cmd = Command.Run(Ytdl, "--version");
+                Version = cmd.Result.StandardOutput;
             }
             catch (Exception ex)
             {
@@ -50,18 +45,6 @@ namespace Podsync.Services.Resolver
             }
         }
 
-        private static void FillStartInfo(ProcessStartInfo startInfo, string arguments)
-        {
-            startInfo.FileName = "youtube-dl";
-            startInfo.Arguments = arguments;
-
-            startInfo.UseShellExecute = false;
-            startInfo.CreateNoWindow = true;
-
-            startInfo.RedirectStandardOutput = true;
-            startInfo.RedirectStandardError = true;
-        }
-
         private static string SelectFormat(ResolveType resolveType)
         {
             switch (resolveType)
@@ -79,35 +62,54 @@ namespace Podsync.Services.Resolver
             }
         }
 
+        private static IEnumerable<string> GetArguments(Uri videoUrl, string format)
+        {
+            // Video format code, see the "FORMAT SELECTION"
+            yield return "-f";
+            yield return format;
+
+            // Simulate, quiet but print URL
+            yield return "-g";
+            yield return videoUrl.ToString();
+
+            // Do not download the video and do not write anything to disk
+            yield return "-s";
+
+            // Suppress HTTPS certificate validation
+            yield return "--no-check-certificate";
+
+            // Do NOT contact the youtube-dl server for debugging
+            yield return "--no-call-home";
+        }
+
         private static async Task<Uri> ResolveInternal(Uri videoUrl, string format)
         {
-            using (var proc = new Process())
+            var cmd = Command.Run(Ytdl, GetArguments(videoUrl, format), opts => opts.ThrowOnError().Timeout(ProcessWaitTimeout));
+
+            try
             {
-                FillStartInfo(proc.StartInfo, $"-f {format} -g {videoUrl} --no-check-certificate");
+                await cmd.Task;
+            }
+            catch (ErrorExitCodeException ex)
+            {
+                var errout = await cmd.StandardError.ReadToEndAsync();
+                var msg = !string.IsNullOrWhiteSpace(errout) ? errout : ex.Message;
 
-                proc.Start();
-
-                if (!proc.WaitForExit(ProcessWaitTimeout))
-                {
-                    proc.Kill();
-
-                    throw new InvalidOperationException("Can't resolve URL because of timeout");
-                }
-
-                var stdout = await proc.StandardOutput.ReadToEndAsync();
-                if (Uri.IsWellFormedUriString(stdout, UriKind.Absolute))
-                {
-                    return new Uri(stdout);
-                }
-
-                var errout = await proc.StandardError.ReadToEndAsync();
                 if (string.Equals(errout, "ERROR: requested format not available"))
                 {
-                    throw new NotSupportedException(errout);
+                    throw new NotSupportedException("Requested format not available", ex);
                 }
 
-                throw new InvalidOperationException(errout);
+                throw new InvalidOperationException(msg, ex);
             }
+
+            var stdout = await cmd.StandardOutput.ReadToEndAsync();
+            if (Uri.IsWellFormedUriString(stdout, UriKind.Absolute))
+            {
+                return new Uri(stdout);
+            }
+
+            throw new InvalidOperationException(stdout);
         }
     }
 }
