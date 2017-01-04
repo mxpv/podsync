@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Podsync.Helpers;
 using Podsync.Services;
 using Podsync.Services.Builder;
 using Podsync.Services.Links;
@@ -82,6 +83,7 @@ namespace Podsync
             {
                 AutomaticAuthenticate = true,
                 AutomaticChallenge = true,
+                CookieName = "podsync_cookies",
                 LoginPath = new PathString("/login"),
                 LogoutPath = new PathString("/logout")
             });
