@@ -46,6 +46,11 @@ namespace Podsync.Controllers
         {
             var linkInfo = _linkService.Parse(new Uri(request.Url));
 
+            if (linkInfo.LinkType == LinkType.Video)
+            {
+                throw new ArgumentException("Direct links are not supported, you should provide group, channel or user link");
+            }
+
             var feed = new FeedMetadata
             {
                 Provider = linkInfo.Provider,
