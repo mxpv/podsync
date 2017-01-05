@@ -17,6 +17,7 @@ using Podsync.Services.Links;
 using Podsync.Services.Patreon;
 using Podsync.Services.Resolver;
 using Podsync.Services.Storage;
+using Podsync.Services.Videos.Vimeo;
 using Podsync.Services.Videos.YouTube;
 
 namespace Podsync
@@ -51,6 +52,7 @@ namespace Podsync
             // Register core services
             services.AddSingleton<ILinkService, LinkService>();
             services.AddSingleton<IYouTubeClient, YouTubeClient>();
+            services.AddSingleton<IVimeoClient, VimeoClient>();
             services.AddSingleton<IResolverService, YtdlWrapper>();
             services.AddSingleton<IStorageService, RedisStorage>();
             services.AddSingleton<IRssBuilder, CompositeRssBuilder>();

@@ -6,6 +6,8 @@ namespace Podsync.Services
     {
         public string YouTubeApiKey { get; set; }
 
+        public string VimeoApiKey { get; set; }
+
         public string RedisConnectionString { get; set; }
 
         public string PatreonClientId { get; set; }
