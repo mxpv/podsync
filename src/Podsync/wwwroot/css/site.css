@@ -303,8 +303,7 @@ a {
     }
 }
 
-@media screen and (max-width: 414px) {
-    /* Results popup, make it more compact on small screens (iPhone 6 -> 375 x 667, iPhone 6 Plus -> 414 x 736, Nexus 6P -> 412 x 732) */
+@media only screen and (max-device-width: 1024px) {
     .modal > input {
         font-size: 1.9em;
         padding: 0;
