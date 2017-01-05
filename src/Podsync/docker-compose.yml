@@ -8,6 +8,7 @@ services:
       dockerfile: Dockerfile
       args:
         - PORT=80
+    restart: always
     ports:
       - 80:80
     environment:
@@ -17,5 +18,6 @@ services:
   redis:
     image: redis
     command: redis-server --appendonly yes
+    restart: always
     volumes:
       - /data/redis:/data
