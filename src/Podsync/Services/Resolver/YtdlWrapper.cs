@@ -8,8 +8,8 @@ namespace Podsync.Services.Resolver
 {
     public class YtdlWrapper : IResolverService
     {
-        private static readonly TimeSpan ProcessWaitTimeout = TimeSpan.FromSeconds(30);
-        private static readonly TimeSpan WaitTimeoutBetweenFailedCalls = TimeSpan.FromSeconds(15);
+        private static readonly TimeSpan ProcessWaitTimeout = TimeSpan.FromMinutes(1);
+        private static readonly TimeSpan WaitTimeoutBetweenFailedCalls = TimeSpan.FromSeconds(30);
 
         private const string Ytdl = "youtube-dl";
 

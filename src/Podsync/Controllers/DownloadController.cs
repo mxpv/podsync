@@ -55,7 +55,13 @@ namespace Podsync.Controllers
                     ["VideoId"] = videoId
                 });
 
-                return BadRequest("Could nou resolve URL");
+                var response = "Could nou resolve URL";
+                if (ex is InvalidOperationException)
+                {
+                    response = ex.Message;
+                }
+
+                return BadRequest(response);
             }
 
             // Report metrics
