@@ -1,4 +1,4 @@
 User-agent: *
-Disallow: /download/
-Disallow: /feed/
+Allow: /$
+Disallow: /
 Host: www.podsync.net
