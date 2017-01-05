@@ -239,7 +239,7 @@ a {
     background: #56524b;
     text-align: center;
     z-index: 10;
-    outline: 9999px solid rgba(0,0,0,0.7);
+    outline: 9999px solid rgba(0,0,0,0.8);
 
     padding: 10px;
 }
@@ -295,9 +295,24 @@ a {
     .man {
         background-image: none;
     }
+}
 
+@media screen and (max-width: 1024px) {
     .modal {
         width: 90%;
+    }
+}
+
+@media screen and (max-width: 414px) {
+    /* Results popup, make it more compact on small screens (iPhone 6 -> 375 x 667, iPhone 6 Plus -> 414 x 736, Nexus 6P -> 412 x 732) */
+    .modal > input {
+        font-size: 1.9em;
+        padding: 0;
+        padding-bottom: 15px;
+    }
+
+    .modal-links span {
+        padding-right: 30px;
     }
 }
 
