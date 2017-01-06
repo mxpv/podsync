@@ -4,6 +4,8 @@ namespace Podsync.Services.Videos.Vimeo
 {
     public class Video
     {
+        public string Id { get; set; }
+
         public string Title { get; set; }
 
         public string Description { get; set; }
@@ -17,5 +19,7 @@ namespace Podsync.Services.Videos.Vimeo
         public long Size { get; set; }
 
         public TimeSpan Duration { get; set; }
+
+        public string Author { get; set; }
     }
 }

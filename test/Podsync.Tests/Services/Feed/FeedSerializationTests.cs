@@ -20,12 +20,9 @@ namespace Podsync.Tests.Services.Feed
                 Title = "Steve Gillespie - Getting Arrested (Stand up Comedy)",
                 Link = new Uri("https://youtube.com/watch?v=Jj22gfTnpAI"),
                 PubDate = DateTime.Parse("Mon, 07 Nov 2016 20:02:26 GMT"),
-                Content = new MediaContent
-                {
-                    Url = new Uri("http://podsync.net/download/youtube/Jj22gfTnpAI.mp4"),
-                    Length = 52850000,
-                    MediaType = "video/mp4"
-                },
+                DownloadLink = new Uri("http://podsync.net/download/youtube/Jj22gfTnpAI.mp4"),
+                FileSize = 52850000,
+                ContentType = "video/mp4",
                 Duration = new TimeSpan(0, 0, 2, 31)
             };
 

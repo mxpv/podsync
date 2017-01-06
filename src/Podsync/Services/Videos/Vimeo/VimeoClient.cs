@@ -101,15 +101,21 @@ namespace Podsync.Services.Videos.Vimeo
                     v.duration.ToObject<long>() *
                     0.38848958333);
 
+                // Extract id from uri like '/videos/50522981'
+                var uri = v.uri.ToString();
+                var id = uri.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[1];
+
                 var video = new Video
                 {
+                    Id = id,
                     Title = v.name,
                     Description = v.description,
                     Link = new Uri(v.link?.ToString()),
                     Thumbnail = new Uri(v.pictures?.sizes[0]?.link?.ToString()),
                     CreatedAt = DateTime.Parse(v.created_time?.ToString()),
                     Duration = TimeSpan.FromSeconds(v.duration?.ToObject<int>()),
-                    Size = size
+                    Size = size,
+                    Author = v.user.name
                 };
 
                 output.Add(video);

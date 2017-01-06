@@ -10,8 +10,8 @@ namespace Podsync.Services.Builder
     {
         Provider Provider { get; }
 
-        Task<Rss> Query(Uri baseUrl, string feedId);
+        Task<Rss> Query(string feedId);
 
-        Task<Rss> Query(Uri baseUrl, string feedId, FeedMetadata metadata);
+        Task<Rss> Query(FeedMetadata metadata);
     }
 }

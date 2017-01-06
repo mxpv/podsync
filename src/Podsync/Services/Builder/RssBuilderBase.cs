@@ -17,13 +17,13 @@ namespace Podsync.Services.Builder
 
         public abstract Provider Provider { get; }
 
-        public async Task<Rss> Query(Uri baseUrl, string feedId)
+        public async Task<Rss> Query(string feedId)
         {
             var metadata = await _storageService.Load(feedId);
 
-            return await Query(baseUrl, feedId, metadata);
+            return await Query(metadata);
         }
 
-        public abstract Task<Rss> Query(Uri baseUrl, string feedId, FeedMetadata metadata);
+        public abstract Task<Rss> Query(FeedMetadata metadata);
     }
 }

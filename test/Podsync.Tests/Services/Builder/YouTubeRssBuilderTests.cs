@@ -21,7 +21,7 @@ namespace Podsync.Tests.Services.Builder
             var linkService = new LinkService();
             var client = new YouTubeClient(linkService, Options);
 
-            _builder = new YouTubeRssBuilder(linkService, client, _storageService.Object);
+            _builder = new YouTubeRssBuilder(client, _storageService.Object);
         }
 
         [Theory]
@@ -41,7 +41,7 @@ namespace Podsync.Tests.Services.Builder
 
             _storageService.Setup(x => x.Load(feedId)).ReturnsAsync(feed);
 
-            var rss = await _builder.Query(new Uri("http://localhost:2020"), feedId);
+            var rss = await _builder.Query(feedId);
 
             Assert.NotEmpty(rss.Channels);
 
@@ -58,10 +58,8 @@ namespace Podsync.Tests.Services.Builder
                 Assert.NotNull(item.Title);
                 Assert.NotNull(item.Link);
                 Assert.True(item.Duration.TotalSeconds > 0);
-                Assert.NotNull(item.Content);
-                Assert.True(item.Content.Length > 0);
-                Assert.NotNull(item.Content.MediaType);
-                Assert.NotNull(item.Content.Url);
+                Assert.True(item.FileSize > 0);
+                Assert.NotNull(item.ContentType);
                 Assert.NotNull(item.PubDate);
             }
         }

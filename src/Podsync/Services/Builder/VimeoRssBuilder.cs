@@ -21,7 +21,7 @@ namespace Podsync.Services.Builder
 
         public override Provider Provider { get; } = Provider.Vimeo;
 
-        public override async Task<Rss> Query(Uri baseUrl, string feedId, FeedMetadata metadata)
+        public override async Task<Rss> Query(FeedMetadata metadata)
         {
             var linkType = metadata.LinkType;
 
@@ -94,17 +94,15 @@ namespace Podsync.Services.Builder
         {
             return new Item
             {
+                Id = video.Id,
                 Title = video.Title,
                 Description = video.Description,
                 PubDate = video.CreatedAt,
                 Link = video.Link,
                 Duration = video.Duration,
-                Content = new MediaContent
-                {
-                    Length = video.Size,
-                    MediaType = "video/mp4",
-                    Url = null
-                }
+                FileSize = video.Size,
+                ContentType = "video/mp4",
+                Author = video.Author
             };
         }
 

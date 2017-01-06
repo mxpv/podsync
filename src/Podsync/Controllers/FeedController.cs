@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
@@ -22,6 +23,12 @@ namespace Podsync.Controllers
     [HandleException]
     public class FeedController : Controller
     {
+        private static readonly IDictionary<string, string> Extensions = new Dictionary<string, string>
+        {
+            ["video/mp4"] = "mp4",
+            ["audio/mp4"] = "m4a"
+        };
+
         private readonly XmlSerializer _serializer = new XmlSerializer(typeof(Rss));
 
         private readonly IRssBuilder _rssBuilder;
@@ -94,17 +101,26 @@ namespace Podsync.Controllers
 
             try
             {
-                rss = await _rssBuilder.Query(Request.GetBaseUrl(), feedId);
+                rss = await _rssBuilder.Query(feedId);
             }
             catch (KeyNotFoundException)
             {
                 return NotFound(feedId);
             }
 
+            var selfHost = Request.GetBaseUrl();
+
             // Set atom link to this feed
             // See https://validator.w3.org/feed/docs/warning/MissingAtomSelfLink.html
-            var selfLink = new Uri($"{Request.Scheme}://{Request.Host}{Request.Path}");
+            var selfLink = new Uri(selfHost, Request.Path);
             rss.Channels.ForEach(x => x.AtomLink = selfLink);
+
+            // No magic here, just make download links to DownloadController.Download
+            rss.Channels.SelectMany(x => x.Items).ForEach(item =>
+            {
+                var ext = Extensions[item.ContentType];
+                item.DownloadLink = new Uri(selfHost, $"download/{feedId}/{item.Id}.{ext}");
+            });
 
             // Serialize feed to string
             string body;

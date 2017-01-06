@@ -30,12 +30,12 @@ namespace Podsync.Services.Builder
             get { throw new NotSupportedException(); }
         }
 
-        public override Task<Rss> Query(Uri baseUrl, string feedId, FeedMetadata feed)
+        public override Task<Rss> Query(FeedMetadata feed)
         {
             IRssBuilder builder;
             if (_builders.TryGetValue(feed.Provider, out builder))
             {
-                return builder.Query(baseUrl, feedId, feed);
+                return builder.Query(feed);
             }
 
             throw new NotSupportedException("Not supported provider");
