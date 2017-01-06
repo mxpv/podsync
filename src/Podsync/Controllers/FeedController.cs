@@ -22,8 +22,6 @@ namespace Podsync.Controllers
     [HandleException]
     public class FeedController : Controller
     {
-        private const int DefaultPageSize = 50;
-
         private readonly XmlSerializer _serializer = new XmlSerializer(typeof(Rss));
 
         private readonly IRssBuilder _rssBuilder;
@@ -52,7 +50,7 @@ namespace Podsync.Controllers
                 LinkType = linkInfo.LinkType,
                 Id = linkInfo.Id,
                 Quality = request.Quality ?? ResolveType.VideoHigh,
-                PageSize = request.PageSize ?? DefaultPageSize
+                PageSize = request.PageSize ?? Constants.DefaultPageSize
             };
 
             // Check if user eligible for Patreon features
@@ -60,7 +58,7 @@ namespace Podsync.Controllers
             if (!enablePatreonFeatures)
             {
                 feed.Quality = ResolveType.VideoHigh;
-                feed.PageSize = DefaultPageSize;
+                feed.PageSize = Constants.DefaultPageSize;
             }
 
             var feedId = await _storageService.Save(feed);

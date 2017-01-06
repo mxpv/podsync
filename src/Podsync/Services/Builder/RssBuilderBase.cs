@@ -8,8 +8,6 @@ namespace Podsync.Services.Builder
 {
     public abstract class RssBuilderBase : IRssBuilder
     {
-        protected static readonly string DefaultItunesCategory = "TV & Film";
-
         private readonly IStorageService _storageService;
 
         protected RssBuilderBase(IStorageService storageService)

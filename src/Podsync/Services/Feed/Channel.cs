@@ -12,10 +12,13 @@ namespace Podsync.Services.Feed
     public class Channel : IXmlSerializable
     {
         private const string PodsyncGeneratorName = "Podsync Generator";
+        private static readonly string DefaultItunesCategory = "TV & Film";
 
         public Channel()
         {
             Items = Enumerable.Empty<Item>();
+            Category = DefaultItunesCategory;
+            LastBuildDate = DateTime.Now;
         }
 
         public string Guid { get; set; }

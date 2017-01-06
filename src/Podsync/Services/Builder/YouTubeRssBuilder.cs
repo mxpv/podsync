@@ -96,11 +96,9 @@ namespace Podsync.Services.Builder
                 Title = item.Title,
                 Description = item.Description,
                 Link = item.Link,
-                LastBuildDate = DateTime.Now,
                 PubDate = item.PublishedAt,
                 Image = item.Thumbnail,
                 Thumbnail = item.Thumbnail,
-                Category = DefaultItunesCategory
             };
         }
 
