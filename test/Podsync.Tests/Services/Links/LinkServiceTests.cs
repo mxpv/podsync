@@ -40,6 +40,23 @@ namespace Podsync.Tests.Services.Links
             Assert.Equal(info.Provider, provider);
         }
 
+        [Theory]
+        [InlineData("https://vimeo.com/groups/101", LinkType.Group, "101")]
+        [InlineData("http://vimeo.com/groups/102", LinkType.Group, "102")]
+        [InlineData("http://www.vimeo.com/groups/103", LinkType.Group, "103")]
+        [InlineData("https://vimeo.com/awhitelabelproduct", LinkType.User, "awhitelabelproduct")]
+        [InlineData("https://vimeo.com/groups/104/videos/", LinkType.Group, "104")]
+        [InlineData("https://vimeo.com/channels/staffpicks", LinkType.Channel, "staffpicks")]
+        [InlineData("https://vimeo.com/channels/staffpicks/146224925", LinkType.Channel, "staffpicks")]
+        public void ParseVimeoLinks(string link, LinkType linkType, string id)
+        {
+            var info = _linkService.Parse(new Uri(link));
+
+            Assert.Equal(info.Id, id);
+            Assert.Equal(info.LinkType, linkType);
+            Assert.Equal(info.Provider, Provider.Vimeo);
+        }
+
         [Fact]
         public void ParseInvalidLinkTest()
         {

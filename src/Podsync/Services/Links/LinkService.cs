@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.WebUtilities;
 using Shared;
 
@@ -27,6 +28,19 @@ namespace Podsync.Services.Links
                 [LinkType.Info] = "https://player.vimeo.com/video/{0}/config"
             }
         };
+
+        /*
+            Test input:
+            https://vimeo.com/groups/109
+            http://vimeo.com/groups/109
+            http://www.vimeo.com/groups/109
+            https://vimeo.com/groups/109/videos/
+            https://vimeo.com/channels/staffpicks
+            https://vimeo.com/channels/staffpicks/146224925
+            https://vimeo.com/awhitelabelproduct
+            vimeo.com/groups/109             
+        */
+        private static readonly Regex VimeoRegex = new Regex(@"^(?:https?://)?(?:www\.)?(?:vimeo.com/)(?<grp>groups|channels)?/?(?<id>\w+)", RegexOptions.Compiled);
 
         public LinkInfo Parse(Uri link)
         {
@@ -162,10 +176,33 @@ namespace Podsync.Services.Links
                     }
                 }
             }
+            else
+            {
+                var match = VimeoRegex.Match(link.AbsoluteUri);
+                if (match.Success)
+                {
+                    provider = Provider.Vimeo;
+                    id = match.Groups["id"]?.ToString();
+
+                    var type = match.Groups["grp"]?.ToString();
+                    if (type == "groups")
+                    {
+                        linkType = LinkType.Group;
+                    }
+                    else if (type == "channels")
+                    {
+                        linkType = LinkType.Channel;
+                    }
+                    else
+                    {
+                        linkType = LinkType.User;
+                    }
+                }
+            }
 
             if (string.IsNullOrWhiteSpace(id) || linkType == LinkType.Unknown || provider == Provider.Unknown)
             {
-                throw new ArgumentException("This provider is not supported");
+                throw new ArgumentException("Not supported provider or link format");
             }
             
             return new LinkInfo
