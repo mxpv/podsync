@@ -33,7 +33,7 @@ namespace Podsync.Services.Builder
                 pageSize = Constants.DefaultPageSize;
             }
 
-            Channel channel = null;
+            Channel channel;
             if (linkType == LinkType.Channel)
             {
                 channel = CreateChannel(await _client.Channel(id));

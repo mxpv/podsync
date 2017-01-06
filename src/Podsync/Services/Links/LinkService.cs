@@ -194,11 +194,6 @@ namespace Podsync.Services.Links
             }
         }
 
-        public Uri Download(Uri baseUrl, string feedId, string videoId, string ext)
-        {
-            return new Uri(baseUrl, $"download/{feedId}/{videoId}{ext}");
-        }
-
         public Uri Feed(Uri baseUrl, string feedId)
         {
             return new Uri(baseUrl, feedId);

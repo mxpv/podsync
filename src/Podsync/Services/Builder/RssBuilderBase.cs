@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Podsync.Services.Feed;
 using Podsync.Services.Links;
 using Podsync.Services.Storage;
