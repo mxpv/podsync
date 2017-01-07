@@ -21,7 +21,8 @@ namespace Podsync.Services.Links
             {
                 [LinkType.Channel] = "https://vimeo.com/channels/{0}",
                 [LinkType.Group] = "https://vimeo.com/groups/{0}",
-                [LinkType.User] = "https://vimeo.com/{0}"
+                [LinkType.User] = "https://vimeo.com/user{0}",
+                [LinkType.Video] = "https://vimeo.com/{0}"
             }
         };
 

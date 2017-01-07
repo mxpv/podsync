@@ -106,9 +106,9 @@ namespace Podsync.Services.Builder
             };
         }
 
-        private static IEnumerable<Item> CreateItems(IEnumerable<Video> videos)
+        private static Item[] CreateItems(IEnumerable<Video> videos)
         {
-            return videos.Select(CreateItem);
+            return videos.Select(CreateItem).ToArray();
         }
     }
 }

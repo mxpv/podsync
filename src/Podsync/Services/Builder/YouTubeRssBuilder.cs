@@ -55,7 +55,7 @@ namespace Podsync.Services.Builder
             // Get video descriptions
             var videos = await _youTube.GetVideos(new VideoQuery { Id = string.Join(",", ids) });
 
-            channel.Items = videos.Select(youtubeVideo => MakeItem(youtubeVideo, metadata));
+            channel.Items = videos.Select(youtubeVideo => MakeItem(youtubeVideo, metadata)).ToArray();
 
             var rss = new Rss
             {
