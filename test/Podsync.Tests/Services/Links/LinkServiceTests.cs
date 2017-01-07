@@ -54,7 +54,7 @@ namespace Podsync.Tests.Services.Links
         [InlineData(Provider.YouTube, LinkType.Video, "321", "https://youtube.com/watch?v=321")]
         [InlineData(Provider.Vimeo, LinkType.Channel, "yzx", "https://vimeo.com/channels/yzx")]
         [InlineData(Provider.Vimeo, LinkType.Group, "zyd", "https://vimeo.com/groups/zyd")]
-        [InlineData(Provider.Vimeo, LinkType.User, "dfz", "https://vimeo.com/dfz")]
+        [InlineData(Provider.Vimeo, LinkType.User, "123", "https://vimeo.com/user123")]
         public void MakeLinkTest(Provider provider, LinkType linkType, string id, string expected)
         {
             var info = new LinkInfo
