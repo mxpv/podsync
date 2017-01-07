@@ -3,7 +3,7 @@ using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Podsync.Services.Patreon;
+using Podsync.Services;
 
 namespace Podsync.Helpers
 {
@@ -53,7 +53,7 @@ namespace Podsync.Helpers
             const int MinAmountCents = 100;
 
             int amount;
-            if (int.TryParse(user.GetClaim(PatreonConstants.AmountDonated), out amount))
+            if (int.TryParse(user.GetClaim(Constants.Patreon.AmountDonated), out amount))
             {
                 return amount >= MinAmountCents;
             }
