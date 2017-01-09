@@ -73,22 +73,6 @@ namespace Podsync.Controllers
             var feedId = await _storageService.Save(feed);
             var url = _linkService.Feed(Request.GetBaseUrl(), feedId);
 
-            // Report metrics
-            var properties = new Dictionary<string, string>
-            {
-                ["Provider"] = linkInfo.Provider.ToString(),
-                ["Patreon"] = enablePatreonFeatures.ToString(),
-                ["Format"] = feed.Quality == ResolveType.AudioHigh || feed.Quality == ResolveType.AudioLow ? "Audio" : "Video",
-                ["Quality"] = feed.Quality == ResolveType.AudioHigh || feed.Quality == ResolveType.VideoHigh ? "Hight" : "Low",
-                ["PageSize"] = feed.PageSize.ToString()
-            };
-
-            if (User.Identity.IsAuthenticated)
-            {
-                properties.Add("User", User.GetClaim(ClaimTypes.NameIdentifier));
-                properties.Add("Email", User.GetClaim(ClaimTypes.Email));
-            }
-
             return url;
         }
 
