@@ -9,7 +9,7 @@ using Podsync.Services.Storage;
 namespace Podsync.Controllers
 {
     [Route("download")]
-    [HandleException]
+    [ServiceFilter(typeof(HandleExceptionAttribute), IsReusable = true)]
     public class DownloadController : Controller
     {
         private readonly IResolverService _resolverService;

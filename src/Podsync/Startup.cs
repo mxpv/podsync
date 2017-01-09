@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Podsync.Helpers;
 using Podsync.Services;
 using Podsync.Services.Builder;
 using Podsync.Services.Links;
@@ -59,6 +60,7 @@ namespace Podsync
             services.AddAuthentication(config => config.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme);
 
             // Add framework services
+            services.AddScoped<HandleExceptionAttribute>();
             services.AddMvc();
         }
 

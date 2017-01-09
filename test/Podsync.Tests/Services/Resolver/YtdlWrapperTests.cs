@@ -1,13 +1,21 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Podsync.Services.Resolver;
 using Xunit;
 
 namespace Podsync.Tests.Services.Resolver
 {
-    public class YtdlWrapperTests
+    public class YtdlWrapperTests : TestBase
     {
-        private readonly IResolverService _resolver = new YtdlWrapper();
+        private readonly IMock<ILogger<YtdlWrapper>> _logger = new Mock<ILogger<YtdlWrapper>>();
+        private readonly IResolverService _resolver;
+
+        public YtdlWrapperTests()
+        {
+            _resolver = new YtdlWrapper(_logger.Object);
+        }
 
         [Theory]
         [InlineData("https://www.youtube.com/watch?v=BaW_jenozKc")]

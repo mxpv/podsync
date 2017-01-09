@@ -19,7 +19,7 @@ using Shared;
 namespace Podsync.Controllers
 {
     [Route("feed")]
-    [HandleException]
+    [ServiceFilter(typeof(HandleExceptionAttribute), IsReusable = true)]
     public class FeedController : Controller
     {
         private static readonly IDictionary<string, string> Extensions = new Dictionary<string, string>
@@ -105,7 +105,7 @@ namespace Podsync.Controllers
             }
             catch (KeyNotFoundException)
             {
-                return NotFound(feedId);
+                return NotFound($"ERROR: No feed with id {feedId}");
             }
 
             var selfHost = Request.GetBaseUrl();

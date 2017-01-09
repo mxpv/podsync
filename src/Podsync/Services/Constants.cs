@@ -18,5 +18,12 @@ namespace Podsync.Services
 
             public const string AmountDonated = "Patreon/" + nameof(AmountDonated);
         }
+
+        public static class Events
+        {
+            public const int RssError = 1;
+            public const int YtdlError = 2;
+            public const int UnhandledError = 3;
+        }
     }
 }

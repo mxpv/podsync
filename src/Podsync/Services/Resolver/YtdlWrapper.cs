@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Medallion.Shell;
+using Microsoft.Extensions.Logging;
 
 namespace Podsync.Services.Resolver
 {
@@ -13,12 +14,18 @@ namespace Podsync.Services.Resolver
 
         private const string Ytdl = "youtube-dl";
 
-        public YtdlWrapper()
+        private readonly ILogger _logger;
+
+        public YtdlWrapper(ILogger<YtdlWrapper> logger)
         {
+            _logger = logger;
+
             try
             {
                 var cmd = Command.Run(Ytdl, "--version");
                 Version = cmd.Result.StandardOutput;
+
+                _logger.LogInformation("Uring youtube-dl {VERSION}", Version);
             }
             catch (Exception ex)
             {
@@ -82,7 +89,7 @@ namespace Podsync.Services.Resolver
             yield return "--no-call-home";
         }
 
-        private static async Task<Uri> ResolveInternal(Uri videoUrl, string format)
+        private async Task<Uri> ResolveInternal(Uri videoUrl, string format)
         {
             var cmd = Command.Run(Ytdl, GetArguments(videoUrl, format), opts => opts.ThrowOnError().Timeout(ProcessWaitTimeout));
 
@@ -94,6 +101,8 @@ namespace Podsync.Services.Resolver
             {
                 var errout = await cmd.StandardError.ReadToEndAsync();
                 var msg = !string.IsNullOrWhiteSpace(errout) ? errout : ex.Message;
+
+                _logger.LogError(Constants.Events.YtdlError, ex, "Failed to resolve {URL} in format {FORMAT}", videoUrl, format);
 
                 if (string.Equals(errout, "ERROR: requested format not available"))
                 {

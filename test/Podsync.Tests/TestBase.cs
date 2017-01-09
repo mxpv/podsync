@@ -24,6 +24,6 @@ namespace Podsync.Tests
 
         protected IOptions<PodsyncConfiguration> Options { get; }
 
-        protected PodsyncConfiguration Configuration => Options.Value;        
+        protected PodsyncConfiguration Configuration => Options.Value;
     }
 }
