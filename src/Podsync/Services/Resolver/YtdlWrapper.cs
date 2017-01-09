@@ -36,9 +36,9 @@ namespace Podsync.Services.Resolver
         public string Version { get; }
 
 
-        public async Task<Uri> Resolve(Uri videoUrl, ResolveType resolveType)
+        public async Task<Uri> Resolve(Uri videoUrl, ResolveFormat resolveFormat)
         {
-            var format = SelectFormat(resolveType);
+            var format = SelectFormat(resolveFormat);
 
             try 
 	        {	        
@@ -52,20 +52,20 @@ namespace Podsync.Services.Resolver
             }
         }
 
-        private static string SelectFormat(ResolveType resolveType)
+        private static string SelectFormat(ResolveFormat format)
         {
-            switch (resolveType)
+            switch (format)
             {
-                case ResolveType.VideoHigh:
+                case ResolveFormat.VideoHigh:
                     return "best[ext=mp4]";
-                case ResolveType.VideoLow:
+                case ResolveFormat.VideoLow:
                     return "worst[ext=mp4]";
-                case ResolveType.AudioHigh:
+                case ResolveFormat.AudioHigh:
                     return "bestaudio[ext=m4a]/worstaudio[ext=m4a]";
-                case ResolveType.AudioLow:
+                case ResolveFormat.AudioLow:
                     return "worstaudio[ext=m4a]/bestaudio[ext=m4a]";
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(resolveType), "Unsupported format", null);
+                    throw new ArgumentOutOfRangeException(nameof(format), "Unsupported format", null);
             }
         }
 

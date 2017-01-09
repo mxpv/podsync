@@ -23,7 +23,7 @@ namespace Podsync.Tests.Controllers
         [InlineData("http://youtube.com", null, 0)]
         [InlineData("http://youtube.com", null, 25)]
         [InlineData("http://youtube.com", null, 151)]
-        public async Task ValidateCreateTest(string url, ResolveType? quality, int? pageSize)
+        public async Task ValidateCreateTest(string url, ResolveFormat? quality, int? pageSize)
         {
             var feed = new CreateFeedRequest
             {
@@ -42,7 +42,7 @@ namespace Podsync.Tests.Controllers
             var feed = new CreateFeedRequest
             {
                 Url = "https://www.youtube.com/channel/UCKy1dAqELo0zrOtPkf0eTMw",
-                Quality = ResolveType.AudioLow,
+                Quality = ResolveFormat.AudioLow,
             };
 
             var response = await Client.PostAsync("/feed/create", MakeHttpContent(feed));

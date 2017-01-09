@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Xml.Serialization;
-using Podsync.Services.Feed;
+using Podsync.Services.Rss.Feed;
 using Xunit;
 
-namespace Podsync.Tests.Services.Feed
+namespace Podsync.Tests.Services.Rss.Feed
 {
     public class FeedSerializationTests
     {
@@ -13,7 +13,7 @@ namespace Podsync.Tests.Services.Feed
         [Fact]
         public void SerializeFeedTest()
         {
-            var feed = new Rss();
+            var feed = new Podsync.Services.Rss.Feed.Rss();
 
             var item = new Item
             {
@@ -50,7 +50,7 @@ namespace Podsync.Tests.Services.Feed
                 channel
             };
 
-            var serializer = new XmlSerializer(typeof(Rss));
+            var serializer = new XmlSerializer(typeof(Podsync.Services.Rss.Feed.Rss));
 
             string body;
             using (var writer = new StringWriter())

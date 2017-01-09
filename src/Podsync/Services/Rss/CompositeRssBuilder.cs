@@ -5,12 +5,11 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Podsync.Services.Feed;
 using Podsync.Services.Links;
 using Podsync.Services.Storage;
 using Shared;
 
-namespace Podsync.Services.Builder
+namespace Podsync.Services.Rss
 {
     // ReSharper disable once ClassNeverInstantiated.Global
     public class CompositeRssBuilder : RssBuilderBase
@@ -35,7 +34,7 @@ namespace Podsync.Services.Builder
             get { throw new NotSupportedException(); }
         }
 
-        public override Task<Rss> Query(FeedMetadata feed)
+        public override Task<Feed.Rss> Query(FeedMetadata feed)
         {
             try
             {

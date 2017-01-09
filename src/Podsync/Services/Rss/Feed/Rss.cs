@@ -6,7 +6,7 @@ using System.Xml.Schema;
 using System.Xml.Serialization;
 using Shared;
 
-namespace Podsync.Services.Feed
+namespace Podsync.Services.Rss.Feed
 {
     [XmlRoot("rss")]
     public class Rss : IXmlSerializable

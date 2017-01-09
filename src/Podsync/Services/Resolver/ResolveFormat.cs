@@ -1,6 +1,6 @@
 ﻿namespace Podsync.Services.Resolver
 {
-    public enum ResolveType
+    public enum ResolveFormat
     {
         VideoHigh = 0,
         VideoLow,

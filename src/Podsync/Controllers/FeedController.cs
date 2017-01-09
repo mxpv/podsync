@@ -8,11 +8,11 @@ using System.Xml.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Podsync.Helpers;
 using Podsync.Services;
-using Podsync.Services.Builder;
-using Podsync.Services.Feed;
-using Podsync.Services.Feed.Internal;
 using Podsync.Services.Links;
 using Podsync.Services.Resolver;
+using Podsync.Services.Rss;
+using Podsync.Services.Rss.Feed;
+using Podsync.Services.Rss.Feed.Internal;
 using Podsync.Services.Storage;
 using Shared;
 
@@ -58,7 +58,7 @@ namespace Podsync.Controllers
                 Provider = linkInfo.Provider,
                 LinkType = linkInfo.LinkType,
                 Id = linkInfo.Id,
-                Quality = request.Quality ?? ResolveType.VideoHigh,
+                Quality = request.Quality ?? ResolveFormat.VideoHigh,
                 PageSize = request.PageSize ?? Constants.DefaultPageSize
             };
 
@@ -66,7 +66,7 @@ namespace Podsync.Controllers
             var enablePatreonFeatures = User.EnablePatreonFeatures();
             if (!enablePatreonFeatures)
             {
-                feed.Quality = ResolveType.VideoHigh;
+                feed.Quality = ResolveFormat.VideoHigh;
                 feed.PageSize = Constants.DefaultPageSize;
             }
 

@@ -7,6 +7,6 @@ namespace Podsync.Services.Resolver
     {
         string Version { get; }
 
-        Task<Uri> Resolve(Uri videoUrl, ResolveType resolveType = ResolveType.VideoHigh);
+        Task<Uri> Resolve(Uri videoUrl, ResolveFormat format = ResolveFormat.VideoHigh);
     }
 }

@@ -11,7 +11,7 @@ namespace Podsync.Services.Storage
 
         public string Id { get; set; }
 
-        public ResolveType Quality { get; set; }
+        public ResolveFormat Quality { get; set; }
 
         public int PageSize { get; set; }
 

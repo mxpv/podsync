@@ -6,7 +6,7 @@ namespace Podsync.Services
     {
         public const int DefaultPageSize = 50;
 
-        public const ResolveType DefaultFormat = ResolveType.VideoHigh;
+        public const ResolveFormat DefaultFormat = ResolveFormat.VideoHigh;
 
         public static class Patreon
         {

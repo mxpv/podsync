@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Podsync.Services.Feed;
 using Podsync.Services.Links;
 using Podsync.Services.Resolver;
+using Podsync.Services.Rss.Feed;
 using Podsync.Services.Storage;
 using Podsync.Services.Videos.YouTube;
-using Channel = Podsync.Services.Feed.Channel;
+using Channel = Podsync.Services.Rss.Feed.Channel;
 using Video = Podsync.Services.Videos.YouTube.Video;
 
-namespace Podsync.Services.Builder
+namespace Podsync.Services.Rss
 {
     public class YouTubeRssBuilder : RssBuilderBase
     {
@@ -22,7 +22,7 @@ namespace Podsync.Services.Builder
 
         public override Provider Provider { get; } = Provider.YouTube;
 
-        public override async Task<Rss> Query(FeedMetadata metadata)
+        public override async Task<Feed.Rss> Query(FeedMetadata metadata)
         {
             if (metadata.Provider != Provider.YouTube)
             {
@@ -57,7 +57,7 @@ namespace Podsync.Services.Builder
 
             channel.Items = videos.Select(youtubeVideo => MakeItem(youtubeVideo, metadata)).ToArray();
 
-            var rss = new Rss
+            var rss = new Feed.Rss
             {
                 Channels = new[] { channel }
             };
@@ -117,14 +117,14 @@ namespace Podsync.Services.Builder
             };
         }
 
-        private static string GetContentType(ResolveType resolveType)
+        private static string GetContentType(ResolveFormat format)
         {
-            if (resolveType == ResolveType.VideoHigh || resolveType == ResolveType.VideoLow)
+            if (format == ResolveFormat.VideoHigh || format == ResolveFormat.VideoLow)
             {
                 return "video/mp4";
             }
 
-            if (resolveType == ResolveType.AudioHigh || resolveType == ResolveType.AudioLow)
+            if (format == ResolveFormat.AudioHigh || format == ResolveFormat.AudioLow)
             {
                 return "audio/mp4";
             }

@@ -10,7 +10,7 @@ namespace Podsync.Tests.Services.Patreon
 
         private Tokens Tokens => Configuration.CreatorTokens;
 
-        [Fact]
+        [Fact(Skip = "Run manually with access token")]
         public async Task FetchProfileTest()
         {
             var user = await _api.FetchUserAndPledges(Tokens);

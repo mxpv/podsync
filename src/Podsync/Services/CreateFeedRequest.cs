@@ -9,7 +9,7 @@ namespace Podsync.Services
         [Url]
         public string Url { get; set; }
 
-        public ResolveType? Quality { get; set; }
+        public ResolveFormat? Quality { get; set; }
 
         [Range(50, 150)]
         public int? PageSize { get; set; }

@@ -2,29 +2,32 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Moq;
-using Podsync.Services.Builder;
 using Podsync.Services.Links;
+using Podsync.Services.Rss;
 using Podsync.Services.Storage;
-using Podsync.Services.Videos.Vimeo;
+using Podsync.Services.Videos.YouTube;
 using Xunit;
 
-namespace Podsync.Tests.Services.Builder
+namespace Podsync.Tests.Services.Rss
 {
-    public class VimeoRssBuilderTests : TestBase
+    public class YouTubeRssBuilderTests : TestBase
     {
         private readonly Mock<IStorageService> _storageService = new Mock<IStorageService>();
 
-        private readonly VimeoRssBuilder _builder;
+        private readonly YouTubeRssBuilder _builder;
 
-        public VimeoRssBuilderTests()
+        public YouTubeRssBuilderTests()
         {
-            _builder = new VimeoRssBuilder(_storageService.Object, new VimeoClient(Options));
+            var linkService = new LinkService();
+            var client = new YouTubeClient(linkService, Options);
+
+            _builder = new YouTubeRssBuilder(client, _storageService.Object);
         }
 
         [Theory]
-        [InlineData(LinkType.Channel, "staffpicks")]
-        [InlineData(LinkType.Group, "motion")]
-        [InlineData(LinkType.User, "motionarray")]
+        [InlineData(LinkType.Channel, "UC0JB7TSe49lg56u6qH8y_MQ")]
+        [InlineData(LinkType.User, "fxigr1")]
+        [InlineData(LinkType.Playlist, "PL2e4mYbwSTbbiX2uwspn0xiYb8_P_cTAr")]
         public async Task BuildRssTest(LinkType linkType, string id)
         {
             var feed = new FeedMetadata
@@ -52,7 +55,6 @@ namespace Podsync.Tests.Services.Builder
 
             foreach (var item in channel.Items)
             {
-                Assert.NotNull(item.Id);
                 Assert.NotNull(item.Title);
                 Assert.NotNull(item.Link);
                 Assert.True(item.Duration.TotalSeconds > 0);

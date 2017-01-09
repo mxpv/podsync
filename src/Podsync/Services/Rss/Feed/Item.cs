@@ -4,7 +4,7 @@ using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 
-namespace Podsync.Services.Feed
+namespace Podsync.Services.Rss.Feed
 {
     [XmlRoot("item")]
     public class Item : IXmlSerializable

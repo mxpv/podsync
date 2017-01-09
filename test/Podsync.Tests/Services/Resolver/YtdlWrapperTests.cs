@@ -45,7 +45,7 @@ namespace Podsync.Tests.Services.Resolver
         [Fact]
         public async Task ResolveOutputTest()
         {
-            var downloadUrl = await _resolver.Resolve(new Uri("https://www.youtube.com/watch?v=-csRxRj_zcw&t=45s"), ResolveType.AudioHigh);
+            var downloadUrl = await _resolver.Resolve(new Uri("https://www.youtube.com/watch?v=-csRxRj_zcw&t=45s"), ResolveFormat.AudioHigh);
             Assert.True(downloadUrl.IsAbsoluteUri);
         }
     }
