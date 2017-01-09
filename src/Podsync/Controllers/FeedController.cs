@@ -5,7 +5,6 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Podsync.Helpers;
 using Podsync.Services;
@@ -34,14 +33,12 @@ namespace Podsync.Controllers
         private readonly IRssBuilder _rssBuilder;
         private readonly ILinkService _linkService;
         private readonly IStorageService _storageService;
-        private readonly TelemetryClient _telemetry;
 
-        public FeedController(IRssBuilder rssBuilder, ILinkService linkService, IStorageService storageService, TelemetryClient telemetry)
+        public FeedController(IRssBuilder rssBuilder, ILinkService linkService, IStorageService storageService)
         {
             _rssBuilder = rssBuilder;
             _linkService = linkService;
             _storageService = storageService;
-            _telemetry = telemetry;
         }
 
         [HttpPost]
@@ -92,8 +89,6 @@ namespace Podsync.Controllers
                 properties.Add("Email", User.GetClaim(ClaimTypes.Email));
             }
 
-            _telemetry.TrackEvent("CreateFeed", properties);
-
             return url;
         }
 
@@ -134,9 +129,6 @@ namespace Podsync.Controllers
                 _serializer.Serialize(writer, rss);
                 body = writer.ToString();
             }
-
-            // Report metrics
-            _telemetry.TrackEvent("GetFeed");
 
             return Content(body, "application/rss+xml; charset=UTF-8");
         }

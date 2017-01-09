@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Podsync.Helpers;
 using Podsync.Services.Links;
@@ -17,14 +15,12 @@ namespace Podsync.Controllers
         private readonly IResolverService _resolverService;
         private readonly ILinkService _linkService;
         private readonly IStorageService _storageService;
-        private readonly TelemetryClient _telemetry;
 
-        public DownloadController(IResolverService resolverService, ILinkService linkService, IStorageService storageService, TelemetryClient telemetry)
+        public DownloadController(IResolverService resolverService, ILinkService linkService, IStorageService storageService)
         {
             _resolverService = resolverService;
             _linkService = linkService;
             _storageService = storageService;
-            _telemetry = telemetry;
         }
         
         // Main video download endpoint, don't forget to reflect any changes in LinkService.Download
@@ -49,12 +45,6 @@ namespace Podsync.Controllers
             }
             catch (Exception ex)
             {
-                _telemetry.TrackException(ex, new Dictionary<string, string>
-                {
-                    ["FeedId"] = feedId,
-                    ["VideoId"] = videoId
-                });
-
                 var response = "Could nou resolve URL";
                 if (ex is InvalidOperationException)
                 {
@@ -63,9 +53,6 @@ namespace Podsync.Controllers
 
                 return BadRequest(response);
             }
-
-            // Report metrics
-            _telemetry.TrackEvent("Download");
 
             return Redirect(redirectUrl.ToString());
         }

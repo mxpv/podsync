@@ -1,7 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Security.Claims;
-using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Builder;
@@ -36,7 +34,6 @@ namespace Podsync
             if (env.IsDevelopment())
             {
                 builder.AddUserSecrets();
-                builder.AddApplicationInsightsSettings(true);
             }
 
             Configuration = builder.Build();
@@ -62,7 +59,6 @@ namespace Podsync
             services.AddAuthentication(config => config.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme);
 
             // Add framework services
-            services.AddApplicationInsightsTelemetry(Configuration);
             services.AddMvc();
         }
 
@@ -71,9 +67,6 @@ namespace Podsync
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
-
-            app.UseApplicationInsightsRequestTelemetry();
-            app.UseApplicationInsightsExceptionTelemetry();
 
             if (env.IsDevelopment())
             {
@@ -130,14 +123,6 @@ namespace Podsync
 
                         var amountCents = user.Pledges.Sum(x => x.AmountCents);
                         context.Identity.AddClaim(new Claim(Constants.Patreon.AmountDonated, amountCents.ToString()));
-
-                        var telemetry = app.ApplicationServices.GetService<TelemetryClient>();
-                        telemetry.TrackEvent("Login", new Dictionary<string, string>
-                        {
-                            ["Email"] = user.Email,
-                            ["Url"] = user.Url,
-                            ["Donated"] = amountCents.ToString()
-                        });
                     }
                 }
             });

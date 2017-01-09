@@ -3,7 +3,6 @@
     "Google.Apis.YouTube.v3": "1.16.0.582",
     "Hashids.net": "1.2.2",
     "MedallionShell": "1.2.1",
-    "Microsoft.ApplicationInsights.AspNetCore": "1.0.0",
     "Microsoft.AspNetCore.Authentication.Cookies": "1.0.0",
     "Microsoft.AspNetCore.Authentication.OAuth": "1.0.0",
     "Microsoft.AspNetCore.Diagnostics": "1.0.0",
