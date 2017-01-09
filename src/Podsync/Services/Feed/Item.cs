@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
@@ -22,7 +23,13 @@ namespace Podsync.Services.Feed
 
         public TimeSpan Duration { get; set; }
 
-        public MediaContent Content { get; set; }
+        public string Id { get; set; }
+
+        public long FileSize { get; set; }
+
+        public Uri DownloadLink { get; set; }
+
+        public string ContentType { get; set; }
 
         public XmlSchema GetSchema()
         {
@@ -52,17 +59,22 @@ namespace Podsync.Services.Feed
 
             writer.WriteStartElement("guid");
             writer.WriteAttributeString("isPermaLink", "true");
-            writer.WriteString(Link.ToString());
+            writer.WriteString(Link?.ToString() ?? Id);
             writer.WriteEndElement();
 
             /*
                 <enclosure url="http://podsync.net/download/youtube/yp202t46OIE.mp4" length="48300000" type="video/mp4"/>
             */
 
+            if (DownloadLink == null)
+            {
+                throw new InvalidDataException("Can't generate RSS item with no download link");
+            }
+
             writer.WriteStartElement("enclosure");
-            writer.WriteAttributeString("url", Content.Url.ToString());
-            writer.WriteAttributeString("length", Content.Length.ToString());
-            writer.WriteAttributeString("type", Content.MediaType);
+            writer.WriteAttributeString("url", DownloadLink.ToString());
+            writer.WriteAttributeString("length", FileSize.ToString());
+            writer.WriteAttributeString("type", ContentType);
             writer.WriteEndElement();
 
             /*
@@ -70,9 +82,9 @@ namespace Podsync.Services.Feed
             */
 
             writer.WriteStartElement("content", Namespaces.Media);
-            writer.WriteAttributeString("url", Content.Url.ToString());
-            writer.WriteAttributeString("fileSize", Content.Length.ToString());
-            writer.WriteAttributeString("type", Content.MediaType);
+            writer.WriteAttributeString("url", DownloadLink.ToString());
+            writer.WriteAttributeString("fileSize", FileSize.ToString());
+            writer.WriteAttributeString("type", ContentType);
             writer.WriteEndElement();
 
             /*

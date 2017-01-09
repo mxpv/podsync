@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.WebUtilities;
-using Shared;
+using Microsoft.Extensions.Primitives;
 
 namespace Podsync.Services.Links
 {
@@ -14,19 +14,40 @@ namespace Podsync.Services.Links
             {
                 [LinkType.Video] = "https://youtube.com/watch?v={0}",
                 [LinkType.Channel] = "https://youtube.com/channel/{0}",
-                [LinkType.Playlist] = "https://youtube.com/playlist?list={0}",
-                [LinkType.Info] = "https://youtube.com/get_video_info?video_id={0}"
+                [LinkType.Playlist] = "https://youtube.com/playlist?list={0}"
             },
 
             [Provider.Vimeo] = new Dictionary<LinkType, string>
             {
-                [LinkType.Category] = "https://vimeo.com/categories/{0}",
                 [LinkType.Channel] = "https://vimeo.com/channels/{0}",
                 [LinkType.Group] = "https://vimeo.com/groups/{0}",
-                [LinkType.User] = "https://vimeo.com/{0}",
-                [LinkType.Info] = "https://player.vimeo.com/video/{0}/config"
+                [LinkType.User] = "https://vimeo.com/user{0}",
+                [LinkType.Video] = "https://vimeo.com/{0}"
             }
         };
+
+        /*
+            YouTube users, channels and playlists
+            Test input:
+            https://www.youtube.com/playlist?list=PLCB9F975ECF01953C
+            https://www.youtube.com/channel/UC5XPnUk8Vvv_pWslhwom6Og
+            https://www.youtube.com/user/fxigr1
+         */
+
+        private static readonly Regex YouTubeRegex = new Regex(@"^(?:https?://)?(?:www\.)?(?:youtube.com/)(?<type>user|channel|playlist|watch)/?(?<id>\w+)?", RegexOptions.Compiled);
+
+        /*
+            Vimeo groups, channels and users
+            Test input:
+            https://vimeo.com/groups/109
+            http://vimeo.com/groups/109
+            http://www.vimeo.com/groups/109
+            https://vimeo.com/groups/109/videos/
+            https://vimeo.com/channels/staffpicks
+            https://vimeo.com/channels/staffpicks/146224925
+            https://vimeo.com/awhitelabelproduct
+        */
+        private static readonly Regex VimeoRegex = new Regex(@"^(?:https?://)?(?:www\.)?(?:vimeo.com/)(?<type>groups|channels)?/?(?<id>\w+)", RegexOptions.Compiled);
 
         public LinkInfo Parse(Uri link)
         {
@@ -40,132 +61,77 @@ namespace Podsync.Services.Links
 
             var id = string.Empty;
 
-            var segments = link.Segments
-                .Select(x => x.TrimEnd('/'))
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .ToArray();
-
-            var host = link.Host.ToLowerInvariant().TrimStart("www.").TrimStart("m.");
-
-            if (host == "youtu.be")
+            // YouTube
+            var match = YouTubeRegex.Match(link.AbsoluteUri);
+            if (match.Success)
             {
                 provider = Provider.YouTube;
 
-                if (segments.Length == 1)
+                var type = match.Groups["type"]?.ToString();
+                if (type == "user")
                 {
-                    // https://youtu.be/AAAAAAAAA01
-                    // https://www.youtu.be/AAAAAAAAA08
+                    // https://www.youtube.com/user/fxigr1
 
-                    linkType = LinkType.Video;
-                    id = segments.Single();
+                    id = match.Groups["id"]?.ToString();
+                    linkType = LinkType.User;
+                }
+                else if (type == "channel")
+                {
+                    // https://www.youtube.com/channel/UC5XPnUk8Vvv_pWslhwom6Og
+
+                    id = match.Groups["id"]?.ToString();
+                    linkType = LinkType.Channel;
+                }
+                else if (type == "playlist" || type == "watch")
+                {
+                    // https://www.youtube.com/playlist?list=PLCB9F975ECF01953C
+                    // https://www.youtube.com/watch?v=otm9NaT9OWU&list=PLCB9F975ECF01953C
+
+                    var qs = QueryHelpers.ParseQuery(link.Query);
+
+                    StringValues list;
+                    if (qs.TryGetValue("list", out list))
+                    {
+                        id = list;
+                    }
+
+                    linkType = LinkType.Playlist;
                 }
             }
-            else if (host == "youtube.com")
+            else
             {
-                provider = Provider.YouTube;
-
-                var query = QueryHelpers.ParseQuery(link.Query);
-
-                if (segments.Length >= 2 && segments[0] == "user")
+                // Vimeo
+                match = VimeoRegex.Match(link.AbsoluteUri);
+                if (match.Success)
                 {
-                    linkType = LinkType.User;
-                    id = segments[1];
-                }
-                else if (segments.Length == 2)
-                {
-                    if (string.Equals(segments[0], "embed"))
+                    provider = Provider.Vimeo;
+                    id = match.Groups["id"]?.ToString();
+
+                    var type = match.Groups["type"]?.ToString();
+                    if (type == "groups")
                     {
-                        linkType = LinkType.Video;
+                        // https://vimeo.com/groups/109
 
-                        if (string.Equals(segments[1], "watch"))
-                        {
-                            // http://www.youtube.com/embed/watch?feature=player_embedded&v=AAAAAAAAA02
-                            // http://www.youtube.com/embed/watch?v=AAAAAAAAA03
-
-                            id = query["v"];
-                        }
-                        else if (segments[1].StartsWith("v="))
-                        {
-                            // http://www.youtube.com/embed/v=AAAAAAAAA04
-                            
-                            id = segments[1].TrimStart("v=");
-                        }
+                        linkType = LinkType.Group;
                     }
-                    else if (string.Equals(segments[0], "watch"))
+                    else if (type == "channels")
                     {
-                        // http://www.youtube.com/watch/jMeC7JFQ6811
-
-                        linkType = LinkType.Video;
-                        id = segments[1];
-                    }
-                    else if (string.Equals(segments[0], "v"))
-                    {
-                        // http://www.youtube.com/v/jMeC7JFQ6812
-                        // http://www.youtube.com/v/A-AAAAAAA18?fs=1&rel=0
-
-                        linkType = LinkType.Video;
-                        id = segments[1];
-                    }
-                    else if (string.Equals(segments[0], "channel"))
-                    {
-                        // https://www.youtube.com/channel/UC5XPnUk8Vvv_pWslhwom6Og
+                        // https://vimeo.com/channels/staffpicks
 
                         linkType = LinkType.Channel;
-                        id = segments[1];
                     }
-                }
-
-                else if (segments.Length == 1)
-                {
-                    if (string.Equals(segments[0], "watch"))
+                    else
                     {
-                        if (query.ContainsKey("list"))
-                        {
-                            // https://www.youtube.com/watch?v=otm9NaT9OWU&list=PLCB9F975ECF01953C
+                        // https://vimeo.com/awhitelabelproduct
 
-                            linkType = LinkType.Playlist;
-                            id = query["list"];
-                        }
-                        else
-                        {
-                            // http://www.youtube.com/watch?v=AAAAAAAAA06
-                            // http://www.youtube.com/watch?feature=player_embedded&v=AAAAAAAAA05
-
-                            linkType = LinkType.Video;
-                            id = query["v"];
-                        }
-                    }
-                    else if (string.Equals(segments[0], "attribution_link"))
-                    {
-                        // http://www.youtube.com/attribution_link?u=/watch?v=jMeC7JFQ6815&feature=share&a=9QlmP1yvjcllp0h3l0NwuA
-                        // http://www.youtube.com/attribution_link?a=fF1CWYwxCQ4&u=/watch?v=jMeC7JFQ6816&feature=em-uploademail 
-                        // http://www.youtube.com/attribution_link?a=fF1CWYwxCQ4&feature=em-uploademail&u=/watch?v=jMeC7JFQ6817 
-
-                        string u = query["u"];
-
-                        var pos = u?.IndexOf("?", StringComparison.OrdinalIgnoreCase) ?? -1;
-                        if (pos != -1)
-                        {
-                            // ReSharper disable once PossibleNullReferenceException
-                            var attrQueryParams = QueryHelpers.ParseQuery(u.Substring(pos));
-
-                            linkType = LinkType.Video;
-                            id = attrQueryParams["v"];
-                        }
-                    }
-                    else if (string.Equals(segments[0], "playlist"))
-                    {
-                        // https://www.youtube.com/playlist?list=PLCB9F975ECF01953C
-
-                        linkType = LinkType.Playlist;
-                        id = query["list"];
+                        linkType = LinkType.User;
                     }
                 }
             }
 
             if (string.IsNullOrWhiteSpace(id) || linkType == LinkType.Unknown || provider == Provider.Unknown)
             {
-                throw new ArgumentException("This provider is not supported");
+                throw new ArgumentException("Not supported provider or link format");
             }
             
             return new LinkInfo
@@ -192,11 +158,6 @@ namespace Podsync.Services.Links
             {
                 throw new ArgumentException("Unsupported provider or link type", nameof(info), ex);
             }
-        }
-
-        public Uri Download(Uri baseUrl, string feedId, string videoId, string ext)
-        {
-            return new Uri(baseUrl, $"download/{feedId}/{videoId}{ext}");
         }
 
         public Uri Feed(Uri baseUrl, string feedId)

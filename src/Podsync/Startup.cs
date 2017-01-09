@@ -17,6 +17,7 @@ using Podsync.Services.Links;
 using Podsync.Services.Patreon;
 using Podsync.Services.Resolver;
 using Podsync.Services.Storage;
+using Podsync.Services.Videos.Vimeo;
 using Podsync.Services.Videos.YouTube;
 
 namespace Podsync
@@ -51,6 +52,7 @@ namespace Podsync
             // Register core services
             services.AddSingleton<ILinkService, LinkService>();
             services.AddSingleton<IYouTubeClient, YouTubeClient>();
+            services.AddSingleton<IVimeoClient, VimeoClient>();
             services.AddSingleton<IResolverService, YtdlWrapper>();
             services.AddSingleton<IStorageService, RedisStorage>();
             services.AddSingleton<IRssBuilder, CompositeRssBuilder>();
@@ -93,15 +95,15 @@ namespace Podsync
             // Patreon authentication
             app.UseOAuthAuthentication(new OAuthOptions
             {
-                AuthenticationScheme = PatreonConstants.AuthenticationScheme,
+                AuthenticationScheme = Constants.Patreon.AuthenticationScheme,
 
                 ClientId = Configuration[$"Podsync:{nameof(PodsyncConfiguration.PatreonClientId)}"],
                 ClientSecret = Configuration[$"Podsync:{nameof(PodsyncConfiguration.PatreonSecret)}"],
 
                 CallbackPath = new PathString("/oauth-patreon"),
 
-                AuthorizationEndpoint = PatreonConstants.AuthorizationEndpoint,
-                TokenEndpoint = PatreonConstants.TokenEndpoint,
+                AuthorizationEndpoint = Constants.Patreon.AuthorizationEndpoint,
+                TokenEndpoint = Constants.Patreon.TokenEndpoint,
 
                 SaveTokens = true,
 
@@ -127,7 +129,7 @@ namespace Podsync
                         context.Identity.AddClaim(new Claim(ClaimTypes.Uri, user.Url));
 
                         var amountCents = user.Pledges.Sum(x => x.AmountCents);
-                        context.Identity.AddClaim(new Claim(PatreonConstants.AmountDonated, amountCents.ToString()));
+                        context.Identity.AddClaim(new Claim(Constants.Patreon.AmountDonated, amountCents.ToString()));
 
                         var telemetry = app.ApplicationServices.GetService<TelemetryClient>();
                         telemetry.TrackEvent("Login", new Dictionary<string, string>
@@ -145,7 +147,7 @@ namespace Podsync
                 builder.Run(async context =>
                 {
                     // Return a challenge to invoke the Patreon authentication scheme
-                    await context.Authentication.ChallengeAsync(PatreonConstants.AuthenticationScheme, new AuthenticationProperties { RedirectUri = "/" });
+                    await context.Authentication.ChallengeAsync(Constants.Patreon.AuthenticationScheme, new AuthenticationProperties { RedirectUri = "/" });
                 });
             });
 

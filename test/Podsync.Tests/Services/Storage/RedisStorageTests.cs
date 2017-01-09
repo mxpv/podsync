@@ -29,17 +29,11 @@ namespace Podsync.Tests.Services.Storage
         {
             const int idCount = 50;
 
-            try
-            {
-                var results = new string[idCount];
-                Parallel.For(0, results.Length, (i, _) => results[i] = _storage.MakeId().GetAwaiter().GetResult());
 
-                Assert.Equal(results.Length, results.Distinct().Count());
-            }
-            finally
-            {
-                _storage.ResetCounter();
-            }
+            var results = new string[idCount];
+            Parallel.For(0, results.Length, (i, _) => results[i] = _storage.MakeId().GetAwaiter().GetResult());
+
+            Assert.Equal(results.Length, results.Distinct().Count());
         }
 
         [Fact]
@@ -49,7 +43,9 @@ namespace Podsync.Tests.Services.Storage
             {
                 Id = "123",
                 LinkType = LinkType.Channel,
-                Provider = Provider.Vimeo
+                Provider = Provider.Vimeo,
+
+                PageSize = 45
             };
 
             var id = await _storage.Save(feed);
@@ -61,6 +57,7 @@ namespace Podsync.Tests.Services.Storage
             Assert.Equal(feed.Id, loaded.Id);
             Assert.Equal(feed.LinkType, loaded.LinkType);
             Assert.Equal(feed.Provider, loaded.Provider);
+            Assert.Equal(45, loaded.PageSize);
         }
 
         [Fact]

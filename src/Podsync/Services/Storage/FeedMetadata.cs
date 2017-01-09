@@ -3,11 +3,11 @@ using Podsync.Services.Resolver;
 
 namespace Podsync.Services.Storage
 {
-    public struct FeedMetadata
+    public class FeedMetadata
     {
         public Provider Provider { get; set; }
 
-        public LinkType LinkType { get; set; }
+        public LinkType Type { get; set; }
 
         public string Id { get; set; }
 
@@ -16,5 +16,12 @@ namespace Podsync.Services.Storage
         public int PageSize { get; set; }
 
         public override string ToString() => $"{Provider} ({LinkType}) {Id}";
+
+        // Workaround for backward compatibility
+        public LinkType LinkType
+        {
+            get { return Type; }
+            set { Type = value; }
+        }
     }
 }

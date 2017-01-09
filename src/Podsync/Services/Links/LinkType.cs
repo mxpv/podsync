@@ -7,8 +7,6 @@
         Playlist,
         User,
         Channel,
-        Info,
-        Category,
         Group
     }
 }

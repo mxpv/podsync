@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
@@ -12,10 +10,12 @@ namespace Podsync.Services.Feed
     public class Channel : IXmlSerializable
     {
         private const string PodsyncGeneratorName = "Podsync Generator";
+        private const string DefaultItunesCategory = "TV & Film";
 
         public Channel()
         {
-            Items = Enumerable.Empty<Item>();
+            Category = DefaultItunesCategory;
+            LastBuildDate = DateTime.Now;
         }
 
         public string Guid { get; set; }
@@ -40,7 +40,7 @@ namespace Podsync.Services.Feed
 
         public Uri Thumbnail { get; set; }
 
-        public IEnumerable<Item> Items { get; set; }
+        public Item[] Items { get; set; }
 
         public bool Explicit { get; set; }
 

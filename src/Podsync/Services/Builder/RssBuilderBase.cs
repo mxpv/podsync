@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Podsync.Services.Feed;
 using Podsync.Services.Links;
 using Podsync.Services.Storage;
@@ -8,8 +7,6 @@ namespace Podsync.Services.Builder
 {
     public abstract class RssBuilderBase : IRssBuilder
     {
-        protected static readonly string DefaultItunesCategory = "TV & Film";
-
         private readonly IStorageService _storageService;
 
         protected RssBuilderBase(IStorageService storageService)
@@ -19,13 +16,13 @@ namespace Podsync.Services.Builder
 
         public abstract Provider Provider { get; }
 
-        public async Task<Rss> Query(Uri baseUrl, string feedId)
+        public async Task<Rss> Query(string feedId)
         {
             var metadata = await _storageService.Load(feedId);
 
-            return await Query(baseUrl, feedId, metadata);
+            return await Query(metadata);
         }
 
-        public abstract Task<Rss> Query(Uri baseUrl, string feedId, FeedMetadata metadata);
+        public abstract Task<Rss> Query(FeedMetadata metadata);
     }
 }
