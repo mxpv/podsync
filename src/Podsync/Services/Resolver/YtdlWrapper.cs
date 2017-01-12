@@ -12,9 +12,9 @@ namespace Podsync.Services.Resolver
     {
         private static readonly TimeSpan ProcessWaitTimeout = TimeSpan.FromMinutes(1);
         private static readonly TimeSpan WaitTimeoutBetweenFailedCalls = TimeSpan.FromSeconds(30);
-
-        private const string Ytdl = "youtube-dl";
-
+        
+        private const string YtdlName = "youtube-dl";
+        
         private readonly ILogger _logger;
 
         public YtdlWrapper(IStorageService storageService, ILogger<YtdlWrapper> logger) : base(storageService)
@@ -23,7 +23,7 @@ namespace Podsync.Services.Resolver
 
             try
             {
-                var cmd = Command.Run(Ytdl, "--version");
+                var cmd = Command.Run(YtdlName, "--version");
                 var version = cmd.Result.StandardOutput;
 
                 Version = version;
@@ -39,48 +39,72 @@ namespace Podsync.Services.Resolver
         public override string Version { get; }
 
 
-        protected override async Task<Uri> ResolveInternal(Uri videoUrl, ResolveFormat resolveFormat)
+        protected override async Task<Uri> ResolveInternal(Uri videoUrl, ResolveFormat format)
         {
-            var format = SelectFormat(resolveFormat);
-
             try 
 	        {	        
-		        return await ResolveInternal(videoUrl, format);
+		        return await Ytdl(videoUrl, format);
 	        }
 	        catch (InvalidOperationException)
 	        {
                 // Give a try one more time, often it helps
 	            await Task.Delay(WaitTimeoutBetweenFailedCalls);
-                return await ResolveInternal(videoUrl, format);
+                return await Ytdl(videoUrl, format);
             }
         }
 
-        private static string SelectFormat(ResolveFormat format)
+        private static IEnumerable<string> GetArguments(Uri videoUrl, ResolveFormat format)
         {
-            switch (format)
-            {
-                case ResolveFormat.VideoHigh:
-                    return "best[ext=mp4]";
-                case ResolveFormat.VideoLow:
-                    return "worst[ext=mp4]";
-                case ResolveFormat.AudioHigh:
-                    return "bestaudio[ext=m4a]/worstaudio[ext=m4a]";
-                case ResolveFormat.AudioLow:
-                    return "worstaudio[ext=m4a]/bestaudio[ext=m4a]";
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(format), "Unsupported format", null);
-            }
-        }
+            var host = videoUrl.Host.ToLowerInvariant();
 
-        private static IEnumerable<string> GetArguments(Uri videoUrl, string format)
-        {
             // Video format code, see the "FORMAT SELECTION"
             yield return "-f";
-            yield return format;
+
+            if (host.Contains("youtube.com"))
+            {
+                if (format == ResolveFormat.VideoHigh)
+                {
+                    yield return "best[ext=mp4]";
+                }
+                else if (format == ResolveFormat.VideoLow)
+                {
+                    yield return "worst[ext=mp4]";
+                }
+                else if (format == ResolveFormat.AudioHigh)
+                {
+                    yield return "bestaudio[ext=m4a]/worstaudio[ext=m4a]";
+                }
+                else if (format == ResolveFormat.AudioLow)
+                {
+                    yield return "worstaudio[ext=m4a]/bestaudio[ext=m4a]";
+                }
+                else
+                {
+                    throw new ArgumentException("Unsupported resolve format");
+                }
+            }
+            else if (host.Contains("vimeo.com"))
+            {
+                if (format == ResolveFormat.VideoHigh)
+                {
+                    yield return "Original/http-1080p/http-720p/http-360p/http-270p";
+                }
+                else if (format == ResolveFormat.VideoLow)
+                {
+                    yield return "http-270p/http-360p/http-540p/http-720p/http-1080p";
+                }
+                else
+                {
+                    throw new ArgumentException("Unsupported resolve format");
+                }
+            }
+            else
+            {
+                throw new ArgumentException("Unsupported video provider");
+            }
 
             // Simulate, quiet but print URL
             yield return "-g";
-            yield return videoUrl.ToString();
 
             // Do not download the video and do not write anything to disk
             yield return "-s";
@@ -90,11 +114,13 @@ namespace Podsync.Services.Resolver
 
             // Do NOT contact the youtube-dl server for debugging
             yield return "--no-call-home";
+
+            yield return videoUrl.ToString();
         }
 
-        private async Task<Uri> ResolveInternal(Uri videoUrl, string format)
+        private async Task<Uri> Ytdl(Uri videoUrl, ResolveFormat format)
         {
-            var cmd = Command.Run(Ytdl, GetArguments(videoUrl, format), opts => opts.ThrowOnError().Timeout(ProcessWaitTimeout));
+            var cmd = Command.Run(YtdlName, GetArguments(videoUrl, format), opts => opts.ThrowOnError().Timeout(ProcessWaitTimeout));
 
             try
             {

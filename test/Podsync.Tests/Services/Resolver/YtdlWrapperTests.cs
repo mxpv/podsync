@@ -57,5 +57,23 @@ namespace Podsync.Tests.Services.Resolver
             var downloadUrl = await _resolver.Resolve(new Uri("https://www.youtube.com/watch?v=-csRxRj_zcw&t=45s"), ResolveFormat.AudioHigh);
             Assert.True(downloadUrl.IsAbsoluteUri);
         }
+
+        [Theory]
+        [InlineData("https://vimeo.com/94747106", ResolveFormat.VideoHigh)]
+        [InlineData("https://vimeo.com/199203302", ResolveFormat.VideoHigh)]
+        [InlineData("https://vimeo.com/93003441", ResolveFormat.VideoHigh)]
+        [InlineData("https://vimeo.com/93003441", ResolveFormat.VideoLow)]
+        public async Task ResolveVimeoLinks(string link, ResolveFormat format)
+        {
+            var downloadUrl = await _resolver.Resolve(new Uri(link), format);
+            Assert.True(downloadUrl.IsWellFormedOriginalString());
+        }
+
+        [Fact]
+        public async Task VimeoAudioExceptionTest()
+        {
+            await Assert.ThrowsAsync<ArgumentException>(async () => await _resolver.Resolve(new Uri("https://vimeo.com/94747106"), ResolveFormat.AudioHigh));
+            await Assert.ThrowsAsync<ArgumentException>(async () => await _resolver.Resolve(new Uri("https://vimeo.com/94747106"), ResolveFormat.AudioLow));
+        }
     }
 }
