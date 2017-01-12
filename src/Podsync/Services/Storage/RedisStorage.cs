@@ -182,7 +182,7 @@ namespace Podsync.Services.Storage
                 var propertyType = typeof(P);
                 if (propertyType.GetTypeInfo().IsEnum)
                 {
-                    value = (P)Enum.Parse(propertyType, entry.Value);
+                    value = (P)Enum.Parse(propertyType, entry.Value, true);
                 }
                 else
                 {
