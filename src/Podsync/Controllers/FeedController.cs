@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Microsoft.AspNetCore.Mvc;
@@ -67,8 +66,9 @@ namespace Podsync.Controllers
             if (!enablePatreonFeatures)
             {
                 feed.Quality = ResolveFormat.VideoHigh;
-                feed.PageSize = Constants.DefaultPageSize;
             }
+
+            feed.PageSize = Constants.DefaultPageSize;
 
             var feedId = await _storageService.Save(feed);
             var url = _linkService.Feed(Request.GetBaseUrl(), feedId);

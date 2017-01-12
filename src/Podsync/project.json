@@ -27,7 +27,7 @@
       "type": "platform"
     },
     "Microsoft.VisualStudio.Web.BrowserLink.Loader": "14.0.0",
-    "StackExchange.Redis": "1.1.608",
+    "StackExchange.Redis": "1.2.0",
     "System.Xml.XmlSerializer": "4.0.11"
   },
   "tools": {

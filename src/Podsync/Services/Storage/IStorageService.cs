@@ -10,5 +10,9 @@ namespace Podsync.Services.Storage
         Task<string> Save(FeedMetadata metadata);
 
         Task<FeedMetadata> Load(string key);
+
+        Task Cache(string prefix, string id, string value, TimeSpan exp);
+
+        Task<string> GetCached(string prefix, string id);
     }
 }

@@ -4,10 +4,11 @@ using System.IO;
 using System.Threading.Tasks;
 using Medallion.Shell;
 using Microsoft.Extensions.Logging;
+using Podsync.Services.Storage;
 
 namespace Podsync.Services.Resolver
 {
-    public class YtdlWrapper : IResolverService
+    public class YtdlWrapper : CachedResolver
     {
         private static readonly TimeSpan ProcessWaitTimeout = TimeSpan.FromMinutes(1);
         private static readonly TimeSpan WaitTimeoutBetweenFailedCalls = TimeSpan.FromSeconds(30);
@@ -16,16 +17,18 @@ namespace Podsync.Services.Resolver
 
         private readonly ILogger _logger;
 
-        public YtdlWrapper(ILogger<YtdlWrapper> logger)
+        public YtdlWrapper(IStorageService storageService, ILogger<YtdlWrapper> logger) : base(storageService)
         {
             _logger = logger;
 
             try
             {
                 var cmd = Command.Run(Ytdl, "--version");
-                Version = cmd.Result.StandardOutput;
+                var version = cmd.Result.StandardOutput;
 
-                _logger.LogInformation("Uring youtube-dl {VERSION}", Version);
+                Version = version;
+
+                _logger.LogInformation("Uring youtube-dl {VERSION}", version);
             }
             catch (Exception ex)
             {
@@ -33,10 +36,10 @@ namespace Podsync.Services.Resolver
             }
         }
 
-        public string Version { get; }
+        public override string Version { get; }
 
 
-        public async Task<Uri> Resolve(Uri videoUrl, ResolveFormat resolveFormat)
+        protected override async Task<Uri> ResolveInternal(Uri videoUrl, ResolveFormat resolveFormat)
         {
             var format = SelectFormat(resolveFormat);
 

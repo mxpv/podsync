@@ -10,6 +10,7 @@ namespace Podsync.Tests.Services.Storage
 {
     public class RedisStorageTests : TestBase, IDisposable
     {
+        private const string TestsCachePrefix = "tests";
         private readonly RedisStorage _storage;
 
         public RedisStorageTests()
@@ -64,6 +65,32 @@ namespace Podsync.Tests.Services.Storage
         public Task LoadInvalidFeedTest()
         {
             return Assert.ThrowsAsync<KeyNotFoundException>(() => _storage.Load("test"));
+        }
+
+        [Fact]
+        public async Task GetInvalidCacheValueTest()
+        {
+            var value = await _storage.GetCached(TestsCachePrefix, "invalid");
+            Assert.Null(value);
+        }
+
+        [Fact]
+        public async Task ExpireCacheValueTest()
+        {
+            await _storage.Cache(TestsCachePrefix, "exp", "1", TimeSpan.FromMilliseconds(500));
+
+            await Task.Delay(600);
+
+            var value = await _storage.GetCached(TestsCachePrefix, "exp");
+            Assert.Null(value);
+        }
+
+        [Fact]
+        public async Task GetCachedValueTest()
+        {
+            await _storage.Cache(TestsCachePrefix, "v", "1", TimeSpan.FromSeconds(1));
+            var value = await _storage.GetCached(TestsCachePrefix, "v");
+            Assert.Equal("1", value);
         }
 
         public void Dispose()

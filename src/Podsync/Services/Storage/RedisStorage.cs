@@ -15,6 +15,8 @@ namespace Podsync.Services.Storage
 {
     public class RedisStorage : IStorageService
     {
+        private const string CachePrefix = "cache";
+
         private const string IdKey = "keygen";
         private const string IdSalt = "65fce519433f4218aa0cee6394225eea";
         private const int IdLength = 4;
@@ -129,10 +131,29 @@ namespace Podsync.Services.Storage
             return metadata;
         }
 
+        public Task Cache(string prefix, string id, string value, TimeSpan exp)
+        {
+            var key = BuildCacheKey(prefix, id);
+            return Db.StringSetAsync(key, value, exp);
+        }
+
+        public async Task<string> GetCached(string prefix, string id)
+        {
+            var key = BuildCacheKey(prefix, id);
+            var value = await Db.StringGetAsync(key);
+            return value;
+        }
+
         public async Task<string> MakeId()
         {
             var id = await Db.StringIncrementAsync(IdKey);
             return HashIds.EncodeLong(id);
+        }
+
+        private static string BuildCacheKey(string prefix, string id)
+        {
+            var key = $"{CachePrefix}:{prefix}:{id}";
+            return key;
         }
 
         private static void SetProperty<T, P>(T target, Expression<Func<T, P>> memberLamda, HashEntry[] entries)
