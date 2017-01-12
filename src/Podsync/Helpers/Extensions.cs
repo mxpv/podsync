@@ -69,7 +69,7 @@ namespace Podsync.Helpers
                    ?? "noname :(";
         }
 
-        private static string GetClaim(this ClaimsPrincipal claimsPrincipal, string type)
+        public static string GetClaim(this ClaimsPrincipal claimsPrincipal, string type)
         {
             return claimsPrincipal.Claims.FirstOrDefault(x => x.Type == type)?.Value;
         }

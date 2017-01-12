@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Microsoft.AspNetCore.Mvc;
@@ -62,8 +63,12 @@ namespace Podsync.Controllers
             };
 
             // Check if user eligible for Patreon features
-            var enablePatreonFeatures = User.EnablePatreonFeatures();
-            if (!enablePatreonFeatures)
+            var allowFeatures = User.EnablePatreonFeatures();
+            if (allowFeatures)
+            {
+                feed.PatreonId = User.GetClaim(ClaimTypes.NameIdentifier);
+            }
+            else
             {
                 feed.Quality = ResolveFormat.VideoHigh;
             }

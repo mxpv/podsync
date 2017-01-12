@@ -78,24 +78,21 @@ namespace Podsync.Services.Storage
         {
             var id = await MakeId();
 
-            if (await Db.KeyExistsAsync(id))
+            var t = Db.CreateTransaction();
+            t.AddCondition(Condition.KeyNotExists(id));
+
+#pragma warning disable 4014
+            // We should not await here because of transaction
+            // See http://stackoverflow.com/questions/25976231/stackexchange-redis-transaction-methods-freezes
+            t.HashSetAsync(id, BuildSet(metadata).ToArray());
+            t.KeyExpireAsync(id, TimeSpan.FromDays(1));
+#pragma warning restore 4014
+
+            var succeeded = await t.ExecuteAsync();
+            if (!succeeded)
             {
-                throw new InvalidOperationException("Failed to generate feed id");
+                throw new InvalidOperationException("Failed to save feed");
             }
-
-            await Db.HashSetAsync(id, new[]
-            {
-                // V1
-                new HashEntry(nameof(metadata.Provider), metadata.Provider.ToString()),
-                new HashEntry(nameof(metadata.Type), metadata.Type.ToString()),
-                new HashEntry(nameof(metadata.Id), metadata.Id),
-
-                // V2
-                new HashEntry(nameof(metadata.Quality), metadata.Quality.ToString()),
-                new HashEntry(nameof(metadata.PageSize), metadata.PageSize),
-            });
-
-            await Db.KeyExpireAsync(id, TimeSpan.FromDays(1));
 
             return id;
         }
@@ -120,13 +117,14 @@ namespace Podsync.Services.Storage
             var metadata = new FeedMetadata();
 
             // V1
-            SetProperty(metadata, x => x.Id, entries);
-            SetProperty(metadata, x => x.Type, entries);
-            SetProperty(metadata, x => x.Provider, entries);
+            UnpackProperty(metadata, x => x.Id, entries);
+            UnpackProperty(metadata, x => x.Type, entries);
+            UnpackProperty(metadata, x => x.Provider, entries);
 
             // V2
-            SetProperty(metadata, x => x.Quality, entries, Constants.DefaultFormat);
-            SetProperty(metadata, x => x.PageSize, entries, Constants.DefaultPageSize);
+            UnpackProperty(metadata, x => x.Quality, entries, Constants.DefaultFormat);
+            UnpackProperty(metadata, x => x.PageSize, entries, Constants.DefaultPageSize);
+            UnpackProperty(metadata, x => x.PatreonId, entries, null);
 
             return metadata;
         }
@@ -156,12 +154,12 @@ namespace Podsync.Services.Storage
             return key;
         }
 
-        private static void SetProperty<T, P>(T target, Expression<Func<T, P>> memberLamda, HashEntry[] entries)
+        private static void UnpackProperty<T, P>(T target, Expression<Func<T, P>> memberLamda, HashEntry[] entries)
         {
-            SetProperty(target, memberLamda, entries, default(P), true);
+            UnpackProperty(target, memberLamda, entries, default(P), true);
         }
 
-        private static void SetProperty<T, P>(T target, Expression<Func<T, P>> memberLamda, HashEntry[] entries, P fallback, bool throwIfMissing = false)
+        private static void UnpackProperty<T, P>(T target, Expression<Func<T, P>> memberLamda, HashEntry[] entries, P fallback, bool throwIfMissing = false)
         {
             var memberExpression = memberLamda.Body as MemberExpression;
 
@@ -201,6 +199,24 @@ namespace Podsync.Services.Storage
 
             var property = memberExpression.Member as PropertyInfo;
             property?.SetValue(target, value);
+        }
+
+        private IEnumerable<HashEntry> BuildSet(FeedMetadata metadata)
+        {
+            // V1.0
+            yield return new HashEntry(nameof(metadata.Provider), metadata.Provider.ToString());
+            yield return new HashEntry(nameof(metadata.Type), metadata.Type.ToString());
+            yield return new HashEntry(nameof(metadata.Id), metadata.Id);
+
+            // V2.0
+            yield return new HashEntry(nameof(metadata.Quality), metadata.Quality.ToString());
+            yield return new HashEntry(nameof(metadata.PageSize), metadata.PageSize);
+
+            // V2.1
+            if (!string.IsNullOrEmpty(metadata.PatreonId))
+            {
+                yield return new HashEntry(nameof(metadata.PatreonId), metadata.PatreonId);
+            }
         }
     }
 }

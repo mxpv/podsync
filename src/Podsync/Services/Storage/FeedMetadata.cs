@@ -15,6 +15,11 @@ namespace Podsync.Services.Storage
 
         public int PageSize { get; set; }
 
+        /// <summary>
+        /// User id on Patreon
+        /// </summary>
+        public string PatreonId { get; set; }
+
         public override string ToString() => $"{Provider} ({LinkType}) {Id}";
 
         // Workaround for backward compatibility
