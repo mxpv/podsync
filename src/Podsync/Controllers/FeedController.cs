@@ -47,9 +47,9 @@ namespace Podsync.Controllers
         {
             var linkInfo = _linkService.Parse(new Uri(request.Url));
 
-            if (linkInfo.LinkType == LinkType.Video)
+            if (linkInfo.Provider != Provider.YouTube && request.Quality.HasValue && request.Quality.Value.IsAudio())
             {
-                throw new ArgumentException("Direct links are not supported, you should provide group, channel or user link");
+                throw new ArgumentException("Only YouTube supports audio feeds");
             }
 
             var feed = new FeedMetadata

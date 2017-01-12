@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Podsync.Services;
+using Podsync.Services.Resolver;
 
 namespace Podsync.Helpers
 {
@@ -68,9 +69,14 @@ namespace Podsync.Helpers
                    ?? "noname :(";
         }
 
-        public static string GetClaim(this ClaimsPrincipal claimsPrincipal, string type)
+        private static string GetClaim(this ClaimsPrincipal claimsPrincipal, string type)
         {
             return claimsPrincipal.Claims.FirstOrDefault(x => x.Type == type)?.Value;
+        }
+
+        public static bool IsAudio(this ResolveFormat format)
+        {
+            return format == ResolveFormat.AudioHigh || format == ResolveFormat.AudioLow;
         }
     }
 }
