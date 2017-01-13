@@ -70,6 +70,21 @@ namespace Podsync.Tests.Services.Videos.YouTube
         }
 
         [Fact]
+        public async Task GetPlaylistIdsPagesTest()
+        {
+            var query = new PlaylistItemsQuery
+            {
+                PlaylistId = "PL2e4mYbwSTbYAKa7Msaq24rT2lUOaVdcj",
+                Count = 100
+            };
+
+            var list = await _client.GetPlaylistItemIds(query);
+
+            Assert.True(list.Count > 50);
+            Assert.True(list.Distinct().Count() == list.Count);
+        }
+
+        [Fact]
         public async Task GetVideosTest()
         {
             var query = new VideoQuery

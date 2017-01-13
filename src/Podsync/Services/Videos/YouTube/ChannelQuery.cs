@@ -6,6 +6,6 @@
 
         public string Username { get; set; }
 
-        public uint? Count { get; set; }
+        public int? Count { get; set; }
     }
 }

@@ -4,6 +4,6 @@
     {
         public string Id { get; set; }
 
-        public uint? Count { get; set; }
+        public int? Count { get; set; }
     }
 }

@@ -48,6 +48,11 @@ namespace Shared
             }
         }
 
+        public static void AddTo<T>(this IEnumerable<T> collection, List<T> target)
+        {
+            target.AddRange(collection);
+        }
+
         public static void SafeForEach<T>(this IEnumerable<T> source, Action<T> action)
         {
             if (source == null)

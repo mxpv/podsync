@@ -12,7 +12,7 @@ namespace Podsync.Services.Videos.YouTube
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        Task<IEnumerable<Channel>> GetChannels(ChannelQuery query);
+        Task<ICollection<Channel>> GetChannels(ChannelQuery query);
 
         /// <summary>
         /// Returns a collection of playlists that match the API request parameters
@@ -21,7 +21,7 @@ namespace Podsync.Services.Videos.YouTube
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        Task<IEnumerable<Playlist>> GetPlaylists(PlaylistQuery query);
+        Task<ICollection<Playlist>> GetPlaylists(PlaylistQuery query);
         
         /// <summary>
         /// Returns a list of videos that match the API request parameters
@@ -30,7 +30,7 @@ namespace Podsync.Services.Videos.YouTube
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        Task<IEnumerable<Video>> GetVideos(VideoQuery query);
+        Task<ICollection<Video>> GetVideos(VideoQuery query);
 
         /// <summary>
         /// Returns a collection of playlist items that match the API request parameters.
@@ -41,7 +41,7 @@ namespace Podsync.Services.Videos.YouTube
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        Task<IEnumerable<Video>> GetPlaylistItems(PlaylistItemsQuery query);
+        Task<ICollection<Video>> GetPlaylistItems(PlaylistItemsQuery query);
 
         /// <summary>
         /// Optimized version of GetPlaylistItems to query video IDs only
@@ -49,6 +49,6 @@ namespace Podsync.Services.Videos.YouTube
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        Task<IEnumerable<string>> GetPlaylistItemIds(PlaylistItemsQuery query);
+        Task<ICollection<string>> GetPlaylistItemIds(PlaylistItemsQuery query);
     }
 }

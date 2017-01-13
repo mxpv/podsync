@@ -8,6 +8,7 @@ using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
 using Microsoft.Extensions.Options;
 using Podsync.Services.Links;
+using Shared;
 
 namespace Podsync.Services.Videos.YouTube
 {
@@ -28,67 +29,98 @@ namespace Podsync.Services.Videos.YouTube
             });
         }
 
-        public async Task<IEnumerable<Channel>> GetChannels(ChannelQuery query)
+        public Task<ICollection<Channel>> GetChannels(ChannelQuery query)
         {
             var request = _youtube.Channels.List("id,snippet,contentDetails");
 
-            request.MaxResults = query.Count ?? MaxResults;
             request.Id = query.ChannelId;
             request.ForUsername = query.Username;
 
-            var response = await request.ExecuteAsync();
+            return AggregatePages<Channel>(query.Count, async (list, token, pageSize) =>
+            {
+                request.MaxResults = pageSize;
+                request.PageToken = token;
 
-            return response.Items.Select(ConvertChannel);
+                var response = await request.ExecuteAsync();
+                response.Items.Select(ConvertChannel).AddTo(list);
+
+                return response.NextPageToken;
+            });
         }
 
-        public async Task<IEnumerable<Playlist>> GetPlaylists(PlaylistQuery query)
+        public Task<ICollection<Playlist>> GetPlaylists(PlaylistQuery query)
         {
             var request = _youtube.Playlists.List("id,snippet");
 
-            request.MaxResults = query.Count ?? MaxResults;
             request.Id = query.PlaylistId;
             request.ChannelId = query.ChannelId;
 
-            var response = await request.ExecuteAsync();
+            return AggregatePages<Playlist>(query.Count, async (list, token, pageSize) =>
+            {
+                request.MaxResults = pageSize;
+                request.PageToken = token;
 
-            return response.Items.Select(ConvertPlaylist);
+                var response = await request.ExecuteAsync();
+                response.Items.Select(ConvertPlaylist).AddTo(list);
+
+                return response.NextPageToken;
+            });
         }
 
-        public async Task<IEnumerable<Video>> GetVideos(VideoQuery query)
+        public Task<ICollection<Video>> GetVideos(VideoQuery query)
         {
             var request = _youtube.Videos.List("id,snippet,contentDetails");
 
-            request.MaxResults = query.Count ?? MaxResults;
             request.Id = query.Id;
 
-            var response = await request.ExecuteAsync();
+            return AggregatePages<Video>(query.Count, async (list, token, pageSize) =>
+            {
+                request.MaxResults = pageSize;
+                request.PageToken = token;
 
-            return response.Items.Select(ConvertVideo);
+                var response = await request.ExecuteAsync();
+                response.Items.Select(ConvertVideo).AddTo(list);
+
+                return response.NextPageToken;
+            });
         }
 
-        public async Task<IEnumerable<Video>> GetPlaylistItems(PlaylistItemsQuery query)
+        public Task<ICollection<Video>> GetPlaylistItems(PlaylistItemsQuery query)
         {
             var request = _youtube.PlaylistItems.List("id,snippet");
 
-            request.MaxResults = query.Count ?? MaxResults;
             request.Id = query.Id;
             request.PlaylistId = query.PlaylistId;
             request.VideoId = query.VideoId;
 
-            var response = await request.ExecuteAsync();
+            return AggregatePages<Video>(query.Count, async (list, token, pageSize) =>
+            {
+                request.MaxResults = pageSize;
+                request.PageToken = token;
 
-            return response.Items.Select(ConvertPlaylistItem);
+                var response = await request.ExecuteAsync();
+                response.Items.Select(ConvertPlaylistItem).AddTo(list);
+
+                return response.NextPageToken;
+            });
         }
 
-        public async Task<IEnumerable<string>> GetPlaylistItemIds(PlaylistItemsQuery query)
+        public Task<ICollection<string>> GetPlaylistItemIds(PlaylistItemsQuery query)
         {
             var request = _youtube.PlaylistItems.List("id,snippet");
-            request.MaxResults = query.Count ?? MaxResults;
+
             request.PlaylistId = query.PlaylistId;
 
-            var response = await request.ExecuteAsync();
+            return AggregatePages<string>(query.Count, async (list, token, pageSize) =>
+            {
+                request.MaxResults = pageSize;
+                request.PageToken = token;
 
-            return response.Items.Select(x => x.Snippet.ResourceId.VideoId);
+                var response = await request.ExecuteAsync();
+                response.Items.Select(x => x.Snippet.ResourceId.VideoId).AddTo(list);
+
+                return response.NextPageToken;
+            });
         }
 
         public void Dispose()
@@ -107,6 +139,33 @@ namespace Podsync.Services.Videos.YouTube
             const long ldBytesPerSecond = 100000;
 
             return totalSeconds * (definition == "hd" ? hdBytesPerSecond : ldBytesPerSecond);
+        }
+
+        private static async Task<ICollection<T>> AggregatePages<T>(int? totalCount, Func<List<T>, string, int, Task<string>> fetchPage)
+        {
+            var count = totalCount ?? MaxResults;
+            if (count <= 0 || count >= MaxResults * 4)
+            {
+                throw new ArgumentException("Invalid page count");
+            }
+
+            string currentPageToken = null;
+
+            var list = new List<T>(count);
+            while (list.Count < count)
+            {
+                var pageSize = Math.Min(MaxResults, count - list.Count);
+
+                var nextPageToken = await fetchPage(list, currentPageToken, pageSize);
+                if (nextPageToken == null)
+                {
+                    break;
+                }
+
+                currentPageToken = nextPageToken;
+            }
+
+            return list;
         }
 
         private Video ConvertVideo(Google.Apis.YouTube.v3.Data.Video item)
