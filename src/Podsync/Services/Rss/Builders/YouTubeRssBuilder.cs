@@ -29,6 +29,11 @@ namespace Podsync.Services.Rss.Builders
                 throw new ArgumentException("Invalid provider");
             }
 
+            if (metadata.PageSize == 0)
+            {
+                metadata.PageSize = Constants.DefaultPageSize;
+            }
+
             var linkType = metadata.LinkType;
 
             Channel channel;

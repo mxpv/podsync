@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Podsync.Services.Links;
+using Podsync.Services.Rss.Contracts;
 using Podsync.Services.Storage;
 
 namespace Podsync.Services.Rss.Builders
@@ -22,6 +23,6 @@ namespace Podsync.Services.Rss.Builders
             return await Query(metadata);
         }
 
-        public abstract Task<Contracts.Feed> Query(FeedMetadata metadata);
+        public abstract Task<Feed> Query(FeedMetadata metadata);
     }
 }

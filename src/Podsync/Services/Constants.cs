@@ -22,7 +22,9 @@ namespace Podsync.Services
         public static class Events
         {
             public const int RssError = 1;
+
             public const int YtdlError = 2;
+
             public const int UnhandledError = 3;
         }
     }
