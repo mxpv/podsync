@@ -4,19 +4,18 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
-using Podsync.Services.Rss.Feed.Internal;
 using Shared;
 
-namespace Podsync.Services.Rss.Feed
+namespace Podsync.Services.Rss.Contracts
 {
     [XmlRoot("rss")]
-    public class Rss : IXmlSerializable
+    public class Feed : IXmlSerializable
     {
         public const string Version = "2.0";
 
         public IEnumerable<Channel> Channels { get; set; }
 
-        public Rss()
+        public Feed()
         {
             Channels = Enumerable.Empty<Channel>();
         }
@@ -47,7 +46,7 @@ namespace Podsync.Services.Rss.Feed
 
         public override string ToString()
         {
-            var serializer = new XmlSerializer(typeof(Rss));
+            var serializer = new XmlSerializer(typeof(Feed));
 
             // Serialize feed to XML string
             using (var writer = new Utf8StringWriter())

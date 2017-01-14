@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Moq;
 using Podsync.Services.Links;
-using Podsync.Services.Rss;
+using Podsync.Services.Rss.Builders;
 using Podsync.Services.Storage;
 using Podsync.Services.Videos.Vimeo;
 using Xunit;

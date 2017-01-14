@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Podsync.Services.Links;
-using Podsync.Services.Rss.Feed;
+using Podsync.Services.Rss.Contracts;
 using Podsync.Services.Storage;
 using Podsync.Services.Videos.Vimeo;
 
-namespace Podsync.Services.Rss
+namespace Podsync.Services.Rss.Builders
 {
     // ReSharper disable once ClassNeverInstantiated.Global
     public class VimeoRssBuilder : RssBuilderBase
@@ -21,7 +21,7 @@ namespace Podsync.Services.Rss
 
         public override Provider Provider { get; } = Provider.Vimeo;
 
-        public override async Task<Feed.Rss> Query(FeedMetadata metadata)
+        public override async Task<Feed> Query(FeedMetadata metadata)
         {
             var linkType = metadata.LinkType;
 
@@ -54,7 +54,7 @@ namespace Podsync.Services.Rss
                 throw new NotSupportedException("URL type is not supported");
             }
 
-            var rss = new Feed.Rss
+            var rss = new Feed
             {
                 Channels = new[] { channel }
             };

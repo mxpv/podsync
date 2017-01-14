@@ -1,4 +1,4 @@
-﻿namespace Podsync.Services.Rss.Feed
+﻿namespace Podsync.Services.Rss.Contracts
 {
     public static class Namespaces
     {

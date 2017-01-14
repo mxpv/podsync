@@ -3,13 +3,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using Podsync.Services.Links;
 using Podsync.Services.Resolver;
-using Podsync.Services.Rss.Feed;
+using Podsync.Services.Rss.Contracts;
 using Podsync.Services.Storage;
 using Podsync.Services.Videos.YouTube;
-using Channel = Podsync.Services.Rss.Feed.Channel;
+using Channel = Podsync.Services.Rss.Contracts.Channel;
 using Video = Podsync.Services.Videos.YouTube.Video;
 
-namespace Podsync.Services.Rss
+namespace Podsync.Services.Rss.Builders
 {
     public class YouTubeRssBuilder : RssBuilderBase
     {
@@ -22,7 +22,7 @@ namespace Podsync.Services.Rss
 
         public override Provider Provider { get; } = Provider.YouTube;
 
-        public override async Task<Feed.Rss> Query(FeedMetadata metadata)
+        public override async Task<Feed> Query(FeedMetadata metadata)
         {
             if (metadata.Provider != Provider.YouTube)
             {
@@ -57,7 +57,7 @@ namespace Podsync.Services.Rss
 
             channel.Items = videos.Select(youtubeVideo => MakeItem(youtubeVideo, metadata)).ToArray();
 
-            var rss = new Feed.Rss
+            var rss = new Feed
             {
                 Channels = new[] { channel }
             };

@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 
-namespace Podsync.Services.Rss.Feed.Internal
+namespace Podsync.Services.Rss
 {
     public class Utf8StringWriter : StringWriter
     {

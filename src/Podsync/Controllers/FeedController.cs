@@ -10,7 +10,7 @@ using Podsync.Services;
 using Podsync.Services.Links;
 using Podsync.Services.Resolver;
 using Podsync.Services.Rss;
-using Podsync.Services.Rss.Feed;
+using Podsync.Services.Rss.Contracts;
 using Podsync.Services.Storage;
 using Shared;
 
@@ -26,15 +26,13 @@ namespace Podsync.Controllers
             ["audio/mp4"] = "m4a"
         };
 
-        private readonly IRssBuilder _rssBuilder;
         private readonly ILinkService _linkService;
-        private readonly IStorageService _storageService;
+        private readonly IFeedService _feedService;
 
-        public FeedController(IRssBuilder rssBuilder, ILinkService linkService, IStorageService storageService)
+        public FeedController(IRssBuilder rssBuilder, ILinkService linkService, IStorageService storageService, IFeedService feedService)
         {
-            _rssBuilder = rssBuilder;
             _linkService = linkService;
-            _storageService = storageService;
+            _feedService = feedService;
         }
 
         [HttpPost]
@@ -43,11 +41,6 @@ namespace Podsync.Controllers
         public async Task<Uri> Create([FromBody] CreateFeedRequest request)
         {
             var linkInfo = _linkService.Parse(new Uri(request.Url));
-
-            if (linkInfo.Provider != Provider.YouTube && request.Quality.HasValue && request.Quality.Value.IsAudio())
-            {
-                throw new ArgumentException("Only YouTube supports audio feeds");
-            }
 
             var feed = new FeedMetadata
             {
@@ -69,9 +62,7 @@ namespace Podsync.Controllers
                 feed.Quality = ResolveFormat.VideoHigh;
             }
 
-            feed.PageSize = Constants.DefaultPageSize;
-
-            var feedId = await _storageService.Save(feed);
+            var feedId = await _feedService.Create(feed);
             var url = _linkService.Feed(Request.GetBaseUrl(), feedId);
 
             return url;
@@ -82,11 +73,11 @@ namespace Podsync.Controllers
         [ValidateModelState]
         public async Task<IActionResult> Feed([Required] string feedId)
         {
-            Rss rss;
+            Feed feed;
 
             try
             {
-                rss = await _rssBuilder.Query(feedId);
+                feed = await _feedService.Get(feedId);
             }
             catch (KeyNotFoundException)
             {
@@ -98,16 +89,16 @@ namespace Podsync.Controllers
             // Set atom link to this feed
             // See https://validator.w3.org/feed/docs/warning/MissingAtomSelfLink.html
             var selfLink = new Uri(selfHost, Request.Path);
-            rss.Channels.ForEach(x => x.AtomLink = selfLink);
+            feed.Channels.ForEach(x => x.AtomLink = selfLink);
 
             // No magic here, just make download links to DownloadController.Download
-            rss.Channels.SelectMany(x => x.Items).ForEach(item =>
+            feed.Channels.SelectMany(x => x.Items).ForEach(item =>
             {
                 var ext = Extensions[item.ContentType];
                 item.DownloadLink = new Uri(selfHost, $"download/{feedId}/{item.Id}.{ext}");
             });
 
-            return Content(rss.ToString(), "application/rss+xml; charset=UTF-8");
+            return Content(feed.ToString(), "application/rss+xml; charset=UTF-8");
         }
     }
 }

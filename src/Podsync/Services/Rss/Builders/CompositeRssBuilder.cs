@@ -9,7 +9,7 @@ using Podsync.Services.Links;
 using Podsync.Services.Storage;
 using Shared;
 
-namespace Podsync.Services.Rss
+namespace Podsync.Services.Rss.Builders
 {
     // ReSharper disable once ClassNeverInstantiated.Global
     public class CompositeRssBuilder : RssBuilderBase
@@ -34,7 +34,7 @@ namespace Podsync.Services.Rss
             get { throw new NotSupportedException(); }
         }
 
-        public override Task<Feed.Rss> Query(FeedMetadata feed)
+        public override Task<Contracts.Feed> Query(FeedMetadata feed)
         {
             try
             {

@@ -15,6 +15,7 @@ using Podsync.Services.Links;
 using Podsync.Services.Patreon;
 using Podsync.Services.Resolver;
 using Podsync.Services.Rss;
+using Podsync.Services.Rss.Builders;
 using Podsync.Services.Storage;
 using Podsync.Services.Videos.Vimeo;
 using Podsync.Services.Videos.YouTube;
@@ -55,6 +56,7 @@ namespace Podsync
             services.AddSingleton<IStorageService, RedisStorage>();
             services.AddSingleton<IRssBuilder, CompositeRssBuilder>();
             services.AddSingleton<IPatreonApi, PatreonApi>();
+            services.AddSingleton<IFeedService, FeedService>();
 
             // Add authentication services
             services.AddAuthentication(config => config.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme);

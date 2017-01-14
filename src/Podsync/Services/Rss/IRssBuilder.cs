@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Podsync.Services.Links;
+using Podsync.Services.Rss.Contracts;
 using Podsync.Services.Storage;
 
 namespace Podsync.Services.Rss
@@ -8,8 +9,8 @@ namespace Podsync.Services.Rss
     {
         Provider Provider { get; }
 
-        Task<Feed.Rss> Query(string feedId);
+        Task<Feed> Query(string feedId);
 
-        Task<Feed.Rss> Query(FeedMetadata metadata);
+        Task<Feed> Query(FeedMetadata metadata);
     }
 }

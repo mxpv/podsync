@@ -2,7 +2,7 @@
 using Podsync.Services.Links;
 using Podsync.Services.Storage;
 
-namespace Podsync.Services.Rss
+namespace Podsync.Services.Rss.Builders
 {
     public abstract class RssBuilderBase : IRssBuilder
     {
@@ -15,13 +15,13 @@ namespace Podsync.Services.Rss
 
         public abstract Provider Provider { get; }
 
-        public async Task<Feed.Rss> Query(string feedId)
+        public async Task<Contracts.Feed> Query(string feedId)
         {
             var metadata = await _storageService.Load(feedId);
 
             return await Query(metadata);
         }
 
-        public abstract Task<Feed.Rss> Query(FeedMetadata metadata);
+        public abstract Task<Contracts.Feed> Query(FeedMetadata metadata);
     }
 }
