@@ -71,17 +71,18 @@ namespace Podsync.Services.Videos.YouTube
         {
             var request = _youtube.Videos.List("id,snippet,contentDetails");
 
-            request.Id = query.Id;
+            var totalCount = query.Ids.Count;
+            var pageIndex = 0;
 
-            return AggregatePages<Video>(query.Count, async (list, token, pageSize) =>
+            return AggregatePages<Video>(totalCount, async (list, token, pageSize) =>
             {
-                request.MaxResults = pageSize;
-                request.PageToken = token;
+                request.Id = string.Join(",", query.Ids.Skip(pageIndex * MaxResults).Take(pageSize));
+                pageIndex++;
 
                 var response = await request.ExecuteAsync();
                 response.Items.Select(ConvertVideo).AddTo(list);
 
-                return response.NextPageToken;
+                return list.Count == totalCount ? null : true.ToString();
             });
         }
 

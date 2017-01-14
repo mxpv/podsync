@@ -50,10 +50,10 @@ namespace Podsync.Services.Rss.Builders
             }
 
             // Get video ids from this playlist
-            var ids = await _youTube.GetPlaylistItemIds(new PlaylistItemsQuery { PlaylistId = channel.Guid });
+            var ids = await _youTube.GetPlaylistItemIds(new PlaylistItemsQuery { PlaylistId = channel.Guid, Count = metadata.PageSize });
 
             // Get video descriptions
-            var videos = await _youTube.GetVideos(new VideoQuery { Id = string.Join(",", ids) });
+            var videos = await _youTube.GetVideos(new VideoQuery { Ids = ids });
 
             channel.Items = videos.Select(youtubeVideo => MakeItem(youtubeVideo, metadata)).ToArray();
 

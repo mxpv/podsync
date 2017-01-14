@@ -1,9 +1,9 @@
-﻿namespace Podsync.Services.Videos.YouTube
+﻿using System.Collections.Generic;
+
+namespace Podsync.Services.Videos.YouTube
 {
     public struct VideoQuery
     {
-        public string Id { get; set; }
-
-        public int? Count { get; set; }
+        public ICollection<string> Ids { get; set; }
     }
 }

@@ -52,26 +52,29 @@ $(function () {
         Tooltips
     */
 
-    $(document).on('mouseenter', 'i', function() {
-        var title = $(this).attr('title');
-        if (!title) {
-            return;
-        }
-        $(this).data('tipText', title).removeAttr('title');
-        $('<p class="tooltip"></p>').text(title).appendTo('body').fadeIn('fast');
-    });
+    if (!isMobile()) {
+        $(document).on('mouseenter', 'i', function () {
+            var title = $(this).attr('title');
+            if (!title) {
+                return;
+            }
 
-    $(document).on('mouseleave', 'i', function() {
-        var text = $(this).data('tipText');
-        $(this).attr('title', text);
-        $('.tooltip').remove();
-    });
+            $(this).data('tipText', title).removeAttr('title');
+            $('<p class="tooltip"></p>').text(title).appendTo('body').fadeIn('fast');
+        });
 
-    $(document).on('mousemove', 'i', function(e) {
-        var x = e.pageX + 10;
-        var y = e.pageY + 5;
-        $('.tooltip').css({ top: y, left: x });
-    });
+        $(document).on('mouseleave', 'i', function () {
+            var text = $(this).data('tipText');
+            $(this).attr('title', text);
+            $('.tooltip').remove();
+        });
+
+        $(document).on('mousemove', 'i', function (e) {
+            var x = e.pageX + 10;
+            var y = e.pageY + 5;
+            $('.tooltip').css({ top: y, left: x });
+        });
+    }
 
     /*
         Control panel
@@ -111,6 +114,28 @@ $(function () {
             return isWorst ? 'VideoLow' : 'VideoHigh';
         }
     }
+
+    function pageSwitch(evt) {
+        if (isLocked()) {
+            return;
+        }
+
+        $('#page-controls > a').removeClass('selected-option');
+        $(evt.target).addClass('selected-option');
+
+        getPageCount();
+    }
+
+    function getPageCount() {
+        try {
+            var text = $('#page-controls > a.selected-option').text();
+            return parseInt(text);
+        } catch (e) {
+            return 50;
+        }
+    }
+
+    $('#page-controls > a').click(pageSwitch);
 
     /* Modal */
 
@@ -156,13 +181,21 @@ $(function () {
         }
     }
 
+    $('body').on('keydown', function (e) {
+        // ESC
+        if ($('#modal').is(':visible') && e.keyCode === 27) {
+            $('#close-modal').click();
+        }
+        e.stopPropagation();
+    });
+
     /*
         Attach handlers
     */
 
     $('#get-link').click(function(e) {
         var url = $('#url-input').val();
-        createFeed({ url: url, quality: getQuality() }, displayLink);
+        createFeed({ url: url, quality: getQuality(), pageSize: getPageCount() }, displayLink);
         e.preventDefault();
     });
 
@@ -175,19 +208,11 @@ $(function () {
 
     $('#video-format, #audio-format').click(formatSwith);
     $('#best-quality, #worst-quality').click(qualitySwitch);
-
+    
     $('#close-modal').click(closeModal);
     $('#modal-copy').click(copyLink);
 
     if (!canCopy()) {
         $('#modal-copy').hide();
     }
-
-    $('body').on('keydown', function (e) {
-        // ESC
-        if ($('#modal').is(':visible') && e.keyCode === 27) {
-            $('#close-modal').click();
-        }
-        e.stopPropagation();
-    });
 });

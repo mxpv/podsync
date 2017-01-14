@@ -24,8 +24,6 @@ namespace Podsync.Services.Rss
                 throw new ArgumentException("Only YouTube supports audio feeds");
             }
 
-            metadata.PageSize = Constants.DefaultPageSize;
-
             return _storageService.Save(metadata);
         }
 

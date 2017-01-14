@@ -89,11 +89,10 @@ namespace Podsync.Tests.Services.Videos.YouTube
         {
             var query = new VideoQuery
             {
-                Id = "OlYH4gDi0Sk,kkcKnWrCZ7k"
+                Ids = new[] { "OlYH4gDi0Sk,kkcKnWrCZ7k" }
             };
 
-            var response = await _client.GetVideos(query);
-            var list = response as IList<Video> ?? response.ToList();
+            var list = await _client.GetVideos(query);
 
             Assert.Equal(2, list.Count);
 

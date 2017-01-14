@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 using Podsync.Helpers;
 using Podsync.Services;
 using Podsync.Services.Links;
-using Podsync.Services.Resolver;
 using Podsync.Services.Rss;
 using Podsync.Services.Rss.Contracts;
 using Podsync.Services.Storage;
@@ -47,7 +46,7 @@ namespace Podsync.Controllers
                 Provider = linkInfo.Provider,
                 LinkType = linkInfo.LinkType,
                 Id = linkInfo.Id,
-                Quality = request.Quality ?? ResolveFormat.VideoHigh,
+                Quality = request.Quality ?? Constants.DefaultFormat,
                 PageSize = request.PageSize ?? Constants.DefaultPageSize
             };
 
@@ -59,7 +58,8 @@ namespace Podsync.Controllers
             }
             else
             {
-                feed.Quality = ResolveFormat.VideoHigh;
+                feed.Quality = Constants.DefaultFormat;
+                feed.PageSize = Constants.DefaultPageSize;
             }
 
             var feedId = await _feedService.Create(feed);

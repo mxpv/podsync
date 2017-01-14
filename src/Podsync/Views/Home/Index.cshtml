@@ -54,15 +54,16 @@
                        aria-hidden="true"
                        title="This features are available for patrons only. You may support us and unlock this features"></i>
                 }
+                
+                <span class="@(!enableFeatures ? "locked" : "")">
+                    <span id="control-panel">
+                        Selected format <a class="selected-option" id="video-format">video</a> <a id="audio-format">audio</a>,
+                        quality <a class="selected-option" id="best-quality">best</a> <a id="worst-quality">worst</a>,
+                    </span>
 
-                <span id="control-panel" class="@(!enableFeatures ? "locked" : "")">
-                    Selected format <a class="selected-option" id="video-format">video</a> <a id="audio-format">audio</a>,
-                    quality <a class="selected-option" id="best-quality">best</a> <a id="worst-quality">worst</a>,
-                </span>
-
-                <span class="locked" style="text-decoration: line-through">
-                    <i class="fa fa-question-circle master-tooltip" title="Still under development. We will keep you updated via Patreon's news feed" aria-hidden="true"></i>
-                    episode count <a class="selected-option">50</a> <a>100</a> <a>150</a>
+                    <span id="page-controls">
+                        episode count <a class="selected-option">50</a> <a>100</a> <a>150</a>
+                    </span>
                 </span>
             </p>
         </div>
