@@ -79,7 +79,11 @@ namespace Podsync.Services.Videos.Vimeo
             {
                 var pageSize = Math.Min(count, MaxPageSize);
 
-                await GetPage(path, pageIndex, pageSize, collection);
+                var isLast = await GetPage(path, pageIndex, pageSize, collection);
+                if (isLast)
+                {
+                    break;
+                }
 
                 count -= pageSize;
                 pageIndex++;
@@ -88,7 +92,7 @@ namespace Podsync.Services.Videos.Vimeo
             return collection;
         }
 
-        private async Task GetPage(string path, int pageIndex, int pageSize, List<Video> output)
+        private async Task<bool> GetPage(string path, int pageIndex, int pageSize, List<Video> output)
         {
             dynamic resp = await QueryApi($"{path}?per_page={pageSize}&page={pageIndex}");
 
@@ -120,6 +124,9 @@ namespace Podsync.Services.Videos.Vimeo
 
                 output.Add(video);
             }
+
+            // Is last page?
+            return string.IsNullOrEmpty(resp.paging?.next?.ToString());
         }
 
         private async Task<Group> QueryGroup(string path)

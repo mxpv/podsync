@@ -58,6 +58,12 @@ namespace Podsync.Tests.Services.Videos.Vimeo
         }
 
         [Fact]
+        public Task PaginationTest()
+        {
+            return _client.GroupVideos("scifilondon48hr2012", 300);
+        }
+
+        [Fact]
         public async Task UserVideosTest()
         {
             var videos = await _client.UserVideos("motionarray", 7);
