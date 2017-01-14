@@ -4,7 +4,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using System.Xml.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Podsync.Helpers;
 using Podsync.Services;
@@ -12,7 +11,6 @@ using Podsync.Services.Links;
 using Podsync.Services.Resolver;
 using Podsync.Services.Rss;
 using Podsync.Services.Rss.Feed;
-using Podsync.Services.Rss.Feed.Internal;
 using Podsync.Services.Storage;
 using Shared;
 
@@ -27,8 +25,6 @@ namespace Podsync.Controllers
             ["video/mp4"] = "mp4",
             ["audio/mp4"] = "m4a"
         };
-
-        private readonly XmlSerializer _serializer = new XmlSerializer(typeof(Rss));
 
         private readonly IRssBuilder _rssBuilder;
         private readonly ILinkService _linkService;
@@ -111,15 +107,7 @@ namespace Podsync.Controllers
                 item.DownloadLink = new Uri(selfHost, $"download/{feedId}/{item.Id}.{ext}");
             });
 
-            // Serialize feed to string
-            string body;
-            using (var writer = new Utf8StringWriter())
-            {
-                _serializer.Serialize(writer, rss);
-                body = writer.ToString();
-            }
-
-            return Content(body, "application/rss+xml; charset=UTF-8");
+            return Content(rss.ToString(), "application/rss+xml; charset=UTF-8");
         }
     }
 }

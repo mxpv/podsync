@@ -4,6 +4,7 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
+using Podsync.Services.Rss.Feed.Internal;
 using Shared;
 
 namespace Podsync.Services.Rss.Feed
@@ -42,6 +43,18 @@ namespace Podsync.Services.Rss.Feed
 
             var serializer = new XmlSerializer(typeof(Channel));
             Channels.ForEach(channel => serializer.Serialize(writer, channel));
+        }
+
+        public override string ToString()
+        {
+            var serializer = new XmlSerializer(typeof(Rss));
+
+            // Serialize feed to XML string
+            using (var writer = new Utf8StringWriter())
+            {
+                serializer.Serialize(writer, this);
+                return writer.ToString();
+            }
         }
     }
 }
