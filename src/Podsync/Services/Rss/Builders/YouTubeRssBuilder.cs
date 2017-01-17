@@ -54,6 +54,11 @@ namespace Podsync.Services.Rss.Builders
                 throw new NotSupportedException("URL type is not supported");
             }
 
+            if (channel == null)
+            {
+                throw new ArgumentException("Invalid channel or playlist id");
+            }
+
             // Get video ids from this playlist
             var ids = await _youTube.GetPlaylistItemIds(new PlaylistItemsQuery { PlaylistId = channel.Guid, Count = metadata.PageSize });
 
@@ -73,7 +78,11 @@ namespace Podsync.Services.Rss.Builders
         private async Task<Channel> GetChannel(ChannelQuery query)
         {
             var list = await _youTube.GetChannels(query);
-            var item = list.Single();
+            var item = list.FirstOrDefault();
+            if (item == null)
+            {
+                return null;
+            }
 
             var channel = MakeChannel(item);
             channel.Guid = item.PlaylistId;
@@ -84,7 +93,11 @@ namespace Podsync.Services.Rss.Builders
         private async Task<Channel> GetPlaylist(string playlistId)
         {
             var list = await _youTube.GetPlaylists(new PlaylistQuery { PlaylistId = playlistId });
-            var item = list.Single();
+            var item = list.FirstOrDefault();
+            if (item == null)
+            {
+                return null;
+            }
 
             var channel = MakeChannel(item);
             channel.Guid = item.PlaylistId;
