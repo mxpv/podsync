@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using Podsync.Services.Rss.Contracts;
 using Podsync.Services.Storage;
 
 namespace Podsync.Services.Rss
@@ -7,6 +9,8 @@ namespace Podsync.Services.Rss
     {
         Task<string> Create(FeedMetadata metadata);
 
-        Task<Contracts.Feed> Get(string id);
+        Task<Feed> Get(string id);
+
+        Task<string> Get(string id, Action<string, Feed> fixup);
     }
 }
