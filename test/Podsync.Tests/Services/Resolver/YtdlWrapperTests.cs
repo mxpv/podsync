@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Podsync.Services;
 using Podsync.Services.Resolver;
 using Podsync.Services.Storage;
 using Xunit;
@@ -30,8 +31,8 @@ namespace Podsync.Tests.Services.Resolver
             var videoUrl = new Uri(url);
             var downloadUrl = await _resolver.Resolve(videoUrl);
 
-            _storage.Verify(x => x.GetCached("video_urls", videoUrl.GetHashCode().ToString()), Times.Once);
-            _storage.Verify(x => x.Cache("video_urls", videoUrl.GetHashCode().ToString(), It.IsAny<string>(), It.IsAny<TimeSpan>()), Times.Once);
+            _storage.Verify(x => x.GetCached(Constants.Cache.VideosPrefix, videoUrl.GetHashCode().ToString()), Times.Once);
+            _storage.Verify(x => x.Cache(Constants.Cache.VideosPrefix, videoUrl.GetHashCode().ToString(), It.IsAny<string>(), It.IsAny<TimeSpan>()), Times.Once);
 
             Assert.NotEqual(downloadUrl, videoUrl);
             Assert.True(downloadUrl.IsAbsoluteUri);

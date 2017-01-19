@@ -6,8 +6,6 @@ namespace Podsync.Services.Resolver
 {
     public abstract class CachedResolver : IResolverService
     {
-        private const string CachePrefix = "video_urls";
-
         private readonly TimeSpan UrlExpiration = TimeSpan.FromHours(3);
         private readonly IStorageService _storageService;
 
@@ -23,7 +21,7 @@ namespace Podsync.Services.Resolver
             var id = videoUrl.GetHashCode().ToString();
 
             // Check if this video URL was resolved within last 3 hours
-            var value = await _storageService.GetCached(CachePrefix, id);
+            var value = await _storageService.GetCached(Constants.Cache.VideosPrefix, id);
             if (!string.IsNullOrWhiteSpace(value))
             {
                 return new Uri(value);
@@ -31,7 +29,7 @@ namespace Podsync.Services.Resolver
 
             // Resolve and save to cache
             var uri = await ResolveInternal(videoUrl, format);
-            await _storageService.Cache(CachePrefix, id, uri.ToString(), UrlExpiration);
+            await _storageService.Cache(Constants.Cache.VideosPrefix, id, uri.ToString(), UrlExpiration);
 
             return uri;
         }

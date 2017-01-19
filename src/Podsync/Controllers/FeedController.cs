@@ -27,11 +27,13 @@ namespace Podsync.Controllers
 
         private readonly ILinkService _linkService;
         private readonly IFeedService _feedService;
+        private readonly IStorageService _storageService;
 
-        public FeedController(IRssBuilder rssBuilder, ILinkService linkService, IStorageService storageService, IFeedService feedService)
+        public FeedController(IRssBuilder rssBuilder, ILinkService linkService, IStorageService storageService, IFeedService feedService, IStorageService storageService1)
         {
             _linkService = linkService;
             _feedService = feedService;
+            _storageService = storageService1;
         }
 
         [HttpPost]
@@ -73,32 +75,41 @@ namespace Podsync.Controllers
         [ValidateModelState]
         public async Task<IActionResult> Feed([Required] string feedId)
         {
-            Feed feed;
+            var serializedFeed = await _storageService.GetCached(Constants.Cache.FeedsPrefix, feedId);
 
-            try
+            if (string.IsNullOrEmpty(serializedFeed))
             {
-                feed = await _feedService.Get(feedId);
+                Feed feed;
+
+                try
+                {
+                    feed = await _feedService.Get(feedId);
+                }
+                catch (KeyNotFoundException)
+                {
+                    return NotFound($"ERROR: No feed with id {feedId}");
+                }
+
+                var selfHost = Request.GetBaseUrl();
+
+                // Set atom link to this feed
+                // See https://validator.w3.org/feed/docs/warning/MissingAtomSelfLink.html
+                var selfLink = new Uri(selfHost, Request.Path);
+                feed.Channels.ForEach(x => x.AtomLink = selfLink);
+
+                // No magic here, just make download links to DownloadController.Download
+                feed.Channels.SelectMany(x => x.Items).ForEach(item =>
+                {
+                    var ext = Extensions[item.ContentType];
+                    item.DownloadLink = new Uri(selfHost, $"download/{feedId}/{item.Id}.{ext}");
+                });
+
+                serializedFeed = feed.ToString();
+
+                await _storageService.Cache(Constants.Cache.FeedsPrefix, feedId, serializedFeed, TimeSpan.FromMinutes(3));
             }
-            catch (KeyNotFoundException)
-            {
-                return NotFound($"ERROR: No feed with id {feedId}");
-            }
 
-            var selfHost = Request.GetBaseUrl();
-
-            // Set atom link to this feed
-            // See https://validator.w3.org/feed/docs/warning/MissingAtomSelfLink.html
-            var selfLink = new Uri(selfHost, Request.Path);
-            feed.Channels.ForEach(x => x.AtomLink = selfLink);
-
-            // No magic here, just make download links to DownloadController.Download
-            feed.Channels.SelectMany(x => x.Items).ForEach(item =>
-            {
-                var ext = Extensions[item.ContentType];
-                item.DownloadLink = new Uri(selfHost, $"download/{feedId}/{item.Id}.{ext}");
-            });
-
-            return Content(feed.ToString(), "application/rss+xml; charset=UTF-8");
+            return Content(serializedFeed, "application/rss+xml; charset=UTF-8");
         }
     }
 }

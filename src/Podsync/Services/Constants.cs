@@ -27,5 +27,12 @@ namespace Podsync.Services
 
             public const int UnhandledError = 3;
         }
+
+        public static class Cache
+        {
+            public const string VideosPrefix = "video_urls";
+
+            public const string FeedsPrefix = "feeds";
+        }
     }
 }
