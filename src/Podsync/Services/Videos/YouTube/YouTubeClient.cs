@@ -77,6 +77,11 @@ namespace Podsync.Services.Videos.YouTube
             return AggregatePages<Video>(totalCount, async (list, token, pageSize) =>
             {
                 request.Id = string.Join(",", query.Ids.Skip(pageIndex * MaxResults).Take(pageSize));
+                if (string.IsNullOrEmpty(request.Id))
+                {
+                    return null;
+                }
+
                 pageIndex++;
 
                 var response = await request.ExecuteAsync();
@@ -145,25 +150,18 @@ namespace Podsync.Services.Videos.YouTube
         private static async Task<ICollection<T>> AggregatePages<T>(int? totalCount, Func<List<T>, string, int, Task<string>> fetchPage)
         {
             var count = totalCount ?? MaxResults;
-            if (count <= 0 || count >= MaxResults * 4)
+            if (count <= 0)
             {
                 throw new ArgumentException("Invalid page count");
             }
 
-            string currentPageToken = null;
+            var token = string.Empty;
 
             var list = new List<T>(count);
-            while (list.Count < count)
+            while (token != null && list.Count < count)
             {
                 var pageSize = Math.Min(MaxResults, count - list.Count);
-
-                var nextPageToken = await fetchPage(list, currentPageToken, pageSize);
-                if (nextPageToken == null)
-                {
-                    break;
-                }
-
-                currentPageToken = nextPageToken;
+                token = await fetchPage(list, token, pageSize);
             }
 
             return list;
