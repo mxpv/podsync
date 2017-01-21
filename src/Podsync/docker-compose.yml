@@ -6,12 +6,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        - PORT=80
     restart: always
     ports:
-      - 80:80
+      - 5001
     environment:
+      - ASPNETCORE_URLS=http://*:5001
       - Podsync:RedisConnectionString=redis
     env_file:
       - ~/podsync.env
@@ -21,3 +20,10 @@ services:
     restart: always
     volumes:
       - /data/redis:/data
+  nginx:
+    image: nginx
+    restart: always
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf

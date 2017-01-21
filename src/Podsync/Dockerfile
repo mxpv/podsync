@@ -1,12 +1,8 @@
 ﻿FROM microsoft/aspnetcore:1.0.3
 
-ARG PORT=56247
 ARG PUBLISH_DIR="bin/Publish"
 
 WORKDIR /app
-
-ENV ASPNETCORE_URLS http://+:$PORT
-EXPOSE $PORT
 
 COPY $PUBLISH_DIR .
 
