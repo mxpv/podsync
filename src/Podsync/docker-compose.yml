@@ -15,13 +15,9 @@ services:
       - Podsync:RedisConnectionString=redis
     env_file:
       - ~/podsync.env
-    logging:
-      driver: syslog
   redis:
     image: redis
     command: redis-server --appendonly yes
     restart: always
     volumes:
       - /data/redis:/data
-    logging:
-      driver: syslog
