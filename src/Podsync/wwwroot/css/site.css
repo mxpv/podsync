@@ -13,7 +13,7 @@ a {
 }
 
 .background-image {
-    background-image: url('../img/pc_bg.png');
+    background-image: url('/img/pc_bg.png');
     -ms-background-repeat: repeat-x;
     background-repeat: repeat-x;
     -ms-background-position: center bottom;
@@ -32,7 +32,7 @@ a {
 /* Footer */
 
 .footer {
-    background-image: url('../img/pc_footer.png');
+    background-image: url('/img/pc_footer.png');
     -ms-background-repeat: space;
     background-repeat: space;
     -ms-background-position: center bottom;
@@ -180,7 +180,7 @@ a {
 .man {
     width: 210px;
     height: 333px;
-    background-image: url('../img/man.png');
+    background-image: url('/img/man.png');
     -ms-background-repeat: no-repeat;
     background-repeat: no-repeat;
     -ms-background-position: center bottom;
@@ -267,11 +267,11 @@ a {
 
 @media screen and (max-width: 640px) {
     .background-image {
-        background-image: url('../img/mobile_bg.png')
+        background-image: url('/img/mobile_bg.png')
     }
 
     .footer {
-        background-image: url('../img/mobile_footer.png');
+        background-image: url('/img/mobile_footer.png');
         height: 50px;
     }
 
