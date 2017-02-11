@@ -2,9 +2,9 @@
 
 services:
   app:
-    image: podsync
+    image: podsync/app
     build:
-      context: .
+      context: ./Podsync
       dockerfile: Dockerfile
     restart: always
     ports:
@@ -12,8 +12,17 @@ services:
     environment:
       - ASPNETCORE_URLS=http://*:5001
       - Podsync:RedisConnectionString=redis
+      - Podsync:RemoteResolverUrl=http://ytdl:8080
     env_file:
       - ~/podsync.env
+  ytdl:
+    image: podsync/ytdl
+    build:
+      context: ./ytdl
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - 8080
   redis:
     image: redis
     command: redis-server --appendonly yes

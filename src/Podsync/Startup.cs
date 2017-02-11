@@ -53,7 +53,7 @@ namespace Podsync
             services.AddSingleton<ILinkService, LinkService>();
             services.AddSingleton<IYouTubeClient, YouTubeClient>();
             services.AddSingleton<IVimeoClient, VimeoClient>();
-            services.AddSingleton<IResolverService, YtdlWrapper>();
+            services.AddSingleton<IResolverService, RemoteResolver>();
             services.AddSingleton<IStorageService, RedisStorage>();
             services.AddSingleton<IRssBuilder, CompositeRssBuilder>();
             services.AddSingleton<IPatreonApi, PatreonApi>();

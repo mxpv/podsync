@@ -15,5 +15,7 @@ namespace Podsync.Services
         public string PatreonSecret { get; set; }
 
         public Tokens CreatorTokens { get; set; }
+
+        public string RemoteResolverUrl { get; set; }
     }
 }
