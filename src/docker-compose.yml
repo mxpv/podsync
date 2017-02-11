@@ -3,6 +3,7 @@
 services:
   app:
     image: podsync/app
+    container_name: app
     build:
       context: ./Podsync
       dockerfile: Dockerfile
@@ -17,6 +18,7 @@ services:
       - ~/podsync.env
   ytdl:
     image: podsync/ytdl
+    container_name: ytdl
     build:
       context: ./ytdl
       dockerfile: Dockerfile
@@ -25,11 +27,13 @@ services:
       - 8080
   redis:
     image: redis
+    container_name: redis
     command: redis-server --appendonly yes
     restart: always
     volumes:
       - /data/redis:/data
   nginx:
+    container_name: nginx
     build:
       context: ./nginx
       dockerfile: Dockerfile
