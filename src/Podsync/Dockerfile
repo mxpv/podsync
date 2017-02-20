@@ -1,4 +1,4 @@
-﻿FROM microsoft/aspnetcore:1.1.0-runtime
+﻿FROM microsoft/aspnetcore:1.1.0
 
 ARG PUBLISH_DIR="bin/Publish"
 
