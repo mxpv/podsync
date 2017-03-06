@@ -1,4 +1,5 @@
 import youtube_dl
+from youtube_dl.utils import DownloadError
 from sanic import Sanic
 from sanic.exceptions import InvalidUsage
 from sanic.response import text
@@ -42,9 +43,13 @@ async def youtube(request):
     if fmt:
         opts.update(format=fmt)
 
-    with youtube_dl.YoutubeDL(opts) as ytdl:
-        info = ytdl.extract_info(url, download=False)
-        return text(info['url'])
+    try:
+        with youtube_dl.YoutubeDL(opts) as ytdl:
+            info = ytdl.extract_info(url, download=False)
+            return text(info['url'])
+    except DownloadError as e:
+        msg = str(e)
+        return text(msg, status=511)
 
 
 def _choose_format(quality, url):

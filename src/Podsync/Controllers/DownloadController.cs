@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Podsync.Helpers;
@@ -45,8 +46,8 @@ namespace Podsync.Controllers
             }
             catch (Exception ex)
             {
-                var response = "Could nou resolve URL";
-                if (ex is InvalidOperationException)
+                var response = "Could not resolve URL";
+                if (ex is InvalidOperationException || ex is HttpRequestException)
                 {
                     response = ex.Message;
                 }

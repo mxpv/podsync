@@ -24,8 +24,19 @@ namespace Podsync.Services.Resolver
 
         protected override async Task<Uri> ResolveInternal(Uri videoUrl, ResolveFormat format)
         {
-            var response = await _client.GetStringAsync($"/resolve?url={videoUrl}&quality={format}");
-            return new Uri(response);
+            using(var response = await _client.GetAsync($"/resolve?url={videoUrl}&quality={format}"))
+            {
+                using(response.Content)
+                {
+                    var body = await response.Content.ReadAsStringAsync();
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new HttpRequestException(body);
+                    }
+
+                    return new Uri(body);
+                }
+            }
         }
     }
 }
