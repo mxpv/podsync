@@ -5,13 +5,14 @@ services:
     image: podsync/app
     container_name: app
     build:
-      context: ./Podsync
+      context: ./src/Podsync
       dockerfile: Dockerfile
     restart: always
     ports:
       - 5001
     environment:
       - ASPNETCORE_URLS=http://*:5001
+      - ASPNETCORE_ENVIRONMENT=Production
       - Podsync:RedisConnectionString=redis
       - Podsync:RemoteResolverUrl=http://ytdl:8080
     env_file:
@@ -20,7 +21,7 @@ services:
     image: podsync/ytdl
     container_name: ytdl
     build:
-      context: ./ytdl
+      context: ./src/ytdl
       dockerfile: Dockerfile
     restart: always
     ports:
@@ -35,7 +36,7 @@ services:
   nginx:
     container_name: nginx
     build:
-      context: ./nginx
+      context: ./src/nginx
       dockerfile: Dockerfile
     restart: always
     ports:
