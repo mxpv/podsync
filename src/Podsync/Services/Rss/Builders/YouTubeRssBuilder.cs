@@ -13,6 +13,8 @@ namespace Podsync.Services.Rss.Builders
 {
     public class YouTubeRssBuilder : RssBuilderBase
     {
+        private static readonly Item[] NoVideos = new Item[0];
+
         private readonly IYouTubeClient _youTube;
 
         public YouTubeRssBuilder(IYouTubeClient youTube, IStorageService storageService) : base(storageService)
@@ -59,13 +61,18 @@ namespace Podsync.Services.Rss.Builders
                 throw new ArgumentException("Invalid channel or playlist id");
             }
 
+            channel.Items = NoVideos;
+
             // Get video ids from this playlist
             var ids = await _youTube.GetPlaylistItemIds(new PlaylistItemsQuery { PlaylistId = channel.Guid, Count = metadata.PageSize });
 
-            // Get video descriptions
-            var videos = await _youTube.GetVideos(new VideoQuery { Ids = ids });
+            if (ids.Count > 0)
+            {
+                // Get video descriptions
+                var videos = await _youTube.GetVideos(new VideoQuery { Ids = ids });
 
-            channel.Items = videos.Select(youtubeVideo => MakeItem(youtubeVideo, metadata)).ToArray();
+                channel.Items = videos.Select(youtubeVideo => MakeItem(youtubeVideo, metadata)).ToArray();
+            }
 
             var rss = new Feed
             {
