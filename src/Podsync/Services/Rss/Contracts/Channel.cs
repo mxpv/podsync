@@ -2,7 +2,7 @@
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
-using Shared;
+using Podsync.Helpers;
 
 namespace Podsync.Services.Rss.Contracts
 {

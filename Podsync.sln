@@ -15,14 +15,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Podsync", "src\Podsync\Pods
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{D94416F2-31EA-4D38-A3D0-BB74180687D4}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{35F181BF-B2AD-42AB-BB11-DC66D57E6514}"
-	ProjectSection(SolutionItems) = preProject
-		src\Shared\EnumerableExtensions.cs = src\Shared\EnumerableExtensions.cs
-		src\Shared\ListExtensions.cs = src\Shared\ListExtensions.cs
-		src\Shared\ServiceProviderExtensions.cs = src\Shared\ServiceProviderExtensions.cs
-		src\Shared\StringExtensions.cs = src\Shared\StringExtensions.cs
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Podsync.Tests", "test\Podsync.Tests\Podsync.Tests.csproj", "{81ABAF5F-4CB6-42A6-8EAA-19EB9BAF66AA}"
 EndProject
 Global
@@ -65,7 +57,6 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C9283472-E95E-4517-AE3B-3E276B9851E4} = {3EF2294C-C807-46F3-B3F4-98B7F30688D0}
-		{35F181BF-B2AD-42AB-BB11-DC66D57E6514} = {3EF2294C-C807-46F3-B3F4-98B7F30688D0}
 		{81ABAF5F-4CB6-42A6-8EAA-19EB9BAF66AA} = {D94416F2-31EA-4D38-A3D0-BB74180687D4}
 	EndGlobalSection
 EndGlobal

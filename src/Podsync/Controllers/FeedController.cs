@@ -11,7 +11,6 @@ using Podsync.Services.Links;
 using Podsync.Services.Rss;
 using Podsync.Services.Rss.Contracts;
 using Podsync.Services.Storage;
-using Shared;
 
 namespace Podsync.Controllers
 {

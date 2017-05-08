@@ -7,8 +7,8 @@ using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
 using Microsoft.Extensions.Options;
+using Podsync.Helpers;
 using Podsync.Services.Links;
-using Shared;
 
 namespace Podsync.Services.Videos.YouTube
 {

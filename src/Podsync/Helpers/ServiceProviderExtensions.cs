@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Shared
+namespace Podsync.Helpers
 {
     internal static class ServiceProviderExtensions
     {

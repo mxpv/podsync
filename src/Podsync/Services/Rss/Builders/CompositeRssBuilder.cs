@@ -5,9 +5,9 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Podsync.Helpers;
 using Podsync.Services.Links;
 using Podsync.Services.Storage;
-using Shared;
 
 namespace Podsync.Services.Rss.Builders
 {
@@ -29,10 +29,7 @@ namespace Podsync.Services.Rss.Builders
             _builders = new ReadOnlyDictionary<Provider, IRssBuilder>(builders);
         }
 
-        public override Provider Provider
-        {
-            get { throw new NotSupportedException(); }
-        }
+        public override Provider Provider => throw new NotSupportedException();
 
         public override Task<Contracts.Feed> Query(FeedMetadata feed)
         {
