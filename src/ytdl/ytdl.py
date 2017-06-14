@@ -9,7 +9,7 @@ from datetime import timedelta
 
 app = Sanic()
 
-db = redis.from_url(os.getenv('REDIS_CONNECTION_STRING', 'localhost'))
+db = redis.from_url(os.getenv('REDIS_CONNECTION_STRING', 'redis://localhost:6379'))
 db.ping()
 
 default_opts = {
@@ -23,20 +23,20 @@ default_opts = {
 }
 
 youtube_quality = {
-    'VideoHigh': 'best[ext=mp4]',
-    'VideoLow': 'worst[ext=mp4]',
-    'AudioHigh': 'bestaudio[ext=m4a]/worstaudio[ext=m4a]',
-    'AudioLow': 'worstaudio[ext=m4a]/bestaudio[ext=m4a]'
+    'videohigh': 'best[ext=mp4]',
+    'videolow': 'worst[ext=mp4]',
+    'audiohigh': 'bestaudio[ext=m4a]/worstaudio[ext=m4a]',
+    'audiolow': 'worstaudio[ext=m4a]/bestaudio[ext=m4a]'
 }
 
 vimeo_quality = {
-    'VideoHigh': 'Original/http-1080p/http-720p/http-360p/http-270p',
-    'VideoLow': 'http-270p/http-360p/http-540p/http-720p/http-1080p'
+    'videohigh': 'Original/http-1080p/http-720p/http-360p/http-270p',
+    'videolow': 'http-270p/http-360p/http-540p/http-720p/http-1080p'
 }
 
 url_formats = {
-    b'YouTube': 'https://youtube.com/watch?v={}',
-    b'Vimeo': 'https://vimeo.com/{}',
+    'youtube': 'https://youtube.com/watch?v={}',
+    'vimeo': 'https://vimeo.com/{}',
 }
 
 
@@ -51,21 +51,23 @@ async def download(request, feed_id, video_id):
         raise InvalidUsage('Invalid video id')
 
     # Query redis
-    entries = db.hgetall(feed_id)
-    if not entries:
+    data = db.hgetall(feed_id)
+    if not data:
         raise NotFound('Feed not found')
 
     # Delete this feed if no requests within 90 days
     db.expire(feed_id, timedelta(days=90))
 
+    entries = {k.decode().lower(): v.decode().lower() for k, v in data.items()}
+
     # Build URL
-    provider = entries.get(b'Provider') or entries[b'provider']  # HACK: we have to keep backward compatibility :(
+    provider = entries.get('provider')
     tpl = url_formats[provider]
     if not tpl:
         raise InvalidUsage('Invalid feed')
 
     url = tpl.format(video_id)
-    quality = entries.get('quality', '')
+    quality = entries.get('quality')
 
     try:
         redirect_url = _resolve(url, quality)
@@ -80,7 +82,7 @@ def _resolve(url, quality):
         raise InvalidUsage('Invalid URL')
 
     if not quality:
-        quality = 'VideoHigh'
+        quality = 'videohigh'
 
     opts = default_opts.copy()
     fmt = _choose_format(quality, url)
