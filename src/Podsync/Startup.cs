@@ -76,7 +76,8 @@ namespace Podsync
             // See https://docs.microsoft.com/en-us/aspnet/core/publishing/linuxproduction
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
-                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+                RequireHeaderSymmetry = false,
             });
 
             if (env.IsDevelopment())
