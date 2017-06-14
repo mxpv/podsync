@@ -2,7 +2,9 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Podsync.Helpers;
+using Podsync.Services;
 using Podsync.Services.Links;
 using Podsync.Services.Resolver;
 using Podsync.Services.Storage;
@@ -16,12 +18,14 @@ namespace Podsync.Controllers
         private readonly IResolverService _resolverService;
         private readonly ILinkService _linkService;
         private readonly IStorageService _storageService;
+        private readonly ILogger<DownloadController> _logger;
 
-        public DownloadController(IResolverService resolverService, ILinkService linkService, IStorageService storageService)
+        public DownloadController(IResolverService resolverService, ILinkService linkService, IStorageService storageService, ILogger<DownloadController> logger)
         {
             _resolverService = resolverService;
             _linkService = linkService;
             _storageService = storageService;
+            _logger = logger;
         }
         
         // Main video download endpoint, don't forget to reflect any changes in LinkService.Download
@@ -46,6 +50,8 @@ namespace Podsync.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(Constants.Events.YtdlError, ex, $"Failed to resolve URL (feed: {feedId}, video id: {videoId}");
+
                 var response = "Could not resolve URL";
                 if (ex is InvalidOperationException || ex is HttpRequestException)
                 {
