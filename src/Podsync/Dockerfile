@@ -1,8 +1,13 @@
-﻿FROM microsoft/aspnetcore:1.1.1
+﻿FROM microsoft/aspnetcore-build AS build
+WORKDIR /workspace
+COPY . .
+RUN dotnet restore
+RUN dotnet publish --configuration release --output ./bin/
 
-ARG PUBLISH_DIR="bin/Publish"
-
+FROM microsoft/aspnetcore:1.1
+ENV ASPNETCORE_URLS http://*:8080
+ENV ASPNETCORE_ENVIRONMENT Production
 WORKDIR /app
-COPY $PUBLISH_DIR .
-
+COPY --from=build /workspace/bin/ .
+EXPOSE 8080
 ENTRYPOINT ["dotnet", "Podsync.dll"]
