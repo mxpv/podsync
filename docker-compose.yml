@@ -2,11 +2,8 @@
 
 services:
   app:
-    image: podsync/app
+    image: gcr.io/pod-sync/app:latest
     container_name: app
-    build:
-      context: ./src/Podsync
-      dockerfile: Dockerfile
     restart: always
     ports:
       - 5001
@@ -14,30 +11,31 @@ services:
       - ASPNETCORE_URLS=http://*:5001
       - ASPNETCORE_ENVIRONMENT=Production
       - Podsync:RedisConnectionString=redis
-      - Podsync:RemoteResolverUrl=http://ytdl:8080
-    env_file:
-      - ~/podsync.env
+      - Podsync:RemoteResolverUrl=http://ytdl:5002
+      - Podsync:YouTubeApiKey={YOUTUBE_API_KEY}
+      - Podsync:VimeoApiKey={VIMEO_API_KEY}
+      - Podsync:PatreonClientId={PATREON_CLIENT_ID}
+      - Podsync:PatreonSecret={PATREON_SECRET}
+      - Logging:LogLevel:Default=Information
+      - Logging:LogLevel:Microsoft=Warning
   ytdl:
-    image: podsync/ytdl
+    image: gcr.io/pod-sync/ytdl:latest
     container_name: ytdl
-    build:
-      context: ./src/ytdl
-      dockerfile: Dockerfile
     restart: always
     ports:
-      - 8080
+      - 5002
+    environment:
+      - REDIS_CONNECTION_STRING=redis://redis:6379/0
   redis:
     image: redis
     container_name: redis
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly no --save 900 1 --save 300 10 --save 60 10000
     restart: always
     volumes:
       - /data/redis:/data
   nginx:
+    image: gcr.io/pod-sync/nginx:latest
     container_name: nginx
-    build:
-      context: ./src/nginx
-      dockerfile: Dockerfile
     restart: always
     ports:
       - 80:80

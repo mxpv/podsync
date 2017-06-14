@@ -1,10 +1,16 @@
 import youtube_dl
+import redis
+import os
 from youtube_dl.utils import DownloadError
 from sanic import Sanic
-from sanic.exceptions import InvalidUsage
-from sanic.response import text
+from sanic.exceptions import InvalidUsage, NotFound
+from sanic.response import text, redirect
+from datetime import timedelta
 
 app = Sanic()
+
+db = redis.from_url(os.getenv('REDIS_CONNECTION_STRING', 'localhost'))
+db.ping()
 
 default_opts = {
     'quiet': True,
@@ -28,16 +34,55 @@ vimeo_quality = {
     'VideoLow': 'http-270p/http-360p/http-540p/http-720p/http-1080p'
 }
 
+url_formats = {
+    b'YouTube': 'https://youtube.com/watch?v={}',
+    b'Vimeo': 'https://vimeo.com/{}',
+}
 
-@app.route('/resolve')
-async def youtube(request):
-    url = request.args.get('url')
+
+@app.route('/download/<feed_id>/<video_id>', methods=['GET'])
+async def download(request, feed_id, video_id):
+    if not feed_id:
+        raise InvalidUsage('Invalid feed id')
+
+    # Remote extension and check if video id is ok
+    video_id = os.path.splitext(video_id)[0]
+    if not video_id:
+        raise InvalidUsage('Invalid video id')
+
+    # Query redis
+    entries = db.hgetall(feed_id)
+    if not entries:
+        raise NotFound('Feed not found')
+
+    # Delete this feed if no requests within 90 days
+    db.expire(feed_id, timedelta(days=90))
+
+    # Build URL
+    provider = entries.get(b'Provider') or entries[b'provider']  # HACK: we have to keep backward compatibility :(
+    tpl = url_formats[provider]
+    if not tpl:
+        raise InvalidUsage('Invalid feed')
+
+    url = tpl.format(video_id)
+    quality = entries.get('quality', '')
+
+    try:
+        redirect_url = _resolve(url, quality)
+        return redirect(redirect_url)
+    except DownloadError as e:
+        msg = str(e)
+        return text(msg, status=511)
+
+
+def _resolve(url, quality):
     if not url:
         raise InvalidUsage('Invalid URL')
 
-    opts = default_opts.copy()
+    if not quality:
+        quality = 'VideoHigh'
 
-    quality = request.args.get('quality', 'VideoHigh')
+    opts = default_opts.copy()
     fmt = _choose_format(quality, url)
 
     if fmt:
@@ -46,10 +91,12 @@ async def youtube(request):
     try:
         with youtube_dl.YoutubeDL(opts) as ytdl:
             info = ytdl.extract_info(url, download=False)
-            return text(info['url'])
-    except DownloadError as e:
-        msg = str(e)
-        return text(msg, status=511)
+            return info['url']
+    except DownloadError:
+        raise
+    except Exception as e:
+        print(e)
+        raise
 
 
 def _choose_format(quality, url):
@@ -63,4 +110,4 @@ def _choose_format(quality, url):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=5002)
