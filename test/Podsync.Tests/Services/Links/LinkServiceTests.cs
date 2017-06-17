@@ -18,6 +18,9 @@ namespace Podsync.Tests.Services.Links
         [InlineData("https://www.youtube.com/playlist?list=PLP8qlV2aurYqdhyXW9ErqUW9Fw9F_mheM", LinkType.Playlist, "PLP8qlV2aurYqdhyXW9ErqUW9Fw9F_mheM")]
         [InlineData("https://www.youtube.com/user/NEMAGIA/videos", LinkType.User, "NEMAGIA")]
         [InlineData("https://www.youtube.com/channel/UCrlakW-ewUT8sOod6Wmzyow/videos", LinkType.Channel, "UCrlakW-ewUT8sOod6Wmzyow")]
+        [InlineData("https://m.youtube.com/channel/UCrlakW-ewUT8sOod6Wmzyow/videos", LinkType.Channel, "UCrlakW-ewUT8sOod6Wmzyow")]
+        [InlineData("http://m.youtube.com/user/NEMAGIA/videos", LinkType.User, "NEMAGIA")]
+        [InlineData("http://m.youtube.com/playlist?list=PLCB9F975ECF01953C", LinkType.Playlist, "PLCB9F975ECF01953C")]
         public void ParseYoutubeLinks(string link, LinkType linkType, string id)
         {
             var info = _linkService.Parse(new Uri(link));

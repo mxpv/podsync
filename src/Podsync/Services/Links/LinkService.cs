@@ -35,7 +35,7 @@ namespace Podsync.Services.Links
             https://www.youtube.com/channel/UCrlakW-ewUT8sOod6Wmzyow/videos
          */
 
-        private static readonly Regex YouTubeRegex = new Regex(@"^(?:https?://)?(?:www\.)?(?:youtube.com/)(?<type>user|channel|playlist|watch)/?(?<id>[-\w]+)?", RegexOptions.Compiled);
+        private static readonly Regex YouTubeRegex = new Regex(@"^(?:https?://)?(?:www\.|m\.)?(?:youtube.com/)(?<type>user|channel|playlist|watch)/?(?<id>[-\w]+)?", RegexOptions.Compiled);
 
         /*
             Vimeo groups, channels and users
