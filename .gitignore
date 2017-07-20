@@ -256,3 +256,6 @@ src/Podsync/wwwroot/lib/
 src/Podsync/wwwroot/**/*.min.css
 src/Podsync/wwwroot/**/*.min.js
 src/Podsync/wwwroot/**/*.min.js.map
+
+
+Gopkg.lock
