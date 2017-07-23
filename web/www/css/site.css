@@ -1,0 +1,338 @@
+﻿@import url('https://fonts.googleapis.com/css?family=Ubuntu');
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Ubuntu', sans-serif;
+    background-color: #f4eddb;
+}
+
+a {
+    color: #EB8C11;
+    text-decoration: none;
+}
+
+.background-image {
+    background-image: url('/img/pc_bg.png');
+    -ms-background-repeat: repeat-x;
+    background-repeat: repeat-x;
+    -ms-background-position: center bottom;
+    background-position: center bottom;
+    position: absolute;
+    width: 100%;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    -webkit-user-select: text;
+    z-index: 0;
+}
+
+/* Footer */
+
+.footer {
+    background-image: url('/img/pc_footer.png');
+    -ms-background-repeat: space;
+    background-repeat: space;
+    -ms-background-position: center bottom;
+    background-position: center bottom;
+    background-color: #aca496;
+    position: absolute;
+    width: 100%;
+    height: 69px;
+    left: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    -webkit-user-select: text;
+    z-index: 1;
+}
+
+.twitter-link {
+    position: absolute;
+    right: 2em;
+    bottom: 0;
+    font-size: 3em;
+}
+
+.twitter-link a {
+    color: rgb(62, 62, 41);
+}
+
+.twitter-link a:hover {
+    color: rgb(33, 33, 26);
+    background: none;
+}
+
+/* Header */
+
+.title {
+    padding: 50px;
+}
+
+.title h1 {
+    margin: 0;
+}
+
+.title h2 {
+    max-width: 500px;
+    font-weight: normal;
+    font-size: 1em;
+}
+
+.login-block {
+    color: #e18712;
+    font-size: 1em;
+}
+
+.login-block a {
+    font-size: 1.2em;
+    font-weight: normal;
+}
+
+/* Main block + input */
+
+.shadow {
+    box-shadow: 0 12px 8px -6px #a79d87;
+    box-shadow: 0 12px 8px -6px rgba(167, 157, 135, 0.4);
+}
+
+.main {
+    text-align: center;
+    padding: 5em 2em 10em;
+    max-width: 860px;
+    width: 90%;
+    margin: 0 auto;
+    padding: 3em 0;
+    text-align: left;
+}
+
+.main-border {
+    border: thin solid #a39c8e;
+    background: #f4ecda;
+}
+
+.input-border {
+    background-color: #e4dac8;
+    border: none;
+    border-bottom: 1px solid #a39c8e;
+}
+
+.main-border input {
+    border: none;
+    padding: 0.5em 0 0.5em 0.5em;
+    width: calc(100% - 2em);
+    font-size: 2em;
+    line-height: 1;
+    color: #616161;
+    background: transparent;
+}
+
+*:focus {
+    outline: none;
+}
+
+/* Input button (arrow) */
+
+.arrow-button {
+    float: right;
+    font-size: 2em;
+    padding-top: 0.5em;
+    padding-right: 0.3em;
+}
+
+.arrow-button a {
+    color: rgb(142, 134, 119);
+}
+
+.arrow-button a:hover {
+    background: none;
+    color: rgb(105, 98, 86);
+}
+
+/* Controls under input */
+
+.controls {
+    padding-left: 1em;
+    word-spacing: 0.15em;
+}
+
+.controls a:hover {
+    cursor: pointer;
+}
+
+/* Options */
+.selected-option, a:hover {
+    background: orange;
+    color: whitesmoke;
+    border: 1px orange;
+    -ms-border-radius: 3px;
+    border-radius: 3px;
+}
+
+.locked {
+    -ms-opacity: 0.3;
+    opacity: 0.2;
+}
+
+/* Man image */
+.man {
+    width: 210px;
+    height: 333px;
+    background-image: url('/img/man.png');
+    -ms-background-repeat: no-repeat;
+    background-repeat: no-repeat;
+    -ms-background-position: center bottom;
+    background-position: center bottom;
+    background-color: transparent;
+    position: absolute;
+    bottom: 100px;
+    left: 30%;
+    margin: 0;
+    padding: 0;
+    z-index: -1;
+}
+
+/* Patreon block */
+
+.patreon {
+    background: rgb(171, 163, 149);
+    border: 1px rgb(240, 232, 214) solid;
+    bottom: 6em;
+    float: right;
+    position: absolute;
+    right: 2em;
+    z-index: -1;
+}
+
+/* Placeholder */
+::-webkit-input-placeholder { color: rgb(171, 163, 149); } /* Chrome/Opera/Safari */
+::-moz-placeholder { color: rgb(171, 163, 149); } /* Firefox 19+ */
+:-ms-input-placeholder { color: rgb(171, 163, 149); } /* IE 10+ */
+:-moz-placeholder { color: rgb(171, 163, 149); } /* Firefox 18- */
+
+/* Tooltips */
+
+.tooltip {
+    display: none;
+    position: absolute;
+    background: rgb(171, 163, 149);
+    border: 1px rgb(244, 236, 218) solid;
+    padding: 10px;
+    color: #4a4030;
+    max-width: 350px;
+}
+
+/* Modal popup */
+
+.modal {
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    width: 50%;
+    max-width: 700px;
+    -ms-transform: translate3d(-50%,-50%, 0);
+    -webkit-transform: translate3d(-50%,-50%, 0);
+    transform: translate3d(-50%,-50%, 0);
+    height: 80px;
+    background: #56524b;
+    text-align: center;
+    z-index: 10;
+    outline: 9999px solid rgba(0,0,0,0.8);
+
+    padding: 10px;
+}
+
+.modal > input {
+    width: 100%;
+    font-size: 3em;
+    border: none;
+    background: none;
+    border-bottom: 1px dotted black;
+}
+
+.modal-links {
+    padding-top: 5px;
+}
+
+.modal-links span {
+    padding-right: 15px;
+}
+
+.modal-links a:hover {
+    color: #EB8C11;
+    background: rgb(68, 65, 60);
+}
+
+@media screen and (max-width: 640px) {
+    .background-image {
+        background-image: url('/img/mobile_bg.png')
+    }
+
+    .footer {
+        background-image: url('/img/mobile_footer.png');
+        height: 50px;
+    }
+
+    .title {
+        padding: 20px;
+    }
+
+    .main {
+        padding: 0;
+    }
+
+    .controls {
+        word-spacing: 0;
+        font-size: 1em;
+    }
+
+    .patreon {
+        right: 2em;
+    }
+
+    .man {
+        background-image: none;
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .modal {
+        width: 90%;
+    }
+}
+
+@media only screen and (max-device-width: 1024px) {
+    .modal > input {
+        font-size: 1.9em;
+        padding: 0;
+        padding-bottom: 15px;
+    }
+
+    .modal-links span {
+        padding-right: 30px;
+    }
+}
+
+@media screen and (max-height: 640px) {
+    .patreon {
+        width: 300px;
+        bottom: 4em;
+    }
+
+    .man {
+        display: none;
+    }
+}
+
+@media screen and (max-height: 840px) {
+    .title {
+        padding-top: 1em;
+        padding-bottom: 0;
+    }
+
+    .main {
+        padding-top: 0;
+    }
+}
