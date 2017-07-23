@@ -1,6 +1,7 @@
 package builders
 
 import (
+	"github.com/mxpv/podsync/web/pkg/database"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -57,11 +58,11 @@ func TestQueryChannel(t *testing.T) {
 	builder, err := NewYouTubeBuilder(ytKey)
 	require.NoError(t, err)
 
-	channel, err := builder.queryChannel("UC2yTVSttx7lxAOAzx1opjoA", "")
+	channel, err := builder.listChannels(linkTypeChannel, "UC2yTVSttx7lxAOAzx1opjoA")
 	require.NoError(t, err)
 	require.Equal(t, "UC2yTVSttx7lxAOAzx1opjoA", channel.Id)
 
-	channel, err = builder.queryChannel("", "fxigr1")
+	channel, err = builder.listChannels(linkTypeUser, "fxigr1")
 	require.NoError(t, err)
 	require.Equal(t, "UCr_fwF-n-2_olTYd-m3n32g", channel.Id)
 }
@@ -74,7 +75,10 @@ func TestBuild(t *testing.T) {
 	builder, err := NewYouTubeBuilder(ytKey)
 	require.NoError(t, err)
 
-	podcast, err := builder.Build("https://youtube.com/channel/UCupvZG-5ko_eiXAupbDfxWw", maxResults)
+	podcast, err := builder.Build(&database.Feed{
+		URL:      "https://youtube.com/channel/UCupvZG-5ko_eiXAupbDfxWw",
+		PageSize: maxResults,
+	})
 	require.NoError(t, err)
 
 	require.Equal(t, "CNN", podcast.Title)
