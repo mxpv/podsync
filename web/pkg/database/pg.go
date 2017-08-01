@@ -1,13 +1,14 @@
 package database
 
 import (
-	"github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/proxy"
-	"github.com/go-pg/pg"
-	"github.com/go-pg/pg/orm"
-	"github.com/pkg/errors"
 	"log"
 	"net"
 	"strings"
+	"time"
+
+	"github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/proxy"
+	"github.com/go-pg/pg"
+	"github.com/pkg/errors"
 )
 
 type PgConfig struct {
@@ -19,6 +20,7 @@ type PgStorage struct {
 }
 
 func (p *PgStorage) CreateFeed(feed *Feed) error {
+	feed.LastAccess = time.Now().UTC()
 	_, err := p.db.Model(feed).Insert()
 	if err != nil {
 		return errors.Wrap(err, "failed to create feed")
@@ -27,21 +29,17 @@ func (p *PgStorage) CreateFeed(feed *Feed) error {
 	return nil
 }
 
-func (p *PgStorage) GetFeed(q ...WhereFunc) (out []Feed, err error) {
-	out = []Feed{}
-	err = p.db.Model(&out).Apply(whereFunc(q...)).Select()
-	return
-}
+func (p *PgStorage) GetFeed(hashId string) (*Feed, error) {
+	lastAccess := time.Now().UTC()
 
-func whereFunc(where ...WhereFunc) func(*orm.Query) (*orm.Query, error) {
-	return func(q *orm.Query) (*orm.Query, error) {
-		for _, fn := range where {
-			field, value := fn()
-			q = q.Where(field+" = ?", value)
-		}
+	feed := &Feed{}
+	_, err := p.db.Model(feed).
+		Set("last_access = ?", lastAccess).
+		Where("hash_id = ?", hashId).
+		Returning("*").
+		Update()
 
-		return q, nil
-	}
+	return feed, err
 }
 
 func NewPgStorage(config *PgConfig) (*PgStorage, error) {

@@ -16,12 +16,13 @@ $$;
 
 CREATE TABLE IF NOT EXISTS feeds (
 	id BIGSERIAL PRIMARY KEY,
-	hash_id VARCHAR(12) NOT NULL CHECK (hash_id <> ''),
+	hash_id VARCHAR(12) NOT NULL CHECK (hash_id <> '') UNIQUE,
 	user_id VARCHAR(32) NULL,
 	url VARCHAR(64) NOT NULL CHECK (url <> ''),
 	page_size INT NOT NULL DEFAULT 50,
 	quality quality NOT NULL DEFAULT 'high',
-	format format NOT NULL DEFAULT 'video'
+	format format NOT NULL DEFAULT 'video',
+	last_access timestamp WITHOUT TIME ZONE NOT NULL
 );
 
 COMMIT;

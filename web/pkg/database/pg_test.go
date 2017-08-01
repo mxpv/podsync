@@ -1,8 +1,9 @@
 package database
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreate(t *testing.T) {
@@ -27,15 +28,43 @@ func TestGetFeed(t *testing.T) {
 	client := createClient(t)
 	client.CreateFeed(feed)
 
-	out, err := client.GetFeed(WithUserId("123"))
+	out, err := client.GetFeed("xyz")
 	require.NoError(t, err)
-	require.Equal(t, 1, len(out))
-	require.Equal(t, feed.Id, out[0].Id)
+	require.Equal(t, feed.Id, out.Id)
+}
 
-	out, err = client.GetFeed(WithHashId("xyz"))
+func TestUpdateLastAccess(t *testing.T) {
+	feed := &Feed{
+		HashId: "xyz",
+		UserId: "123",
+		URL:    "http://youtube.com",
+	}
+
+	client := createClient(t)
+	err := client.CreateFeed(feed)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(out))
-	require.Equal(t, feed.Id, out[0].Id)
+
+	lastAccess := feed.LastAccess
+	require.True(t, lastAccess.Unix() > 0)
+
+	last, err := client.GetFeed("xyz")
+	require.NoError(t, err)
+
+	require.NotEmpty(t, last.HashId)
+	require.NotEmpty(t, last.UserId)
+	require.NotEmpty(t, last.URL)
+
+	require.True(t, last.LastAccess.Unix() > lastAccess.Unix())
+}
+
+func TestUniqueHashId(t *testing.T) {
+	client := createClient(t)
+
+	err := client.CreateFeed(&Feed{HashId: "xyz", URL: "url"})
+	require.NoError(t, err)
+
+	err = client.CreateFeed(&Feed{HashId: "xyz", URL: "url"})
+	require.Error(t, err)
 }
 
 const TestDatabaseConnectionUrl = "postgres://postgres:@localhost/podsync?sslmode=disable"
