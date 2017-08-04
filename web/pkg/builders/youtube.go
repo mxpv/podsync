@@ -2,15 +2,16 @@ package builders
 
 import (
 	"fmt"
-	"github.com/BrianHicks/finch/duration"
-	itunes "github.com/eduncan911/podcast"
-	"github.com/mxpv/podsync/web/pkg/database"
-	"github.com/pkg/errors"
-	"google.golang.org/api/youtube/v3"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/BrianHicks/finch/duration"
+	itunes "github.com/mxpv/podcast"
+	"github.com/mxpv/podsync/web/pkg/database"
+	"github.com/pkg/errors"
+	"google.golang.org/api/youtube/v3"
 )
 
 const (

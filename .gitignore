@@ -27,3 +27,5 @@ _testmain.go
 glide.lock
 
 Gopkg.lock
+
+.idea/

@@ -1,9 +1,10 @@
 package builders
 
 import (
+	"testing"
+
 	"github.com/mxpv/podsync/web/pkg/database"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var ytKey = "AIzaSyAp0mB03BFY3fm0Oxaxk96-mnE0D3MeUp4"
