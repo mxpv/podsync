@@ -21,7 +21,7 @@ type PgStorage struct {
 
 func (p *PgStorage) CreateFeed(feed *Feed) error {
 	feed.LastAccess = time.Now().UTC()
-	_, err := p.db.Model(feed).Insert()
+	_, err := p.db.Model(feed).OnConflict("DO NOTHING").Insert()
 	if err != nil {
 		return errors.Wrap(err, "failed to create feed")
 	}

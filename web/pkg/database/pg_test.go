@@ -18,6 +18,31 @@ func TestCreate(t *testing.T) {
 	require.True(t, feed.Id > 0)
 }
 
+func TestCreateDuplicate(t *testing.T) {
+	feed := &Feed{
+		HashId: "123",
+		URL:    "http://youtube.com",
+	}
+
+	client := createClient(t)
+	err := client.CreateFeed(feed)
+	require.NoError(t, err)
+
+	// Ensure 1 record
+	count, err := client.db.Model(&Feed{}).Count()
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+
+	// Insert duplicated feed
+	err = client.CreateFeed(feed)
+	require.NoError(t, err)
+
+	// Check no duplicates inserted
+	count, err = client.db.Model(&Feed{}).Count()
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+}
+
 func TestGetFeed(t *testing.T) {
 	feed := &Feed{
 		HashId: "xyz",
@@ -55,16 +80,6 @@ func TestUpdateLastAccess(t *testing.T) {
 	require.NotEmpty(t, last.URL)
 
 	require.True(t, last.LastAccess.Unix() > lastAccess.Unix())
-}
-
-func TestUniqueHashId(t *testing.T) {
-	client := createClient(t)
-
-	err := client.CreateFeed(&Feed{HashId: "xyz", URL: "url"})
-	require.NoError(t, err)
-
-	err = client.CreateFeed(&Feed{HashId: "xyz", URL: "url"})
-	require.Error(t, err)
 }
 
 const TestDatabaseConnectionUrl = "postgres://postgres:@localhost/podsync?sslmode=disable"

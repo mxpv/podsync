@@ -1,6 +1,9 @@
 package id
 
 import (
+	"hash/fnv"
+
+	"github.com/mxpv/podsync/web/pkg/database"
 	hd "github.com/speps/go-hashids"
 )
 
@@ -14,9 +17,24 @@ type hashId struct {
 	hid *hd.HashID
 }
 
-func (h *hashId) Encode(x ...int) (string, error) {
-	var d []int
-	return h.hid.Encode(append(d, x...))
+func hashString(s string) int {
+	h := fnv.New32a()
+	h.Write([]byte(s))
+	return int(h.Sum32())
+}
+
+func (h *hashId) Encode(feed *database.Feed) (string, error) {
+	// Don't create duplicate urls for same playlist/settings
+	// https://github.com/podsync/issues/issues/6
+	numbers := []int{
+		hashString(feed.UserId),
+		hashString(feed.URL),
+		feed.PageSize,
+		hashString(string(feed.Quality)),
+		hashString(string(feed.Format)),
+	}
+
+	return h.hid.Encode(numbers)
 }
 
 func NewIdGenerator() (*hashId, error) {
@@ -24,10 +42,6 @@ func NewIdGenerator() (*hashId, error) {
 	data.MinLength = minLength
 	data.Salt = salt
 	data.Alphabet = alphabet
-	hid, err := hd.NewWithData(data)
-	if err != nil {
-		return nil, err
-	}
-
+	hid := hd.NewWithData(data)
 	return &hashId{hid}, nil
 }
