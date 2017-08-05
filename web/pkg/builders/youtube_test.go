@@ -92,5 +92,6 @@ func TestBuildYTFeed(t *testing.T) {
 	for _, item := range podcast.Items {
 		require.NotEmpty(t, item.Title)
 		require.NotEmpty(t, item.Link)
+		require.NotEmpty(t, item.IDuration)
 	}
 }

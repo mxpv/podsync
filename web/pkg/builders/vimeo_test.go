@@ -134,6 +134,7 @@ func TestQueryVimeoVideos(t *testing.T) {
 		require.NotEmpty(t, item.Title)
 		require.NotEmpty(t, item.Link)
 		require.NotEmpty(t, item.GUID)
+		require.NotEmpty(t, item.IDuration)
 		require.NotNil(t, item.Enclosure)
 		require.NotEmpty(t, item.Enclosure.URL)
 		require.True(t, item.Enclosure.Length > 0)
