@@ -3,13 +3,15 @@ package builders
 import (
 	"testing"
 
+	"os"
+
 	"github.com/mxpv/podsync/web/pkg/database"
 	"github.com/stretchr/testify/require"
 )
 
-var ytKey = "AIzaSyAp0mB03BFY3fm0Oxaxk96-mnE0D3MeUp4"
+var ytKey = os.Getenv("YOUTUBE_TEST_API_KEY")
 
-func TestParsePlaylist(t *testing.T) {
+func TestParseYTPlaylist(t *testing.T) {
 	builder := &YouTubeBuilder{}
 
 	kind, id, err := builder.parseUrl("https://www.youtube.com/playlist?list=PLCB9F975ECF01953C")
@@ -18,7 +20,7 @@ func TestParsePlaylist(t *testing.T) {
 	require.Equal(t, "PLCB9F975ECF01953C", id)
 }
 
-func TestParseChannel(t *testing.T) {
+func TestParseYTChannel(t *testing.T) {
 	builder := &YouTubeBuilder{}
 
 	kind, id, err := builder.parseUrl("https://www.youtube.com/channel/UC5XPnUk8Vvv_pWslhwom6Og")
@@ -32,7 +34,7 @@ func TestParseChannel(t *testing.T) {
 	require.Equal(t, "UCrlakW-ewUT8sOod6Wmzyow", id)
 }
 
-func TestParseUser(t *testing.T) {
+func TestParseYTUser(t *testing.T) {
 	builder := &YouTubeBuilder{}
 
 	kind, id, err := builder.parseUrl("https://youtube.com/user/fxigr1")
@@ -41,7 +43,7 @@ func TestParseUser(t *testing.T) {
 	require.Equal(t, "fxigr1", id)
 }
 
-func TestHandleInvalidLink(t *testing.T) {
+func TestHandleInvalidYTLink(t *testing.T) {
 	builder := &YouTubeBuilder{}
 
 	_, _, err := builder.parseUrl("https://www.youtube.com/user///")
@@ -51,7 +53,7 @@ func TestHandleInvalidLink(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestQueryChannel(t *testing.T) {
+func TestQueryYTChannel(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping YT test in short mode")
 	}
@@ -68,7 +70,7 @@ func TestQueryChannel(t *testing.T) {
 	require.Equal(t, "UCr_fwF-n-2_olTYd-m3n32g", channel.Id)
 }
 
-func TestBuild(t *testing.T) {
+func TestBuildYTFeed(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping YT test in short mode")
 	}
@@ -78,7 +80,7 @@ func TestBuild(t *testing.T) {
 
 	podcast, err := builder.Build(&database.Feed{
 		URL:      "https://youtube.com/channel/UCupvZG-5ko_eiXAupbDfxWw",
-		PageSize: maxResults,
+		PageSize: maxYoutubeResults,
 	})
 	require.NoError(t, err)
 

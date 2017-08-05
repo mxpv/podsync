@@ -15,20 +15,11 @@ import (
 )
 
 const (
-	linkTypeChannel  = linkType(1)
-	linkTypePlaylist = linkType(2)
-	linkTypeUser     = linkType(3)
+	maxYoutubeResults = 50
+	hdBytesPerSecond  = 350000
+	ldBytesPerSecond  = 100000
 )
 
-const (
-	maxResults       = 50
-	podsyncGenerator = "Podsync YouTube generator"
-	defaultCategory  = "TV & Film"
-	hdBytesPerSecond = 350000
-	ldBytesPerSecond = 100000
-)
-
-type linkType int
 type apiKey string
 
 func (key apiKey) Get() (string, string) {
@@ -48,7 +39,7 @@ func (yt *YouTubeBuilder) parseUrl(link string) (kind linkType, id string, err e
 	}
 
 	if !strings.HasSuffix(parsed.Host, "youtube.com") {
-		err = errors.New("invalid youtube link")
+		err = errors.New("invalid youtube host")
 		return
 	}
 
@@ -75,7 +66,7 @@ func (yt *YouTubeBuilder) parseUrl(link string) (kind linkType, id string, err e
 		kind = linkTypeChannel
 		parts := strings.Split(parsed.EscapedPath(), "/")
 		if len(parts) <= 2 {
-			err = errors.New("invalid channel link")
+			err = errors.New("invalid youtube channel link")
 			return
 		}
 
@@ -157,7 +148,7 @@ func (yt *YouTubeBuilder) listPlaylists(id, channelId string) (*youtube.Playlist
 }
 
 func (yt *YouTubeBuilder) listPlaylistItems(itemId string, pageToken string) ([]*youtube.PlaylistItem, string, error) {
-	req := yt.client.PlaylistItems.List("id,snippet").MaxResults(maxResults).PlaylistId(itemId)
+	req := yt.client.PlaylistItems.List("id,snippet").MaxResults(maxYoutubeResults).PlaylistId(itemId)
 	if pageToken != "" {
 		req = req.PageToken(pageToken)
 	}
@@ -327,14 +318,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ids []string, feed *database.Fe
 		// Add download links
 
 		size := yt.getVideoSize(video.ContentDetails.Definition, seconds, feed.Format)
-
-		if feed.Format == database.VideoFormat {
-			downloadLink := fmt.Sprintf("http://podsync.net/download/%s/%s.mp4", feed.HashId, video.Id)
-			item.AddEnclosure(downloadLink, itunes.MP4, size)
-		} else {
-			downloadLink := fmt.Sprintf("http://podsync.net/download/%s/%s.m4a", feed.HashId, video.Id)
-			item.AddEnclosure(downloadLink, itunes.M4A, size)
-		}
+		item.AddEnclosure(makeEnclosure(feed, video.Id, size))
 
 		_, err = podcast.AddItem(item)
 		if err != nil {
