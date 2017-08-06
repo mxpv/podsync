@@ -5,7 +5,7 @@ import (
 
 	"os"
 
-	"github.com/mxpv/podsync/web/pkg/database"
+	"github.com/mxpv/podsync/web/pkg/storage"
 	"github.com/stretchr/testify/require"
 )
 
@@ -78,7 +78,7 @@ func TestBuildYTFeed(t *testing.T) {
 	builder, err := NewYouTubeBuilder(ytKey)
 	require.NoError(t, err)
 
-	podcast, err := builder.Build(&database.Feed{
+	podcast, err := builder.Build(&storage.Feed{
 		URL:      "https://youtube.com/channel/UCupvZG-5ko_eiXAupbDfxWw",
 		PageSize: maxYoutubeResults,
 	})

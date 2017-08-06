@@ -9,7 +9,7 @@ import (
 
 	"github.com/BrianHicks/finch/duration"
 	itunes "github.com/mxpv/podcast"
-	"github.com/mxpv/podsync/web/pkg/database"
+	"github.com/mxpv/podsync/web/pkg/storage"
 	"github.com/pkg/errors"
 	"google.golang.org/api/youtube/v3"
 )
@@ -170,10 +170,10 @@ func (yt *YouTubeBuilder) parseDate(s string) (time.Time, error) {
 	return date, nil
 }
 
-func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, quality database.Quality) string {
+func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, quality storage.Quality) string {
 	// Use high resolution thumbnails for high quality mode
 	// https://github.com/mxpv/Podsync/issues/14
-	if quality == database.HighQuality {
+	if quality == storage.HighQuality {
 		if snippet.Maxres != nil {
 			return snippet.Maxres.Url
 		}
@@ -190,7 +190,7 @@ func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, qua
 	return snippet.Default.Url
 }
 
-func (yt *YouTubeBuilder) queryFeed(kind linkType, id string, feed *database.Feed) (*itunes.Podcast, string, error) {
+func (yt *YouTubeBuilder) queryFeed(kind linkType, id string, feed *storage.Feed) (*itunes.Podcast, string, error) {
 	now := time.Now()
 
 	if kind == linkTypeChannel || kind == linkTypeUser {
@@ -255,7 +255,7 @@ func (yt *YouTubeBuilder) queryFeed(kind linkType, id string, feed *database.Fee
 	return nil, "", errors.New("unsupported link format")
 }
 
-func (yt *YouTubeBuilder) getVideoSize(definition string, duration int64, fmt database.Format) int64 {
+func (yt *YouTubeBuilder) getVideoSize(definition string, duration int64, fmt storage.Format) int64 {
 	// Video size information requires 1 additional call for each video (1 feed = 50 videos = 50 calls),
 	// which is too expensive, so get approximated size depending on duration and definition params
 	var size int64 = 0
@@ -268,14 +268,14 @@ func (yt *YouTubeBuilder) getVideoSize(definition string, duration int64, fmt da
 
 	// Some podcasts are coming in with exactly double the actual runtime and with the second half just silence.
 	// https://github.com/mxpv/Podsync/issues/6
-	if fmt == database.AudioFormat {
+	if fmt == storage.AudioFormat {
 		size /= 2
 	}
 
 	return size
 }
 
-func (yt *YouTubeBuilder) queryVideoDescriptions(ids []string, feed *database.Feed, podcast *itunes.Podcast) error {
+func (yt *YouTubeBuilder) queryVideoDescriptions(ids []string, feed *storage.Feed, podcast *itunes.Podcast) error {
 	req, err := yt.client.Videos.List("id,snippet,contentDetails").Id(strings.Join(ids, ",")).Do(yt.key)
 	if err != nil {
 		return errors.Wrap(err, "failed to query video descriptions")
@@ -329,7 +329,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ids []string, feed *database.Fe
 	return nil
 }
 
-func (yt *YouTubeBuilder) queryItems(itemId string, feed *database.Feed, podcast *itunes.Podcast) error {
+func (yt *YouTubeBuilder) queryItems(itemId string, feed *storage.Feed, podcast *itunes.Podcast) error {
 	pageToken := ""
 	count := 0
 
@@ -361,7 +361,7 @@ func (yt *YouTubeBuilder) queryItems(itemId string, feed *database.Feed, podcast
 	}
 }
 
-func (yt *YouTubeBuilder) Build(feed *database.Feed) (*itunes.Podcast, error) {
+func (yt *YouTubeBuilder) Build(feed *storage.Feed) (*itunes.Podcast, error) {
 	kind, id, err := yt.parseUrl(feed.URL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse link: %s", feed.URL)

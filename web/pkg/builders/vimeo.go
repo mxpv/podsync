@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	itunes "github.com/mxpv/podcast"
-	"github.com/mxpv/podsync/web/pkg/database"
+	"github.com/mxpv/podsync/web/pkg/storage"
 	"github.com/pkg/errors"
 	"github.com/silentsokolov/go-vimeo"
 	"golang.org/x/net/context"
@@ -77,19 +77,19 @@ func (v *VimeoBuilder) parseUrl(link string) (kind linkType, id string, err erro
 	return
 }
 
-func (v *VimeoBuilder) selectImage(p *vimeo.Pictures, q database.Quality) string {
+func (v *VimeoBuilder) selectImage(p *vimeo.Pictures, q storage.Quality) string {
 	if p == nil || len(p.Sizes) < 1 {
 		return ""
 	}
 
-	if q == database.LowQuality {
+	if q == storage.LowQuality {
 		return p.Sizes[0].Link
 	} else {
 		return p.Sizes[len(p.Sizes)-1].Link
 	}
 }
 
-func (v *VimeoBuilder) queryChannel(channelId string, feed *database.Feed) (*itunes.Podcast, error) {
+func (v *VimeoBuilder) queryChannel(channelId string, feed *storage.Feed) (*itunes.Podcast, error) {
 	ch, resp, err := v.client.Channels.Get(channelId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query channel with channelId %s", channelId)
@@ -109,7 +109,7 @@ func (v *VimeoBuilder) queryChannel(channelId string, feed *database.Feed) (*itu
 	return &podcast, nil
 }
 
-func (v *VimeoBuilder) queryGroup(groupId string, feed *database.Feed) (*itunes.Podcast, error) {
+func (v *VimeoBuilder) queryGroup(groupId string, feed *storage.Feed) (*itunes.Podcast, error) {
 	gr, resp, err := v.client.Groups.Get(groupId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query group with id %s", groupId)
@@ -129,7 +129,7 @@ func (v *VimeoBuilder) queryGroup(groupId string, feed *database.Feed) (*itunes.
 	return &podcast, nil
 }
 
-func (v *VimeoBuilder) queryUser(userId string, feed *database.Feed) (*itunes.Podcast, error) {
+func (v *VimeoBuilder) queryUser(userId string, feed *storage.Feed) (*itunes.Podcast, error) {
 	user, resp, err := v.client.Users.Get(userId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query user with id %s", userId)
@@ -156,7 +156,7 @@ func (v *VimeoBuilder) getVideoSize(video *vimeo.Video) int64 {
 
 type queryVideosFunc func(id string, opt *vimeo.ListVideoOptions) ([]*vimeo.Video, *vimeo.Response, error)
 
-func (v *VimeoBuilder) queryVideos(queryVideos queryVideosFunc, id string, podcast *itunes.Podcast, feed *database.Feed) error {
+func (v *VimeoBuilder) queryVideos(queryVideos queryVideosFunc, id string, podcast *itunes.Podcast, feed *storage.Feed) error {
 	opt := vimeo.ListVideoOptions{}
 	opt.Page = 1
 	opt.PerPage = vimeoDefaultPageSize
@@ -207,7 +207,7 @@ func (v *VimeoBuilder) queryVideos(queryVideos queryVideosFunc, id string, podca
 	}
 }
 
-func (v *VimeoBuilder) Build(feed *database.Feed) (podcast *itunes.Podcast, err error) {
+func (v *VimeoBuilder) Build(feed *storage.Feed) (podcast *itunes.Podcast, err error) {
 	kind, id, err := v.parseUrl(feed.URL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse link: %s", feed.URL)

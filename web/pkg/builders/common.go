@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	itunes "github.com/mxpv/podcast"
-	"github.com/mxpv/podsync/web/pkg/database"
+	"github.com/mxpv/podsync/web/pkg/storage"
 )
 
 const (
@@ -22,10 +22,10 @@ const (
 	linkTypeGroup
 )
 
-func makeEnclosure(feed *database.Feed, id string, lengthInBytes int64) (string, itunes.EnclosureType, int64) {
+func makeEnclosure(feed *storage.Feed, id string, lengthInBytes int64) (string, itunes.EnclosureType, int64) {
 	ext := "mp4"
 	contentType := itunes.MP4
-	if feed.Format == database.AudioFormat {
+	if feed.Format == storage.AudioFormat {
 		ext = "mp3"
 		contentType = itunes.MP3
 	}

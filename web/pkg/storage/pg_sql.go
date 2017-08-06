@@ -1,4 +1,4 @@
-package database
+package storage
 
 const installScript = `
 BEGIN;
