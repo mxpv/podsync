@@ -3,7 +3,7 @@ package id
 import (
 	"testing"
 
-	"github.com/mxpv/podsync/web/pkg/storage"
+	"github.com/mxpv/podsync/web/pkg/api"
 	"github.com/stretchr/testify/require"
 )
 
@@ -11,12 +11,12 @@ func TestEncode(t *testing.T) {
 	hid, err := NewIdGenerator()
 	require.NoError(t, err)
 
-	feed := &storage.Feed{
+	feed := &api.Feed{
 		UserId:   "1",
 		URL:      "https://www.youtube.com/channel/UC2yTVSttx7lxAOAzx1opjoA",
 		PageSize: 10,
-		Quality:  storage.HighQuality,
-		Format:   storage.AudioFormat,
+		Quality:  api.HighQuality,
+		Format:   api.AudioFormat,
 	}
 
 	hash1, err := hid.Encode(feed)

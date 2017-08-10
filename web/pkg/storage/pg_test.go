@@ -3,11 +3,12 @@ package storage
 import (
 	"testing"
 
+	"github.com/mxpv/podsync/web/pkg/api"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreate(t *testing.T) {
-	feed := &Feed{
+	feed := &api.Feed{
 		HashId: "xyz",
 		URL:    "http://youtube.com",
 	}
@@ -19,7 +20,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCreateDuplicate(t *testing.T) {
-	feed := &Feed{
+	feed := &api.Feed{
 		HashId: "123",
 		URL:    "http://youtube.com",
 	}
@@ -29,7 +30,7 @@ func TestCreateDuplicate(t *testing.T) {
 	require.NoError(t, err)
 
 	// Ensure 1 record
-	count, err := client.db.Model(&Feed{}).Count()
+	count, err := client.db.Model(&api.Feed{}).Count()
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
 
@@ -38,13 +39,13 @@ func TestCreateDuplicate(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check no duplicates inserted
-	count, err = client.db.Model(&Feed{}).Count()
+	count, err = client.db.Model(&api.Feed{}).Count()
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
 }
 
 func TestGetFeed(t *testing.T) {
-	feed := &Feed{
+	feed := &api.Feed{
 		HashId: "xyz",
 		UserId: "123",
 		URL:    "http://youtube.com",
@@ -59,7 +60,7 @@ func TestGetFeed(t *testing.T) {
 }
 
 func TestUpdateLastAccess(t *testing.T) {
-	feed := &Feed{
+	feed := &api.Feed{
 		HashId: "xyz",
 		UserId: "123",
 		URL:    "http://youtube.com",
@@ -88,7 +89,7 @@ func createClient(t *testing.T) *PgStorage {
 	pg, err := NewPgStorage(&PgConfig{ConnectionUrl: TestDatabaseConnectionUrl})
 	require.NoError(t, err)
 
-	_, err = pg.db.Model(&Feed{}).Where("1=1").Delete()
+	_, err = pg.db.Model(&api.Feed{}).Where("1=1").Delete()
 	require.NoError(t, err)
 
 	return pg

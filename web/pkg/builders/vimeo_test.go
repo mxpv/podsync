@@ -7,13 +7,13 @@ import (
 	"context"
 
 	itunes "github.com/mxpv/podcast"
-	"github.com/mxpv/podsync/web/pkg/storage"
+	"github.com/mxpv/podsync/web/pkg/api"
 	"github.com/stretchr/testify/require"
 )
 
 var (
 	vimeoKey    = os.Getenv("VIMEO_TEST_API_KEY")
-	defaultFeed = &storage.Feed{Quality: storage.HighQuality}
+	defaultFeed = &api.Feed{Quality: api.HighQuality}
 )
 
 func TestParseVimeoGroupLink(t *testing.T) {
@@ -125,7 +125,7 @@ func TestQueryVimeoVideos(t *testing.T) {
 
 	feed := &itunes.Podcast{}
 
-	err = builder.queryVideos(builder.client.Channels.ListVideo, "staffpicks", feed, &storage.Feed{})
+	err = builder.queryVideos(builder.client.Channels.ListVideo, "staffpicks", feed, &api.Feed{})
 	require.NoError(t, err)
 
 	require.Equal(t, vimeoDefaultPageSize, len(feed.Items))

@@ -3,7 +3,7 @@ package id
 import (
 	"hash/fnv"
 
-	"github.com/mxpv/podsync/web/pkg/storage"
+	"github.com/mxpv/podsync/web/pkg/api"
 	hd "github.com/speps/go-hashids"
 )
 
@@ -23,7 +23,7 @@ func hashString(s string) int {
 	return int(h.Sum32())
 }
 
-func (h *hashId) Encode(feed *storage.Feed) (string, error) {
+func (h *hashId) Encode(feed *api.Feed) (string, error) {
 	// Don't create duplicate urls for same playlist/settings
 	// https://github.com/podsync/issues/issues/6
 	numbers := []int{
