@@ -14,6 +14,7 @@ type AppConfig struct {
 	PatreonClientId       string `yaml:"patreonClientId"`
 	PatreonSecret         string `yaml:"patreonSecret"`
 	PostgresConnectionURL string `yaml:"postgresConnectionUrl"`
+	RedisURL              string `yaml:"redisUrl"`
 }
 
 func ReadConfiguration() (cfg *AppConfig, err error) {

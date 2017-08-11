@@ -12,13 +12,19 @@ const (
 	VideoFormat = Format("video")
 )
 
+const (
+	DefaultPageSize = 50
+	DefaultFormat   = VideoFormat
+	DefaultQuality  = HighQuality
+)
+
 type Feed struct {
-	Id         int64
-	HashId     string
-	UserId     string
-	URL        string
-	PageSize   int
-	Quality    Quality
-	Format     Format
-	LastAccess time.Time
+	Id         int64     `json:"id"`
+	HashId     string    `json:"hash_id"`
+	UserId     string    `json:"user_id"`
+	URL        string    `json:"url"`
+	PageSize   int       `json:"page_size"`
+	Quality    Quality   `json:"quality"`
+	Format     Format    `json:"format"`
+	LastAccess time.Time `json:"last_access"`
 }
