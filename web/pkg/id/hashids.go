@@ -23,15 +23,18 @@ func hashString(s string) int {
 	return int(h.Sum32())
 }
 
-func (h *hashId) Encode(feed *api.Feed) (string, error) {
+func (h *hashId) Generate(feed *api.Feed) (string, error) {
 	// Don't create duplicate urls for same playlist/settings
 	// https://github.com/podsync/issues/issues/6
 	numbers := []int{
 		hashString(feed.UserId),
-		hashString(feed.URL),
+		hashString(string(feed.Provider)),
+		hashString(string(feed.LinkType)),
+		hashString(feed.ItemId),
 		feed.PageSize,
 		hashString(string(feed.Quality)),
 		hashString(string(feed.Format)),
+		feed.FeatureLevel,
 	}
 
 	return h.hid.Encode(numbers)

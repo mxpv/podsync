@@ -13,23 +13,25 @@ func TestEncode(t *testing.T) {
 
 	feed := &api.Feed{
 		UserId:   "1",
-		URL:      "https://www.youtube.com/channel/UC2yTVSttx7lxAOAzx1opjoA",
+		Provider: api.Youtube,
+		LinkType: api.Channel,
+		ItemId:   "UC2yTVSttx7lxAOAzx1opjoA",
 		PageSize: 10,
 		Quality:  api.HighQuality,
 		Format:   api.AudioFormat,
 	}
 
-	hash1, err := hid.Encode(feed)
+	hash1, err := hid.Generate(feed)
 	require.NoError(t, err)
 	require.NotEmpty(t, hash1)
 
 	// Ensure we have same hash for same feed/parameters
-	hash2, err := hid.Encode(feed)
+	hash2, err := hid.Generate(feed)
 	require.NoError(t, err)
 	require.Equal(t, hash1, hash2)
 
 	feed.UserId = ""
-	hash3, err := hid.Encode(feed)
+	hash3, err := hid.Generate(feed)
 	require.NoError(t, err)
 	require.NotEqual(t, hash1, hash3)
 }

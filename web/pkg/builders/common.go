@@ -12,16 +12,6 @@ const (
 	defaultCategory  = "TV & Film"
 )
 
-type linkType int
-
-const (
-	_                        = iota
-	linkTypeChannel linkType = iota
-	linkTypePlaylist
-	linkTypeUser
-	linkTypeGroup
-)
-
 func makeEnclosure(feed *api.Feed, id string, lengthInBytes int64) (string, itunes.EnclosureType, int64) {
 	ext := "mp4"
 	contentType := itunes.MP4

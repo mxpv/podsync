@@ -129,8 +129,6 @@ func (r *RedisStorage) GetFeed(hashId string) (*api.Feed, error) {
 		return nil, err
 	}
 
-	feed.URL = url
-
 	// Fetch user id
 	patreonId, ok := m["patreonid"]
 	if ok {

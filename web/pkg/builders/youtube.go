@@ -3,7 +3,6 @@ package builders
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -31,82 +30,12 @@ type YouTubeBuilder struct {
 	key    apiKey
 }
 
-func (yt *YouTubeBuilder) parseUrl(link string) (kind linkType, id string, err error) {
-	parsed, err := url.Parse(link)
-	if err != nil {
-		err = errors.Wrapf(err, "failed to parse url: %s", link)
-		return
-	}
-
-	if !strings.HasSuffix(parsed.Host, "youtube.com") {
-		err = errors.New("invalid youtube host")
-		return
-	}
-
-	path := parsed.EscapedPath()
-
-	// Parse
-	// https://www.youtube.com/playlist?list=PLCB9F975ECF01953C
-	if strings.HasPrefix(path, "/playlist") {
-		kind = linkTypePlaylist
-
-		id = parsed.Query().Get("list")
-		if id != "" {
-			return
-		}
-
-		err = errors.New("invalid playlist link")
-		return
-	}
-
-	// Parse
-	// - https://www.youtube.com/channel/UC5XPnUk8Vvv_pWslhwom6Og
-	// - https://www.youtube.com/channel/UCrlakW-ewUT8sOod6Wmzyow/videos
-	if strings.HasPrefix(path, "/channel") {
-		kind = linkTypeChannel
-		parts := strings.Split(parsed.EscapedPath(), "/")
-		if len(parts) <= 2 {
-			err = errors.New("invalid youtube channel link")
-			return
-		}
-
-		id = parts[2]
-		if id == "" {
-			err = errors.New("invalid id")
-		}
-
-		return
-	}
-
-	// Parse
-	// - https://www.youtube.com/user/fxigr1
-	if strings.HasPrefix(path, "/user") {
-		kind = linkTypeUser
-
-		parts := strings.Split(parsed.EscapedPath(), "/")
-		if len(parts) <= 2 {
-			err = errors.New("invalid user link")
-			return
-		}
-
-		id = parts[2]
-		if id == "" {
-			err = errors.New("invalid id")
-		}
-
-		return
-	}
-
-	err = errors.New("unsupported link format")
-	return
-}
-
-func (yt *YouTubeBuilder) listChannels(kind linkType, id string) (*youtube.Channel, error) {
+func (yt *YouTubeBuilder) listChannels(linkType api.LinkType, id string) (*youtube.Channel, error) {
 	req := yt.client.Channels.List("id,snippet,contentDetails")
 
-	if kind == linkTypeChannel {
+	if linkType == api.Channel {
 		req = req.Id(id)
-	} else if kind == linkTypeUser {
+	} else if linkType == api.User {
 		req = req.ForUsername(id)
 	} else {
 		return nil, errors.New("unsupported link type")
@@ -190,11 +119,11 @@ func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, qua
 	return snippet.Default.Url
 }
 
-func (yt *YouTubeBuilder) queryFeed(kind linkType, id string, feed *api.Feed) (*itunes.Podcast, string, error) {
+func (yt *YouTubeBuilder) queryFeed(feed *api.Feed) (*itunes.Podcast, string, error) {
 	now := time.Now()
 
-	if kind == linkTypeChannel || kind == linkTypeUser {
-		channel, err := yt.listChannels(kind, id)
+	if feed.LinkType == api.Channel || feed.LinkType == api.User {
+		channel, err := yt.listChannels(feed.LinkType, feed.ItemId)
 		if err != nil {
 			return nil, "", errors.Wrap(err, "failed to query channel")
 		}
@@ -202,7 +131,7 @@ func (yt *YouTubeBuilder) queryFeed(kind linkType, id string, feed *api.Feed) (*
 		itemId := channel.ContentDetails.RelatedPlaylists.Uploads
 
 		link := ""
-		if kind == linkTypeChannel {
+		if feed.LinkType == api.Channel {
 			link = fmt.Sprintf("https://youtube.com/channel/%s", itemId)
 		} else {
 			link = fmt.Sprintf("https://youtube.com/user/%s", itemId)
@@ -225,8 +154,8 @@ func (yt *YouTubeBuilder) queryFeed(kind linkType, id string, feed *api.Feed) (*
 		return &podcast, itemId, nil
 	}
 
-	if kind == linkTypePlaylist {
-		playlist, err := yt.listPlaylists(id, "")
+	if feed.LinkType == api.Playlist {
+		playlist, err := yt.listPlaylists(feed.ItemId, "")
 		if err != nil {
 			return nil, "", errors.Wrap(err, "failed to query playlist")
 		}
@@ -362,14 +291,10 @@ func (yt *YouTubeBuilder) queryItems(itemId string, feed *api.Feed, podcast *itu
 }
 
 func (yt *YouTubeBuilder) Build(feed *api.Feed) (*itunes.Podcast, error) {
-	kind, id, err := yt.parseUrl(feed.URL)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse link: %s", feed.URL)
-	}
 
 	// Query general information about feed (title, description, lang, etc)
 
-	podcast, itemId, err := yt.queryFeed(kind, id, feed)
+	podcast, itemId, err := yt.queryFeed(feed)
 	if err != nil {
 		return nil, err
 	}

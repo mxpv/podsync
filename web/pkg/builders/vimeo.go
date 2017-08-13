@@ -3,9 +3,7 @@ package builders
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
-	"strings"
 
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/web/pkg/api"
@@ -23,60 +21,6 @@ type VimeoBuilder struct {
 	client *vimeo.Client
 }
 
-func (v *VimeoBuilder) parseUrl(link string) (kind linkType, id string, err error) {
-	parsed, err := url.Parse(link)
-	if err != nil {
-		err = errors.Wrapf(err, "failed to parse url: %s", link)
-		return
-	}
-
-	if !strings.HasSuffix(parsed.Host, "vimeo.com") {
-		err = errors.New("invalid vimeo host")
-		return
-	}
-
-	parts := strings.Split(parsed.EscapedPath(), "/")
-
-	if len(parts) <= 1 {
-		err = errors.New("invalid vimeo link path")
-		return
-	}
-
-	if parts[1] == "groups" {
-		kind = linkTypeGroup
-	} else if parts[1] == "channels" {
-		kind = linkTypeChannel
-	} else {
-		kind = linkTypeUser
-	}
-
-	if kind == linkTypeGroup || kind == linkTypeChannel {
-		if len(parts) <= 2 {
-			err = errors.New("invalid channel link")
-			return
-		}
-
-		id = parts[2]
-		if id == "" {
-			err = errors.New("invalid id")
-		}
-
-		return
-	}
-
-	if kind == linkTypeUser {
-		id = parts[1]
-		if id == "" {
-			err = errors.New("invalid id")
-		}
-
-		return
-	}
-
-	err = errors.New("unsupported link format")
-	return
-}
-
 func (v *VimeoBuilder) selectImage(p *vimeo.Pictures, q api.Quality) string {
 	if p == nil || len(p.Sizes) < 1 {
 		return ""
@@ -89,7 +33,9 @@ func (v *VimeoBuilder) selectImage(p *vimeo.Pictures, q api.Quality) string {
 	}
 }
 
-func (v *VimeoBuilder) queryChannel(channelId string, feed *api.Feed) (*itunes.Podcast, error) {
+func (v *VimeoBuilder) queryChannel(feed *api.Feed) (*itunes.Podcast, error) {
+	channelId := feed.ItemId
+
 	ch, resp, err := v.client.Channels.Get(channelId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query channel with channelId %s", channelId)
@@ -109,7 +55,9 @@ func (v *VimeoBuilder) queryChannel(channelId string, feed *api.Feed) (*itunes.P
 	return &podcast, nil
 }
 
-func (v *VimeoBuilder) queryGroup(groupId string, feed *api.Feed) (*itunes.Podcast, error) {
+func (v *VimeoBuilder) queryGroup(feed *api.Feed) (*itunes.Podcast, error) {
+	groupId := feed.ItemId
+
 	gr, resp, err := v.client.Groups.Get(groupId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query group with id %s", groupId)
@@ -129,7 +77,9 @@ func (v *VimeoBuilder) queryGroup(groupId string, feed *api.Feed) (*itunes.Podca
 	return &podcast, nil
 }
 
-func (v *VimeoBuilder) queryUser(userId string, feed *api.Feed) (*itunes.Podcast, error) {
+func (v *VimeoBuilder) queryUser(feed *api.Feed) (*itunes.Podcast, error) {
+	userId := feed.ItemId
+
 	user, resp, err := v.client.Users.Get(userId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query user with id %s", userId)
@@ -154,9 +104,9 @@ func (v *VimeoBuilder) getVideoSize(video *vimeo.Video) int64 {
 	return int64(float64(video.Duration*video.Width*video.Height) * 0.38848958333)
 }
 
-type queryVideosFunc func(id string, opt *vimeo.ListVideoOptions) ([]*vimeo.Video, *vimeo.Response, error)
+type getVideosFunc func(id string, opt *vimeo.ListVideoOptions) ([]*vimeo.Video, *vimeo.Response, error)
 
-func (v *VimeoBuilder) queryVideos(queryVideos queryVideosFunc, id string, podcast *itunes.Podcast, feed *api.Feed) error {
+func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, podcast *itunes.Podcast, feed *api.Feed) error {
 	opt := vimeo.ListVideoOptions{}
 	opt.Page = 1
 	opt.PerPage = vimeoDefaultPageSize
@@ -164,7 +114,7 @@ func (v *VimeoBuilder) queryVideos(queryVideos queryVideosFunc, id string, podca
 	added := 0
 
 	for {
-		videos, response, err := queryVideos(id, &opt)
+		videos, response, err := getVideos(feed.ItemId, &opt)
 		if err != nil {
 			return errors.Wrap(err, "failed to query videos")
 		}
@@ -208,27 +158,31 @@ func (v *VimeoBuilder) queryVideos(queryVideos queryVideosFunc, id string, podca
 }
 
 func (v *VimeoBuilder) Build(feed *api.Feed) (podcast *itunes.Podcast, err error) {
-	kind, id, err := v.parseUrl(feed.URL)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse link: %s", feed.URL)
+	if feed.LinkType == api.Channel {
+		if podcast, err = v.queryChannel(feed); err == nil {
+			err = v.queryVideos(v.client.Channels.ListVideo, podcast, feed)
+		}
+
+		return
 	}
 
-	if kind == linkTypeChannel {
-		if podcast, err = v.queryChannel(id, feed); err == nil {
-			err = v.queryVideos(v.client.Channels.ListVideo, id, podcast, feed)
+	if feed.LinkType == api.Group {
+		if podcast, err = v.queryGroup(feed); err == nil {
+			err = v.queryVideos(v.client.Groups.ListVideo, podcast, feed)
 		}
-	} else if kind == linkTypeGroup {
-		if podcast, err = v.queryGroup(id, feed); err == nil {
-			err = v.queryVideos(v.client.Groups.ListVideo, id, podcast, feed)
-		}
-	} else if kind == linkTypeUser {
-		if podcast, err = v.queryUser(id, feed); err == nil {
-			err = v.queryVideos(v.client.Users.ListVideo, id, podcast, feed)
-		}
-	} else {
-		err = errors.New("unsupported feed type")
+
+		return
 	}
 
+	if feed.LinkType == api.User {
+		if podcast, err = v.queryUser(feed); err == nil {
+			err = v.queryVideos(v.client.Users.ListVideo, podcast, feed)
+		}
+
+		return
+	}
+
+	err = errors.New("unsupported feed type")
 	return
 }
 

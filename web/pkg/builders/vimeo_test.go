@@ -1,10 +1,9 @@
 package builders
 
 import (
+	"context"
 	"os"
 	"testing"
-
-	"context"
 
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/web/pkg/api"
@@ -12,75 +11,14 @@ import (
 )
 
 var (
-	vimeoKey    = os.Getenv("VIMEO_TEST_API_KEY")
-	defaultFeed = &api.Feed{Quality: api.HighQuality}
+	vimeoKey = os.Getenv("VIMEO_TEST_API_KEY")
 )
-
-func TestParseVimeoGroupLink(t *testing.T) {
-	builder := &VimeoBuilder{}
-
-	kind, id, err := builder.parseUrl("https://vimeo.com/groups/109")
-	require.NoError(t, err)
-	require.Equal(t, linkTypeGroup, kind)
-	require.Equal(t, "109", id)
-
-	kind, id, err = builder.parseUrl("http://vimeo.com/groups/109")
-	require.NoError(t, err)
-	require.Equal(t, linkTypeGroup, kind)
-	require.Equal(t, "109", id)
-
-	kind, id, err = builder.parseUrl("http://www.vimeo.com/groups/109")
-	require.NoError(t, err)
-	require.Equal(t, linkTypeGroup, kind)
-	require.Equal(t, "109", id)
-
-	kind, id, err = builder.parseUrl("https://vimeo.com/groups/109/videos/")
-	require.NoError(t, err)
-	require.Equal(t, linkTypeGroup, kind)
-	require.Equal(t, "109", id)
-}
-
-func TestParseVimeoChannelLink(t *testing.T) {
-	builder := &VimeoBuilder{}
-
-	kind, id, err := builder.parseUrl("https://vimeo.com/channels/staffpicks")
-	require.NoError(t, err)
-	require.Equal(t, linkTypeChannel, kind)
-	require.Equal(t, "staffpicks", id)
-
-	kind, id, err = builder.parseUrl("http://vimeo.com/channels/staffpicks/146224925")
-	require.NoError(t, err)
-	require.Equal(t, linkTypeChannel, kind)
-	require.Equal(t, "staffpicks", id)
-}
-
-func TestParseVimeoUserLink(t *testing.T) {
-	builder := &VimeoBuilder{}
-
-	kind, id, err := builder.parseUrl("https://vimeo.com/awhitelabelproduct")
-	require.NoError(t, err)
-	require.Equal(t, linkTypeUser, kind)
-	require.Equal(t, "awhitelabelproduct", id)
-}
-
-func TestParseInvalidVimeoLink(t *testing.T) {
-	builder := &VimeoBuilder{}
-
-	_, _, err := builder.parseUrl("")
-	require.Error(t, err)
-
-	_, _, err = builder.parseUrl("http://www.apple.com")
-	require.Error(t, err)
-
-	_, _, err = builder.parseUrl("http://www.vimeo.com")
-	require.Error(t, err)
-}
 
 func TestQueryVimeoChannel(t *testing.T) {
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
-	podcast, err := builder.queryChannel("staffpicks", defaultFeed)
+	podcast, err := builder.queryChannel(&api.Feed{ItemId: "staffpicks", Quality: api.HighQuality})
 	require.NoError(t, err)
 
 	require.Equal(t, "https://vimeo.com/channels/staffpicks", podcast.Link)
@@ -95,7 +33,7 @@ func TestQueryVimeoGroup(t *testing.T) {
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
-	podcast, err := builder.queryGroup("motion", defaultFeed)
+	podcast, err := builder.queryGroup(&api.Feed{ItemId: "motion", Quality: api.HighQuality})
 	require.NoError(t, err)
 
 	require.Equal(t, "https://vimeo.com/groups/motion", podcast.Link)
@@ -110,7 +48,7 @@ func TestQueryVimeoUser(t *testing.T) {
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
-	podcast, err := builder.queryUser("motionarray", defaultFeed)
+	podcast, err := builder.queryUser(&api.Feed{ItemId: "motionarray", Quality: api.HighQuality})
 	require.NoError(t, err)
 
 	require.Equal(t, "https://vimeo.com/motionarray", podcast.Link)
@@ -125,7 +63,7 @@ func TestQueryVimeoVideos(t *testing.T) {
 
 	feed := &itunes.Podcast{}
 
-	err = builder.queryVideos(builder.client.Channels.ListVideo, "staffpicks", feed, &api.Feed{})
+	err = builder.queryVideos(builder.client.Channels.ListVideo, feed, &api.Feed{ItemId: "staffpicks"})
 	require.NoError(t, err)
 
 	require.Equal(t, vimeoDefaultPageSize, len(feed.Items))

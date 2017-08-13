@@ -9,8 +9,10 @@ import (
 
 func TestCreate(t *testing.T) {
 	feed := &api.Feed{
-		HashId: "xyz",
-		URL:    "http://youtube.com",
+		HashId:   "xyz",
+		Provider: api.Youtube,
+		LinkType: api.Channel,
+		ItemId:   "123",
 	}
 
 	client := createClient(t)
@@ -21,8 +23,10 @@ func TestCreate(t *testing.T) {
 
 func TestCreateDuplicate(t *testing.T) {
 	feed := &api.Feed{
-		HashId: "123",
-		URL:    "http://youtube.com",
+		HashId:   "123",
+		Provider: api.Youtube,
+		LinkType: api.Channel,
+		ItemId:   "123",
 	}
 
 	client := createClient(t)
@@ -46,9 +50,11 @@ func TestCreateDuplicate(t *testing.T) {
 
 func TestGetFeed(t *testing.T) {
 	feed := &api.Feed{
-		HashId: "xyz",
-		UserId: "123",
-		URL:    "http://youtube.com",
+		HashId:   "xyz",
+		UserId:   "123",
+		Provider: api.Youtube,
+		LinkType: api.Channel,
+		ItemId:   "123",
 	}
 
 	client := createClient(t)
@@ -61,9 +67,11 @@ func TestGetFeed(t *testing.T) {
 
 func TestUpdateLastAccess(t *testing.T) {
 	feed := &api.Feed{
-		HashId: "xyz",
-		UserId: "123",
-		URL:    "http://youtube.com",
+		HashId:   "xyz",
+		UserId:   "123",
+		Provider: api.Youtube,
+		LinkType: api.Channel,
+		ItemId:   "123",
 	}
 
 	client := createClient(t)
@@ -78,7 +86,9 @@ func TestUpdateLastAccess(t *testing.T) {
 
 	require.NotEmpty(t, last.HashId)
 	require.NotEmpty(t, last.UserId)
-	require.NotEmpty(t, last.URL)
+	require.NotEmpty(t, last.Provider)
+	require.NotEmpty(t, last.LinkType)
+	require.NotEmpty(t, last.ItemId)
 
 	require.True(t, last.LastAccess.Unix() > lastAccess.Unix())
 }
