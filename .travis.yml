@@ -1,0 +1,20 @@
+dist: trusty
+sudo: required
+language: go
+go_import_path: github.com/mxpv/podsync
+go:
+  - 1.8.3
+install:
+  - go get -u github.com/golang/dep/cmd/dep
+  - dep ensure
+services:
+  - postgresql
+addons:
+  postgresql: "9.6"
+before_script:
+  - psql -a -c "CREATE DATABASE podsync;" -U postgres
+script:
+  - set -e
+  - cd $TRAVIS_BUILD_DIR/web
+  - go test -v -short $(go list -e ./... | grep -v vendor)
+  - go tool vet -all ./pkg
