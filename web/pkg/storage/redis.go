@@ -151,7 +151,7 @@ func (r *RedisStorage) GetFeed(hashId string) (*api.Feed, error) {
 	}
 
 	feed.Format = format
-	quality = quality
+	feed.Quality = quality
 
 	return feed, nil
 }
