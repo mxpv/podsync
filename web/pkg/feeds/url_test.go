@@ -1,4 +1,4 @@
-package parsers
+package feeds
 
 import (
 	"net/url"

@@ -13,12 +13,11 @@ import (
 type service struct {
 	id       id
 	storage  storage
-	parser   parser
 	builders map[api.Provider]builder
 }
 
 func (s *service) CreateFeed(ctx context.Context, req *api.CreateFeedRequest) (string, error) {
-	feed, err := s.parser.ParseURL(req.URL)
+	feed, err := parseURL(req.URL)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to create feed for URL: %s", req.URL)
 	}

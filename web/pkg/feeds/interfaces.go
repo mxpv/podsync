@@ -17,7 +17,3 @@ type storage interface {
 type builder interface {
 	Build(feed *api.Feed) (podcast *itunes.Podcast, err error)
 }
-
-type parser interface {
-	ParseURL(link string) (feed *api.Feed, err error)
-}

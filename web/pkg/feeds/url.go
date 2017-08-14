@@ -1,4 +1,4 @@
-package parsers
+package feeds
 
 import (
 	"net/url"
@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func ParseURL(link string) (*api.Feed, error) {
+func parseURL(link string) (*api.Feed, error) {
 	parsed, err := url.Parse(link)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to parse url: %s", link)
