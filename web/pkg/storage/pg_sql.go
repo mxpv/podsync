@@ -6,10 +6,10 @@ BEGIN;
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'provider') THEN
-    CREATE TYPE quality AS ENUM ('youtube', 'vimeo');
+    CREATE TYPE provider AS ENUM ('youtube', 'vimeo');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'link_type') THEN
-    CREATE TYPE quality AS ENUM ('channel', 'playlist', 'user', 'group');
+    CREATE TYPE link_type AS ENUM ('channel', 'playlist', 'user', 'group');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'quality') THEN
     CREATE TYPE quality AS ENUM ('high', 'low');
