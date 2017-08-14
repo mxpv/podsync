@@ -9,6 +9,10 @@ import (
 )
 
 func parseURL(link string) (*api.Feed, error) {
+	if !strings.HasPrefix(link, "http") {
+		link = "https://" + link
+	}
+
 	parsed, err := url.Parse(link)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to parse url: %s", link)

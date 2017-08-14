@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseYTPlaylist(t *testing.T) {
+func TestParseYoutubeURL_Playlist(t *testing.T) {
 	link, _ := url.ParseRequestURI("https://www.youtube.com/playlist?list=PLCB9F975ECF01953C")
 	kind, id, err := parseYoutubeURL(link)
 	require.NoError(t, err)
@@ -16,7 +16,7 @@ func TestParseYTPlaylist(t *testing.T) {
 	require.Equal(t, "PLCB9F975ECF01953C", id)
 }
 
-func TestParseYTChannel(t *testing.T) {
+func TestParseYoutubeURL_Channel(t *testing.T) {
 	link, _ := url.ParseRequestURI("https://www.youtube.com/channel/UC5XPnUk8Vvv_pWslhwom6Og")
 	kind, id, err := parseYoutubeURL(link)
 	require.NoError(t, err)
@@ -30,7 +30,7 @@ func TestParseYTChannel(t *testing.T) {
 	require.Equal(t, "UCrlakW-ewUT8sOod6Wmzyow", id)
 }
 
-func TestParseYTUser(t *testing.T) {
+func TestParseYoutubeURL_User(t *testing.T) {
 	link, _ := url.ParseRequestURI("https://youtube.com/user/fxigr1")
 	kind, id, err := parseYoutubeURL(link)
 	require.NoError(t, err)
@@ -38,7 +38,7 @@ func TestParseYTUser(t *testing.T) {
 	require.Equal(t, "fxigr1", id)
 }
 
-func TestHandleInvalidYTLink(t *testing.T) {
+func TestParseYoutubeURL_InvalidLink(t *testing.T) {
 	link, _ := url.ParseRequestURI("https://www.youtube.com/user///")
 	_, _, err := parseYoutubeURL(link)
 	require.Error(t, err)
@@ -48,7 +48,7 @@ func TestHandleInvalidYTLink(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestParseVimeoGroupLink(t *testing.T) {
+func TestParseVimeoURL_Group(t *testing.T) {
 	link, _ := url.ParseRequestURI("https://vimeo.com/groups/109")
 	kind, id, err := parseVimeoURL(link)
 	require.NoError(t, err)
@@ -74,7 +74,7 @@ func TestParseVimeoGroupLink(t *testing.T) {
 	require.Equal(t, "109", id)
 }
 
-func TestParseVimeoChannelLink(t *testing.T) {
+func TestParseVimeoURL_Channel(t *testing.T) {
 	link, _ := url.ParseRequestURI("https://vimeo.com/channels/staffpicks")
 	kind, id, err := parseVimeoURL(link)
 	require.NoError(t, err)
@@ -88,7 +88,7 @@ func TestParseVimeoChannelLink(t *testing.T) {
 	require.Equal(t, "staffpicks", id)
 }
 
-func TestParseVimeoUserLink(t *testing.T) {
+func TestParseVimeoURL_User(t *testing.T) {
 	link, _ := url.ParseRequestURI("https://vimeo.com/awhitelabelproduct")
 	kind, id, err := parseVimeoURL(link)
 	require.NoError(t, err)
@@ -96,7 +96,7 @@ func TestParseVimeoUserLink(t *testing.T) {
 	require.Equal(t, "awhitelabelproduct", id)
 }
 
-func TestParseInvalidVimeoLink(t *testing.T) {
+func TestParseVimeoURL_InvalidLink(t *testing.T) {
 	link, _ := url.ParseRequestURI("http://www.apple.com")
 	_, _, err := parseVimeoURL(link)
 	require.Error(t, err)

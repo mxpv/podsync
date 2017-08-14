@@ -45,6 +45,9 @@ func NewIdGenerator() (*hashId, error) {
 	data.MinLength = minLength
 	data.Salt = salt
 	data.Alphabet = alphabet
-	hid := hd.NewWithData(data)
+	hid, err := hd.NewWithData(data)
+	if err != nil {
+		return nil, err
+	}
 	return &hashId{hid}, nil
 }
