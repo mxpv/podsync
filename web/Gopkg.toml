@@ -23,3 +23,7 @@
 [[constraint]]
   name = "github.com/mxpv/podcast"
   branch = "master"
+
+[[constraint]]
+  name = "github.com/speps/go-hashids"
+  revision = "c6ced3330f133cec79e144fb11b2e4c5154059ae"

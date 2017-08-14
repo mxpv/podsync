@@ -19,42 +19,6 @@ type RedisStorage struct {
 	client *redis.Client
 }
 
-func (r *RedisStorage) makeURL(m map[string]string) (string, error) {
-	provider := m["provider"]
-	linkType := m["type"]
-	id := m["id"]
-
-	if provider == "" || linkType == "" || id == "" {
-		return "", errors.New("failed to query URL data from storage")
-	}
-
-	url := ""
-
-	if strings.EqualFold(provider, "youtube") {
-		if strings.EqualFold(linkType, "channel") {
-			url = "https://youtube.com/channel/" + id
-		} else if strings.EqualFold(linkType, "playlist") {
-			url = "https://youtube.com/playlist?list=" + id
-		} else if strings.EqualFold(linkType, "user") {
-			url = "https://youtube.com/user/" + id
-		}
-	} else if strings.EqualFold(provider, "vimeo") {
-		if strings.EqualFold(linkType, "channel") {
-			url = "https://vimeo.com/channels/" + id
-		} else if strings.EqualFold(linkType, "user") {
-			url = "https://vimeo.com/" + id
-		} else if strings.EqualFold(linkType, "group") {
-			url = "https://vimeo.com/groups/" + id
-		}
-	}
-
-	if url == "" {
-		return "", fmt.Errorf("failed to query URL (provider: %s, type: %s, id: %s)", provider, linkType, id)
-	}
-
-	return url, nil
-}
-
 func (r *RedisStorage) parsePageSize(m map[string]string) (int, error) {
 	str, ok := m["pagesize"]
 	if !ok {
@@ -123,11 +87,46 @@ func (r *RedisStorage) GetFeed(hashId string) (*api.Feed, error) {
 		return feed, nil
 	}
 
-	// Construct URL data
-	url, err := r.makeURL(m)
-	if err != nil {
-		return nil, err
+	// Unpack provider and link type
+	provider := m["provider"]
+	linkType := m["type"]
+	if strings.EqualFold(provider, "youtube") {
+		feed.Provider = api.Youtube
+
+		if strings.EqualFold(linkType, "channel") {
+			feed.LinkType = api.Channel
+		} else if strings.EqualFold(linkType, "playlist") {
+			feed.LinkType = api.Playlist
+		} else if strings.EqualFold(linkType, "user") {
+			feed.LinkType = api.User
+		} else {
+			return nil, fmt.Errorf("unsupported yt link type %s", linkType)
+		}
+
+	} else if strings.EqualFold(provider, "vimeo") {
+		feed.Provider = api.Vimeo
+
+		if strings.EqualFold(linkType, "channel") {
+			feed.LinkType = api.Channel
+		} else if strings.EqualFold(linkType, "user") {
+			feed.LinkType = api.User
+		} else if strings.EqualFold(linkType, "group") {
+			feed.LinkType = api.Group
+		} else {
+			return nil, fmt.Errorf("unsupported vimeo link type %s", linkType)
+		}
+
+	} else {
+		return nil, errors.New("unsupported provider")
 	}
+
+	// Unpack item id
+	id, ok := m["id"]
+	if !ok || id == "" {
+		return nil, errors.New("failed to unpack item id")
+	}
+
+	feed.ItemId = id
 
 	// Fetch user id
 	patreonId, ok := m["patreonid"]

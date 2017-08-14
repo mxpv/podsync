@@ -41,7 +41,9 @@ func TestRedisStorage_CreateFeed(t *testing.T) {
 		Id:       123,
 		HashId:   hashId,
 		UserId:   "321",
-		URL:      "https://youtube.com/123",
+		Provider: api.Youtube,
+		LinkType: api.Channel,
+		ItemId:   "123",
 		PageSize: 45,
 		Quality:  api.LowQuality,
 		Format:   api.AudioFormat,
@@ -55,7 +57,9 @@ func TestRedisStorage_CreateFeed(t *testing.T) {
 	require.Equal(t, int64(123), feed.Id)
 	require.Equal(t, hashId, feed.HashId)
 	require.Equal(t, "321", feed.UserId)
-	require.Equal(t, "https://youtube.com/123", feed.URL)
+	require.Equal(t, api.Youtube, feed.Provider)
+	require.Equal(t, api.Channel, feed.LinkType)
+	require.Equal(t, "123", feed.ItemId)
 	require.Equal(t, 45, feed.PageSize)
 	require.Equal(t, api.LowQuality, feed.Quality)
 	require.Equal(t, api.AudioFormat, feed.Format)
