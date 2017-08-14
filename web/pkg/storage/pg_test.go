@@ -90,7 +90,7 @@ func TestPgStorage_UpdateLastAccess(t *testing.T) {
 	require.NotEmpty(t, last.LinkType)
 	require.NotEmpty(t, last.ItemId)
 
-	require.True(t, last.LastAccess.Unix() > lastAccess.Unix())
+	require.True(t, last.LastAccess.UnixNano() > lastAccess.UnixNano())
 }
 
 const TestDatabaseConnectionUrl = "postgres://postgres:@localhost/podsync?sslmode=disable"
