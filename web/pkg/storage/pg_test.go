@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCreate(t *testing.T) {
+func TestPgStorage_CreateFeed(t *testing.T) {
 	feed := &api.Feed{
 		HashId:   "xyz",
 		Provider: api.Youtube,
@@ -21,7 +21,7 @@ func TestCreate(t *testing.T) {
 	require.True(t, feed.Id > 0)
 }
 
-func TestCreateDuplicate(t *testing.T) {
+func TestPgStorage_CreateFeedWithDuplicate(t *testing.T) {
 	feed := &api.Feed{
 		HashId:   "123",
 		Provider: api.Youtube,
@@ -48,7 +48,7 @@ func TestCreateDuplicate(t *testing.T) {
 	require.Equal(t, 1, count)
 }
 
-func TestGetFeed(t *testing.T) {
+func TestPgStorage_GetFeed(t *testing.T) {
 	feed := &api.Feed{
 		HashId:   "xyz",
 		UserId:   "123",
@@ -65,7 +65,7 @@ func TestGetFeed(t *testing.T) {
 	require.Equal(t, feed.Id, out.Id)
 }
 
-func TestUpdateLastAccess(t *testing.T) {
+func TestPgStorage_UpdateLastAccess(t *testing.T) {
 	feed := &api.Feed{
 		HashId:   "xyz",
 		UserId:   "123",
