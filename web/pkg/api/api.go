@@ -59,8 +59,8 @@ const (
 )
 
 type CreateFeedRequest struct {
-	URL      string  `json:"url"`
-	PageSize int     `json:"page_size"`
-	Quality  Quality `json:"quality"`
-	Format   Format  `json:"format"`
+	URL      string  `json:"url" binding:"url,required"`
+	PageSize int     `json:"page_size" binding:"min=10,max=150,required"`
+	Quality  Quality `json:"quality" binding:"eq=high|eq=low"`
+	Format   Format  `json:"format" binding:"eq=video|eq=audio"`
 }

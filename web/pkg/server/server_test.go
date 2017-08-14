@@ -1,0 +1,130 @@
+//go:generate mockgen -source=server.go -destination=server_mock_test.go -package=server
+
+package server
+
+import (
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
+	"github.com/golang/mock/gomock"
+	itunes "github.com/mxpv/podcast"
+	"github.com/mxpv/podsync/web/pkg/api"
+	"github.com/stretchr/testify/require"
+)
+
+func TestCreateFeed(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	req := &api.CreateFeedRequest{
+		URL:      "https://youtube.com/channel/123",
+		PageSize: 55,
+		Quality:  api.LowQuality,
+		Format:   api.AudioFormat,
+	}
+
+	feed := NewMockfeed(ctrl)
+	feed.EXPECT().CreateFeed(gomock.Any(), gomock.Eq(req)).Times(1).Return("456", nil)
+
+	srv := httptest.NewServer(MakeHandlers(feed))
+	defer srv.Close()
+
+	query := `{"url": "https://youtube.com/channel/123", "page_size": 55, "quality": "low", "format": "audio"}`
+	resp, err := http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	require.JSONEq(t, `{"id": "456"}`, readBody(t, resp))
+}
+
+func TestCreateInvalidFeed(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	srv := httptest.NewServer(MakeHandlers(NewMockfeed(ctrl)))
+	defer srv.Close()
+
+	query := `{}`
+	resp, err := http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	require.NoError(t, err)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	query = `{"url": "not a url", "page_size": 55, "quality": "low", "format": "audio"}`
+	resp, err = http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	require.NoError(t, err)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	query = `{"url": "https://youtube.com/channel/123", "page_size": 1, "quality": "low", "format": "audio"}`
+	resp, err = http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	require.NoError(t, err)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	query = `{"url": "https://youtube.com/channel/123", "page_size": 151, "quality": "low", "format": "audio"}`
+	resp, err = http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	require.NoError(t, err)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	query = `{"url": "https://youtube.com/channel/123", "page_size": 50, "quality": "xyz", "format": "audio"}`
+	resp, err = http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	require.NoError(t, err)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	query = `{"url": "https://youtube.com/channel/123", "page_size": 50, "quality": "low", "format": "xyz"}`
+	resp, err = http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	require.NoError(t, err)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	query = `{"url": "https://youtube.com/channel/123", "page_size": 50, "quality": "low", "format": ""}`
+	resp, err = http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	require.NoError(t, err)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	query = `{"url": "https://youtube.com/channel/123", "page_size": 50, "quality": "", "format": "audio"}`
+	resp, err = http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	require.NoError(t, err)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+}
+
+func TestGetFeed(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	podcast := itunes.New("", "", "", nil, nil)
+
+	feed := NewMockfeed(ctrl)
+	feed.EXPECT().GetFeed("123").Return(&podcast, nil)
+
+	srv := httptest.NewServer(MakeHandlers(feed))
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/feed/123")
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func TestGetMetadata(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	feed := NewMockfeed(ctrl)
+	feed.EXPECT().GetMetadata("123").Times(1).Return(&api.Feed{}, nil)
+
+	srv := httptest.NewServer(MakeHandlers(feed))
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/metadata/123")
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func readBody(t *testing.T, resp *http.Response) string {
+	buf, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	require.NoError(t, err)
+
+	return string(buf)
+}

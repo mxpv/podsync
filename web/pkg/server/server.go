@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/web/pkg/api"
 	"github.com/pkg/errors"
@@ -33,11 +32,6 @@ func MakeHandlers(feed feed) http.Handler {
 			return
 		}
 
-		if err := binding.Validator.ValidateStruct(req); err != nil {
-			c.JSON(badRequest(err))
-			return
-		}
-
 		hashId, err := feed.CreateFeed(c.Request.Context(), req)
 		if err != nil {
 			c.JSON(internalError(err))
@@ -47,7 +41,7 @@ func MakeHandlers(feed feed) http.Handler {
 		c.JSON(http.StatusOK, gin.H{"id": hashId})
 	})
 
-	r.GET("/:hashId", func(c *gin.Context) {
+	r.GET("/feed/:hashId", func(c *gin.Context) {
 		hashId := c.Param("hashId")
 		if hashId == "" || len(hashId) > 12 {
 			c.JSON(badRequest(errors.New("invalid feed id")))
