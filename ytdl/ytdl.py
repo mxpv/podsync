@@ -88,7 +88,7 @@ def _choose_url(info, quality):
 
     # Filter formats by file extension
     ext = 'mp4' if is_video else 'm4a'
-    fmt_list = [x for x in info['formats'] if x['ext'] == ext and x['format_note'] != 'DASH video']
+    fmt_list = [x for x in info['formats'] if x['ext'] == ext and x['acodec'] != 'none']
     if not len(fmt_list):
         return info['url']
 
