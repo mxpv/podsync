@@ -3,7 +3,7 @@ package storage
 import (
 	"testing"
 
-	"github.com/mxpv/podsync/web/pkg/api"
+	"github.com/mxpv/podsync/pkg/api"
 	"github.com/stretchr/testify/require"
 )
 

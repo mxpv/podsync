@@ -8,7 +8,7 @@ import (
 
 	"github.com/BrianHicks/finch/duration"
 	itunes "github.com/mxpv/podcast"
-	"github.com/mxpv/podsync/web/pkg/api"
+	"github.com/mxpv/podsync/pkg/api"
 	"github.com/pkg/errors"
 	"google.golang.org/api/youtube/v3"
 )

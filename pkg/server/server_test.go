@@ -11,7 +11,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	itunes "github.com/mxpv/podcast"
-	"github.com/mxpv/podsync/web/pkg/api"
+	"github.com/mxpv/podsync/pkg/api"
 	"github.com/stretchr/testify/require"
 )
 

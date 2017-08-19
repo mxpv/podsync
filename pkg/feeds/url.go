@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/mxpv/podsync/web/pkg/api"
+	"github.com/mxpv/podsync/pkg/api"
 	"github.com/pkg/errors"
 )
 

@@ -6,7 +6,7 @@ package feeds
 import (
 	gomock "github.com/golang/mock/gomock"
 	podcast "github.com/mxpv/podcast"
-	api "github.com/mxpv/podsync/web/pkg/api"
+	api "github.com/mxpv/podsync/pkg/api"
 	reflect "reflect"
 )
 

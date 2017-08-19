@@ -3,7 +3,7 @@ package id
 import (
 	"hash/fnv"
 
-	"github.com/mxpv/podsync/web/pkg/api"
+	"github.com/mxpv/podsync/pkg/api"
 	hd "github.com/speps/go-hashids"
 )
 

@@ -9,13 +9,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/mxpv/podsync/web/pkg/api"
-	"github.com/mxpv/podsync/web/pkg/builders"
-	"github.com/mxpv/podsync/web/pkg/config"
-	"github.com/mxpv/podsync/web/pkg/feeds"
-	"github.com/mxpv/podsync/web/pkg/id"
-	"github.com/mxpv/podsync/web/pkg/server"
-	"github.com/mxpv/podsync/web/pkg/storage"
+	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/builders"
+	"github.com/mxpv/podsync/pkg/config"
+	"github.com/mxpv/podsync/pkg/feeds"
+	"github.com/mxpv/podsync/pkg/id"
+	"github.com/mxpv/podsync/pkg/server"
+	"github.com/mxpv/podsync/pkg/storage"
 )
 
 func main() {
