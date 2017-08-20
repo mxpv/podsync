@@ -29,3 +29,6 @@ glide.lock
 Gopkg.lock
 
 .idea/
+
+node_modules/
+package-lock.json

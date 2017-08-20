@@ -1,6 +1,4 @@
-﻿// Write your Javascript code.
-
-$(function () {
+﻿$(function () {
     function err(msg) {
         alert(msg);
     }
@@ -12,7 +10,7 @@ $(function () {
 
         $.ajax({
             dataType: 'text',
-            url: '/feed/create',
+            url: '/api/create',
             method: 'POST',
             data: JSON.stringify(data),
             contentType: 'application/json; charset=utf-8',
@@ -22,24 +20,18 @@ $(function () {
                 done(feedLink);
             },
             error: function (xhr, status, error) {
-                if (xhr.status === 400) {
-                    // Bad request
-                    var text = '';
+                var text = '';
 
-                    try {
-                        var json = JSON.parse(xhr.responseText);
-                        $.each(json, function (key, value) {
-                            text += value + '\r\n';
-                        });
-                    } catch (e) {
-                        text = xhr.responseText;
-                    } 
-
-                    err(text);
-                } else {
-                    // Generic error
-                    err('Server sad \'' + error + '\': ' + xhr.responseText);
+                try {
+                    var json = JSON.parse(xhr.responseText);
+                    if (json['error']) {
+                        text = json['error'];
+                    }
+                } catch (e) {
+                    text = xhr.responseText;
                 }
+
+                err(text);
             }
         });
     }
@@ -104,15 +96,14 @@ $(function () {
         $('#best-quality, #worst-quality').toggleClass('selected-option');
     }
 
-    function getQuality() {
+    function getFormat() {
         var isAudio = $('#audio-format').hasClass('selected-option');
-        var isWorst = $('#worst-quality').hasClass('selected-option');
+        return isAudio ? 'audio' : 'video'
+    }
 
-        if (isAudio) {
-            return isWorst ? 'AudioLow' : 'AudioHigh';
-        } else {
-            return isWorst ? 'VideoLow' : 'VideoHigh';
-        }
+    function getQuality() {
+        var isWorst = $('#worst-quality').hasClass('selected-option');
+        return isWorst ? 'low' : 'high';
     }
 
     function pageSwitch(evt) {
@@ -195,7 +186,7 @@ $(function () {
 
     $('#get-link').click(function(e) {
         var url = $('#url-input').val();
-        createFeed({ url: url, quality: getQuality(), pageSize: getPageCount() }, displayLink);
+        createFeed({ url: url, format: getFormat(), quality: getQuality(), page_size: getPageCount() }, displayLink);
         e.preventDefault();
     });
 

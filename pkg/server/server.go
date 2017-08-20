@@ -32,16 +32,19 @@ func MakeHandlers(feed feed) http.Handler {
 	r.LoadHTMLGlob(path.Join(rootDir, "templates/*.html"))
 
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{"title": "Index page"})
+		c.HTML(http.StatusOK, "index.html", gin.H{
+			"identity":       &struct{}{},
+			"enableFeatures": true,
+		})
 	})
 
 	// REST API
 
-	r.GET("/ping", func(c *gin.Context) {
+	r.GET("/api/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "ok")
 	})
 
-	r.POST("/create", func(c *gin.Context) {
+	r.POST("/api/create", func(c *gin.Context) {
 		req := &api.CreateFeedRequest{}
 
 		if err := c.BindJSON(req); err != nil {
@@ -58,7 +61,7 @@ func MakeHandlers(feed feed) http.Handler {
 		c.JSON(http.StatusOK, gin.H{"id": hashId})
 	})
 
-	r.GET("/feed/:hashId", func(c *gin.Context) {
+	r.GET("/api/feed/:hashId", func(c *gin.Context) {
 		hashId := c.Param("hashId")
 		if hashId == "" || len(hashId) > 12 {
 			c.JSON(badRequest(errors.New("invalid feed id")))
@@ -74,7 +77,7 @@ func MakeHandlers(feed feed) http.Handler {
 		c.Data(http.StatusOK, "application/rss+xml", podcast.Bytes())
 	})
 
-	r.GET("/metadata/:hashId", func(c *gin.Context) {
+	r.GET("/api/metadata/:hashId", func(c *gin.Context) {
 		hashId := c.Param("hashId")
 		if hashId == "" || len(hashId) > 12 {
 			c.JSON(badRequest(errors.New("invalid feed id")))
