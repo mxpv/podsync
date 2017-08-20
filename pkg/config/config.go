@@ -34,6 +34,7 @@ func ReadConfiguration() (cfg *AppConfig, err error) {
 		"patreonClientId":       "PATREON_CLIENT_ID",
 		"patreonSecret":         "PATREON_SECRET",
 		"postgresConnectionUrl": "POSTGRES_CONNECTION_URL",
+		"redisUrl":              "REDIS_CONNECTION_URL",
 	}
 
 	for k, v := range envmap {

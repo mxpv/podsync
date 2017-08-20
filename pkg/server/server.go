@@ -2,7 +2,10 @@ package server
 
 import (
 	"context"
+	"go/build"
+	"log"
 	"net/http"
+	"path"
 
 	"github.com/gin-gonic/gin"
 	itunes "github.com/mxpv/podcast"
@@ -19,6 +22,20 @@ type feed interface {
 func MakeHandlers(feed feed) http.Handler {
 	r := gin.New()
 	r.Use(gin.Recovery())
+
+	// Static files + HTML
+
+	rootDir := path.Join(build.Default.GOPATH, "src/github.com/mxpv/podsync")
+	log.Printf("Using root directory: %s", rootDir)
+
+	r.Static("/assets", path.Join(rootDir, "assets"))
+	r.LoadHTMLGlob(path.Join(rootDir, "templates/*.html"))
+
+	r.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "index.html", gin.H{"title": "Index page"})
+	})
+
+	// REST API
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "ok")
