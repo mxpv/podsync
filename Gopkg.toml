@@ -1,25 +1,4 @@
 
-# Gopkg.toml example
-#
-# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
-# for detailed Gopkg.toml documentation.
-#
-# required = ["github.com/user/thing/cmd/thing"]
-# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
-#
-# [[constraint]]
-#   name = "github.com/user/project"
-#   version = "1.0.0"
-#
-# [[constraint]]
-#   name = "github.com/user/project2"
-#   branch = "dev"
-#   source = "github.com/myfork/project2"
-#
-# [[override]]
-#  name = "github.com/x/y"
-#  version = "2.4.0"
-
 [[constraint]]
   name = "github.com/mxpv/podcast"
   branch = "master"
@@ -27,3 +6,11 @@
 [[constraint]]
   name = "github.com/speps/go-hashids"
   revision = "c6ced3330f133cec79e144fb11b2e4c5154059ae"
+
+[[constraint]]
+  name = "github.com/gin-gonic/gin"
+  version = "1.2"
+
+[[constraint]]
+  name = "github.com/gin-contrib/sessions"
+  revision = "a71ea9167c616cf9f02bc928ed08bc390c8279bc"

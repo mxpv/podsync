@@ -15,6 +15,7 @@ vimeoApiKey: "2"
 patreonClientId: "3"
 patreonSecret: "4"
 postgresConnectionUrl: "5"
+cookieSecret: "6"
 `
 
 func TestReadYaml(t *testing.T) {
@@ -32,6 +33,7 @@ func TestReadYaml(t *testing.T) {
 	require.Equal(t, "3", cfg.PatreonClientId)
 	require.Equal(t, "4", cfg.PatreonSecret)
 	require.Equal(t, "5", cfg.PostgresConnectionURL)
+	require.Equal(t, "6", cfg.CookieSecret)
 }
 
 func TestReadEnv(t *testing.T) {
@@ -43,6 +45,7 @@ func TestReadEnv(t *testing.T) {
 	os.Setenv("PATREON_CLIENT_ID", "33")
 	os.Setenv("PATREON_SECRET", "44")
 	os.Setenv("POSTGRES_CONNECTION_URL", "55")
+	os.Setenv("COOKIE_SECRET", "66")
 
 	cfg, err := ReadConfiguration()
 	require.NoError(t, err)
@@ -51,4 +54,6 @@ func TestReadEnv(t *testing.T) {
 	require.Equal(t, "22", cfg.VimeoApiKey)
 	require.Equal(t, "33", cfg.PatreonClientId)
 	require.Equal(t, "44", cfg.PatreonSecret)
+	require.Equal(t, "55", cfg.PostgresConnectionURL)
+	require.Equal(t, "66", cfg.CookieSecret)
 }

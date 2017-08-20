@@ -12,8 +12,11 @@ import (
 	"github.com/golang/mock/gomock"
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/config"
 	"github.com/stretchr/testify/require"
 )
+
+var cfg = &config.AppConfig{}
 
 func TestCreateFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -29,11 +32,11 @@ func TestCreateFeed(t *testing.T) {
 	feed := NewMockfeed(ctrl)
 	feed.EXPECT().CreateFeed(gomock.Any(), gomock.Eq(req)).Times(1).Return("456", nil)
 
-	srv := httptest.NewServer(MakeHandlers(feed))
+	srv := httptest.NewServer(MakeHandlers(feed, cfg))
 	defer srv.Close()
 
 	query := `{"url": "https://youtube.com/channel/123", "page_size": 55, "quality": "low", "format": "audio"}`
-	resp, err := http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	resp, err := http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -44,46 +47,46 @@ func TestCreateInvalidFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	srv := httptest.NewServer(MakeHandlers(NewMockfeed(ctrl)))
+	srv := httptest.NewServer(MakeHandlers(NewMockfeed(ctrl), cfg))
 	defer srv.Close()
 
 	query := `{}`
-	resp, err := http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	resp, err := http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	query = `{"url": "not a url", "page_size": 55, "quality": "low", "format": "audio"}`
-	resp, err = http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	resp, err = http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	query = `{"url": "https://youtube.com/channel/123", "page_size": 1, "quality": "low", "format": "audio"}`
-	resp, err = http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	resp, err = http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	query = `{"url": "https://youtube.com/channel/123", "page_size": 151, "quality": "low", "format": "audio"}`
-	resp, err = http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	resp, err = http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	query = `{"url": "https://youtube.com/channel/123", "page_size": 50, "quality": "xyz", "format": "audio"}`
-	resp, err = http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	resp, err = http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	query = `{"url": "https://youtube.com/channel/123", "page_size": 50, "quality": "low", "format": "xyz"}`
-	resp, err = http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	resp, err = http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	query = `{"url": "https://youtube.com/channel/123", "page_size": 50, "quality": "low", "format": ""}`
-	resp, err = http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	resp, err = http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	query = `{"url": "https://youtube.com/channel/123", "page_size": 50, "quality": "", "format": "audio"}`
-	resp, err = http.Post(srv.URL+"/create", "application/json", strings.NewReader(query))
+	resp, err = http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
@@ -97,10 +100,10 @@ func TestGetFeed(t *testing.T) {
 	feed := NewMockfeed(ctrl)
 	feed.EXPECT().GetFeed("123").Return(&podcast, nil)
 
-	srv := httptest.NewServer(MakeHandlers(feed))
+	srv := httptest.NewServer(MakeHandlers(feed, cfg))
 	defer srv.Close()
 
-	resp, err := http.Get(srv.URL + "/feed/123")
+	resp, err := http.Get(srv.URL + "/api/feed/123")
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 }
@@ -112,10 +115,10 @@ func TestGetMetadata(t *testing.T) {
 	feed := NewMockfeed(ctrl)
 	feed.EXPECT().GetMetadata("123").Times(1).Return(&api.Feed{}, nil)
 
-	srv := httptest.NewServer(MakeHandlers(feed))
+	srv := httptest.NewServer(MakeHandlers(feed, cfg))
 	defer srv.Close()
 
-	resp, err := http.Get(srv.URL + "/metadata/123")
+	resp, err := http.Get(srv.URL + "/api/metadata/123")
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 }

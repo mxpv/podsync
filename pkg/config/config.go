@@ -15,6 +15,7 @@ type AppConfig struct {
 	PatreonSecret         string `yaml:"patreonSecret"`
 	PostgresConnectionURL string `yaml:"postgresConnectionUrl"`
 	RedisURL              string `yaml:"redisUrl"`
+	CookieSecret          string `yaml:"cookieSecret"`
 }
 
 func ReadConfiguration() (cfg *AppConfig, err error) {
@@ -35,6 +36,7 @@ func ReadConfiguration() (cfg *AppConfig, err error) {
 		"patreonSecret":         "PATREON_SECRET",
 		"postgresConnectionUrl": "POSTGRES_CONNECTION_URL",
 		"redisUrl":              "REDIS_CONNECTION_URL",
+		"cookieSecret":          "COOKIE_SECRET",
 	}
 
 	for k, v := range envmap {

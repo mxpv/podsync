@@ -28,9 +28,9 @@
         </h2>
 
         <div class="login-block">
-            {{if not .identity }}
+            {{if .UserId }}
             <p>
-                Yo, <i class="fa fa-user-circle" aria-hidden="true"></i> @User.GetName() ( <a href="/logout"><i class="fa fa-sign-out" aria-hidden="true"></i>logout</a>)
+                Yo, <i class="fa fa-user-circle" aria-hidden="true"></i> {{ .FullName }} ( <a href="/logout"><i class="fa fa-sign-out" aria-hidden="true"></i>logout</a>)
             </p>
             {{else}}
             <h5>
@@ -57,7 +57,7 @@
 
             <div class="controls">
                 <p>
-                    {{if .enableFeatures }}
+                    {{if gt .FeatureLevel 0 }}
                     <i class="fa fa-wrench" aria-hidden="true"></i>
                     {{else}}
                     <i class="fa fa-question-circle master-tooltip"
@@ -65,7 +65,7 @@
                        title="This features are available for patrons only. You may support us and unlock this features"></i>
                     {{end}}
 
-                    <span class="{{if not .enableFeatures }}locked{{end}}">
+                    <span class="{{if eq .FeatureLevel 0 }}locked{{end}}">
                         <span id="control-panel">
                             Selected format <a class="selected-option" id="video-format">video</a> <a id="audio-format">audio</a>,
                             quality <a class="selected-option" id="best-quality">best</a> <a id="worst-quality">worst</a>,

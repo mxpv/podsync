@@ -1,6 +1,8 @@
 package api
 
-import "time"
+import (
+	"time"
+)
 
 type Provider string
 
@@ -63,4 +65,12 @@ type CreateFeedRequest struct {
 	PageSize int     `json:"page_size" binding:"min=10,max=150,required"`
 	Quality  Quality `json:"quality" binding:"eq=high|eq=low"`
 	Format   Format  `json:"format" binding:"eq=video|eq=audio"`
+}
+
+type Identity struct {
+	UserId       string `json:"user_id"`
+	FullName     string `json:"full_name"`
+	Email        string `json:"email"`
+	ProfileURL   string `json:"profile_url"`
+	FeatureLevel int    `json:"feature_level"`
 }
