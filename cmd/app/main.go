@@ -62,7 +62,7 @@ func main() {
 	)
 
 	srv := http.Server{
-		Addr:    fmt.Sprintf(":%d", 8080),
+		Addr:    fmt.Sprintf(":%d", 5001),
 		Handler: server.MakeHandlers(feed, cfg),
 	}
 
