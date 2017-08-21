@@ -3,7 +3,6 @@
 package feeds
 
 import (
-	"context"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -34,7 +33,7 @@ func TestService_CreateFeed(t *testing.T) {
 		Format:   api.VideoFormat,
 	}
 
-	hashId, err := s.CreateFeed(context.Background(), req)
+	hashId, err := s.CreateFeed(req, &api.Identity{})
 	require.NoError(t, err)
 	require.Equal(t, "123", hashId)
 }
