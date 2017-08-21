@@ -12,7 +12,7 @@ app = Sanic()
 db = redis.from_url(os.getenv('REDIS_CONNECTION_STRING', 'redis://localhost:6379'))
 db.ping()
 
-default_opts = {
+opts = {
     'quiet': True,
     'no_warnings': True,
     'forceurl': True,
@@ -20,18 +20,6 @@ default_opts = {
     'skip_download': True,
     'call_home': False,
     'nocheckcertificate': True
-}
-
-youtube_quality = {
-    'videohigh': 'best[ext=mp4]',
-    'videolow': 'worst[ext=mp4]',
-    'audiohigh': 'bestaudio[ext=m4a]/worstaudio[ext=m4a]',
-    'audiolow': 'worstaudio[ext=m4a]/bestaudio[ext=m4a]'
-}
-
-vimeo_quality = {
-    'videohigh': 'Original/http-1080p/http-720p/http-360p/http-270p',
-    'videolow': 'http-270p/http-360p/http-540p/http-720p/http-1080p'
 }
 
 url_formats = {
@@ -84,16 +72,10 @@ def _resolve(url, quality):
     if not quality:
         quality = 'videohigh'
 
-    opts = default_opts.copy()
-    fmt = _choose_format(quality, url)
-
-    if fmt:
-        opts.update(format=fmt)
-
     try:
         with youtube_dl.YoutubeDL(opts) as ytdl:
             info = ytdl.extract_info(url, download=False)
-            return info['url']
+            return _choose_url(info, quality)
     except DownloadError:
         raise
     except Exception as e:
@@ -101,15 +83,24 @@ def _resolve(url, quality):
         raise
 
 
-def _choose_format(quality, url):
-    fmt = None
-    if 'youtube.com' in url:
-        fmt = youtube_quality.get(quality)
-    elif 'vimeo.com' in url:
-        fmt = vimeo_quality.get(quality)
+def _choose_url(info, quality):
+    is_video = quality == 'videohigh' or quality == 'videolow'
 
-    return fmt
+    # Filter formats by file extension
+    ext = 'mp4' if is_video else 'm4a'
+    fmt_list = [x for x in info['formats'] if x['ext'] == ext and x['acodec'] != 'none']
+    if not len(fmt_list):
+        return info['url']
+
+    # Sort list by field (width for videos, file size for audio)
+    sort_field = 'width' if is_video else 'filesize'
+    ordered = sorted(fmt_list, key=lambda x: x[sort_field], reverse=True)
+
+    # Choose an item depending on quality
+    is_high_quality = quality == 'videohigh' or quality == 'audiohigh'
+    item = ordered[0] if is_high_quality else ordered[-1]
+    return item['url']
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5002, workers=16)
+    app.run(host='0.0.0.0', port=5002, workers=32)
