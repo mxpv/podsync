@@ -68,9 +68,11 @@ func (r *RedisStorage) GetFeed(hashId string) (*api.Feed, error) {
 	}
 
 	feed := &api.Feed{
-		PageSize: api.DefaultPageSize,
-		Quality:  api.DefaultQuality,
-		Format:   api.DefaultFormat,
+		PageSize:   api.DefaultPageSize,
+		Quality:    api.DefaultQuality,
+		Format:     api.DefaultFormat,
+		HashId:     hashId,
+		LastAccess: time.Now().UTC(),
 	}
 
 	m := make(map[string]string, len(result))
