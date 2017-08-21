@@ -1,16 +1,15 @@
-import youtube_dl
-import redis
 import os
-from youtube_dl.utils import DownloadError
+import requests
+import youtube_dl
 from sanic import Sanic
-from sanic.exceptions import InvalidUsage, NotFound
+from sanic.exceptions import InvalidUsage
 from sanic.response import text, redirect
-from datetime import timedelta
+from youtube_dl.utils import DownloadError
+
+METADATA_URL = os.getenv('METADATA_URL', 'http://app:5001/api/metadata/{feed_id}')
+print('Using metadata URL template: ' + METADATA_URL)
 
 app = Sanic()
-
-db = redis.from_url(os.getenv('REDIS_CONNECTION_STRING', 'redis://localhost:6379'))
-db.ping()
 
 opts = {
     'quiet': True,
@@ -29,7 +28,7 @@ url_formats = {
 
 
 @app.route('/download/<feed_id>/<video_id>', methods=['GET'])
-async def download(request, feed_id, video_id):
+async def download(req, feed_id, video_id):
     if not feed_id:
         raise InvalidUsage('Invalid feed id')
 
@@ -38,44 +37,34 @@ async def download(request, feed_id, video_id):
     if not video_id:
         raise InvalidUsage('Invalid video id')
 
-    # Query redis
-    data = db.hgetall(feed_id)
-    if not data:
-        raise NotFound('Feed not found')
-
-    # Delete this feed if no requests within 90 days
-    db.expire(feed_id, timedelta(days=90))
-
-    entries = {k.decode().lower(): v.decode().lower() for k, v in data.items()}
+    # Pull metadata from API server
+    metadata_url = METADATA_URL.format(feed_id=feed_id, video_id=video_id)
+    r = requests.get(url=metadata_url)
+    json = r.json()
 
     # Build URL
-    provider = entries.get('provider')
+    provider = json['provider']
     tpl = url_formats[provider]
     if not tpl:
         raise InvalidUsage('Invalid feed')
-
     url = tpl.format(video_id)
-    quality = entries.get('quality')
 
     try:
-        redirect_url = _resolve(url, quality)
+        redirect_url = _resolve(url, json)
         return redirect(redirect_url)
     except DownloadError as e:
         msg = str(e)
         return text(msg, status=511)
 
 
-def _resolve(url, quality):
+def _resolve(url, metadata):
     if not url:
         raise InvalidUsage('Invalid URL')
-
-    if not quality:
-        quality = 'videohigh'
 
     try:
         with youtube_dl.YoutubeDL(opts) as ytdl:
             info = ytdl.extract_info(url, download=False)
-            return _choose_url(info, quality)
+            return _choose_url(info, metadata)
     except DownloadError:
         raise
     except Exception as e:
@@ -83,8 +72,8 @@ def _resolve(url, quality):
         raise
 
 
-def _choose_url(info, quality):
-    is_video = quality == 'videohigh' or quality == 'videolow'
+def _choose_url(info, metadata):
+    is_video = metadata['format'] == 'video'
 
     # Filter formats by file extension
     ext = 'mp4' if is_video else 'm4a'
@@ -97,7 +86,7 @@ def _choose_url(info, quality):
     ordered = sorted(fmt_list, key=lambda x: x[sort_field], reverse=True)
 
     # Choose an item depending on quality
-    is_high_quality = quality == 'videohigh' or quality == 'audiohigh'
+    is_high_quality = metadata['quality'] == 'high'
     item = ordered[0] if is_high_quality else ordered[-1]
     return item['url']
 
