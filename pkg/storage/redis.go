@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -80,15 +79,6 @@ func (r *RedisStorage) GetFeed(hashId string) (*api.Feed, error) {
 		m[strings.ToLower(key)] = val
 	}
 
-	j, ok := m["json"]
-	if ok {
-		if err := json.Unmarshal([]byte(j), feed); err != nil {
-			return nil, err
-		}
-
-		return feed, nil
-	}
-
 	// Unpack provider and link type
 	provider := m["provider"]
 	linkType := m["type"]
@@ -152,6 +142,7 @@ func (r *RedisStorage) GetFeed(hashId string) (*api.Feed, error) {
 		return nil, err
 	}
 
+	feed.PageSize = pageSize
 	feed.Format = format
 	feed.Quality = quality
 
@@ -159,12 +150,32 @@ func (r *RedisStorage) GetFeed(hashId string) (*api.Feed, error) {
 }
 
 func (r *RedisStorage) CreateFeed(feed *api.Feed) error {
-	raw, err := json.Marshal(feed)
-	if err != nil {
-		return err
+	fields := map[string]interface{}{
+		"provider":  string(feed.Provider),
+		"type":      string(feed.LinkType),
+		"id":        feed.ItemId,
+		"patreonid": feed.UserId,
+		"pagesize":  feed.PageSize,
 	}
 
-	fields := map[string]interface{}{"json": string(raw)}
+	if feed.Format == api.VideoFormat {
+
+		if feed.Quality == api.HighQuality {
+			fields["quality"] = "VideoHigh"
+		} else {
+			fields["quality"] = "VideoLow"
+		}
+
+	} else {
+
+		if feed.Quality == api.HighQuality {
+			fields["quality"] = "AudioHigh"
+		} else {
+			fields["quality"] = "AudioLow"
+		}
+
+	}
+
 	if err := r.client.HMSet(feed.HashId, fields).Err(); err != nil {
 		return errors.Wrap(err, "failed to save feed")
 	}

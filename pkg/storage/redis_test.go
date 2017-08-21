@@ -38,7 +38,6 @@ func TestRedisStorage_CreateFeed(t *testing.T) {
 	hashId := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
 
 	err := client.CreateFeed(&api.Feed{
-		Id:       123,
 		HashId:   hashId,
 		UserId:   "321",
 		Provider: api.Youtube,
@@ -54,7 +53,6 @@ func TestRedisStorage_CreateFeed(t *testing.T) {
 	feed, err := client.GetFeed(hashId)
 	require.NoError(t, err)
 
-	require.Equal(t, int64(123), feed.Id)
 	require.Equal(t, hashId, feed.HashId)
 	require.Equal(t, "321", feed.UserId)
 	require.Equal(t, api.Youtube, feed.Provider)
