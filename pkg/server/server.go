@@ -39,10 +39,14 @@ func MakeHandlers(feed feed, cfg *config.AppConfig) http.Handler {
 
 	// Static files + HTML
 
+	if cfg.PatreonRedirectURL == "" {
+		cfg.PatreonRedirectURL = "http://localhost:8080/patreon"
+	}
+
 	conf := &oauth2.Config{
 		ClientID:     cfg.PatreonClientId,
 		ClientSecret: cfg.PatreonSecret,
-		RedirectURL:  "http://localhost:8080/patreon",
+		RedirectURL:  cfg.PatreonRedirectURL,
 		Scopes:       []string{"users", "pledges-to-me", "my-campaign"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  patreon.AuthorizationURL,

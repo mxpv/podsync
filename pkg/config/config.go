@@ -13,6 +13,7 @@ type AppConfig struct {
 	VimeoApiKey           string `yaml:"vimeoApiKey"`
 	PatreonClientId       string `yaml:"patreonClientId"`
 	PatreonSecret         string `yaml:"patreonSecret"`
+	PatreonRedirectURL    string `yaml:"patreonRedirectUrl"`
 	PostgresConnectionURL string `yaml:"postgresConnectionUrl"`
 	RedisURL              string `yaml:"redisUrl"`
 	CookieSecret          string `yaml:"cookieSecret"`
@@ -34,6 +35,7 @@ func ReadConfiguration() (cfg *AppConfig, err error) {
 		"vimeoApiKey":           "VIMEO_API_KEY",
 		"patreonClientId":       "PATREON_CLIENT_ID",
 		"patreonSecret":         "PATREON_SECRET",
+		"patreonRedirectUrl":    "PATREON_REDIRECT_URL",
 		"postgresConnectionUrl": "POSTGRES_CONNECTION_URL",
 		"redisUrl":              "REDIS_CONNECTION_URL",
 		"cookieSecret":          "COOKIE_SECRET",
