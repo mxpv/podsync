@@ -30,7 +30,7 @@ func TestCreateFeed(t *testing.T) {
 	}
 
 	feed := NewMockfeed(ctrl)
-	feed.EXPECT().CreateFeed(gomock.Any(), gomock.Eq(req)).Times(1).Return("456", nil)
+	feed.EXPECT().CreateFeed(gomock.Eq(req), gomock.Any()).Times(1).Return("456", nil)
 
 	srv := httptest.NewServer(MakeHandlers(feed, cfg))
 	defer srv.Close()

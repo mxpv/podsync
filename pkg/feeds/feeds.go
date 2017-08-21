@@ -1,7 +1,6 @@
 package feeds
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -10,13 +9,17 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	maxPageSize = 150
+)
+
 type service struct {
 	id       id
 	storage  storage
 	builders map[api.Provider]builder
 }
 
-func (s *service) CreateFeed(ctx context.Context, req *api.CreateFeedRequest) (string, error) {
+func (s *service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error) {
 	feed, err := parseURL(req.URL)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to create feed for URL: %s", req.URL)
@@ -34,6 +37,16 @@ func (s *service) CreateFeed(ctx context.Context, req *api.CreateFeedRequest) (s
 	feed.Quality = api.HighQuality
 	feed.FeatureLevel = api.DefaultFeatures
 	feed.LastAccess = time.Now().UTC()
+
+	if identity.FeatureLevel > 0 {
+		feed.Quality = req.Quality
+		feed.Format = req.Format
+		feed.FeatureLevel = identity.FeatureLevel
+		feed.PageSize = req.PageSize
+		if feed.PageSize > maxPageSize {
+			feed.PageSize = maxPageSize
+		}
+	}
 
 	// Generate short id
 	hashId, err := s.id.Generate(feed)

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -26,7 +25,7 @@ const (
 )
 
 type feed interface {
-	CreateFeed(ctx context.Context, req *api.CreateFeedRequest) (string, error)
+	CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error)
 	GetFeed(hashId string) (*itunes.Podcast, error)
 	GetMetadata(hashId string) (*api.Feed, error)
 }
@@ -116,10 +115,24 @@ func MakeHandlers(feed feed, cfg *config.AppConfig) http.Handler {
 		client := patreon.NewClient(tc)
 
 		// Query user info from Patreon
-		user, err := client.FetchUser(patreon.WithIncludes(patreon.UserDefaultRelations))
+		user, err := client.FetchUser()
 		if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
+		}
+
+		// Determine feature level
+		level := api.DefaultFeatures
+		amount := 0
+		for _, item := range user.Included.Items {
+			pledge, ok := item.(*patreon.Pledge)
+			if ok {
+				amount += pledge.Attributes.AmountCents
+			}
+		}
+
+		if amount >= 100 {
+			level = api.ExtendedFeatures
 		}
 
 		identity := &api.Identity{
@@ -127,7 +140,7 @@ func MakeHandlers(feed feed, cfg *config.AppConfig) http.Handler {
 			FullName:     user.Data.Attributes.FullName,
 			Email:        user.Data.Attributes.Email,
 			ProfileURL:   user.Data.Attributes.URL,
-			FeatureLevel: api.ExtendedFeatures,
+			FeatureLevel: level,
 		}
 
 		// Serialize identity and return cookies
@@ -158,7 +171,22 @@ func MakeHandlers(feed feed, cfg *config.AppConfig) http.Handler {
 			return
 		}
 
-		hashId, err := feed.CreateFeed(c.Request.Context(), req)
+		s := sessions.Default(c)
+
+		identity := &api.Identity{
+			FeatureLevel: api.DefaultFeatures,
+		}
+
+		buf, ok := s.Get(identitySessionKey).(string)
+		if ok {
+			// We are failed to deserialize Identity structure, do cleanup, force user to login again
+			if err := json.Unmarshal([]byte(buf), identity); err != nil {
+				s.Clear()
+				s.Save()
+			}
+		}
+
+		hashId, err := feed.CreateFeed(req, identity)
 		if err != nil {
 			c.JSON(internalError(err))
 			return

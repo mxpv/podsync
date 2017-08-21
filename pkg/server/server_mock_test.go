@@ -4,7 +4,6 @@
 package server
 
 import (
-	context "context"
 	gomock "github.com/golang/mock/gomock"
 	podcast "github.com/mxpv/podcast"
 	api "github.com/mxpv/podsync/pkg/api"
@@ -35,8 +34,8 @@ func (_m *Mockfeed) EXPECT() *MockfeedMockRecorder {
 }
 
 // CreateFeed mocks base method
-func (_m *Mockfeed) CreateFeed(ctx context.Context, req *api.CreateFeedRequest) (string, error) {
-	ret := _m.ctrl.Call(_m, "CreateFeed", ctx, req)
+func (_m *Mockfeed) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error) {
+	ret := _m.ctrl.Call(_m, "CreateFeed", req, identity)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1

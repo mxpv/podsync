@@ -14,3 +14,7 @@
 [[constraint]]
   name = "github.com/gin-contrib/sessions"
   revision = "a71ea9167c616cf9f02bc928ed08bc390c8279bc"
+
+[[constraint]]
+  name = "github.com/mxpv/patreon-go"
+  version = "1.2"
