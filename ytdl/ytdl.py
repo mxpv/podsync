@@ -94,9 +94,9 @@ def _choose_url(info, quality):
 
     # Sort list by field (width for videos, file size for audio)
     sort_field = 'width' if is_video else 'filesize'
-    ordered = sorted(fmt_list, key=lambda x: x[sort_field], reverse=True)
+    ordered = sorted(fmt_list, key=lambda x: x[sort_field] or x['format_id'], reverse=True)
 
-    # Choose an item depending on quality
+    # Choose an item depending on quality, better at the beginning
     is_high_quality = quality == 'videohigh' or quality == 'audiohigh'
     item = ordered[0] if is_high_quality else ordered[-1]
     return item['url']
