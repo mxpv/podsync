@@ -125,7 +125,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *api.Feed) (*itunes.Podcast, string, er
 	if feed.LinkType == api.Channel || feed.LinkType == api.User {
 		channel, err := yt.listChannels(feed.LinkType, feed.ItemId)
 		if err != nil {
-			return nil, "", errors.Wrap(err, "failed to query channel")
+			return nil, "", err
 		}
 
 		itemId := channel.ContentDetails.RelatedPlaylists.Uploads

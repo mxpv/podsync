@@ -2,6 +2,12 @@ package api
 
 import (
 	"time"
+
+	"github.com/pkg/errors"
+)
+
+var (
+	ErrNotFound = errors.New("not found")
 )
 
 type Provider string

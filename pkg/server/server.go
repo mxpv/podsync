@@ -14,7 +14,6 @@ import (
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/config"
-	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
 
@@ -198,16 +197,21 @@ func MakeHandlers(feed feed, cfg *config.AppConfig) http.Handler {
 		c.JSON(http.StatusOK, gin.H{"id": hashId})
 	})
 
-	r.GET("/api/feed/:hashId", func(c *gin.Context) {
-		hashId := c.Param("hashId")
+	r.NoRoute(func(c *gin.Context) {
+		hashId := c.Request.URL.Path[1:]
 		if hashId == "" || len(hashId) > 12 {
-			c.JSON(badRequest(errors.New("invalid feed id")))
+			c.String(http.StatusBadRequest, "invalid feed id")
 			return
 		}
 
 		podcast, err := feed.GetFeed(hashId)
 		if err != nil {
-			c.JSON(internalError(err))
+			code := http.StatusInternalServerError
+			if err == api.ErrNotFound {
+				code = http.StatusNotFound
+			}
+
+			c.String(code, err.Error())
 			return
 		}
 
@@ -217,13 +221,13 @@ func MakeHandlers(feed feed, cfg *config.AppConfig) http.Handler {
 	r.GET("/api/metadata/:hashId", func(c *gin.Context) {
 		hashId := c.Param("hashId")
 		if hashId == "" || len(hashId) > 12 {
-			c.JSON(badRequest(errors.New("invalid feed id")))
+			c.String(http.StatusBadRequest, "invalid feed id")
 			return
 		}
 
 		feed, err := feed.GetMetadata(hashId)
 		if err != nil {
-			c.JSON(internalError(err))
+			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
 

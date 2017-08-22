@@ -79,12 +79,7 @@ func (s *service) GetFeed(hashId string) (*itunes.Podcast, error) {
 }
 
 func (s *service) GetMetadata(hashId string) (*api.Feed, error) {
-	feed, err := s.storage.GetFeed(hashId)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to query feed: %s", hashId)
-	}
-
-	return feed, nil
+	return s.storage.GetFeed(hashId)
 }
 
 type feedOption func(*service)

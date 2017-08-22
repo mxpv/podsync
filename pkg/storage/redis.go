@@ -61,6 +61,10 @@ func (r *RedisStorage) GetFeed(hashId string) (*api.Feed, error) {
 		return nil, errors.Wrapf(err, "failed to query feed with id %s", hashId)
 	}
 
+	if len(result) == 0 {
+		return nil, api.ErrNotFound
+	}
+
 	// Expire after 3 month if no use
 	if err := r.client.Expire(hashId, expiration).Err(); err != nil {
 		return nil, errors.Wrap(err, "failed query update feed")
