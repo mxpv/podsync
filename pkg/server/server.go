@@ -159,6 +159,14 @@ func MakeHandlers(feed feed, cfg *config.AppConfig) http.Handler {
 		c.Redirect(http.StatusFound, "/")
 	})
 
+	// GET /robots.txt
+	r.GET("/robots.txt", func(c *gin.Context) {
+		c.String(http.StatusOK, `User-agent: *
+Allow: /$
+Disallow: /
+Host: www.podsync.net`)
+	})
+
 	// REST API
 
 	r.GET("/api/ping", func(c *gin.Context) {
