@@ -8,7 +8,7 @@ services:
     ports:
       - 5001
     environment:
-      - REDIS_CONNECTION_URL=redis
+      - REDIS_CONNECTION_URL=redis://redis
       - YOUTUBE_API_KEY={YOUTUBE_API_KEY}
       - VIMEO_API_KEY={VIMEO_API_KEY}
       - PATREON_CLIENT_ID={PATREON_CLIENT_ID}

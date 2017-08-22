@@ -103,7 +103,7 @@ func TestGetFeed(t *testing.T) {
 	srv := httptest.NewServer(MakeHandlers(feed, cfg))
 	defer srv.Close()
 
-	resp, err := http.Get(srv.URL + "/api/feed/123")
+	resp, err := http.Get(srv.URL + "/123")
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 }
