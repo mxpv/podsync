@@ -39,10 +39,14 @@ func MakeHandlers(feed feed, cfg *config.AppConfig) http.Handler {
 	// Static files + HTML
 
 	log.Printf("using assets path: %s", cfg.AssetsPath)
-	r.Static("/assets", cfg.AssetsPath)
+	if cfg.AssetsPath != "" {
+		r.Static("/assets", cfg.AssetsPath)
+	}
 
 	log.Printf("using templates path: %s", cfg.TemplatesPath)
-	r.LoadHTMLGlob(path.Join(cfg.TemplatesPath, "*.html"))
+	if cfg.TemplatesPath != "" {
+		r.LoadHTMLGlob(path.Join(cfg.TemplatesPath, "*.html"))
+	}
 
 	conf := &oauth2.Config{
 		ClientID:     cfg.PatreonClientId,
