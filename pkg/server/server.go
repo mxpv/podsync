@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"go/build"
 	"log"
 	"net/http"
 	"path"
@@ -39,9 +38,11 @@ func MakeHandlers(feed feed, cfg *config.AppConfig) http.Handler {
 
 	// Static files + HTML
 
-	if cfg.PatreonRedirectURL == "" {
-		cfg.PatreonRedirectURL = "http://localhost:8080/patreon"
-	}
+	log.Printf("using assets path: %s", cfg.AssetsPath)
+	r.Static("/assets", cfg.AssetsPath)
+
+	log.Printf("using templates path: %s", cfg.TemplatesPath)
+	r.LoadHTMLGlob(path.Join(cfg.TemplatesPath, "*.html"))
 
 	conf := &oauth2.Config{
 		ClientID:     cfg.PatreonClientId,
@@ -53,12 +54,6 @@ func MakeHandlers(feed feed, cfg *config.AppConfig) http.Handler {
 			TokenURL: patreon.AccessTokenURL,
 		},
 	}
-
-	rootDir := path.Join(build.Default.GOPATH, "src/github.com/mxpv/podsync")
-	log.Printf("Using root directory: %s", rootDir)
-
-	r.Static("/assets", path.Join(rootDir, "assets"))
-	r.LoadHTMLGlob(path.Join(rootDir, "templates/*.html"))
 
 	r.GET("/", func(c *gin.Context) {
 		s := sessions.Default(c)

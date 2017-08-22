@@ -17,6 +17,8 @@ type AppConfig struct {
 	PostgresConnectionURL string `yaml:"postgresConnectionUrl"`
 	RedisURL              string `yaml:"redisUrl"`
 	CookieSecret          string `yaml:"cookieSecret"`
+	AssetsPath            string `yaml:"assetsPath"`
+	TemplatesPath         string `yaml:"templatesPath"`
 }
 
 func ReadConfiguration() (cfg *AppConfig, err error) {
@@ -39,6 +41,8 @@ func ReadConfiguration() (cfg *AppConfig, err error) {
 		"postgresConnectionUrl": "POSTGRES_CONNECTION_URL",
 		"redisUrl":              "REDIS_CONNECTION_URL",
 		"cookieSecret":          "COOKIE_SECRET",
+		"assetsPath":            "ASSETS_PATH",
+		"templatesPath":         "TEMPLATES_PATH",
 	}
 
 	for k, v := range envmap {

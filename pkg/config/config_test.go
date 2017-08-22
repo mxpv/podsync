@@ -17,6 +17,8 @@ patreonSecret: "4"
 postgresConnectionUrl: "5"
 cookieSecret: "6"
 patreonRedirectUrl: "7"
+assetsPath: "8"
+templatesPath: "9"
 `
 
 func TestReadYaml(t *testing.T) {
@@ -36,6 +38,8 @@ func TestReadYaml(t *testing.T) {
 	require.Equal(t, "5", cfg.PostgresConnectionURL)
 	require.Equal(t, "6", cfg.CookieSecret)
 	require.Equal(t, "7", cfg.PatreonRedirectURL)
+	require.Equal(t, "8", cfg.AssetsPath)
+	require.Equal(t, "9", cfg.TemplatesPath)
 }
 
 func TestReadEnv(t *testing.T) {
@@ -49,6 +53,8 @@ func TestReadEnv(t *testing.T) {
 	os.Setenv("POSTGRES_CONNECTION_URL", "55")
 	os.Setenv("COOKIE_SECRET", "66")
 	os.Setenv("PATREON_REDIRECT_URL", "77")
+	os.Setenv("ASSETS_PATH", "88")
+	os.Setenv("TEMPLATES_PATH", "99")
 
 	cfg, err := ReadConfiguration()
 	require.NoError(t, err)
@@ -60,4 +66,6 @@ func TestReadEnv(t *testing.T) {
 	require.Equal(t, "55", cfg.PostgresConnectionURL)
 	require.Equal(t, "66", cfg.CookieSecret)
 	require.Equal(t, "77", cfg.PatreonRedirectURL)
+	require.Equal(t, "88", cfg.AssetsPath)
+	require.Equal(t, "99", cfg.TemplatesPath)
 }
