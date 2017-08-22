@@ -83,7 +83,10 @@ def _choose_url(info, metadata):
 
     # Sort list by field (width for videos, file size for audio)
     sort_field = 'width' if is_video else 'filesize'
-    ordered = sorted(fmt_list, key=lambda x: x[sort_field] or x['format_id'], reverse=True)
+    # Sometime 'filesize' field can be None
+    if not all(x[sort_field] is not None for x in fmt_list):
+        sort_field = 'format_id'
+    ordered = sorted(fmt_list, key=lambda x: x[sort_field], reverse=True)
 
     # Choose an item depending on quality, better at the beginning
     is_high_quality = metadata['quality'] == 'high'
