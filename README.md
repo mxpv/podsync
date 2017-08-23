@@ -31,3 +31,7 @@ gcloud docker -- push gcr.io/pod-sync/ytdl
 ```
 
 or just use `build.sh`
+
+## Access to Container Registry from docker
+
+See https://cloud.google.com/container-registry/docs/advanced-authentication for details
