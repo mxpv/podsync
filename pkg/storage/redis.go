@@ -198,5 +198,9 @@ func NewRedisStorage(redisUrl string) (*RedisStorage, error) {
 	}
 
 	client := redis.NewClient(opts)
+	if err := client.Ping().Err(); err != nil {
+		return nil, err
+	}
+
 	return &RedisStorage{client}, nil
 }
