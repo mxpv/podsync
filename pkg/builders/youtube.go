@@ -47,7 +47,7 @@ func (yt *YouTubeBuilder) listChannels(linkType api.LinkType, id string) (*youtu
 	}
 
 	if len(resp.Items) == 0 {
-		return nil, errors.New("channel not found")
+		return nil, api.ErrNotFound
 	}
 
 	item := resp.Items[0]

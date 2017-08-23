@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	ErrNotFound = errors.New("not found")
+	ErrNotFound = errors.New("resource not found")
 )
 
 type Provider string
@@ -16,6 +16,7 @@ const (
 	Youtube = Provider("youtube")
 	Vimeo   = Provider("vimeo")
 )
+
 
 type LinkType string
 
