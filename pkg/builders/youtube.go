@@ -249,6 +249,12 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ids []string, feed *api.Feed, p
 		size := yt.getVideoSize(video.ContentDetails.Definition, seconds, feed.Format)
 		item.AddEnclosure(makeEnclosure(feed, video.Id, size))
 
+		// podcast.AddItem requires description to be not empty, use workaround
+
+		if item.Description == "" {
+			item.Description = " "
+		}
+
 		_, err = podcast.AddItem(item)
 		if err != nil {
 			return errors.Wrapf(err, "failed to add item to podcast (id '%s')", video.Id)

@@ -217,13 +217,15 @@ Host: www.podsync.net`)
 			code := http.StatusInternalServerError
 			if err == api.ErrNotFound {
 				code = http.StatusNotFound
+			} else {
+				log.Printf("server error: %v", err)
 			}
 
 			c.String(code, err.Error())
 			return
 		}
 
-		c.Data(http.StatusOK, "application/rss+xml", podcast.Bytes())
+		c.Data(http.StatusOK, "application/rss+xml; charset=UTF-8", podcast.Bytes())
 	})
 
 	r.GET("/api/metadata/:hashId", func(c *gin.Context) {
@@ -250,6 +252,7 @@ func badRequest(err error) (int, interface{}) {
 }
 
 func internalError(err error) (int, interface{}) {
+	log.Printf("server error: %v", err)
 	return http.StatusInternalServerError, gin.H{"error": err.Error()}
 }
 
