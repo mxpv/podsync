@@ -29,3 +29,5 @@ docker tag ytdl gcr.io/pod-sync/ytdl
 gcloud auth application-default login
 gcloud docker -- push gcr.io/pod-sync/ytdl
 ```
+
+or just use `build.sh`
