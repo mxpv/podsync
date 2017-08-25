@@ -69,7 +69,7 @@ func (yt *YouTubeBuilder) listPlaylists(id, channelId string) (*youtube.Playlist
 	}
 
 	if len(resp.Items) == 0 {
-		return nil, errors.New("playlist not found")
+		return nil, api.ErrNotFound
 	}
 
 	item := resp.Items[0]
@@ -157,7 +157,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *api.Feed) (*itunes.Podcast, string, er
 	if feed.LinkType == api.Playlist {
 		playlist, err := yt.listPlaylists(feed.ItemId, "")
 		if err != nil {
-			return nil, "", errors.Wrap(err, "failed to query playlist")
+			return nil, "", err
 		}
 
 		link := fmt.Sprintf("https://youtube.com/playlist?list=%s", playlist.Id)

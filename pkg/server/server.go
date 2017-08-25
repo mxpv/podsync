@@ -218,7 +218,7 @@ Host: www.podsync.net`)
 			if err == api.ErrNotFound {
 				code = http.StatusNotFound
 			} else {
-				log.Printf("server error: %v", err)
+				log.Printf("server error (hash id: %s): %v", hashId, err)
 			}
 
 			c.String(code, err.Error())

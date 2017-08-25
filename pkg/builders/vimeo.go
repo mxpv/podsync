@@ -1,7 +1,6 @@
 package builders
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -22,7 +21,7 @@ type VimeoBuilder struct {
 }
 
 func (v *VimeoBuilder) selectImage(p *vimeo.Pictures, q api.Quality) string {
-	if p == nil || len(p.Sizes) < 1 {
+	if p == nil || len(p.Sizes) == 0 {
 		return ""
 	}
 
@@ -38,11 +37,11 @@ func (v *VimeoBuilder) queryChannel(feed *api.Feed) (*itunes.Podcast, error) {
 
 	ch, resp, err := v.client.Channels.Get(channelId)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to query channel with channelId %s", channelId)
-	}
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, api.ErrNotFound
+		}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("invalid http response from video server")
+		return nil, errors.Wrapf(err, "failed to query channel with channelId %s", channelId)
 	}
 
 	podcast := itunes.New(ch.Name, ch.Link, ch.Description, &ch.CreatedTime, nil)
@@ -60,11 +59,11 @@ func (v *VimeoBuilder) queryGroup(feed *api.Feed) (*itunes.Podcast, error) {
 
 	gr, resp, err := v.client.Groups.Get(groupId)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to query group with id %s", groupId)
-	}
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, api.ErrNotFound
+		}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("invalid http response from video server")
+		return nil, errors.Wrapf(err, "failed to query group with id %s", groupId)
 	}
 
 	podcast := itunes.New(gr.Name, gr.Link, gr.Description, &gr.CreatedTime, nil)
@@ -82,11 +81,11 @@ func (v *VimeoBuilder) queryUser(feed *api.Feed) (*itunes.Podcast, error) {
 
 	user, resp, err := v.client.Users.Get(userId)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to query user with id %s", userId)
-	}
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, api.ErrNotFound
+		}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("invalid http response from video server")
+		return nil, errors.Wrapf(err, "failed to query user with id %s", userId)
 	}
 
 	podcast := itunes.New(user.Name, user.Link, user.Bio, &user.CreatedTime, nil)
@@ -116,11 +115,7 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, podcast *itunes.Podc
 	for {
 		videos, response, err := getVideos(feed.ItemId, &opt)
 		if err != nil {
-			return errors.Wrap(err, "failed to query videos")
-		}
-
-		if response.StatusCode != http.StatusOK {
-			return fmt.Errorf("invalid http response %d from vimeo: %s", response.StatusCode, response.Status)
+			return errors.Wrapf(err, "failed to query videos (error %d %s)", response.StatusCode, response.Status)
 		}
 
 		for _, video := range videos {
@@ -143,7 +138,7 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, podcast *itunes.Podc
 
 			_, err = podcast.AddItem(item)
 			if err != nil {
-				return errors.Wrapf(err, "failed to add episode")
+				return errors.Wrapf(err, "failed to add episode %s (%s)", item.GUID, item.Title)
 			}
 
 			added++
