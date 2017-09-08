@@ -14,10 +14,8 @@
             method: 'POST',
             data: JSON.stringify(data),
             contentType: 'application/json; charset=utf-8',
-            success: function (feedLink) {
-                // HACK: remove quotes
-                feedLink = JSON.parse(feedLink);
-                done(feedLink);
+            success: function (resp) {
+                done(JSON.parse(resp));
             },
             error: function (xhr, status, error) {
                 var text = '';
@@ -36,8 +34,9 @@
         });
     }
 
-    function displayLink(link) {
-        showModal(link);
+    function displayLink(obj) {
+        var addr = location.protocol + '//' + location.hostname + '/' + obj.id;
+        showModal(addr);
     }
 
     /*
