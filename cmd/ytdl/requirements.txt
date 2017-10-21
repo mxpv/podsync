@@ -1,0 +1,4 @@
+requests
+youtube_dl
+sanic
+redis

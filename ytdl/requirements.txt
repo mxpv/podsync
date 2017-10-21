@@ -1,3 +1,0 @@
-youtube_dl
-sanic
-redis

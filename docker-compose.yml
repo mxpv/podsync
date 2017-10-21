@@ -8,16 +8,13 @@ services:
     ports:
       - 5001
     environment:
-      - ASPNETCORE_URLS=http://*:5001
-      - ASPNETCORE_ENVIRONMENT=Production
-      - Podsync:RedisConnectionString=redis
-      - Podsync:RemoteResolverUrl=http://ytdl:5002
-      - Podsync:YouTubeApiKey={YOUTUBE_API_KEY}
-      - Podsync:VimeoApiKey={VIMEO_API_KEY}
-      - Podsync:PatreonClientId={PATREON_CLIENT_ID}
-      - Podsync:PatreonSecret={PATREON_SECRET}
-      - Logging:LogLevel:Default=Information
-      - Logging:LogLevel:Microsoft=Warning
+      - REDIS_CONNECTION_URL=redis://redis
+      - YOUTUBE_API_KEY={YOUTUBE_API_KEY}
+      - VIMEO_API_KEY={VIMEO_API_KEY}
+      - PATREON_CLIENT_ID={PATREON_CLIENT_ID}
+      - PATREON_SECRET={PATREON_SECRET}
+      - PATREON_REDIRECT_URL=http://podsync.net/patreon
+      - COOKIE_SECRET={COOKIE_SECRET}
   ytdl:
     image: gcr.io/pod-sync/ytdl:latest
     container_name: ytdl
@@ -25,7 +22,7 @@ services:
     ports:
       - 5002
     environment:
-      - REDIS_CONNECTION_STRING=redis://redis:6379/0
+      - METADATA_URL=http://app:5001/api/metadata/{feed_id}
   redis:
     image: redis
     container_name: redis

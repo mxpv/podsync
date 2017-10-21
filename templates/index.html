@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=UTF-8"/>
+    <meta charset="utf-8"/>
+    <title>Podsync - Turn YouTube channels into podcast feeds</title>
+    <meta property="og:title" content="Podsync - turn YouTube channels into podcast feeds" />
+    <meta property="og:description" content="Simple and free service that lets you listen to any YouTube or Vimeo channels, playlists or user videos in podcast format" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:image" content="/assets/img/og_image.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Simple and free service that lets you listen to any YouTube or Vimeo channels, playlists or user videos in podcast format"/>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="assets/css/site.css" />
+</head>
+
+<body>
+
+<div class="background-image">
+    <div class="title">
+        <h1>Podsync</h1>
+
+        <h2>
+            Simple and free service that lets you listen to any YouTube or
+            Vimeo channels, playlists or user videos in podcast format.
+        </h2>
+
+        <div class="login-block">
+            {{if .UserId }}
+            <p>
+                Yo, <i class="fa fa-user-circle" aria-hidden="true"></i> {{ .FullName }} ( <a href="/logout"><i class="fa fa-sign-out" aria-hidden="true"></i>logout</a>)
+            </p>
+            {{else}}
+            <h5>
+                <a href="/login">
+                    Login with Patreon to unlock features
+                    <i class="fa fa-question-circle master-tooltip" aria-hidden="true" title="We have added advanced features for those who supported development. Login with your Patreon account to unlock them.">
+                    </i>
+                </a>
+            </h5>
+            {{end}}
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="main-border shadow">
+            <div class="input-border">
+                <input id="url-input" type="url" placeholder="paste your link here" spellcheck="false" autofocus />
+                <div class="arrow-button">
+                    <a href="#" id="get-link">
+                        <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="controls">
+                <p>
+                    {{if gt .FeatureLevel 0 }}
+                    <i class="fa fa-wrench" aria-hidden="true"></i>
+                    {{else}}
+                    <i class="fa fa-question-circle master-tooltip"
+                       aria-hidden="true"
+                       title="This features are available for patrons only. You may support us and unlock this features"></i>
+                    {{end}}
+
+                    <span class="{{if eq .FeatureLevel 0 }}locked{{end}}">
+                        <span id="control-panel">
+                            Selected format <a class="selected-option" id="video-format">video</a> <a id="audio-format">audio</a>,
+                            quality <a class="selected-option" id="best-quality">best</a> <a id="worst-quality">worst</a>,
+                        </span>
+
+                        <span id="page-controls">
+                            episode count <a class="selected-option">50</a> <a>100</a> <a>150</a>
+                        </span>
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="man"></div>
+
+    <div>
+        <a href="https://www.patreon.com/podsync" target="_blank">
+            <img class="patreon shadow" width="400" src="assets/img/become_patreon.png" alt="Become my patron on Patreon" />
+        </a>
+    </div>
+
+    <div class="modal" id="modal" style="display: none">
+        <input type="url" id="output-input" readonly />
+        <div class="modal-links">
+        <span>
+            <a id="modal-copy" href="#">
+                <i class="fa fa-clone" aria-hidden="true"></i>
+                Copy
+            </a>
+        </span>
+
+            <span>
+            <a id="modal-open" href="#" target="_blank">
+                <i class="fa fa-external-link" aria-hidden="true"></i>
+                Open
+            </a>
+        </span>
+
+            <span>
+            <a id="close-modal" href="#">
+                <i class="fa fa-thumbs-up" aria-hidden="true"></i>
+                Close
+            </a>
+        </span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="twitter-link">
+            <a href="https://twitter.com/pod_sync"><i class="fa fa-twitter" aria-hidden="true"></i></a>
+        </div>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="assets/js/site.js"></script>
+
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-64237526-1', 'auto');
+    ga('send', 'pageview');
+</script>
+
+<script>
+    (function (w,i,d,g,e,t,s) {w[d] = w[d]||[];t= i.createElement(g);
+        t.async=1;t.src=e;s=i.getElementsByTagName(g)[0];s.parentNode.insertBefore(t, s);
+    })(window, document, '_gscq','script','//widgets.getsitecontrol.com/23626/script.js');
+</script>
+
+</body>
