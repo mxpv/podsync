@@ -27,7 +27,7 @@ url_formats = {
 }
 
 
-@app.route('/download/<feed_id>/<video_id>', methods=['GET'])
+@app.route('/download/<feed_id>/<video_id>', methods=['GET', 'HEAD'])
 async def download(req, feed_id, video_id):
     if not feed_id:
         raise InvalidUsage('Invalid feed id')
