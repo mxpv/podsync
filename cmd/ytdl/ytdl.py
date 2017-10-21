@@ -62,9 +62,16 @@ def _resolve(url, metadata):
         raise InvalidUsage('Invalid URL')
 
     try:
+        provider = metadata['provider']
+
         with youtube_dl.YoutubeDL(opts) as ytdl:
             info = ytdl.extract_info(url, download=False)
-            return _choose_url(info, metadata)
+            if provider == 'youtube':
+                return _choose_url(info, metadata)
+            elif provider == 'vimeo':
+                return info['url']
+            else:
+                raise ValueError('undefined provider')
     except DownloadError:
         raise
     except Exception as e:
