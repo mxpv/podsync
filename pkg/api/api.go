@@ -17,7 +17,6 @@ const (
 	Vimeo   = Provider("vimeo")
 )
 
-
 type LinkType string
 
 const (
