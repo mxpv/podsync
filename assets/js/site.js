@@ -68,64 +68,25 @@
     }
 
     /*
-        Control panel
-    */
-
-    function isLocked() {
-        return $('#control-panel').hasClass('locked');
-    }
-
-    /*
         Handlers
     */
 
-    function formatSwith() {
-        if (isLocked()) {
-            return;
-        }
-
-        $('#video-format, #audio-format').toggleClass('selected-option');
-    }
-
-    function qualitySwitch() {
-        if (isLocked()) {
-            return;
-        }
-
-        $('#best-quality, #worst-quality').toggleClass('selected-option');
-    }
-
     function getFormat() {
-        var isAudio = $('#audio-format').hasClass('selected-option');
-        return isAudio ? 'audio' : 'video'
+        return $('input[name=episode_format]:checked').val();
     }
 
     function getQuality() {
-        var isWorst = $('#worst-quality').hasClass('selected-option');
-        return isWorst ? 'low' : 'high';
-    }
-
-    function pageSwitch(evt) {
-        if (isLocked()) {
-            return;
-        }
-
-        $('#page-controls > a').removeClass('selected-option');
-        $(evt.target).addClass('selected-option');
-
-        getPageCount();
+        return $('input[name=episode_quality]:checked').val();
     }
 
     function getPageCount() {
         try {
-            var text = $('#page-controls > a.selected-option').text();
+            var text = $('input[name=page_count]:checked').val();
             return parseInt(text);
         } catch (e) {
             return 50;
         }
     }
-
-    $('#page-controls > a').click(pageSwitch);
 
     /* Modal */
 
@@ -195,9 +156,6 @@
             $('#get-link').click();
         }
     });
-
-    $('#video-format, #audio-format').click(formatSwith);
-    $('#best-quality, #worst-quality').click(qualitySwitch);
     
     $('#close-modal').click(closeModal);
     $('#modal-copy').click(copyLink);

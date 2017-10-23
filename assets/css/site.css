@@ -156,18 +156,55 @@ a {
 .controls {
     padding-left: 1em;
     word-spacing: 0.15em;
+    margin: 12px 0 12px 0;
+    overflow: hidden;
 }
 
-.controls a:hover {
+.controls-icon {
+    float: left;
+    padding-right: 6px;
+}
+
+.switch-field {
+    float: left;
+    font-size: 1em;
+    padding-right: 7px;
+}
+
+.switch-title {
+    display: inline-block;
+    float: left;
+    padding-right: 5px;
+}
+
+.switch-field input {
+    position: absolute !important;
+    clip: rect(0, 0, 0, 0);
+    height: 1px;
+    width: 1px;
+    border: 0;
+    overflow: hidden;
+}
+
+.switch-field label {
+    float: left;
+    display: inline-block;
+    color: #EB8C11;
+    padding: 0 2px;
+}
+
+.switch-field label:hover {
     cursor: pointer;
 }
 
-/* Options */
-.selected-option, a:hover {
+.switch-field input:checked + label {
     background: orange;
     color: whitesmoke;
     border: 1px orange;
-    -ms-border-radius: 3px;
+    -ms-border-top-right-radius: 3px;
+    -ms-border-top-left-radius: 3px;
+    -ms-border-bottom-right-radius: 3px;
+    -ms-border-bottom-left-radius: 3px;
     border-radius: 3px;
 }
 
