@@ -14,6 +14,12 @@ func TestParseYoutubeURL_Playlist(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, api.Playlist, kind)
 	require.Equal(t, "PLCB9F975ECF01953C", id)
+
+	link, _ = url.ParseRequestURI("https://www.youtube.com/watch?v=rbCbho7aLYw&list=PLMpEfaKcGjpWEgNtdnsvLX6LzQL0UC0EM")
+	kind, id, err = parseYoutubeURL(link)
+	require.NoError(t, err)
+	require.Equal(t, api.Playlist, kind)
+	require.Equal(t, "PLMpEfaKcGjpWEgNtdnsvLX6LzQL0UC0EM", id)
 }
 
 func TestParseYoutubeURL_Channel(t *testing.T) {

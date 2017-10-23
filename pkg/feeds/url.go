@@ -54,7 +54,8 @@ func parseYoutubeURL(parsed *url.URL) (kind api.LinkType, id string, err error) 
 	path := parsed.EscapedPath()
 
 	// https://www.youtube.com/playlist?list=PLCB9F975ECF01953C
-	if strings.HasPrefix(path, "/playlist") {
+	// https://www.youtube.com/watch?v=rbCbho7aLYw&list=PLMpEfaKcGjpWEgNtdnsvLX6LzQL0UC0EM
+	if strings.HasPrefix(path, "/playlist") || strings.HasPrefix(path, "/watch") {
 		kind = api.Playlist
 
 		id = parsed.Query().Get("list")
