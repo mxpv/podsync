@@ -20,7 +20,7 @@
 
 <body>
 
-<div class="background-image">
+<div class="background-image" id="app">
     <div class="title">
         <h1>Podsync</h1>
 
@@ -30,30 +30,37 @@
         </h2>
 
         <div class="login-block">
-            {{if .UserId }}
-            <p>
-                Yo, <i class="fa fa-user-circle" aria-hidden="true"></i> {{ .FullName }} ( <a href="/logout"><i
-                    class="fa fa-sign-out" aria-hidden="true"></i>logout</a>)
-            </p>
-            {{else}}
-            <h5>
-                <a href="/login">
-                    Login with Patreon to unlock features
-                    <i class="fa fa-question-circle master-tooltip" aria-hidden="true"
-                       title="We have added advanced features for those who supported development. Login with your Patreon account to unlock them.">
-                    </i>
-                </a>
-            </h5>
-            {{end}}
+            <template v-if="locked">
+                <h5>
+                    <a href="/login">
+                        Login with Patreon to unlock features
+                        <i class="fa fa-question-circle master-tooltip" aria-hidden="true"
+                           title="We have added advanced features for those who supported development. Login with your Patreon account to unlock them.">
+                        </i>
+                    </a>
+                </h5>
+            </template>
+            <template v-else>
+                <p>
+                    Yo, <i class="fa fa-user-circle" aria-hidden="true"></i> {{ .FullName }} ( <a href="/logout"><i
+                        class="fa fa-sign-out" aria-hidden="true"></i>logout</a>)
+                </p>
+            </template>
         </div>
     </div>
 
-    <div class="main">
+    <div class="main" v-if="!showModal" v-cloak>
         <div class="main-border shadow">
             <div class="input-border">
-                <input id="url-input" type="url" placeholder="paste your link here" spellcheck="false" autofocus/>
+                <input v-model="link"
+                       @keyup.enter="submit"
+                       type="text"
+                       placeholder="paste your link here"
+                       spellcheck="false"
+                       autofocus />
+
                 <div class="arrow-button">
-                    <a href="#" id="get-link">
+                    <a href="#" id="get-link" @click="submit">
                         <i class="fa fa-arrow-right" aria-hidden="true"></i>
                     </a>
                 </div>
@@ -61,40 +68,41 @@
 
             <div class="controls">
                 <div class="controls-icon">
-                    {{if gt .FeatureLevel 0 }}
-                    <i class="fa fa-wrench" aria-hidden="true"></i>
-                    {{else}}
-                    <i class="fa fa-question-circle master-tooltip"
-                       aria-hidden="true"
-                       title="This features are available for patrons only. You may support us and unlock this features"></i>
-                    {{end}}
+                    <template v-if="locked">
+                        <i class="fa fa-question-circle master-tooltip"
+                           aria-hidden="true"
+                           title="This features are available for patrons only. You may support us and unlock this features"></i>
+                    </template>
+                    <template v-else>
+                        <i class="fa fa-wrench" aria-hidden="true"></i>
+                    </template>
                 </div>
 
-                <div class="{{if eq .FeatureLevel 0 }}locked{{end}}">
+                <div :class="{ locked: locked }">
 
                     <div class="switch-field">
                         <div class="switch-title">format </div>
-                        <input type="radio" id="type_video" value="video" name="episode_format" checked/>
+                        <input type="radio" id="type_video" value="video" name="episode_format" v-model="format" :disabled="locked" />
                         <label for="type_video">video</label>
-                        <input type="radio" id="type_audio" value="audio" name="episode_format" />
+                        <input type="radio" id="type_audio" value="audio" name="episode_format" v-model="format" :disabled="locked" />
                         <label for="type_audio">audio</label>
                     </div>
 
                     <div class="switch-field">
                         <div class="switch-title">quality </div>
-                        <input type="radio" id="quality_low" value="low" name="episode_quality" />
+                        <input type="radio" id="quality_low" value="low" name="episode_quality" v-model="quality" :disabled="locked" />
                         <label for="quality_low">low</label>
-                        <input type="radio" id="quality_high" value="high" name="episode_quality" checked />
+                        <input type="radio" id="quality_high" value="high" name="episode_quality" v-model="quality" :disabled="locked" />
                         <label for="quality_high">high</label>
                     </div>
 
                     <div class="switch-field">
                         <div class="switch-title">episode count </div>
-                        <input type="radio" id="page_50" value="50" name="page_count" checked />
+                        <input type="radio" id="page_50" value="50" name="page_count" v-model.number="count" :disabled="locked" />
                         <label for="page_50">50</label>
-                        <input type="radio" id="page_100" value="100" name="page_count" />
+                        <input type="radio" id="page_100" value="100" name="page_count" v-model.number="count" :disabled="locked" />
                         <label for="page_100">100</label>
-                        <input type="radio" id="page_150" value="150" name="page_count" />
+                        <input type="radio" id="page_150" value="150" name="page_count" v-model.number="count" :disabled="locked" />
                         <label for="page_150">150</label>
                     </div>
 
@@ -112,29 +120,30 @@
         </a>
     </div>
 
-    <div class="modal" id="modal" style="display: none">
-        <input type="url" id="output-input" readonly/>
+    <!-- Modal dialog -->
+    <div v-cloak v-if="showModal" class="modal">
+        <input type="url" v-model="feedLink" ref="output" readonly />
         <div class="modal-links">
-        <span>
-            <a id="modal-copy" href="#">
-                <i class="fa fa-clone" aria-hidden="true"></i>
-                Copy
-            </a>
-        </span>
+            <span v-if="canCopy">
+                <a id="modal-copy" href="#" @click="copyLink">
+                    <i class="fa fa-clone" aria-hidden="true"></i>
+                    Copy
+                </a>
+            </span>
 
             <span>
-            <a id="modal-open" href="#" target="_blank">
-                <i class="fa fa-external-link" aria-hidden="true"></i>
-                Open
-            </a>
-        </span>
+                <a id="modal-open" :href="feedLink" target="_blank">
+                    <i class="fa fa-external-link" aria-hidden="true"></i>
+                    Open
+                </a>
+            </span>
 
             <span>
-            <a id="close-modal" href="#">
-                <i class="fa fa-thumbs-up" aria-hidden="true"></i>
-                Close
-            </a>
-        </span>
+                <a id="close-modal" href="#" @click="showModal=false">
+                    <i class="fa fa-thumbs-up" aria-hidden="true"></i>
+                    Close
+                </a>
+            </span>
         </div>
     </div>
 
@@ -145,8 +154,11 @@
     </div>
 </div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script src="assets/js/site.js"></script>
+
+<script type="application/javascript">app.featureLevel = {{.FeatureLevel}};</script>
 
 <script>
     (function (i, s, o, g, r, a, m) {

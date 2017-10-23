@@ -1,5 +1,9 @@
 ﻿@import url('https://fonts.googleapis.com/css?family=Ubuntu');
 
+[v-cloak] {
+    display: none;
+}
+
 body {
     margin: 0;
     padding: 0;

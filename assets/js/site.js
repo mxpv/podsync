@@ -1,166 +1,98 @@
-﻿$(function () {
-    function err(msg) {
-        alert(msg);
-    }
-    
-    function createFeed(data, done) {
-        if (!data.url) {
-            return;
-        }
+﻿var app = new Vue({
+    el: '#app',
 
-        $.ajax({
-            dataType: 'text',
-            url: '/api/create',
-            method: 'POST',
-            data: JSON.stringify(data),
-            contentType: 'application/json; charset=utf-8',
-            success: function (resp) {
-                done(JSON.parse(resp));
-            },
-            error: function (xhr, status, error) {
-                var text = '';
+    data: {
+        link: '',
+        format: 'video',
+        quality: 'high',
+        count: 50,
 
-                try {
-                    var json = JSON.parse(xhr.responseText);
-                    if (json['error']) {
-                        text = json['error'];
-                    }
-                } catch (e) {
-                    text = xhr.responseText;
-                }
+        showModal: false,
+        feedLink: '',
 
-                err(text);
-            }
-        });
-    }
+        // Server variables
+        featureLevel: 0
+    },
 
-    function displayLink(obj) {
-        var addr = location.protocol + '//' + location.hostname + '/' + obj.id;
-        showModal(addr);
-    }
+    methods: {
+        submit: function() {
+            var vm = this;
 
-    /*
-        Tooltips
-    */
-
-    if (!isMobile()) {
-        $(document).on('mouseenter', 'i', function () {
-            var title = $(this).attr('title');
-            if (!title) {
+            if (vm.link === '') {
                 return;
             }
 
-            $(this).data('tipText', title).removeAttr('title');
-            $('<p class="tooltip"></p>').text(title).appendTo('body').fadeIn('fast');
+            axios.post('/api/create', {
+                url: this.link,
+                format: this.format,
+                quality: this.quality,
+                page_size: this.count,
+            }).then(function(response) {
+                vm.feedLink = vm.formatLink(response.data.id);
+                vm.showModal = true;
+                vm.link = '';
+            }).catch(vm.httpError);
+        },
+
+        httpError: function(error) {
+            try {
+                this.showError(error.response.data.error);
+            } catch (e) {
+                console.error(e);
+                this.showError(error.message);
+            }
+        },
+
+        showError: function(msg) {
+            alert(msg);
+        },
+
+        formatLink: function(id) {
+            if (location.port === '80' || location.port === '443') {
+                return location.protocol + '//' + location.hostname + '/' + id;
+            } else {
+                return location.protocol + '//' + location.host + '/' + id;
+            }
+        },
+
+        copyLink: function() {
+            if (!this.showModal || !this.canCopy) {
+                return
+            }
+
+            this.$refs.output.select();
+
+            if (!document.execCommand('copy')) {
+                self.showError('Can\'t copy... Something went wrong...');
+            }
+        }
+    },
+
+    computed: {
+        locked: function() {
+            return this.featureLevel === 0;
+        },
+
+        isMobile: function() {
+            return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        },
+
+        canCopy: function() {
+            try {
+                return document.queryCommandSupported('copy') && !this.isMobile;
+            } catch (e) {
+                return false;
+            }
+        }
+    },
+
+    mounted: function() {
+        var vm = this;
+        window.addEventListener('keydown', function(event) {
+            // ESC handler
+            if (event.keyCode === 27 && vm.showModal) {
+                vm.showModal = false;
+            }
         });
-
-        $(document).on('mouseleave', 'i', function () {
-            var text = $(this).data('tipText');
-            $(this).attr('title', text);
-            $('.tooltip').remove();
-        });
-
-        $(document).on('mousemove', 'i', function (e) {
-            var x = e.pageX + 10;
-            var y = e.pageY + 5;
-            $('.tooltip').css({ top: y, left: x });
-        });
-    }
-
-    /*
-        Handlers
-    */
-
-    function getFormat() {
-        return $('input[name=episode_format]:checked').val();
-    }
-
-    function getQuality() {
-        return $('input[name=episode_quality]:checked').val();
-    }
-
-    function getPageCount() {
-        try {
-            var text = $('input[name=page_count]:checked').val();
-            return parseInt(text);
-        } catch (e) {
-            return 50;
-        }
-    }
-
-    /* Modal */
-
-    function closeModal() {
-        $('#modal').hide();
-        $('#url-input').val('');
-        $('.main').show();
-    }
-
-    function showModal(url) {
-        // Hide main block on screen
-        $('.main').hide();
-
-        // Set input URL
-        $('#output-input').val(url);
-
-        // Update 'Open' button link
-        $('#modal-open').attr('href', url);
-
-        // Show dialog itself
-        $('#modal').show();
-
-        // Select modal output text
-        $('#output-input').select();
-    }
-
-    function copyLink() {
-        $('#output-input').select();
-        if (!document.execCommand('copy')) {
-            err('Can\'t copy... Something went wrong...');
-        }
-    }
-
-    function isMobile() {
-        return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    }
-
-    function canCopy() {
-        try {
-            return document.queryCommandSupported('copy') && !isMobile();
-        } catch (e) {
-            return false;
-        }
-    }
-
-    $('body').on('keydown', function (e) {
-        // ESC
-        if ($('#modal').is(':visible') && e.keyCode === 27) {
-            $('#close-modal').click();
-        }
-        e.stopPropagation();
-    });
-
-    /*
-        Attach handlers
-    */
-
-    $('#get-link').click(function(e) {
-        var url = $('#url-input').val();
-        createFeed({ url: url, format: getFormat(), quality: getQuality(), page_size: getPageCount() }, displayLink);
-        e.preventDefault();
-    });
-
-    $('#url-input').keyup(function (e) {
-        // 'Enter' click
-        if (e.keyCode === 13) {
-            $('#get-link').click();
-        }
-    });
-    
-    $('#close-modal').click(closeModal);
-    $('#modal-copy').click(copyLink);
-
-    if (!canCopy()) {
-        $('#modal-copy').hide();
     }
 });
