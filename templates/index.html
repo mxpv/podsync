@@ -30,7 +30,7 @@
         </h2>
 
         <div class="login-block">
-            <template v-if="locked">
+            <template v-if="!userId">
                 <h5>
                     <a href="/login">
                         Login with Patreon to unlock features
@@ -158,7 +158,10 @@
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script src="assets/js/site.js"></script>
 
-<script type="application/javascript">app.featureLevel = {{.FeatureLevel}};</script>
+<script type="application/javascript">
+    app.featureLevel = {{.FeatureLevel}};
+    app.userId = {{.UserId}};
+</script>
 
 <script>
     (function (i, s, o, g, r, a, m) {

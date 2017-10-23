@@ -11,7 +11,8 @@
         feedLink: '',
 
         // Server variables
-        featureLevel: 0
+        featureLevel: 0,
+        userId: '',
     },
 
     methods: {
