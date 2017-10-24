@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	campaignId         = "278915"
+	creatorID          = "2822191"
 	identitySessionKey = "identity"
 )
 
@@ -125,16 +125,21 @@ func MakeHandlers(feed feed, cfg *config.AppConfig) http.Handler {
 
 		// Determine feature level
 		level := api.DefaultFeatures
-		amount := 0
-		for _, item := range user.Included.Items {
-			pledge, ok := item.(*patreon.Pledge)
-			if ok {
-				amount += pledge.Attributes.AmountCents
-			}
-		}
 
-		if amount >= 100 {
-			level = api.ExtendedFeatures
+		if user.Data.Id == creatorID {
+			level = api.PodcasterFeature
+		} else {
+			amount := 0
+			for _, item := range user.Included.Items {
+				pledge, ok := item.(*patreon.Pledge)
+				if ok {
+					amount += pledge.Attributes.AmountCents
+				}
+			}
+
+			if amount >= 100 {
+				level = api.ExtendedFeatures
+			}
 		}
 
 		identity := &api.Identity{
