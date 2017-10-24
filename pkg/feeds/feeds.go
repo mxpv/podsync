@@ -39,6 +39,7 @@ func (s *service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity)
 	feed.LastAccess = time.Now().UTC()
 
 	if identity.FeatureLevel > 0 {
+		feed.UserId = identity.UserId
 		feed.Quality = req.Quality
 		feed.Format = req.Format
 		feed.FeatureLevel = identity.FeatureLevel
