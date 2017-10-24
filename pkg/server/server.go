@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"strings"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -21,6 +22,7 @@ import (
 const (
 	creatorID          = "2822191"
 	identitySessionKey = "identity"
+	maxHashIDLength    = 16
 )
 
 type feed interface {
@@ -216,9 +218,13 @@ Host: www.podsync.net`)
 
 	r.NoRoute(func(c *gin.Context) {
 		hashId := c.Request.URL.Path[1:]
-		if hashId == "" || len(hashId) > 12 {
+		if hashId == "" || len(hashId) > maxHashIDLength {
 			c.String(http.StatusBadRequest, "invalid feed id")
 			return
+		}
+
+		if strings.HasSuffix(hashId, ".xml") {
+			hashId = strings.TrimSuffix(hashId, ".xml")
 		}
 
 		podcast, err := feed.GetFeed(hashId)
@@ -239,7 +245,7 @@ Host: www.podsync.net`)
 
 	r.GET("/api/metadata/:hashId", func(c *gin.Context) {
 		hashId := c.Param("hashId")
-		if hashId == "" || len(hashId) > 12 {
+		if hashId == "" || len(hashId) > maxHashIDLength {
 			c.String(http.StatusBadRequest, "invalid feed id")
 			return
 		}
