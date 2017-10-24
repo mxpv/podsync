@@ -14,6 +14,7 @@ import (
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/config"
+	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
 
@@ -198,6 +199,9 @@ Host: www.podsync.net`)
 			if err := json.Unmarshal([]byte(buf), identity); err != nil {
 				s.Clear()
 				s.Save()
+
+				c.JSON(internalError(errors.New("broken session, try to login again")))
+				return
 			}
 		}
 
