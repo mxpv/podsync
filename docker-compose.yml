@@ -13,7 +13,7 @@ services:
       - VIMEO_API_KEY={VIMEO_API_KEY}
       - PATREON_CLIENT_ID={PATREON_CLIENT_ID}
       - PATREON_SECRET={PATREON_SECRET}
-      - PATREON_REDIRECT_URL=http://podsync.net/patreon
+      - PATREON_REDIRECT_URL=https://podsync.net/patreon
       - COOKIE_SECRET={COOKIE_SECRET}
   ytdl:
     image: gcr.io/pod-sync/ytdl:latest
@@ -36,3 +36,11 @@ services:
     restart: always
     ports:
       - 80:80
+      - 443:443
+    environment:
+      - TZ=America/Los_Angeles
+      - LETSENCRYPT=true
+      - LE_EMAIL=name@example.com
+      - LE_FQDN=podsync.net,www.podsync.net
+    volumes:
+      - /data/ssl:/etc/nginx/ssl
