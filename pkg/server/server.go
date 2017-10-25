@@ -1,9 +1,6 @@
 package server
 
 import (
-	"crypto/rand"
-	"encoding/base64"
-	"encoding/json"
 	"log"
 	"net/http"
 	"path"
@@ -15,14 +12,13 @@ import (
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/config"
-	"github.com/pkg/errors"
+	"github.com/mxpv/podsync/pkg/session"
 	"golang.org/x/oauth2"
 )
 
 const (
-	creatorID          = "2822191"
-	identitySessionKey = "identity"
-	maxHashIDLength    = 16
+	creatorID       = "2822191"
+	maxHashIDLength = 16
 )
 
 type feed interface {
@@ -62,48 +58,34 @@ func MakeHandlers(feed feed, cfg *config.AppConfig) http.Handler {
 	}
 
 	r.GET("/", func(c *gin.Context) {
-		s := sessions.Default(c)
-
-		identity := &api.Identity{
-			FeatureLevel: api.DefaultFeatures,
-		}
-
-		buf, ok := s.Get(identitySessionKey).(string)
-		if ok {
-			// We are failed to deserialize Identity structure, do cleanup, force user to login again
-			if err := json.Unmarshal([]byte(buf), identity); err != nil {
-				s.Clear()
-				s.Save()
-			}
+		identity, err := session.GetIdentity(c)
+		if err != nil {
+			identity = &api.Identity{}
 		}
 
 		c.HTML(http.StatusOK, "index.html", identity)
 	})
 
 	r.GET("/login", func(c *gin.Context) {
-		state := randToken()
-
-		s := sessions.Default(c)
-		s.Set("state", state)
-		s.Save()
+		state, err := session.SetState(c)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
 
 		authURL := conf.AuthCodeURL(state)
 		c.Redirect(http.StatusFound, authURL)
 	})
 
 	r.GET("/logout", func(c *gin.Context) {
-		s := sessions.Default(c)
-		s.Clear()
-		s.Save()
+		session.Clear(c)
 
 		c.Redirect(http.StatusFound, "/")
 	})
 
 	r.GET("/patreon", func(c *gin.Context) {
 		// Validate session state
-		s := sessions.Default(c)
-		state := s.Get("state")
-		if state != c.Query("state") {
+		if session.GetSetate(c) != c.Query("state") {
 			c.String(http.StatusUnauthorized, "invalid state")
 			return
 		}
@@ -153,17 +135,7 @@ func MakeHandlers(feed feed, cfg *config.AppConfig) http.Handler {
 			FeatureLevel: level,
 		}
 
-		// Serialize identity and return cookies
-		buf, err := json.Marshal(identity)
-		if err != nil {
-			c.String(http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		s.Clear()
-		s.Set(identitySessionKey, string(buf))
-		s.Save()
-
+		session.SetIdentity(c, identity)
 		c.Redirect(http.StatusFound, "/")
 	})
 
@@ -189,22 +161,10 @@ Host: www.podsync.net`)
 			return
 		}
 
-		s := sessions.Default(c)
-
-		identity := &api.Identity{
-			FeatureLevel: api.DefaultFeatures,
-		}
-
-		buf, ok := s.Get(identitySessionKey).(string)
-		if ok {
-			// We are failed to deserialize Identity structure, do cleanup, force user to login again
-			if err := json.Unmarshal([]byte(buf), identity); err != nil {
-				s.Clear()
-				s.Save()
-
-				c.JSON(internalError(errors.New("broken session, try to login again")))
-				return
-			}
+		identity, err := session.GetIdentity(c)
+		if err != nil {
+			c.JSON(internalError(err))
+			return
 		}
 
 		hashId, err := feed.CreateFeed(req, identity)
@@ -269,10 +229,4 @@ func badRequest(err error) (int, interface{}) {
 func internalError(err error) (int, interface{}) {
 	log.Printf("server error: %v", err)
 	return http.StatusInternalServerError, gin.H{"error": err.Error()}
-}
-
-func randToken() string {
-	b := make([]byte, 32)
-	rand.Read(b)
-	return base64.StdEncoding.EncodeToString(b)
 }
