@@ -81,8 +81,6 @@ func (h Hook) Handle(pledge *patreon.Pledge, event string) error {
 	default:
 		return fmt.Errorf("unknown event: %s", event)
 	}
-
-	return nil
 }
 
 func NewHookHandler(db *pg.DB) *Hook {
