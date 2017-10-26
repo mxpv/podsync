@@ -19,6 +19,7 @@ cookieSecret: "6"
 patreonRedirectUrl: "7"
 assetsPath: "8"
 templatesPath: "9"
+patreonWebhooksSecret: "10"
 `
 
 func TestReadYaml(t *testing.T) {
@@ -40,6 +41,7 @@ func TestReadYaml(t *testing.T) {
 	require.Equal(t, "7", cfg.PatreonRedirectURL)
 	require.Equal(t, "8", cfg.AssetsPath)
 	require.Equal(t, "9", cfg.TemplatesPath)
+	require.Equal(t, "10", cfg.PatreonWebhooksSecret)
 }
 
 func TestReadEnv(t *testing.T) {
@@ -55,6 +57,7 @@ func TestReadEnv(t *testing.T) {
 	os.Setenv("PATREON_REDIRECT_URL", "77")
 	os.Setenv("ASSETS_PATH", "88")
 	os.Setenv("TEMPLATES_PATH", "99")
+	os.Setenv("PATREON_WEBHOOKS_SECRET", "1010")
 
 	cfg, err := ReadConfiguration()
 	require.NoError(t, err)
@@ -68,4 +71,5 @@ func TestReadEnv(t *testing.T) {
 	require.Equal(t, "77", cfg.PatreonRedirectURL)
 	require.Equal(t, "88", cfg.AssetsPath)
 	require.Equal(t, "99", cfg.TemplatesPath)
+	require.Equal(t, "1010", cfg.PatreonWebhooksSecret)
 }

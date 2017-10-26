@@ -14,6 +14,7 @@ services:
       - PATREON_CLIENT_ID={PATREON_CLIENT_ID}
       - PATREON_SECRET={PATREON_SECRET}
       - PATREON_REDIRECT_URL=https://podsync.net/patreon
+      - PATREON_WEBHOOKS_SECRET={PATREON_WEBHOOKS_SECRET}
       - COOKIE_SECRET={COOKIE_SECRET}
   ytdl:
     image: gcr.io/pod-sync/ytdl:latest
