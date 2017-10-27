@@ -1,4 +1,4 @@
-package patreon
+package webhooks
 
 import (
 	"fmt"
@@ -19,11 +19,11 @@ const (
 	EventNameDeletePledge = "pledges:delete"
 )
 
-type Hook struct {
+type Handler struct {
 	db *pg.DB
 }
 
-func (h Hook) toModel(pledge *patreon.Pledge) (*models.Pledge, error) {
+func (h Handler) toModel(pledge *patreon.Pledge) (*models.Pledge, error) {
 	pledgeID, err := strconv.ParseInt(pledge.Id, 10, 64)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse pledge id: %s", pledge.Id)
@@ -65,7 +65,7 @@ func (h Hook) toModel(pledge *patreon.Pledge) (*models.Pledge, error) {
 	return model, nil
 }
 
-func (h Hook) Handle(pledge *patreon.Pledge, event string) error {
+func (h Handler) Handle(pledge *patreon.Pledge, event string) error {
 	model, err := h.toModel(pledge)
 	if err != nil {
 		return err
@@ -83,6 +83,6 @@ func (h Hook) Handle(pledge *patreon.Pledge, event string) error {
 	}
 }
 
-func NewHookHandler(db *pg.DB) *Hook {
-	return &Hook{db: db}
+func NewHookHandler(db *pg.DB) *Handler {
+	return &Handler{db: db}
 }

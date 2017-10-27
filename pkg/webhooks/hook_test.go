@@ -1,4 +1,4 @@
-package patreon
+package webhooks
 
 import (
 	"testing"
@@ -52,7 +52,7 @@ func TestDelete(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func createHandler(t *testing.T) *Hook {
+func createHandler(t *testing.T) *Handler {
 	opts, err := pg.ParseURL("postgres://postgres:@localhost/podsync?sslmode=disable")
 	if err != nil {
 		require.NoError(t, err)
