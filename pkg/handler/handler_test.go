@@ -1,6 +1,6 @@
-//go:generate mockgen -source=server.go -destination=server_mock_test.go -package=server
+//go:generate mockgen -source=handler.go -destination=handler_mock_test.go -package=handler
 
-package server
+package handler
 
 import (
 	"io/ioutil"
@@ -32,7 +32,7 @@ func TestCreateFeed(t *testing.T) {
 	feed := NewMockfeed(ctrl)
 	feed.EXPECT().CreateFeed(gomock.Eq(req), gomock.Any()).Times(1).Return("456", nil)
 
-	srv := httptest.NewServer(MakeHandlers(feed, cfg))
+	srv := httptest.NewServer(New(feed, cfg))
 	defer srv.Close()
 
 	query := `{"url": "https://youtube.com/channel/123", "page_size": 55, "quality": "low", "format": "audio"}`
@@ -47,7 +47,7 @@ func TestCreateInvalidFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	srv := httptest.NewServer(MakeHandlers(NewMockfeed(ctrl), cfg))
+	srv := httptest.NewServer(New(NewMockfeed(ctrl), cfg))
 	defer srv.Close()
 
 	query := `{}`
@@ -100,7 +100,7 @@ func TestGetFeed(t *testing.T) {
 	feed := NewMockfeed(ctrl)
 	feed.EXPECT().GetFeed("123").Return(&podcast, nil)
 
-	srv := httptest.NewServer(MakeHandlers(feed, cfg))
+	srv := httptest.NewServer(New(feed, cfg))
 	defer srv.Close()
 
 	resp, err := http.Get(srv.URL + "/123")
@@ -115,7 +115,7 @@ func TestGetMetadata(t *testing.T) {
 	feed := NewMockfeed(ctrl)
 	feed.EXPECT().GetMetadata("123").Times(1).Return(&api.Feed{}, nil)
 
-	srv := httptest.NewServer(MakeHandlers(feed, cfg))
+	srv := httptest.NewServer(New(feed, cfg))
 	defer srv.Close()
 
 	resp, err := http.Get(srv.URL + "/api/metadata/123")

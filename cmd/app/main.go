@@ -13,8 +13,8 @@ import (
 	"github.com/mxpv/podsync/pkg/builders"
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/feeds"
+	"github.com/mxpv/podsync/pkg/handler"
 	"github.com/mxpv/podsync/pkg/id"
-	"github.com/mxpv/podsync/pkg/server"
 	"github.com/mxpv/podsync/pkg/storage"
 )
 
@@ -63,7 +63,7 @@ func main() {
 
 	srv := http.Server{
 		Addr:    fmt.Sprintf(":%d", 5001),
-		Handler: server.MakeHandlers(feed, cfg),
+		Handler: handler.New(feed, cfg),
 	}
 
 	go func() {
