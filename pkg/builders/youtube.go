@@ -14,9 +14,11 @@ import (
 )
 
 const (
-	maxYoutubeResults = 50
-	hdBytesPerSecond  = 350000
-	ldBytesPerSecond  = 100000
+	maxYoutubeResults       = 50
+	hdBytesPerSecond        = 350000
+	ldBytesPerSecond        = 100000
+	lowAudioBytesPerSecond  = 48000 / 8
+	highAudioBytesPerSecond = 128000 / 8
 )
 
 type apiKey string
@@ -184,24 +186,22 @@ func (yt *YouTubeBuilder) queryFeed(feed *api.Feed) (*itunes.Podcast, string, er
 	return nil, "", errors.New("unsupported link format")
 }
 
-func (yt *YouTubeBuilder) getVideoSize(definition string, duration int64, fmt api.Format) int64 {
-	// Video size information requires 1 additional call for each video (1 feed = 50 videos = 50 calls),
-	// which is too expensive, so get approximated size depending on duration and definition params
-	var size int64 = 0
-
-	if definition == "hd" {
-		size = duration * hdBytesPerSecond
+// Video size information requires 1 additional call for each video (1 feed = 50 videos = 50 calls),
+// which is too expensive, so get approximated size depending on duration and definition params
+func (yt *YouTubeBuilder) getSize(duration int64, feed *api.Feed) int64 {
+	if feed.Format == api.AudioFormat {
+		if feed.Quality == api.HighQuality {
+			return highAudioBytesPerSecond * duration
+		} else {
+			return lowAudioBytesPerSecond * duration
+		}
 	} else {
-		size = duration * ldBytesPerSecond
+		if feed.Quality == api.HighQuality {
+			return duration * hdBytesPerSecond
+		} else {
+			return duration * ldBytesPerSecond
+		}
 	}
-
-	// Some podcasts are coming in with exactly double the actual runtime and with the second half just silence.
-	// https://github.com/mxpv/Podsync/issues/6
-	if fmt == api.AudioFormat {
-		size /= 2
-	}
-
-	return size
 }
 
 func (yt *YouTubeBuilder) queryVideoDescriptions(ids []string, feed *api.Feed, podcast *itunes.Podcast) error {
@@ -245,8 +245,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ids []string, feed *api.Feed, p
 		item.AddDuration(seconds)
 
 		// Add download links
-
-		size := yt.getVideoSize(video.ContentDetails.Definition, seconds, feed.Format)
+		size := yt.getSize(seconds, feed)
 		item.AddEnclosure(makeEnclosure(feed, video.Id, size))
 
 		// podcast.AddItem requires description to be not empty, use workaround
