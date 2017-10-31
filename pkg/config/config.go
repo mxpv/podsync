@@ -14,6 +14,7 @@ type AppConfig struct {
 	PatreonClientId       string `yaml:"patreonClientId"`
 	PatreonSecret         string `yaml:"patreonSecret"`
 	PatreonRedirectURL    string `yaml:"patreonRedirectUrl"`
+	PatreonWebhooksSecret string `json:"patreonWebhooksSecret"`
 	PostgresConnectionURL string `yaml:"postgresConnectionUrl"`
 	RedisURL              string `yaml:"redisUrl"`
 	CookieSecret          string `yaml:"cookieSecret"`
@@ -38,6 +39,7 @@ func ReadConfiguration() (cfg *AppConfig, err error) {
 		"patreonClientId":       "PATREON_CLIENT_ID",
 		"patreonSecret":         "PATREON_SECRET",
 		"patreonRedirectUrl":    "PATREON_REDIRECT_URL",
+		"patreonWebhooksSecret": "PATREON_WEBHOOKS_SECRET",
 		"postgresConnectionUrl": "POSTGRES_CONNECTION_URL",
 		"redisUrl":              "REDIS_CONNECTION_URL",
 		"cookieSecret":          "COOKIE_SECRET",
