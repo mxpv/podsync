@@ -14,7 +14,7 @@ func TestCreate(t *testing.T) {
 	pledge := createPledge()
 
 	hook := createHandler(t)
-	err := hook.Handle(pledge, EventNameCreatePledge)
+	err := hook.Handle(pledge, patreon.EventCreatePledge)
 	require.NoError(t, err)
 
 	model := &models.Pledge{PledgeID: 12345}
@@ -27,12 +27,12 @@ func TestUpdate(t *testing.T) {
 	pledge := createPledge()
 
 	hook := createHandler(t)
-	err := hook.Handle(pledge, EventNameCreatePledge)
+	err := hook.Handle(pledge, patreon.EventCreatePledge)
 	require.NoError(t, err)
 
 	pledge.Attributes.AmountCents = 999
 
-	err = hook.Handle(pledge, EventNameUpdatePledge)
+	err = hook.Handle(pledge, patreon.EventUpdatePledge)
 	require.NoError(t, err)
 
 	model := &models.Pledge{PledgeID: 12345}
@@ -45,10 +45,10 @@ func TestDelete(t *testing.T) {
 	pledge := createPledge()
 	hook := createHandler(t)
 
-	err := hook.Handle(pledge, EventNameCreatePledge)
+	err := hook.Handle(pledge, patreon.EventCreatePledge)
 	require.NoError(t, err)
 
-	err = hook.Handle(pledge, EventNameDeletePledge)
+	err = hook.Handle(pledge, patreon.EventDeletePledge)
 	require.NoError(t, err)
 }
 
@@ -68,7 +68,7 @@ func createHandler(t *testing.T) *Handler {
 
 func createPledge() *patreon.Pledge {
 	pledge := &patreon.Pledge{
-		Id:   "12345",
+		ID:   "12345",
 		Type: "pledge",
 	}
 
@@ -76,7 +76,7 @@ func createPledge() *patreon.Pledge {
 	pledge.Attributes.CreatedAt = patreon.NullTime{Valid: true, Time: time.Now().UTC()}
 
 	pledge.Relationships.Patron = &patreon.PatronRelationship{}
-	pledge.Relationships.Patron.Data.Id = "67890"
+	pledge.Relationships.Patron.Data.ID = "67890"
 
 	return pledge
 }

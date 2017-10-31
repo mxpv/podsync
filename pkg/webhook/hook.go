@@ -10,28 +10,19 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	EventHeader     = "X-Patreon-Event"
-	SignatureHeader = "X-Patreon-Signature"
-
-	EventNameCreatePledge = "pledges:create"
-	EventNameUpdatePledge = "pledges:update"
-	EventNameDeletePledge = "pledges:delete"
-)
-
 type Handler struct {
 	db *pg.DB
 }
 
 func (h Handler) toModel(pledge *patreon.Pledge) (*models.Pledge, error) {
-	pledgeID, err := strconv.ParseInt(pledge.Id, 10, 64)
+	pledgeID, err := strconv.ParseInt(pledge.ID, 10, 64)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse pledge id: %s", pledge.Id)
+		return nil, errors.Wrapf(err, "failed to parse pledge id: %s", pledge.ID)
 	}
 
-	patronID, err := strconv.ParseInt(pledge.Relationships.Patron.Data.Id, 10, 64)
+	patronID, err := strconv.ParseInt(pledge.Relationships.Patron.Data.ID, 10, 64)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse patron id: %s", pledge.Relationships.Patron.Data.Id)
+		return nil, errors.Wrapf(err, "failed to parse patron id: %s", pledge.Relationships.Patron.Data.ID)
 	}
 
 	model := &models.Pledge{
@@ -72,11 +63,11 @@ func (h Handler) Handle(pledge *patreon.Pledge, event string) error {
 	}
 
 	switch event {
-	case EventNameCreatePledge:
+	case patreon.EventCreatePledge:
 		return h.db.Insert(model)
-	case EventNameUpdatePledge:
+	case patreon.EventUpdatePledge:
 		return h.db.Update(model)
-	case EventNameDeletePledge:
+	case patreon.EventDeletePledge:
 		return h.db.Delete(model)
 	default:
 		return fmt.Errorf("unknown event: %s", event)

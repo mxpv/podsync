@@ -13,7 +13,7 @@
 
 [[constraint]]
   name = "github.com/mxpv/patreon-go"
-  revision = "181da1e272784f51dea234c0e58e595321abd1ed"
+  version = "1.3"
 
 [[constraint]]
   name = "github.com/ventu-io/go-shortid"

@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"path"
@@ -8,11 +10,13 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/go-pg/pg"
 	"github.com/mxpv/patreon-go"
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/session"
+	"github.com/mxpv/podsync/pkg/webhook"
 	"golang.org/x/oauth2"
 )
 
@@ -31,6 +35,7 @@ type handler struct {
 	feed   feed
 	cfg    *config.AppConfig
 	oauth2 oauth2.Config
+	hook   *webhook.Handler
 }
 
 func (h handler) index(c *gin.Context) {
@@ -87,7 +92,7 @@ func (h handler) patreonCallback(c *gin.Context) {
 	// Determine feature level
 	level := api.DefaultFeatures
 
-	if user.Data.Id == creatorID {
+	if user.Data.ID == creatorID {
 		level = api.PodcasterFeature
 	} else {
 		amount := 0
@@ -104,7 +109,7 @@ func (h handler) patreonCallback(c *gin.Context) {
 	}
 
 	identity := &api.Identity{
-		UserId:       user.Data.Id,
+		UserId:       user.Data.ID,
 		FullName:     user.Data.Attributes.FullName,
 		Email:        user.Data.Attributes.Email,
 		ProfileURL:   user.Data.Attributes.URL,
@@ -192,7 +197,52 @@ func (h handler) metadata(c *gin.Context) {
 	c.JSON(http.StatusOK, feed)
 }
 
-func New(feed feed, cfg *config.AppConfig) http.Handler {
+func (h handler) webhook(c *gin.Context) {
+	// Read body to byte array in order to verify signature first
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		log.Printf("failed to read webhook body: %v", err)
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	// Verify signature
+	signature := c.GetHeader(patreon.HeaderSignature)
+	valid, err := patreon.VerifySignature(body, h.cfg.PatreonWebhooksSecret, signature)
+	if err != nil {
+		log.Printf("failed to verify signature: %v", err)
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	if !valid {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
+
+	// Get event name
+	eventName := c.GetHeader(patreon.HeaderEventType)
+	if eventName == "" {
+		log.Print("event name header is empty")
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	pledge := &patreon.WebhookPledge{}
+	if err := json.Unmarshal(body, pledge); err != nil {
+		c.JSON(badRequest(err))
+		return
+	}
+
+	if err := h.hook.Handle(&pledge.Data, eventName); err != nil {
+		c.JSON(internalError(err))
+		return
+	}
+
+	log.Printf("sucessfully processed patreon event %s (%s)", pledge.Data.ID, eventName)
+}
+
+func New(feed feed, db *pg.DB, cfg *config.AppConfig) http.Handler {
 	r := gin.New()
 	r.Use(gin.Recovery())
 
@@ -214,6 +264,7 @@ func New(feed feed, cfg *config.AppConfig) http.Handler {
 	h := handler{
 		feed: feed,
 		cfg:  cfg,
+		hook: webhook.NewHookHandler(db),
 	}
 
 	// OAuth 2 configuration
@@ -240,6 +291,7 @@ func New(feed feed, cfg *config.AppConfig) http.Handler {
 	r.GET("/api/ping", h.ping)
 	r.POST("/api/create", h.create)
 	r.GET("/api/metadata/:hashId", h.metadata)
+	r.POST("/api/webhooks", h.webhook)
 
 	r.NoRoute(h.getFeed)
 
