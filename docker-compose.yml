@@ -10,6 +10,8 @@ services:
     environment:
       - REDIS_CONNECTION_URL=redis://redis
       - POSTGRES_CONNECTION_URL={POSTGRES_CONNECTION_URL}
+      # https://console.developers.google.com/project/_/apiui/credential/serviceaccount
+      - GOOGLE_APPLICATION_CREDENTIALS={PATH_TO_GOOGLE_CREDENTIALS_FILE_FOR_USE_OUTSIDE_GOOGLE_CLOUD}
       - YOUTUBE_API_KEY={YOUTUBE_API_KEY}
       - VIMEO_API_KEY={VIMEO_API_KEY}
       - PATREON_CLIENT_ID={PATREON_CLIENT_ID}
