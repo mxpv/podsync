@@ -204,7 +204,13 @@ func (yt *YouTubeBuilder) getSize(duration int64, feed *api.Feed) int64 {
 	}
 }
 
-func (yt *YouTubeBuilder) queryVideoDescriptions(ids []string, feed *api.Feed, podcast *itunes.Podcast) error {
+func (yt *YouTubeBuilder) queryVideoDescriptions(playlistItems map[string]*youtube.PlaylistItemSnippet, feed *api.Feed, podcast *itunes.Podcast) error {
+	// Make the list of video ids
+	ids := make([]string, 0, len(playlistItems))
+	for _, s := range playlistItems {
+		ids = append(ids, s.ResourceId.VideoId)
+	}
+
 	req, err := yt.client.Videos.List("id,snippet,contentDetails").Id(strings.Join(ids, ",")).Do(yt.key)
 	if err != nil {
 		return errors.Wrap(err, "failed to query video descriptions")
@@ -225,11 +231,19 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ids []string, feed *api.Feed, p
 
 		item.AddImage(yt.selectThumbnail(snippet.Thumbnails, feed.Quality))
 
-		// Parse publication date
+		// Parse date added to playlist / publication date
 
-		pubDate, err := yt.parseDate(snippet.PublishedAt)
+		dateStr := ""
+		playlistItem, ok := playlistItems[video.Id]
+		if ok {
+			dateStr = playlistItem.PublishedAt
+		} else {
+			dateStr = snippet.PublishedAt
+		}
+
+		pubDate, err := yt.parseDate(dateStr)
 		if err != nil {
-			return errors.Wrapf(err, "failed to parse video publish date: %s", snippet.PublishedAt)
+			return errors.Wrapf(err, "failed to parse video publish date: %s", dateStr)
 		}
 
 		item.AddPubDate(&pubDate)
@@ -245,6 +259,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ids []string, feed *api.Feed, p
 		item.AddDuration(seconds)
 
 		// Add download links
+
 		size := yt.getSize(seconds, feed)
 		item.AddEnclosure(makeEnclosure(feed, video.Id, size))
 
@@ -277,15 +292,15 @@ func (yt *YouTubeBuilder) queryItems(itemId string, feed *api.Feed, podcast *itu
 			return nil
 		}
 
-		// Extract video ids
-		ids := make([]string, len(items))
-		for index, item := range items {
-			ids[index] = item.Snippet.ResourceId.VideoId
+		// Extract playlist snippets
+		snippets := map[string]*youtube.PlaylistItemSnippet{}
+		for _, item := range items {
+			snippets[item.Snippet.ResourceId.VideoId] = item.Snippet
 			count++
 		}
 
 		// Query video descriptions from the list of ids
-		if err := yt.queryVideoDescriptions(ids, feed, podcast); err != nil {
+		if err := yt.queryVideoDescriptions(snippets, feed, podcast); err != nil {
 			return err
 		}
 
