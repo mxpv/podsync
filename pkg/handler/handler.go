@@ -216,6 +216,7 @@ func (h handler) webhook(c *gin.Context) {
 	}
 
 	if !valid {
+		log.Printf("! webhooks signatures are not equal (header: %s)", signature)
 		c.Status(http.StatusUnauthorized)
 		return
 	}
