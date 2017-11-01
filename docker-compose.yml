@@ -19,6 +19,7 @@ services:
       - PATREON_REDIRECT_URL=https://podsync.net/patreon
       - PATREON_WEBHOOKS_SECRET={PATREON_WEBHOOKS_SECRET}
       - COOKIE_SECRET={COOKIE_SECRET}
+      - GIN_MODE=release
     volumes:
       - {PATH_TO_GOOGLE_CREDENTIALS_FILE_FOR_USE_OUTSIDE_GOOGLE_CLOUD}:/google-credentials.json
   ytdl:
