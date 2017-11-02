@@ -236,6 +236,7 @@ func (h handler) webhook(c *gin.Context) {
 	}
 
 	if err := h.hook.Handle(&pledge.Data, eventName); err != nil {
+		log.Printf("failed to process patreon event %s (%s): %v", pledge.Data.ID, eventName, err)
 		c.JSON(internalError(err))
 		return
 	}
