@@ -68,7 +68,12 @@ func (h Handler) Handle(pledge *patreon.Pledge, event string) error {
 	case patreon.EventUpdatePledge:
 		return h.db.Update(model)
 	case patreon.EventDeletePledge:
-		return h.db.Delete(model)
+		err := h.db.Delete(model)
+		if err == pg.ErrNoRows {
+			return nil
+		}
+
+		return err
 	default:
 		return fmt.Errorf("unknown event: %s", event)
 	}
