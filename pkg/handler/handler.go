@@ -28,11 +28,8 @@ type feedService interface {
 	GetMetadata(hashId string) (*api.Feed, error)
 }
 
-// HACK: mockgen fails to import patreon.Pledge type
-type P *patreon.Pledge
-
 type patreonService interface {
-	Hook(pledge P, event string) error
+	Hook(pledge *patreon.Pledge, event string) error
 	GetFeatureLevel(patronID string) int
 }
 

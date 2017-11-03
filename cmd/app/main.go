@@ -12,7 +12,6 @@ import (
 	"syscall"
 
 	"github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/proxy"
-	"github.com/coreos/etcd/pkg/srv"
 	"github.com/go-pg/pg"
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/builders"
@@ -49,10 +48,12 @@ func main() {
 		panic(err)
 	}
 
-	pg, err := createPg(cfg.PostgresConnectionURL)
+	database, err := createPg(cfg.PostgresConnectionURL)
 	if err != nil {
 		panic(err)
 	}
+
+	patreon := support.NewPatreon(database)
 
 	// Builders
 
@@ -73,8 +74,6 @@ func main() {
 		feeds.WithBuilder(api.Vimeo, vimeo),
 	)
 
-	patreon := support.NewPatreon(pg)
-
 	srv := http.Server{
 		Addr:    fmt.Sprintf(":%d", 5001),
 		Handler: handler.New(feed, patreon, cfg),
@@ -92,7 +91,7 @@ func main() {
 	log.Printf("shutting down server")
 
 	srv.Shutdown(ctx)
-	pg.Close()
+	database.Close()
 
 	log.Printf("server gracefully stopped")
 }
