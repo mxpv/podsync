@@ -93,6 +93,10 @@ func (h Patreon) FindPledge(patronID string) (*model.Pledge, error) {
 func (h Patreon) GetFeatureLevel(patronID string) (level int) {
 	level = api.DefaultFeatures
 
+	if patronID == "" {
+		return
+	}
+
 	if patronID == creatorID {
 		level = api.PodcasterFeature
 		return
