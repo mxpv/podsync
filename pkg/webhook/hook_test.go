@@ -59,7 +59,7 @@ func TestFindPledge(t *testing.T) {
 	err := hook.Handle(pledge, patreon.EventCreatePledge)
 	require.NoError(t, err)
 
-	res, err := hook.FindPledge(pledge.ID)
+	res, err := hook.FindPledge("67890")
 	require.NoError(t, err)
 	require.Equal(t, res.AmountCents, pledge.Attributes.AmountCents)
 }

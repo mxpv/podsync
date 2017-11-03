@@ -95,16 +95,17 @@ func (h handler) patreonCallback(c *gin.Context) {
 	if user.Data.ID == creatorID {
 		level = api.PodcasterFeature
 	} else {
-		amount := 0
-		for _, item := range user.Included.Items {
-			pledge, ok := item.(*patreon.Pledge)
-			if ok {
-				amount += pledge.Attributes.AmountCents
+		pledge, err := h.hook.FindPledge(user.Data.ID)
+		if err != nil {
+			log.Printf("! can't find pledge for user %s: %v", user.Data.ID, err)
+		} else {
+			// Check pledge is valid
+			if pledge.DeclinedSince.IsZero() && !pledge.IsPaused {
+				// Check the amount of pledge
+				if pledge.AmountCents >= 100 {
+					level = api.ExtendedFeatures
+				}
 			}
-		}
-
-		if amount >= 100 {
-			level = api.ExtendedFeatures
 		}
 	}
 
