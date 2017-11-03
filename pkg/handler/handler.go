@@ -128,6 +128,9 @@ func (h handler) create(c *gin.Context) {
 		return
 	}
 
+	// Check feature level again if user deleted pledge by still logged in
+	identity.FeatureLevel = h.patreon.GetFeatureLevel(identity.UserId)
+
 	hashId, err := h.feed.CreateFeed(req, identity)
 	if err != nil {
 		c.JSON(internalError(err))
