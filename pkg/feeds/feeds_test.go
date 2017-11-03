@@ -1,4 +1,4 @@
-//go:generate mockgen -source=interfaces.go -destination=interfaces_mock_test.go -package=feeds
+//go:generate mockgen -source=feeds.go -destination=feeds_mock_test.go -package=feeds
 
 package feeds
 
@@ -14,10 +14,10 @@ func TestService_CreateFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	id := NewMockid(ctrl)
+	id := NewMockidService(ctrl)
 	id.EXPECT().Generate(gomock.Any()).Times(1).Return("123", nil)
 
-	storage := NewMockstorage(ctrl)
+	storage := NewMockstorageService(ctrl)
 	storage.EXPECT().CreateFeed(gomock.Any()).Times(1).Return(nil)
 
 	s := service{
@@ -44,7 +44,7 @@ func TestService_GetFeed(t *testing.T) {
 
 	feed := &api.Feed{Provider: api.Youtube}
 
-	storage := NewMockstorage(ctrl)
+	storage := NewMockstorageService(ctrl)
 	storage.EXPECT().GetFeed("123").Times(1).Return(feed, nil)
 
 	bld := NewMockbuilder(ctrl)
@@ -63,7 +63,7 @@ func TestService_GetMetadata(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	storage := NewMockstorage(ctrl)
+	storage := NewMockstorageService(ctrl)
 	storage.EXPECT().GetFeed("123").Times(1).Return(&api.Feed{}, nil)
 
 	s := service{storage: storage}

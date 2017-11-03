@@ -1,4 +1,4 @@
-package webhook
+package support
 
 import (
 	"testing"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-pg/pg"
 	"github.com/mxpv/patreon-go"
+	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/models"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +15,7 @@ func TestCreate(t *testing.T) {
 	pledge := createPledge()
 
 	hook := createHandler(t)
-	err := hook.Handle(pledge, patreon.EventCreatePledge)
+	err := hook.Hook(pledge, patreon.EventCreatePledge)
 	require.NoError(t, err)
 
 	model := &models.Pledge{PledgeID: 12345}
@@ -27,12 +28,12 @@ func TestUpdate(t *testing.T) {
 	pledge := createPledge()
 
 	hook := createHandler(t)
-	err := hook.Handle(pledge, patreon.EventCreatePledge)
+	err := hook.Hook(pledge, patreon.EventCreatePledge)
 	require.NoError(t, err)
 
 	pledge.Attributes.AmountCents = 999
 
-	err = hook.Handle(pledge, patreon.EventUpdatePledge)
+	err = hook.Hook(pledge, patreon.EventUpdatePledge)
 	require.NoError(t, err)
 
 	model := &models.Pledge{PledgeID: 12345}
@@ -45,14 +46,38 @@ func TestDelete(t *testing.T) {
 	pledge := createPledge()
 	hook := createHandler(t)
 
-	err := hook.Handle(pledge, patreon.EventCreatePledge)
+	err := hook.Hook(pledge, patreon.EventCreatePledge)
 	require.NoError(t, err)
 
-	err = hook.Handle(pledge, patreon.EventDeletePledge)
+	err = hook.Hook(pledge, patreon.EventDeletePledge)
 	require.NoError(t, err)
 }
 
-func createHandler(t *testing.T) *Handler {
+func TestFindPledge(t *testing.T) {
+	pledge := createPledge()
+	hook := createHandler(t)
+
+	err := hook.Hook(pledge, patreon.EventCreatePledge)
+	require.NoError(t, err)
+
+	res, err := hook.FindPledge("67890")
+	require.NoError(t, err)
+	require.Equal(t, res.AmountCents, pledge.Attributes.AmountCents)
+}
+
+func TestGetFeatureLevel(t *testing.T) {
+	pledge := createPledge()
+	hook := createHandler(t)
+
+	err := hook.Hook(pledge, patreon.EventCreatePledge)
+	require.NoError(t, err)
+
+	require.Equal(t, api.PodcasterFeature, hook.GetFeatureLevel(creatorID))
+	require.Equal(t, api.DefaultFeatures, hook.GetFeatureLevel("xyz"))
+	require.Equal(t, api.ExtendedFeatures, hook.GetFeatureLevel(pledge.Relationships.Patron.Data.ID))
+}
+
+func createHandler(t *testing.T) *Patreon {
 	opts, err := pg.ParseURL("postgres://postgres:@localhost/podsync?sslmode=disable")
 	if err != nil {
 		require.NoError(t, err)
@@ -63,7 +88,7 @@ func createHandler(t *testing.T) *Handler {
 	_, err = db.Model(&models.Pledge{}).Where("1=1").Delete()
 	require.NoError(t, err)
 
-	return NewHookHandler(db)
+	return NewPatreon(db)
 }
 
 func createPledge() *patreon.Pledge {

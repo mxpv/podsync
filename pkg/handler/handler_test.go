@@ -29,10 +29,13 @@ func TestCreateFeed(t *testing.T) {
 		Format:   api.AudioFormat,
 	}
 
-	feed := NewMockfeed(ctrl)
+	feed := NewMockfeedService(ctrl)
 	feed.EXPECT().CreateFeed(gomock.Eq(req), gomock.Any()).Times(1).Return("456", nil)
 
-	srv := httptest.NewServer(New(feed, nil, cfg))
+	patreon := NewMockpatreonService(ctrl)
+	patreon.EXPECT().GetFeatureLevel(gomock.Any()).Return(api.DefaultFeatures)
+
+	srv := httptest.NewServer(New(feed, patreon, cfg))
 	defer srv.Close()
 
 	query := `{"url": "https://youtube.com/channel/123", "page_size": 55, "quality": "low", "format": "audio"}`
@@ -47,7 +50,7 @@ func TestCreateInvalidFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	srv := httptest.NewServer(New(NewMockfeed(ctrl), nil, cfg))
+	srv := httptest.NewServer(New(NewMockfeedService(ctrl), nil, cfg))
 	defer srv.Close()
 
 	query := `{}`
@@ -97,7 +100,7 @@ func TestGetFeed(t *testing.T) {
 
 	podcast := itunes.New("", "", "", nil, nil)
 
-	feed := NewMockfeed(ctrl)
+	feed := NewMockfeedService(ctrl)
 	feed.EXPECT().GetFeed("123").Return(&podcast, nil)
 
 	srv := httptest.NewServer(New(feed, nil, cfg))
@@ -112,7 +115,7 @@ func TestGetMetadata(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	feed := NewMockfeed(ctrl)
+	feed := NewMockfeedService(ctrl)
 	feed.EXPECT().GetMetadata("123").Times(1).Return(&api.Feed{}, nil)
 
 	srv := httptest.NewServer(New(feed, nil, cfg))

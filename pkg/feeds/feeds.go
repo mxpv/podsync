@@ -13,9 +13,22 @@ const (
 	maxPageSize = 150
 )
 
+type idService interface {
+	Generate(feed *api.Feed) (string, error)
+}
+
+type storageService interface {
+	CreateFeed(feed *api.Feed) error
+	GetFeed(hashId string) (*api.Feed, error)
+}
+
+type builder interface {
+	Build(feed *api.Feed) (podcast *itunes.Podcast, err error)
+}
+
 type service struct {
-	id       id
-	storage  storage
+	id       idService
+	storage  storageService
 	builders map[api.Provider]builder
 }
 
@@ -85,13 +98,13 @@ func (s *service) GetMetadata(hashId string) (*api.Feed, error) {
 
 type feedOption func(*service)
 
-func WithStorage(storage storage) feedOption {
+func WithStorage(storage storageService) feedOption {
 	return func(service *service) {
 		service.storage = storage
 	}
 }
 
-func WithIdGen(id id) feedOption {
+func WithIdGen(id idService) feedOption {
 	return func(service *service) {
 		service.id = id
 	}

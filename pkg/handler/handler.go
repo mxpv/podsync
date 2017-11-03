@@ -10,32 +10,34 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/go-pg/pg"
-	"github.com/mxpv/patreon-go"
+	patreon "github.com/mxpv/patreon-go"
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/session"
-	"github.com/mxpv/podsync/pkg/webhook"
 	"golang.org/x/oauth2"
 )
 
 const (
-	creatorID       = "2822191"
 	maxHashIDLength = 16
 )
 
-type feed interface {
+type feedService interface {
 	CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error)
 	GetFeed(hashId string) (*itunes.Podcast, error)
 	GetMetadata(hashId string) (*api.Feed, error)
 }
 
+type patreonService interface {
+	Hook(pledge *patreon.Pledge, event string) error
+	GetFeatureLevel(patronID string) int
+}
+
 type handler struct {
-	feed   feed
-	cfg    *config.AppConfig
-	oauth2 oauth2.Config
-	hook   *webhook.Handler
+	feed    feedService
+	cfg     *config.AppConfig
+	oauth2  oauth2.Config
+	patreon patreonService
 }
 
 func (h handler) index(c *gin.Context) {
@@ -90,23 +92,7 @@ func (h handler) patreonCallback(c *gin.Context) {
 	}
 
 	// Determine feature level
-	level := api.DefaultFeatures
-
-	if user.Data.ID == creatorID {
-		level = api.PodcasterFeature
-	} else {
-		amount := 0
-		for _, item := range user.Included.Items {
-			pledge, ok := item.(*patreon.Pledge)
-			if ok {
-				amount += pledge.Attributes.AmountCents
-			}
-		}
-
-		if amount >= 100 {
-			level = api.ExtendedFeatures
-		}
-	}
+	level := h.patreon.GetFeatureLevel(user.Data.ID)
 
 	identity := &api.Identity{
 		UserId:       user.Data.ID,
@@ -144,6 +130,9 @@ func (h handler) create(c *gin.Context) {
 		c.JSON(internalError(err))
 		return
 	}
+
+	// Check feature level again if user deleted pledge by still logged in
+	identity.FeatureLevel = h.patreon.GetFeatureLevel(identity.UserId)
 
 	hashId, err := h.feed.CreateFeed(req, identity)
 	if err != nil {
@@ -235,7 +224,7 @@ func (h handler) webhook(c *gin.Context) {
 		return
 	}
 
-	if err := h.hook.Handle(&pledge.Data, eventName); err != nil {
+	if err := h.patreon.Hook(&pledge.Data, eventName); err != nil {
 		log.Printf("failed to process patreon event %s (%s): %v", pledge.Data.ID, eventName, err)
 		c.JSON(internalError(err))
 		return
@@ -244,7 +233,7 @@ func (h handler) webhook(c *gin.Context) {
 	log.Printf("sucessfully processed patreon event %s (%s)", pledge.Data.ID, eventName)
 }
 
-func New(feed feed, db *pg.DB, cfg *config.AppConfig) http.Handler {
+func New(feed feedService, support patreonService, cfg *config.AppConfig) http.Handler {
 	r := gin.New()
 	r.Use(gin.Recovery())
 
@@ -264,9 +253,9 @@ func New(feed feed, db *pg.DB, cfg *config.AppConfig) http.Handler {
 	}
 
 	h := handler{
-		feed: feed,
-		cfg:  cfg,
-		hook: webhook.NewHookHandler(db),
+		feed:    feed,
+		patreon: support,
+		cfg:     cfg,
 	}
 
 	// OAuth 2 configuration
