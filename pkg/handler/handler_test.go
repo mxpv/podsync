@@ -25,8 +25,8 @@ func TestCreateFeed(t *testing.T) {
 	req := &api.CreateFeedRequest{
 		URL:      "https://youtube.com/channel/123",
 		PageSize: 55,
-		Quality:  api.LowQuality,
-		Format:   api.AudioFormat,
+		Quality:  api.QualityLow,
+		Format:   api.FormatAudio,
 	}
 
 	feed := NewMockfeedService(ctrl)

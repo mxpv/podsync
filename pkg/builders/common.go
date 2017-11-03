@@ -15,7 +15,7 @@ const (
 func makeEnclosure(feed *api.Feed, id string, lengthInBytes int64) (string, itunes.EnclosureType, int64) {
 	ext := "mp4"
 	contentType := itunes.MP4
-	if feed.Format == api.AudioFormat {
+	if feed.Format == api.FormatAudio {
 		ext = "m4a"
 		contentType = itunes.M4A
 	}

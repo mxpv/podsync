@@ -39,17 +39,17 @@ func (r *RedisStorage) parsePageSize(m map[string]string) (int, error) {
 func (r *RedisStorage) parseFormat(m map[string]string) (api.Format, api.Quality, error) {
 	quality, ok := m["quality"]
 	if !ok {
-		return api.VideoFormat, api.HighQuality, nil
+		return api.FormatVideo, api.QualityHigh, nil
 	}
 
 	if quality == "VideoHigh" {
-		return api.VideoFormat, api.HighQuality, nil
+		return api.FormatVideo, api.QualityHigh, nil
 	} else if quality == "VideoLow" {
-		return api.VideoFormat, api.LowQuality, nil
+		return api.FormatVideo, api.QualityLow, nil
 	} else if quality == "AudioHigh" {
-		return api.AudioFormat, api.HighQuality, nil
+		return api.FormatAudio, api.QualityHigh, nil
 	} else if quality == "AudioLow" {
-		return api.AudioFormat, api.LowQuality, nil
+		return api.FormatAudio, api.QualityLow, nil
 	}
 
 	return "", "", fmt.Errorf("unsupported formmat %s", quality)
@@ -87,27 +87,27 @@ func (r *RedisStorage) GetFeed(hashId string) (*api.Feed, error) {
 	provider := m["provider"]
 	linkType := m["type"]
 	if strings.EqualFold(provider, "youtube") {
-		feed.Provider = api.Youtube
+		feed.Provider = api.ProviderYoutube
 
 		if strings.EqualFold(linkType, "channel") {
-			feed.LinkType = api.Channel
+			feed.LinkType = api.LinkTypeChannel
 		} else if strings.EqualFold(linkType, "playlist") {
-			feed.LinkType = api.Playlist
+			feed.LinkType = api.LinkTypePlaylist
 		} else if strings.EqualFold(linkType, "user") {
-			feed.LinkType = api.User
+			feed.LinkType = api.LinkTypeUser
 		} else {
 			return nil, fmt.Errorf("unsupported yt link type %s", linkType)
 		}
 
 	} else if strings.EqualFold(provider, "vimeo") {
-		feed.Provider = api.Vimeo
+		feed.Provider = api.ProviderVimeo
 
 		if strings.EqualFold(linkType, "channel") {
-			feed.LinkType = api.Channel
+			feed.LinkType = api.LinkTypeChannel
 		} else if strings.EqualFold(linkType, "user") {
-			feed.LinkType = api.User
+			feed.LinkType = api.LinkTypeUser
 		} else if strings.EqualFold(linkType, "group") {
-			feed.LinkType = api.Group
+			feed.LinkType = api.LinkTypeGroup
 		} else {
 			return nil, fmt.Errorf("unsupported vimeo link type %s", linkType)
 		}
@@ -162,9 +162,9 @@ func (r *RedisStorage) CreateFeed(feed *api.Feed) error {
 		"pagesize":  feed.PageSize,
 	}
 
-	if feed.Format == api.VideoFormat {
+	if feed.Format == api.FormatVideo {
 
-		if feed.Quality == api.HighQuality {
+		if feed.Quality == api.QualityHigh {
 			fields["quality"] = "VideoHigh"
 		} else {
 			fields["quality"] = "VideoLow"
@@ -172,7 +172,7 @@ func (r *RedisStorage) CreateFeed(feed *api.Feed) error {
 
 	} else {
 
-		if feed.Quality == api.HighQuality {
+		if feed.Quality == api.QualityHigh {
 			fields["quality"] = "AudioHigh"
 		} else {
 			fields["quality"] = "AudioLow"

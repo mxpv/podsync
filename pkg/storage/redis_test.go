@@ -40,12 +40,12 @@ func TestRedisStorage_CreateFeed(t *testing.T) {
 	err := client.CreateFeed(&api.Feed{
 		HashId:   hashId,
 		UserId:   "321",
-		Provider: api.Youtube,
-		LinkType: api.Channel,
+		Provider: api.ProviderYoutube,
+		LinkType: api.LinkTypeChannel,
 		ItemId:   "123",
 		PageSize: 45,
-		Quality:  api.LowQuality,
-		Format:   api.AudioFormat,
+		Quality:  api.QualityLow,
+		Format:   api.FormatAudio,
 	})
 
 	require.NoError(t, err)
@@ -55,12 +55,12 @@ func TestRedisStorage_CreateFeed(t *testing.T) {
 
 	require.Equal(t, hashId, feed.HashId)
 	require.Equal(t, "321", feed.UserId)
-	require.Equal(t, api.Youtube, feed.Provider)
-	require.Equal(t, api.Channel, feed.LinkType)
+	require.Equal(t, api.ProviderYoutube, feed.Provider)
+	require.Equal(t, api.LinkTypeChannel, feed.LinkType)
 	require.Equal(t, "123", feed.ItemId)
 	require.Equal(t, 45, feed.PageSize)
-	require.Equal(t, api.LowQuality, feed.Quality)
-	require.Equal(t, api.AudioFormat, feed.Format)
+	require.Equal(t, api.QualityLow, feed.Quality)
+	require.Equal(t, api.FormatAudio, feed.Format)
 }
 
 func createRedisClient(t *testing.T) *RedisStorage {

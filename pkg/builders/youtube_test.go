@@ -18,11 +18,11 @@ func TestQueryYTChannel(t *testing.T) {
 	builder, err := NewYouTubeBuilder(ytKey)
 	require.NoError(t, err)
 
-	channel, err := builder.listChannels(api.Channel, "UC2yTVSttx7lxAOAzx1opjoA")
+	channel, err := builder.listChannels(api.LinkTypeChannel, "UC2yTVSttx7lxAOAzx1opjoA")
 	require.NoError(t, err)
 	require.Equal(t, "UC2yTVSttx7lxAOAzx1opjoA", channel.Id)
 
-	channel, err = builder.listChannels(api.User, "fxigr1")
+	channel, err = builder.listChannels(api.LinkTypeUser, "fxigr1")
 	require.NoError(t, err)
 	require.Equal(t, "UCr_fwF-n-2_olTYd-m3n32g", channel.Id)
 }
@@ -36,8 +36,8 @@ func TestBuildYTFeed(t *testing.T) {
 	require.NoError(t, err)
 
 	podcast, err := builder.Build(&api.Feed{
-		Provider: api.Youtube,
-		LinkType: api.Channel,
+		Provider: api.ProviderYoutube,
+		LinkType: api.LinkTypeChannel,
 		ItemId:   "UCupvZG-5ko_eiXAupbDfxWw",
 		PageSize: maxYoutubeResults,
 	})

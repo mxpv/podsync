@@ -13,37 +13,37 @@ var (
 type Provider string
 
 const (
-	Youtube = Provider("youtube")
-	Vimeo   = Provider("vimeo")
+	ProviderYoutube = Provider("youtube")
+	ProviderVimeo   = Provider("vimeo")
 )
 
 type LinkType string
 
 const (
-	Channel  = LinkType("channel")
-	Playlist = LinkType("playlist")
-	User     = LinkType("user")
-	Group    = LinkType("group")
+	LinkTypeChannel  = LinkType("channel")
+	LinkTypePlaylist = LinkType("playlist")
+	LinkTypeUser     = LinkType("user")
+	LinkTypeGroup    = LinkType("group")
 )
 
 type Quality string
 
 const (
-	HighQuality = Quality("high")
-	LowQuality  = Quality("low")
+	QualityHigh = Quality("high")
+	QualityLow  = Quality("low")
 )
 
 type Format string
 
 const (
-	AudioFormat = Format("audio")
-	VideoFormat = Format("video")
+	FormatAudio = Format("audio")
+	FormatVideo = Format("video")
 )
 
 const (
 	DefaultPageSize = 50
-	DefaultFormat   = VideoFormat
-	DefaultQuality  = HighQuality
+	DefaultFormat   = FormatVideo
+	DefaultQuality  = QualityHigh
 )
 
 type Feed struct {

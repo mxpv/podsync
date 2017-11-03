@@ -70,8 +70,8 @@ func main() {
 	feed := feeds.NewFeedService(
 		feeds.WithIdGen(hashIds),
 		feeds.WithStorage(redis),
-		feeds.WithBuilder(api.Youtube, youtube),
-		feeds.WithBuilder(api.Vimeo, vimeo),
+		feeds.WithBuilder(api.ProviderYoutube, youtube),
+		feeds.WithBuilder(api.ProviderVimeo, vimeo),
 	)
 
 	srv := http.Server{

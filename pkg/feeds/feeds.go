@@ -46,8 +46,8 @@ func (s *service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity)
 
 	// Set default fields
 	feed.PageSize = api.DefaultPageSize
-	feed.Format = api.VideoFormat
-	feed.Quality = api.HighQuality
+	feed.Format = api.FormatVideo
+	feed.Quality = api.QualityHigh
 	feed.FeatureLevel = api.DefaultFeatures
 	feed.LastAccess = time.Now().UTC()
 

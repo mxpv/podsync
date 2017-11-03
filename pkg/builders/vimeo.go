@@ -25,7 +25,7 @@ func (v *VimeoBuilder) selectImage(p *vimeo.Pictures, q api.Quality) string {
 		return ""
 	}
 
-	if q == api.LowQuality {
+	if q == api.QualityLow {
 		return p.Sizes[0].Link
 	} else {
 		return p.Sizes[len(p.Sizes)-1].Link
@@ -153,7 +153,7 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, podcast *itunes.Podc
 }
 
 func (v *VimeoBuilder) Build(feed *api.Feed) (podcast *itunes.Podcast, err error) {
-	if feed.LinkType == api.Channel {
+	if feed.LinkType == api.LinkTypeChannel {
 		if podcast, err = v.queryChannel(feed); err == nil {
 			err = v.queryVideos(v.client.Channels.ListVideo, podcast, feed)
 		}
@@ -161,7 +161,7 @@ func (v *VimeoBuilder) Build(feed *api.Feed) (podcast *itunes.Podcast, err error
 		return
 	}
 
-	if feed.LinkType == api.Group {
+	if feed.LinkType == api.LinkTypeGroup {
 		if podcast, err = v.queryGroup(feed); err == nil {
 			err = v.queryVideos(v.client.Groups.ListVideo, podcast, feed)
 		}
@@ -169,7 +169,7 @@ func (v *VimeoBuilder) Build(feed *api.Feed) (podcast *itunes.Podcast, err error
 		return
 	}
 
-	if feed.LinkType == api.User {
+	if feed.LinkType == api.LinkTypeUser {
 		if podcast, err = v.queryUser(feed); err == nil {
 			err = v.queryVideos(v.client.Users.ListVideo, podcast, feed)
 		}

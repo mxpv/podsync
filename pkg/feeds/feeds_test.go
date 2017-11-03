@@ -23,14 +23,14 @@ func TestService_CreateFeed(t *testing.T) {
 	s := service{
 		id:       id,
 		storage:  storage,
-		builders: map[api.Provider]builder{api.Youtube: nil},
+		builders: map[api.Provider]builder{api.ProviderYoutube: nil},
 	}
 
 	req := &api.CreateFeedRequest{
 		URL:      "youtube.com/channel/123",
 		PageSize: 50,
-		Quality:  api.HighQuality,
-		Format:   api.VideoFormat,
+		Quality:  api.QualityHigh,
+		Format:   api.FormatVideo,
 	}
 
 	hashId, err := s.CreateFeed(req, &api.Identity{})
@@ -42,7 +42,7 @@ func TestService_GetFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	feed := &api.Feed{Provider: api.Youtube}
+	feed := &api.Feed{Provider: api.ProviderYoutube}
 
 	storage := NewMockstorageService(ctrl)
 	storage.EXPECT().GetFeed("123").Times(1).Return(feed, nil)
@@ -52,7 +52,7 @@ func TestService_GetFeed(t *testing.T) {
 
 	s := service{
 		storage:  storage,
-		builders: map[api.Provider]builder{api.Youtube: bld},
+		builders: map[api.Provider]builder{api.ProviderYoutube: bld},
 	}
 
 	_, err := s.GetFeed("123")

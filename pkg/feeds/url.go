@@ -27,7 +27,7 @@ func parseURL(link string) (*api.Feed, error) {
 			return nil, err
 		}
 
-		feed.Provider = api.Youtube
+		feed.Provider = api.ProviderYoutube
 		feed.LinkType = kind
 		feed.ItemId = id
 
@@ -40,7 +40,7 @@ func parseURL(link string) (*api.Feed, error) {
 			return nil, err
 		}
 
-		feed.Provider = api.Vimeo
+		feed.Provider = api.ProviderVimeo
 		feed.LinkType = kind
 		feed.ItemId = id
 
@@ -56,7 +56,7 @@ func parseYoutubeURL(parsed *url.URL) (kind api.LinkType, id string, err error) 
 	// https://www.youtube.com/playlist?list=PLCB9F975ECF01953C
 	// https://www.youtube.com/watch?v=rbCbho7aLYw&list=PLMpEfaKcGjpWEgNtdnsvLX6LzQL0UC0EM
 	if strings.HasPrefix(path, "/playlist") || strings.HasPrefix(path, "/watch") {
-		kind = api.Playlist
+		kind = api.LinkTypePlaylist
 
 		id = parsed.Query().Get("list")
 		if id != "" {
@@ -70,7 +70,7 @@ func parseYoutubeURL(parsed *url.URL) (kind api.LinkType, id string, err error) 
 	// - https://www.youtube.com/channel/UC5XPnUk8Vvv_pWslhwom6Og
 	// - https://www.youtube.com/channel/UCrlakW-ewUT8sOod6Wmzyow/videos
 	if strings.HasPrefix(path, "/channel") {
-		kind = api.Channel
+		kind = api.LinkTypeChannel
 		parts := strings.Split(parsed.EscapedPath(), "/")
 		if len(parts) <= 2 {
 			err = errors.New("invalid youtube channel link")
@@ -87,7 +87,7 @@ func parseYoutubeURL(parsed *url.URL) (kind api.LinkType, id string, err error) 
 
 	// - https://www.youtube.com/user/fxigr1
 	if strings.HasPrefix(path, "/user") {
-		kind = api.User
+		kind = api.LinkTypeUser
 
 		parts := strings.Split(parsed.EscapedPath(), "/")
 		if len(parts) <= 2 {
@@ -116,14 +116,14 @@ func parseVimeoURL(parsed *url.URL) (kind api.LinkType, id string, err error) {
 	}
 
 	if parts[1] == "groups" {
-		kind = api.Group
+		kind = api.LinkTypeGroup
 	} else if parts[1] == "channels" {
-		kind = api.Channel
+		kind = api.LinkTypeChannel
 	} else {
-		kind = api.User
+		kind = api.LinkTypeUser
 	}
 
-	if kind == api.Group || kind == api.Channel {
+	if kind == api.LinkTypeGroup || kind == api.LinkTypeChannel {
 		if len(parts) <= 2 {
 			err = errors.New("invalid channel link")
 			return
@@ -137,7 +137,7 @@ func parseVimeoURL(parsed *url.URL) (kind api.LinkType, id string, err error) {
 		return
 	}
 
-	if kind == api.User {
+	if kind == api.LinkTypeUser {
 		id = parts[1]
 		if id == "" {
 			err = errors.New("invalid id")

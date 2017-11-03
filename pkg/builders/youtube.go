@@ -37,9 +37,9 @@ type YouTubeBuilder struct {
 func (yt *YouTubeBuilder) listChannels(linkType api.LinkType, id string) (*youtube.Channel, error) {
 	req := yt.client.Channels.List("id,snippet,contentDetails")
 
-	if linkType == api.Channel {
+	if linkType == api.LinkTypeChannel {
 		req = req.Id(id)
-	} else if linkType == api.User {
+	} else if linkType == api.LinkTypeUser {
 		req = req.ForUsername(id)
 	} else {
 		return nil, errors.New("unsupported link type")
@@ -110,7 +110,7 @@ func (yt *YouTubeBuilder) parseDate(s string) (time.Time, error) {
 func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, quality api.Quality) string {
 	// Use high resolution thumbnails for high quality mode
 	// https://github.com/mxpv/Podsync/issues/14
-	if quality == api.HighQuality {
+	if quality == api.QualityHigh {
 		if snippet.Maxres != nil {
 			return snippet.Maxres.Url
 		}
@@ -133,7 +133,7 @@ func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, qua
 func (yt *YouTubeBuilder) queryFeed(feed *api.Feed) (*itunes.Podcast, string, error) {
 	now := time.Now()
 
-	if feed.LinkType == api.Channel || feed.LinkType == api.User {
+	if feed.LinkType == api.LinkTypeChannel || feed.LinkType == api.LinkTypeUser {
 		channel, err := yt.listChannels(feed.LinkType, feed.ItemId)
 		if err != nil {
 			return nil, "", err
@@ -142,7 +142,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *api.Feed) (*itunes.Podcast, string, er
 		itemId := channel.ContentDetails.RelatedPlaylists.Uploads
 
 		link := ""
-		if feed.LinkType == api.Channel {
+		if feed.LinkType == api.LinkTypeChannel {
 			link = fmt.Sprintf("https://youtube.com/channel/%s", itemId)
 		} else {
 			link = fmt.Sprintf("https://youtube.com/user/%s", itemId)
@@ -165,7 +165,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *api.Feed) (*itunes.Podcast, string, er
 		return &podcast, itemId, nil
 	}
 
-	if feed.LinkType == api.Playlist {
+	if feed.LinkType == api.LinkTypePlaylist {
 		playlist, err := yt.listPlaylists(feed.ItemId, "")
 		if err != nil {
 			return nil, "", err
@@ -198,14 +198,14 @@ func (yt *YouTubeBuilder) queryFeed(feed *api.Feed) (*itunes.Podcast, string, er
 // Video size information requires 1 additional call for each video (1 feed = 50 videos = 50 calls),
 // which is too expensive, so get approximated size depending on duration and definition params
 func (yt *YouTubeBuilder) getSize(duration int64, feed *api.Feed) int64 {
-	if feed.Format == api.AudioFormat {
-		if feed.Quality == api.HighQuality {
+	if feed.Format == api.FormatAudio {
+		if feed.Quality == api.QualityHigh {
 			return highAudioBytesPerSecond * duration
 		} else {
 			return lowAudioBytesPerSecond * duration
 		}
 	} else {
-		if feed.Quality == api.HighQuality {
+		if feed.Quality == api.QualityHigh {
 			return duration * hdBytesPerSecond
 		} else {
 			return duration * ldBytesPerSecond

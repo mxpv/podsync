@@ -18,7 +18,7 @@ func TestQueryVimeoChannel(t *testing.T) {
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
-	podcast, err := builder.queryChannel(&api.Feed{ItemId: "staffpicks", Quality: api.HighQuality})
+	podcast, err := builder.queryChannel(&api.Feed{ItemId: "staffpicks", Quality: api.QualityHigh})
 	require.NoError(t, err)
 
 	require.Equal(t, "https://vimeo.com/channels/staffpicks", podcast.Link)
@@ -33,7 +33,7 @@ func TestQueryVimeoGroup(t *testing.T) {
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
-	podcast, err := builder.queryGroup(&api.Feed{ItemId: "motion", Quality: api.HighQuality})
+	podcast, err := builder.queryGroup(&api.Feed{ItemId: "motion", Quality: api.QualityHigh})
 	require.NoError(t, err)
 
 	require.Equal(t, "https://vimeo.com/groups/motion", podcast.Link)
@@ -48,7 +48,7 @@ func TestQueryVimeoUser(t *testing.T) {
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
-	podcast, err := builder.queryUser(&api.Feed{ItemId: "motionarray", Quality: api.HighQuality})
+	podcast, err := builder.queryUser(&api.Feed{ItemId: "motionarray", Quality: api.QualityHigh})
 	require.NoError(t, err)
 
 	require.Equal(t, "https://vimeo.com/motionarray", podcast.Link)

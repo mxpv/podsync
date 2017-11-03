@@ -10,8 +10,8 @@ import (
 func TestPgStorage_CreateFeed(t *testing.T) {
 	feed := &api.Feed{
 		HashId:   "xyz",
-		Provider: api.Youtube,
-		LinkType: api.Channel,
+		Provider: api.ProviderYoutube,
+		LinkType: api.LinkTypeChannel,
 		ItemId:   "123",
 	}
 
@@ -24,8 +24,8 @@ func TestPgStorage_CreateFeed(t *testing.T) {
 func TestPgStorage_CreateFeedWithDuplicate(t *testing.T) {
 	feed := &api.Feed{
 		HashId:   "123",
-		Provider: api.Youtube,
-		LinkType: api.Channel,
+		Provider: api.ProviderYoutube,
+		LinkType: api.LinkTypeChannel,
 		ItemId:   "123",
 	}
 
@@ -52,8 +52,8 @@ func TestPgStorage_GetFeed(t *testing.T) {
 	feed := &api.Feed{
 		HashId:   "xyz",
 		UserId:   "123",
-		Provider: api.Youtube,
-		LinkType: api.Channel,
+		Provider: api.ProviderYoutube,
+		LinkType: api.LinkTypeChannel,
 		ItemId:   "123",
 	}
 
@@ -69,8 +69,8 @@ func TestPgStorage_UpdateLastAccess(t *testing.T) {
 	feed := &api.Feed{
 		HashId:   "xyz",
 		UserId:   "123",
-		Provider: api.Youtube,
-		LinkType: api.Channel,
+		Provider: api.ProviderYoutube,
+		LinkType: api.LinkTypeChannel,
 		ItemId:   "123",
 	}
 
