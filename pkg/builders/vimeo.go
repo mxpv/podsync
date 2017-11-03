@@ -6,6 +6,7 @@ import (
 
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/model"
 	"github.com/pkg/errors"
 	"github.com/silentsokolov/go-vimeo"
 	"golang.org/x/net/context"
@@ -32,8 +33,8 @@ func (v *VimeoBuilder) selectImage(p *vimeo.Pictures, q api.Quality) string {
 	}
 }
 
-func (v *VimeoBuilder) queryChannel(feed *api.Feed) (*itunes.Podcast, error) {
-	channelId := feed.ItemId
+func (v *VimeoBuilder) queryChannel(feed *model.Feed) (*itunes.Podcast, error) {
+	channelId := feed.ItemID
 
 	ch, resp, err := v.client.Channels.Get(channelId)
 	if err != nil {
@@ -54,8 +55,8 @@ func (v *VimeoBuilder) queryChannel(feed *api.Feed) (*itunes.Podcast, error) {
 	return &podcast, nil
 }
 
-func (v *VimeoBuilder) queryGroup(feed *api.Feed) (*itunes.Podcast, error) {
-	groupId := feed.ItemId
+func (v *VimeoBuilder) queryGroup(feed *model.Feed) (*itunes.Podcast, error) {
+	groupId := feed.ItemID
 
 	gr, resp, err := v.client.Groups.Get(groupId)
 	if err != nil {
@@ -76,8 +77,8 @@ func (v *VimeoBuilder) queryGroup(feed *api.Feed) (*itunes.Podcast, error) {
 	return &podcast, nil
 }
 
-func (v *VimeoBuilder) queryUser(feed *api.Feed) (*itunes.Podcast, error) {
-	userId := feed.ItemId
+func (v *VimeoBuilder) queryUser(feed *model.Feed) (*itunes.Podcast, error) {
+	userId := feed.ItemID
 
 	user, resp, err := v.client.Users.Get(userId)
 	if err != nil {
@@ -105,7 +106,7 @@ func (v *VimeoBuilder) getVideoSize(video *vimeo.Video) int64 {
 
 type getVideosFunc func(id string, opt *vimeo.ListVideoOptions) ([]*vimeo.Video, *vimeo.Response, error)
 
-func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, podcast *itunes.Podcast, feed *api.Feed) error {
+func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, podcast *itunes.Podcast, feed *model.Feed) error {
 	opt := vimeo.ListVideoOptions{}
 	opt.Page = 1
 	opt.PerPage = vimeoDefaultPageSize
@@ -113,7 +114,7 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, podcast *itunes.Podc
 	added := 0
 
 	for {
-		videos, response, err := getVideos(feed.ItemId, &opt)
+		videos, response, err := getVideos(feed.ItemID, &opt)
 		if err != nil {
 			return errors.Wrapf(err, "failed to query videos (error %d %s)", response.StatusCode, response.Status)
 		}
@@ -152,7 +153,7 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, podcast *itunes.Podc
 	}
 }
 
-func (v *VimeoBuilder) Build(feed *api.Feed) (podcast *itunes.Podcast, err error) {
+func (v *VimeoBuilder) Build(feed *model.Feed) (podcast *itunes.Podcast, err error) {
 	if feed.LinkType == api.LinkTypeChannel {
 		if podcast, err = v.queryChannel(feed); err == nil {
 			err = v.queryVideos(v.client.Channels.ListVideo, podcast, feed)

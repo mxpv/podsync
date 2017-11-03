@@ -9,6 +9,7 @@ import (
 	"github.com/BrianHicks/finch/duration"
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/model"
 	"github.com/pkg/errors"
 	"google.golang.org/api/youtube/v3"
 )
@@ -130,11 +131,11 @@ func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, qua
 // Cost:
 // - 5 units for channel or user
 // - 3 units for playlist
-func (yt *YouTubeBuilder) queryFeed(feed *api.Feed) (*itunes.Podcast, string, error) {
+func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, error) {
 	now := time.Now()
 
 	if feed.LinkType == api.LinkTypeChannel || feed.LinkType == api.LinkTypeUser {
-		channel, err := yt.listChannels(feed.LinkType, feed.ItemId)
+		channel, err := yt.listChannels(feed.LinkType, feed.ItemID)
 		if err != nil {
 			return nil, "", err
 		}
@@ -166,7 +167,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *api.Feed) (*itunes.Podcast, string, er
 	}
 
 	if feed.LinkType == api.LinkTypePlaylist {
-		playlist, err := yt.listPlaylists(feed.ItemId, "")
+		playlist, err := yt.listPlaylists(feed.ItemID, "")
 		if err != nil {
 			return nil, "", err
 		}
@@ -197,7 +198,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *api.Feed) (*itunes.Podcast, string, er
 
 // Video size information requires 1 additional call for each video (1 feed = 50 videos = 50 calls),
 // which is too expensive, so get approximated size depending on duration and definition params
-func (yt *YouTubeBuilder) getSize(duration int64, feed *api.Feed) int64 {
+func (yt *YouTubeBuilder) getSize(duration int64, feed *model.Feed) int64 {
 	if feed.Format == api.FormatAudio {
 		if feed.Quality == api.QualityHigh {
 			return highAudioBytesPerSecond * duration
@@ -215,7 +216,7 @@ func (yt *YouTubeBuilder) getSize(duration int64, feed *api.Feed) int64 {
 
 // Cost: 5 units (call: 1, snippet: 2, contentDetails: 2)
 // See https://developers.google.com/youtube/v3/docs/videos/list#part
-func (yt *YouTubeBuilder) queryVideoDescriptions(playlistItems map[string]*youtube.PlaylistItemSnippet, feed *api.Feed, podcast *itunes.Podcast) error {
+func (yt *YouTubeBuilder) queryVideoDescriptions(playlistItems map[string]*youtube.PlaylistItemSnippet, feed *model.Feed, podcast *itunes.Podcast) error {
 	// Make the list of video ids
 	ids := make([]string, 0, len(playlistItems))
 	for _, s := range playlistItems {
@@ -290,7 +291,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(playlistItems map[string]*youtu
 }
 
 // Cost: (3 units + 5 units) * X pages = 8 units per page
-func (yt *YouTubeBuilder) queryItems(itemId string, feed *api.Feed, podcast *itunes.Podcast) error {
+func (yt *YouTubeBuilder) queryItems(itemId string, feed *model.Feed, podcast *itunes.Podcast) error {
 	pageToken := ""
 	count := 0
 
@@ -322,7 +323,7 @@ func (yt *YouTubeBuilder) queryItems(itemId string, feed *api.Feed, podcast *itu
 	}
 }
 
-func (yt *YouTubeBuilder) Build(feed *api.Feed) (*itunes.Podcast, error) {
+func (yt *YouTubeBuilder) Build(feed *model.Feed) (*itunes.Podcast, error) {
 
 	// Query general information about feed (title, description, lang, etc)
 

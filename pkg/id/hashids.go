@@ -4,7 +4,7 @@ import (
 	"hash/fnv"
 	"time"
 
-	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/model"
 	"github.com/ventu-io/go-shortid"
 )
 
@@ -18,7 +18,7 @@ func hashString(s string) int {
 	return int(h.Sum32())
 }
 
-func (h *hashId) Generate(feed *api.Feed) (string, error) {
+func (h *hashId) Generate(feed *model.Feed) (string, error) {
 	return h.sid.Generate()
 }
 

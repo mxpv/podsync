@@ -8,7 +8,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/proxy"
 	"github.com/go-pg/pg"
-	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/model"
 	"github.com/pkg/errors"
 )
 
@@ -20,7 +20,7 @@ type PgStorage struct {
 	db *pg.DB
 }
 
-func (p *PgStorage) CreateFeed(feed *api.Feed) error {
+func (p *PgStorage) CreateFeed(feed *model.Feed) error {
 	feed.LastAccess = time.Now().UTC()
 	_, err := p.db.Model(feed).OnConflict("DO NOTHING").Insert()
 	if err != nil {
@@ -30,10 +30,10 @@ func (p *PgStorage) CreateFeed(feed *api.Feed) error {
 	return nil
 }
 
-func (p *PgStorage) GetFeed(hashId string) (*api.Feed, error) {
+func (p *PgStorage) GetFeed(hashId string) (*model.Feed, error) {
 	lastAccess := time.Now().UTC()
 
-	feed := &api.Feed{}
+	feed := &model.Feed{}
 	_, err := p.db.Model(feed).
 		Set("last_access = ?", lastAccess).
 		Where("hash_id = ?", hashId).

@@ -6,6 +6,7 @@ import (
 
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/model"
 	"github.com/pkg/errors"
 )
 
@@ -14,16 +15,16 @@ const (
 )
 
 type idService interface {
-	Generate(feed *api.Feed) (string, error)
+	Generate(feed *model.Feed) (string, error)
 }
 
 type storageService interface {
-	CreateFeed(feed *api.Feed) error
-	GetFeed(hashId string) (*api.Feed, error)
+	CreateFeed(feed *model.Feed) error
+	GetFeed(hashId string) (*model.Feed, error)
 }
 
 type builder interface {
-	Build(feed *api.Feed) (podcast *itunes.Podcast, err error)
+	Build(feed *model.Feed) (podcast *itunes.Podcast, err error)
 }
 
 type service struct {
@@ -52,7 +53,7 @@ func (s *service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity)
 	feed.LastAccess = time.Now().UTC()
 
 	if identity.FeatureLevel > 0 {
-		feed.UserId = identity.UserId
+		feed.UserID = identity.UserId
 		feed.Quality = req.Quality
 		feed.Format = req.Format
 		feed.FeatureLevel = identity.FeatureLevel
@@ -68,7 +69,7 @@ func (s *service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity)
 		return "", errors.Wrap(err, "failed to generate id for feed")
 	}
 
-	feed.HashId = hashId
+	feed.HashID = hashId
 
 	// Save to database
 	if err := s.storage.CreateFeed(feed); err != nil {
@@ -79,7 +80,7 @@ func (s *service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity)
 }
 
 func (s *service) GetFeed(hashId string) (*itunes.Podcast, error) {
-	feed, err := s.GetMetadata(hashId)
+	feed, err := s.storage.GetFeed(hashId)
 	if err != nil {
 		return nil, err
 	}
@@ -92,24 +93,36 @@ func (s *service) GetFeed(hashId string) (*itunes.Podcast, error) {
 	return builder.Build(feed)
 }
 
-func (s *service) GetMetadata(hashId string) (*api.Feed, error) {
-	return s.storage.GetFeed(hashId)
+func (s *service) GetMetadata(hashId string) (*api.Metadata, error) {
+	feed, err := s.storage.GetFeed(hashId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.Metadata{
+		Provider: feed.Provider,
+		Format:   feed.Format,
+		Quality:  feed.Quality,
+	}, nil
 }
 
 type feedOption func(*service)
 
+//noinspection GoExportedFuncWithUnexportedType
 func WithStorage(storage storageService) feedOption {
 	return func(service *service) {
 		service.storage = storage
 	}
 }
 
+//noinspection GoExportedFuncWithUnexportedType
 func WithIdGen(id idService) feedOption {
 	return func(service *service) {
 		service.id = id
 	}
 }
 
+//noinspection GoExportedFuncWithUnexportedType
 func WithBuilder(provider api.Provider, builder builder) feedOption {
 	return func(service *service) {
 		service.builders[provider] = builder

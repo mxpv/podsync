@@ -6,7 +6,7 @@ package feeds
 import (
 	gomock "github.com/golang/mock/gomock"
 	podcast "github.com/mxpv/podcast"
-	api "github.com/mxpv/podsync/pkg/api"
+	model "github.com/mxpv/podsync/pkg/model"
 	reflect "reflect"
 )
 
@@ -34,7 +34,7 @@ func (_m *MockidService) EXPECT() *MockidServiceMockRecorder {
 }
 
 // Generate mocks base method
-func (_m *MockidService) Generate(feed *api.Feed) (string, error) {
+func (_m *MockidService) Generate(feed *model.Feed) (string, error) {
 	ret := _m.ctrl.Call(_m, "Generate", feed)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
@@ -70,7 +70,7 @@ func (_m *MockstorageService) EXPECT() *MockstorageServiceMockRecorder {
 }
 
 // CreateFeed mocks base method
-func (_m *MockstorageService) CreateFeed(feed *api.Feed) error {
+func (_m *MockstorageService) CreateFeed(feed *model.Feed) error {
 	ret := _m.ctrl.Call(_m, "CreateFeed", feed)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -82,9 +82,9 @@ func (_mr *MockstorageServiceMockRecorder) CreateFeed(arg0 interface{}) *gomock.
 }
 
 // GetFeed mocks base method
-func (_m *MockstorageService) GetFeed(hashId string) (*api.Feed, error) {
+func (_m *MockstorageService) GetFeed(hashId string) (*model.Feed, error) {
 	ret := _m.ctrl.Call(_m, "GetFeed", hashId)
-	ret0, _ := ret[0].(*api.Feed)
+	ret0, _ := ret[0].(*model.Feed)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -118,7 +118,7 @@ func (_m *Mockbuilder) EXPECT() *MockbuilderMockRecorder {
 }
 
 // Build mocks base method
-func (_m *Mockbuilder) Build(feed *api.Feed) (*podcast.Podcast, error) {
+func (_m *Mockbuilder) Build(feed *model.Feed) (*podcast.Podcast, error) {
 	ret := _m.ctrl.Call(_m, "Build", feed)
 	ret0, _ := ret[0].(*podcast.Podcast)
 	ret1, _ := ret[1].(error)

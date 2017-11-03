@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,12 +38,12 @@ func TestRedisStorage_CreateFeed(t *testing.T) {
 
 	hashId := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
 
-	err := client.CreateFeed(&api.Feed{
-		HashId:   hashId,
-		UserId:   "321",
+	err := client.CreateFeed(&model.Feed{
+		HashID:   hashId,
+		UserID:   "321",
 		Provider: api.ProviderYoutube,
 		LinkType: api.LinkTypeChannel,
-		ItemId:   "123",
+		ItemID:   "123",
 		PageSize: 45,
 		Quality:  api.QualityLow,
 		Format:   api.FormatAudio,
@@ -53,11 +54,11 @@ func TestRedisStorage_CreateFeed(t *testing.T) {
 	feed, err := client.GetFeed(hashId)
 	require.NoError(t, err)
 
-	require.Equal(t, hashId, feed.HashId)
-	require.Equal(t, "321", feed.UserId)
+	require.Equal(t, hashId, feed.HashID)
+	require.Equal(t, "321", feed.UserID)
 	require.Equal(t, api.ProviderYoutube, feed.Provider)
 	require.Equal(t, api.LinkTypeChannel, feed.LinkType)
-	require.Equal(t, "123", feed.ItemId)
+	require.Equal(t, "123", feed.ItemID)
 	require.Equal(t, 45, feed.PageSize)
 	require.Equal(t, api.QualityLow, feed.Quality)
 	require.Equal(t, api.FormatAudio, feed.Format)

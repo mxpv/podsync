@@ -5,6 +5,7 @@ import (
 
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/model"
 )
 
 const (
@@ -12,7 +13,7 @@ const (
 	defaultCategory  = "TV & Film"
 )
 
-func makeEnclosure(feed *api.Feed, id string, lengthInBytes int64) (string, itunes.EnclosureType, int64) {
+func makeEnclosure(feed *model.Feed, id string, lengthInBytes int64) (string, itunes.EnclosureType, int64) {
 	ext := "mp4"
 	contentType := itunes.MP4
 	if feed.Format == api.FormatAudio {
@@ -20,6 +21,6 @@ func makeEnclosure(feed *api.Feed, id string, lengthInBytes int64) (string, itun
 		contentType = itunes.M4A
 	}
 
-	url := fmt.Sprintf("https://podsync.net/download/%s/%s.%s", feed.HashId, id, ext)
+	url := fmt.Sprintf("https://podsync.net/download/%s/%s.%s", feed.HashID, id, ext)
 	return url, contentType, lengthInBytes
 }

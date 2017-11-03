@@ -5,10 +5,11 @@ import (
 	"strings"
 
 	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/model"
 	"github.com/pkg/errors"
 )
 
-func parseURL(link string) (*api.Feed, error) {
+func parseURL(link string) (*model.Feed, error) {
 	if !strings.HasPrefix(link, "http") {
 		link = "https://" + link
 	}
@@ -19,7 +20,7 @@ func parseURL(link string) (*api.Feed, error) {
 		return nil, err
 	}
 
-	feed := &api.Feed{}
+	feed := &model.Feed{}
 
 	if strings.HasSuffix(parsed.Host, "youtube.com") {
 		kind, id, err := parseYoutubeURL(parsed)
@@ -29,7 +30,7 @@ func parseURL(link string) (*api.Feed, error) {
 
 		feed.Provider = api.ProviderYoutube
 		feed.LinkType = kind
-		feed.ItemId = id
+		feed.ItemID = id
 
 		return feed, nil
 	}
@@ -42,7 +43,7 @@ func parseURL(link string) (*api.Feed, error) {
 
 		feed.Provider = api.ProviderVimeo
 		feed.LinkType = kind
-		feed.ItemId = id
+		feed.ItemID = id
 
 		return feed, nil
 	}

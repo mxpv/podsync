@@ -116,7 +116,7 @@ func TestGetMetadata(t *testing.T) {
 	defer ctrl.Finish()
 
 	feed := NewMockfeedService(ctrl)
-	feed.EXPECT().GetMetadata("123").Times(1).Return(&api.Feed{}, nil)
+	feed.EXPECT().GetMetadata("123").Times(1).Return(&api.Metadata{}, nil)
 
 	srv := httptest.NewServer(New(feed, nil, cfg))
 	defer srv.Close()

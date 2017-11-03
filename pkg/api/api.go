@@ -1,8 +1,6 @@
 package api
 
 import (
-	"time"
-
 	"github.com/pkg/errors"
 )
 
@@ -46,18 +44,10 @@ const (
 	DefaultQuality  = QualityHigh
 )
 
-type Feed struct {
-	Id           int64     `json:"id"`
-	HashId       string    `json:"hash_id"` // Short human readable feed id for users
-	UserId       string    `json:"user_id"` // Patreon user id
-	ItemId       string    `json:"item_id"`
-	Provider     Provider  `json:"provider"`  // Youtube or Vimeo
-	LinkType     LinkType  `json:"link_type"` // Either group, channel or user
-	PageSize     int       `json:"page_size"` // The number of episodes to return
-	Format       Format    `json:"format"`
-	Quality      Quality   `json:"quality"`
-	FeatureLevel int       `json:"feature_level"` // Available features
-	LastAccess   time.Time `json:"last_access"`
+type Metadata struct {
+	Provider Provider `json:"provider"`
+	Format   Format   `json:"format"`
+	Quality  Quality  `json:"quality"`
 }
 
 const (

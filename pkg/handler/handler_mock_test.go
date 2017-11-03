@@ -61,9 +61,9 @@ func (_mr *MockfeedServiceMockRecorder) GetFeed(arg0 interface{}) *gomock.Call {
 }
 
 // GetMetadata mocks base method
-func (_m *MockfeedService) GetMetadata(hashId string) (*api.Feed, error) {
+func (_m *MockfeedService) GetMetadata(hashId string) (*api.Metadata, error) {
 	ret := _m.ctrl.Call(_m, "GetMetadata", hashId)
-	ret0, _ := ret[0].(*api.Feed)
+	ret0, _ := ret[0].(*api.Metadata)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

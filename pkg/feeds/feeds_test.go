@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,7 +43,7 @@ func TestService_GetFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	feed := &api.Feed{Provider: api.ProviderYoutube}
+	feed := &model.Feed{Provider: api.ProviderYoutube}
 
 	storage := NewMockstorageService(ctrl)
 	storage.EXPECT().GetFeed("123").Times(1).Return(feed, nil)
@@ -64,7 +65,7 @@ func TestService_GetMetadata(t *testing.T) {
 	defer ctrl.Finish()
 
 	storage := NewMockstorageService(ctrl)
-	storage.EXPECT().GetFeed("123").Times(1).Return(&api.Feed{}, nil)
+	storage.EXPECT().GetFeed("123").Times(1).Return(&model.Feed{}, nil)
 
 	s := service{storage: storage}
 	_, err := s.GetMetadata("123")

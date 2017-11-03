@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/model"
 	"github.com/pkg/errors"
 )
 
@@ -55,7 +56,7 @@ func (r *RedisStorage) parseFormat(m map[string]string) (api.Format, api.Quality
 	return "", "", fmt.Errorf("unsupported formmat %s", quality)
 }
 
-func (r *RedisStorage) GetFeed(hashId string) (*api.Feed, error) {
+func (r *RedisStorage) GetFeed(hashId string) (*model.Feed, error) {
 	result, err := r.client.HGetAll(hashId).Result()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query feed with id %s", hashId)
@@ -70,11 +71,11 @@ func (r *RedisStorage) GetFeed(hashId string) (*api.Feed, error) {
 		return nil, errors.Wrap(err, "failed query update feed")
 	}
 
-	feed := &api.Feed{
+	feed := &model.Feed{
 		PageSize:   api.DefaultPageSize,
 		Quality:    api.DefaultQuality,
 		Format:     api.DefaultFormat,
-		HashId:     hashId,
+		HashID:     hashId,
 		LastAccess: time.Now().UTC(),
 	}
 
@@ -122,12 +123,12 @@ func (r *RedisStorage) GetFeed(hashId string) (*api.Feed, error) {
 		return nil, errors.New("failed to unpack item id")
 	}
 
-	feed.ItemId = id
+	feed.ItemID = id
 
 	// Fetch user id
 	patreonId, ok := m["patreonid"]
 	if ok {
-		feed.UserId = patreonId
+		feed.UserID = patreonId
 	}
 
 	// Unpack page size
@@ -153,12 +154,12 @@ func (r *RedisStorage) GetFeed(hashId string) (*api.Feed, error) {
 	return feed, nil
 }
 
-func (r *RedisStorage) CreateFeed(feed *api.Feed) error {
+func (r *RedisStorage) CreateFeed(feed *model.Feed) error {
 	fields := map[string]interface{}{
 		"provider":  string(feed.Provider),
 		"type":      string(feed.LinkType),
-		"id":        feed.ItemId,
-		"patreonid": feed.UserId,
+		"id":        feed.ItemID,
+		"patreonid": feed.UserID,
 		"pagesize":  feed.PageSize,
 	}
 
@@ -180,11 +181,11 @@ func (r *RedisStorage) CreateFeed(feed *api.Feed) error {
 
 	}
 
-	if err := r.client.HMSet(feed.HashId, fields).Err(); err != nil {
+	if err := r.client.HMSet(feed.HashID, fields).Err(); err != nil {
 		return errors.Wrap(err, "failed to save feed")
 	}
 
-	return r.client.Expire(feed.HashId, expiration).Err()
+	return r.client.Expire(feed.HashID, expiration).Err()
 }
 
 func (r *RedisStorage) keys() ([]string, error) {

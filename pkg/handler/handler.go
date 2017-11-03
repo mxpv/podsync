@@ -25,7 +25,7 @@ const (
 type feedService interface {
 	CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error)
 	GetFeed(hashId string) (*itunes.Podcast, error)
-	GetMetadata(hashId string) (*api.Feed, error)
+	GetMetadata(hashId string) (*api.Metadata, error)
 }
 
 type patreonService interface {

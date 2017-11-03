@@ -21,7 +21,7 @@ END
 $$;
 
 CREATE TABLE IF NOT EXISTS feeds (
-	id BIGSERIAL PRIMARY KEY,
+	feed_id BIGSERIAL PRIMARY KEY,
 	hash_id VARCHAR(12) NOT NULL CHECK (hash_id <> '') UNIQUE,
 	user_id VARCHAR(32) NULL,
 	item_id VARCHAR(32) NOT NULL CHECK (item_id <> ''),
