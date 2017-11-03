@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -35,12 +36,13 @@ func TestBuildYTFeed(t *testing.T) {
 	builder, err := NewYouTubeBuilder(ytKey)
 	require.NoError(t, err)
 
-	podcast, err := builder.Build(&api.Feed{
+	podcast, err := builder.Build(&model.Feed{
 		Provider: api.ProviderYoutube,
 		LinkType: api.LinkTypeChannel,
-		ItemId:   "UCupvZG-5ko_eiXAupbDfxWw",
+		ItemID:   "UCupvZG-5ko_eiXAupbDfxWw",
 		PageSize: maxYoutubeResults,
 	})
+
 	require.NoError(t, err)
 
 	require.Equal(t, "CNN", podcast.Title)
