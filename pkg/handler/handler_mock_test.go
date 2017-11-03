@@ -10,31 +10,31 @@ import (
 	reflect "reflect"
 )
 
-// Mockfeed is a mock of feed interface
-type Mockfeed struct {
+// MockfeedService is a mock of feedService interface
+type MockfeedService struct {
 	ctrl     *gomock.Controller
-	recorder *MockfeedMockRecorder
+	recorder *MockfeedServiceMockRecorder
 }
 
-// MockfeedMockRecorder is the mock recorder for Mockfeed
-type MockfeedMockRecorder struct {
-	mock *Mockfeed
+// MockfeedServiceMockRecorder is the mock recorder for MockfeedService
+type MockfeedServiceMockRecorder struct {
+	mock *MockfeedService
 }
 
-// NewMockfeed creates a new mock instance
-func NewMockfeed(ctrl *gomock.Controller) *Mockfeed {
-	mock := &Mockfeed{ctrl: ctrl}
-	mock.recorder = &MockfeedMockRecorder{mock}
+// NewMockfeedService creates a new mock instance
+func NewMockfeedService(ctrl *gomock.Controller) *MockfeedService {
+	mock := &MockfeedService{ctrl: ctrl}
+	mock.recorder = &MockfeedServiceMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (_m *Mockfeed) EXPECT() *MockfeedMockRecorder {
+func (_m *MockfeedService) EXPECT() *MockfeedServiceMockRecorder {
 	return _m.recorder
 }
 
 // CreateFeed mocks base method
-func (_m *Mockfeed) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error) {
+func (_m *MockfeedService) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error) {
 	ret := _m.ctrl.Call(_m, "CreateFeed", req, identity)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
@@ -42,12 +42,12 @@ func (_m *Mockfeed) CreateFeed(req *api.CreateFeedRequest, identity *api.Identit
 }
 
 // CreateFeed indicates an expected call of CreateFeed
-func (_mr *MockfeedMockRecorder) CreateFeed(arg0, arg1 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "CreateFeed", reflect.TypeOf((*Mockfeed)(nil).CreateFeed), arg0, arg1)
+func (_mr *MockfeedServiceMockRecorder) CreateFeed(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "CreateFeed", reflect.TypeOf((*MockfeedService)(nil).CreateFeed), arg0, arg1)
 }
 
 // GetFeed mocks base method
-func (_m *Mockfeed) GetFeed(hashId string) (*podcast.Podcast, error) {
+func (_m *MockfeedService) GetFeed(hashId string) (*podcast.Podcast, error) {
 	ret := _m.ctrl.Call(_m, "GetFeed", hashId)
 	ret0, _ := ret[0].(*podcast.Podcast)
 	ret1, _ := ret[1].(error)
@@ -55,12 +55,12 @@ func (_m *Mockfeed) GetFeed(hashId string) (*podcast.Podcast, error) {
 }
 
 // GetFeed indicates an expected call of GetFeed
-func (_mr *MockfeedMockRecorder) GetFeed(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetFeed", reflect.TypeOf((*Mockfeed)(nil).GetFeed), arg0)
+func (_mr *MockfeedServiceMockRecorder) GetFeed(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetFeed", reflect.TypeOf((*MockfeedService)(nil).GetFeed), arg0)
 }
 
 // GetMetadata mocks base method
-func (_m *Mockfeed) GetMetadata(hashId string) (*api.Feed, error) {
+func (_m *MockfeedService) GetMetadata(hashId string) (*api.Feed, error) {
 	ret := _m.ctrl.Call(_m, "GetMetadata", hashId)
 	ret0, _ := ret[0].(*api.Feed)
 	ret1, _ := ret[1].(error)
@@ -68,6 +68,53 @@ func (_m *Mockfeed) GetMetadata(hashId string) (*api.Feed, error) {
 }
 
 // GetMetadata indicates an expected call of GetMetadata
-func (_mr *MockfeedMockRecorder) GetMetadata(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetMetadata", reflect.TypeOf((*Mockfeed)(nil).GetMetadata), arg0)
+func (_mr *MockfeedServiceMockRecorder) GetMetadata(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetMetadata", reflect.TypeOf((*MockfeedService)(nil).GetMetadata), arg0)
+}
+
+// MockpatreonService is a mock of patreonService interface
+type MockpatreonService struct {
+	ctrl     *gomock.Controller
+	recorder *MockpatreonServiceMockRecorder
+}
+
+// MockpatreonServiceMockRecorder is the mock recorder for MockpatreonService
+type MockpatreonServiceMockRecorder struct {
+	mock *MockpatreonService
+}
+
+// NewMockpatreonService creates a new mock instance
+func NewMockpatreonService(ctrl *gomock.Controller) *MockpatreonService {
+	mock := &MockpatreonService{ctrl: ctrl}
+	mock.recorder = &MockpatreonServiceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (_m *MockpatreonService) EXPECT() *MockpatreonServiceMockRecorder {
+	return _m.recorder
+}
+
+// Hook mocks base method
+func (_m *MockpatreonService) Hook(pledge P, event string) error {
+	ret := _m.ctrl.Call(_m, "Hook", pledge, event)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Hook indicates an expected call of Hook
+func (_mr *MockpatreonServiceMockRecorder) Hook(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "Hook", reflect.TypeOf((*MockpatreonService)(nil).Hook), arg0, arg1)
+}
+
+// GetFeatureLevel mocks base method
+func (_m *MockpatreonService) GetFeatureLevel(patronID string) int {
+	ret := _m.ctrl.Call(_m, "GetFeatureLevel", patronID)
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// GetFeatureLevel indicates an expected call of GetFeatureLevel
+func (_mr *MockpatreonServiceMockRecorder) GetFeatureLevel(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetFeatureLevel", reflect.TypeOf((*MockpatreonService)(nil).GetFeatureLevel), arg0)
 }

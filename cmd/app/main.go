@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/proxy"
+	"github.com/coreos/etcd/pkg/srv"
 	"github.com/go-pg/pg"
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/builders"
@@ -20,6 +21,7 @@ import (
 	"github.com/mxpv/podsync/pkg/handler"
 	"github.com/mxpv/podsync/pkg/id"
 	"github.com/mxpv/podsync/pkg/storage"
+	"github.com/mxpv/podsync/pkg/support"
 	"github.com/pkg/errors"
 )
 
@@ -71,9 +73,11 @@ func main() {
 		feeds.WithBuilder(api.Vimeo, vimeo),
 	)
 
+	patreon := support.NewPatreon(pg)
+
 	srv := http.Server{
 		Addr:    fmt.Sprintf(":%d", 5001),
-		Handler: handler.New(feed, pg, cfg),
+		Handler: handler.New(feed, patreon, cfg),
 	}
 
 	go func() {
@@ -88,6 +92,7 @@ func main() {
 	log.Printf("shutting down server")
 
 	srv.Shutdown(ctx)
+	pg.Close()
 
 	log.Printf("server gracefully stopped")
 }

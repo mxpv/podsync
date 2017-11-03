@@ -10,13 +10,11 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/go-pg/pg"
 	"github.com/mxpv/patreon-go"
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/session"
-	"github.com/mxpv/podsync/pkg/support"
 	"golang.org/x/oauth2"
 )
 
@@ -24,17 +22,25 @@ const (
 	maxHashIDLength = 16
 )
 
-type feed interface {
+type feedService interface {
 	CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error)
 	GetFeed(hashId string) (*itunes.Podcast, error)
 	GetMetadata(hashId string) (*api.Feed, error)
 }
 
+// HACK: mockgen fails to import patreon.Pledge type
+type P *patreon.Pledge
+
+type patreonService interface {
+	Hook(pledge P, event string) error
+	GetFeatureLevel(patronID string) int
+}
+
 type handler struct {
-	feed    feed
+	feed    feedService
 	cfg     *config.AppConfig
 	oauth2  oauth2.Config
-	patreon *support.Patreon
+	patreon patreonService
 }
 
 func (h handler) index(c *gin.Context) {
@@ -230,7 +236,7 @@ func (h handler) webhook(c *gin.Context) {
 	log.Printf("sucessfully processed patreon event %s (%s)", pledge.Data.ID, eventName)
 }
 
-func New(feed feed, db *pg.DB, cfg *config.AppConfig) http.Handler {
+func New(feed feedService, support patreonService, cfg *config.AppConfig) http.Handler {
 	r := gin.New()
 	r.Use(gin.Recovery())
 
@@ -251,8 +257,8 @@ func New(feed feed, db *pg.DB, cfg *config.AppConfig) http.Handler {
 
 	h := handler{
 		feed:    feed,
+		patreon: support,
 		cfg:     cfg,
-		patreon: support.NewPatreon(db),
 	}
 
 	// OAuth 2 configuration
