@@ -20,19 +20,19 @@ CREATE INDEX IF NOT EXISTS patron_id_idx ON pledges(patron_id);
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'provider') THEN
-    CREATE TYPE provider_type AS ENUM ('youtube', 'vimeo');
+    CREATE TYPE provider AS ENUM ('youtube', 'vimeo');
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'link_type') THEN
-    CREATE TYPE direction AS ENUM ('channel', 'playlist', 'user', 'group');
+    CREATE TYPE link_type AS ENUM ('channel', 'playlist', 'user', 'group');
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'quality') THEN
-    CREATE TYPE sms_status AS ENUM ('low', 'high');
+    CREATE TYPE quality AS ENUM ('low', 'high');
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'format') THEN
-    CREATE TYPE sms_status AS ENUM ('video', 'audio');
+    CREATE TYPE format AS ENUM ('video', 'audio');
   END IF;
 END
 $$;
