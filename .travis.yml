@@ -13,7 +13,7 @@ addons:
   postgresql: "9.6"
 before_script:
   - psql -a -c "CREATE DATABASE podsync;" -U postgres
-  - psql -a -f ./pkg/models/pg.sql -d podsync -U postgres
+  - psql -a -f ./pkg/model/pg.sql -d podsync -U postgres
 script:
   - set -e
   - go test -v -short $(go list -e ./... | grep -v vendor)
