@@ -18,7 +18,7 @@ func TestCreate(t *testing.T) {
 	err := hook.Hook(pledge, patreon.EventCreatePledge)
 	require.NoError(t, err)
 
-	model := &models.Pledge{PledgeID: 12345}
+	model := &model.Pledge{PledgeID: 12345}
 	err = hook.db.Select(model)
 	require.NoError(t, err)
 	require.Equal(t, pledge.Attributes.AmountCents, model.AmountCents)
@@ -36,7 +36,7 @@ func TestUpdate(t *testing.T) {
 	err = hook.Hook(pledge, patreon.EventUpdatePledge)
 	require.NoError(t, err)
 
-	model := &models.Pledge{PledgeID: 12345}
+	model := &model.Pledge{PledgeID: 12345}
 	err = hook.db.Select(model)
 	require.NoError(t, err)
 	require.Equal(t, 999, model.AmountCents)
@@ -85,7 +85,7 @@ func createHandler(t *testing.T) *Patreon {
 
 	db := pg.Connect(opts)
 
-	_, err = db.Model(&models.Pledge{}).Where("1=1").Delete()
+	_, err = db.Model(&model.Pledge{}).Where("1=1").Delete()
 	require.NoError(t, err)
 
 	return NewPatreon(db)

@@ -8,7 +8,7 @@ import (
 	"github.com/go-pg/pg"
 	"github.com/mxpv/patreon-go"
 	"github.com/mxpv/podsync/pkg/api"
-	"github.com/mxpv/podsync/pkg/models"
+	"github.com/mxpv/podsync/pkg/model"
 	"github.com/pkg/errors"
 )
 
@@ -20,7 +20,7 @@ type Patreon struct {
 	db *pg.DB
 }
 
-func (h Patreon) toModel(pledge *patreon.Pledge) (*models.Pledge, error) {
+func (h Patreon) toModel(pledge *patreon.Pledge) (*model.Pledge, error) {
 	pledgeID, err := strconv.ParseInt(pledge.ID, 10, 64)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse pledge id: %s", pledge.ID)
@@ -31,50 +31,50 @@ func (h Patreon) toModel(pledge *patreon.Pledge) (*models.Pledge, error) {
 		return nil, errors.Wrapf(err, "failed to parse patron id: %s", pledge.Relationships.Patron.Data.ID)
 	}
 
-	model := &models.Pledge{
+	m := &model.Pledge{
 		PledgeID:    pledgeID,
 		PatronID:    patronID,
 		AmountCents: pledge.Attributes.AmountCents,
 	}
 
 	if pledge.Attributes.CreatedAt.Valid {
-		model.CreatedAt = pledge.Attributes.CreatedAt.Time
+		m.CreatedAt = pledge.Attributes.CreatedAt.Time
 	}
 
 	if pledge.Attributes.DeclinedSince.Valid {
-		model.DeclinedSince = pledge.Attributes.DeclinedSince.Time
+		m.DeclinedSince = pledge.Attributes.DeclinedSince.Time
 	}
 
 	// Read optional fields
 
 	if pledge.Attributes.TotalHistoricalAmountCents != nil {
-		model.TotalHistoricalAmountCents = *pledge.Attributes.TotalHistoricalAmountCents
+		m.TotalHistoricalAmountCents = *pledge.Attributes.TotalHistoricalAmountCents
 	}
 
 	if pledge.Attributes.OutstandingPaymentAmountCents != nil {
-		model.OutstandingPaymentAmountCents = *pledge.Attributes.OutstandingPaymentAmountCents
+		m.OutstandingPaymentAmountCents = *pledge.Attributes.OutstandingPaymentAmountCents
 	}
 
 	if pledge.Attributes.IsPaused != nil {
-		model.IsPaused = *pledge.Attributes.IsPaused
+		m.IsPaused = *pledge.Attributes.IsPaused
 	}
 
-	return model, nil
+	return m, nil
 }
 
 func (h Patreon) Hook(pledge *patreon.Pledge, event string) error {
-	model, err := h.toModel(pledge)
+	obj, err := h.toModel(pledge)
 	if err != nil {
 		return err
 	}
 
 	switch event {
 	case patreon.EventCreatePledge:
-		return h.db.Insert(model)
+		return h.db.Insert(obj)
 	case patreon.EventUpdatePledge:
-		return h.db.Update(model)
+		return h.db.Update(obj)
 	case patreon.EventDeletePledge:
-		err := h.db.Delete(model)
+		err := h.db.Delete(obj)
 		if err == pg.ErrNoRows {
 			return nil
 		}
@@ -85,8 +85,8 @@ func (h Patreon) Hook(pledge *patreon.Pledge, event string) error {
 	}
 }
 
-func (h Patreon) FindPledge(patronID string) (*models.Pledge, error) {
-	p := &models.Pledge{}
+func (h Patreon) FindPledge(patronID string) (*model.Pledge, error) {
+	p := &model.Pledge{}
 	return p, h.db.Model(p).Where("patron_id = ?", patronID).Limit(1).Select()
 }
 
