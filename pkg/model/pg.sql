@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS pledges (
   is_paused BOOLEAN
 );
 
-CREATE INDEX patron_id_idx ON pledges(patron_id);
+CREATE INDEX IF NOT EXISTS patron_id_idx ON pledges(patron_id);
 
 -- Feeds
 
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS feeds (
   last_access TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX feeds_hash_id_idx ON feeds(hash_id);
-CREATE INDEX feeds_user_id_idx ON feeds(user_id);
+CREATE INDEX IF NOT EXISTS feeds_hash_id_idx ON feeds(hash_id);
+CREATE INDEX IF NOT EXISTS feeds_user_id_idx ON feeds(user_id);
 
 COMMIT;
