@@ -32,6 +32,8 @@ type YouTubeBuilder struct {
 	key    apiKey
 }
 
+// Cost: 5 units (call method: 1, snippet: 2, contentDetails: 2)
+// See https://developers.google.com/youtube/v3/docs/channels/list#part
 func (yt *YouTubeBuilder) listChannels(linkType api.LinkType, id string) (*youtube.Channel, error) {
 	req := yt.client.Channels.List("id,snippet,contentDetails")
 
@@ -56,6 +58,8 @@ func (yt *YouTubeBuilder) listChannels(linkType api.LinkType, id string) (*youtu
 	return item, nil
 }
 
+// Cost: 3 units (call method: 1, snippet: 2)
+// See https://developers.google.com/youtube/v3/docs/playlists/list#part
 func (yt *YouTubeBuilder) listPlaylists(id, channelId string) (*youtube.Playlist, error) {
 	req := yt.client.Playlists.List("id,snippet")
 
@@ -78,6 +82,8 @@ func (yt *YouTubeBuilder) listPlaylists(id, channelId string) (*youtube.Playlist
 	return item, nil
 }
 
+// Cost: 3 units (call: 1, snippet: 2)
+// See https://developers.google.com/youtube/v3/docs/playlistItems/list#part
 func (yt *YouTubeBuilder) listPlaylistItems(itemId string, pageToken string) ([]*youtube.PlaylistItem, string, error) {
 	req := yt.client.PlaylistItems.List("id,snippet").MaxResults(maxYoutubeResults).PlaylistId(itemId)
 	if pageToken != "" {
@@ -121,6 +127,9 @@ func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, qua
 	return snippet.Default.Url
 }
 
+// Cost:
+// - 5 units for channel or user
+// - 3 units for playlist
 func (yt *YouTubeBuilder) queryFeed(feed *api.Feed) (*itunes.Podcast, string, error) {
 	now := time.Now()
 
@@ -204,6 +213,8 @@ func (yt *YouTubeBuilder) getSize(duration int64, feed *api.Feed) int64 {
 	}
 }
 
+// Cost: 5 units (call: 1, snippet: 2, contentDetails: 2)
+// See https://developers.google.com/youtube/v3/docs/videos/list#part
 func (yt *YouTubeBuilder) queryVideoDescriptions(playlistItems map[string]*youtube.PlaylistItemSnippet, feed *api.Feed, podcast *itunes.Podcast) error {
 	// Make the list of video ids
 	ids := make([]string, 0, len(playlistItems))
@@ -278,6 +289,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(playlistItems map[string]*youtu
 	return nil
 }
 
+// Cost: (3 units + 5 units) * X pages = 8 units per page
 func (yt *YouTubeBuilder) queryItems(itemId string, feed *api.Feed, podcast *itunes.Podcast) error {
 	pageToken := ""
 	count := 0
