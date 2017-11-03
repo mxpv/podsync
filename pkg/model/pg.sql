@@ -1,5 +1,7 @@
 BEGIN;
 
+-- Pledges
+
 CREATE TABLE IF NOT EXISTS pledges (
   pledge_id BIGSERIAL PRIMARY KEY,
   patron_id BIGINT NOT NULL UNIQUE,
@@ -12,5 +14,44 @@ CREATE TABLE IF NOT EXISTS pledges (
 );
 
 CREATE INDEX patron_id_idx ON pledges(patron_id);
+
+-- Feeds
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'provider') THEN
+    CREATE TYPE provider_type AS ENUM ('youtube', 'vimeo');
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'link_type') THEN
+    CREATE TYPE direction AS ENUM ('channel', 'playlist', 'user', 'group');
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'quality') THEN
+    CREATE TYPE sms_status AS ENUM ('low', 'high');
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'format') THEN
+    CREATE TYPE sms_status AS ENUM ('video', 'audio');
+  END IF;
+END
+$$;
+
+CREATE TABLE IF NOT EXISTS feeds (
+  feed_id BIGSERIAL PRIMARY KEY,
+  hash_id VARCHAR(12) NOT NULL UNIQUE,
+  user_id VARCHAR(32) NULL,
+  item_id VARCHAR(32) NOT NULL CHECK (item_id <> ''),
+  link_type link_type NOT NULL,
+  provider provider NOT NULL,
+  page_size INT NOT NULL DEFAULT 50,
+  format format NOT NULL DEFAULT 'video',
+  quality quality NOT NULL DEFAULT 'high',
+  feature_level INT NOT NULL DEFAULT 0,
+  last_access TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX feeds_hash_id_idx ON feeds(hash_id);
+CREATE INDEX feeds_user_id_idx ON feeds(user_id);
 
 COMMIT;
