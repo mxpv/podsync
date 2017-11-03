@@ -5,6 +5,7 @@ package handler
 
 import (
 	gomock "github.com/golang/mock/gomock"
+	patreon_go "github.com/mxpv/patreon-go"
 	podcast "github.com/mxpv/podcast"
 	api "github.com/mxpv/podsync/pkg/api"
 	reflect "reflect"
@@ -96,7 +97,7 @@ func (_m *MockpatreonService) EXPECT() *MockpatreonServiceMockRecorder {
 }
 
 // Hook mocks base method
-func (_m *MockpatreonService) Hook(pledge P, event string) error {
+func (_m *MockpatreonService) Hook(pledge *patreon_go.Pledge, event string) error {
 	ret := _m.ctrl.Call(_m, "Hook", pledge, event)
 	ret0, _ := ret[0].(error)
 	return ret0
