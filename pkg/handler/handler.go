@@ -16,12 +16,11 @@ import (
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/session"
-	"github.com/mxpv/podsync/pkg/webhook"
+	"github.com/mxpv/podsync/pkg/support"
 	"golang.org/x/oauth2"
 )
 
 const (
-	creatorID       = "2822191"
 	maxHashIDLength = 16
 )
 
@@ -32,10 +31,10 @@ type feed interface {
 }
 
 type handler struct {
-	feed   feed
-	cfg    *config.AppConfig
-	oauth2 oauth2.Config
-	hook   *webhook.Handler
+	feed    feed
+	cfg     *config.AppConfig
+	oauth2  oauth2.Config
+	patreon *support.Patreon
 }
 
 func (h handler) index(c *gin.Context) {
@@ -90,24 +89,7 @@ func (h handler) patreonCallback(c *gin.Context) {
 	}
 
 	// Determine feature level
-	level := api.DefaultFeatures
-
-	if user.Data.ID == creatorID {
-		level = api.PodcasterFeature
-	} else {
-		pledge, err := h.hook.FindPledge(user.Data.ID)
-		if err != nil {
-			log.Printf("! can't find pledge for user %s: %v", user.Data.ID, err)
-		} else {
-			// Check pledge is valid
-			if pledge.DeclinedSince.IsZero() && !pledge.IsPaused {
-				// Check the amount of pledge
-				if pledge.AmountCents >= 100 {
-					level = api.ExtendedFeatures
-				}
-			}
-		}
-	}
+	level := h.patreon.GetFeatureLevel(user.Data.ID)
 
 	identity := &api.Identity{
 		UserId:       user.Data.ID,
@@ -236,7 +218,7 @@ func (h handler) webhook(c *gin.Context) {
 		return
 	}
 
-	if err := h.hook.Handle(&pledge.Data, eventName); err != nil {
+	if err := h.patreon.Hook(&pledge.Data, eventName); err != nil {
 		log.Printf("failed to process patreon event %s (%s): %v", pledge.Data.ID, eventName, err)
 		c.JSON(internalError(err))
 		return
@@ -265,9 +247,9 @@ func New(feed feed, db *pg.DB, cfg *config.AppConfig) http.Handler {
 	}
 
 	h := handler{
-		feed: feed,
-		cfg:  cfg,
-		hook: webhook.NewHookHandler(db),
+		feed:    feed,
+		cfg:     cfg,
+		patreon: support.NewPatreon(db),
 	}
 
 	// OAuth 2 configuration
