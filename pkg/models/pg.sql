@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE TABLE IF NOT EXISTS pledges (
   pledge_id BIGSERIAL PRIMARY KEY,
-  patron_id BIGINT NOT NULL ,
+  patron_id BIGINT NOT NULL UNIQUE,
   created_at TIMESTAMPTZ NOT NULL,
   declined_since TIMESTAMPTZ NULL,
   amount_cents INT NOT NULL,

@@ -79,6 +79,11 @@ func (h Handler) Handle(pledge *patreon.Pledge, event string) error {
 	}
 }
 
+func (h Handler) FindPledge(patronID string) (*models.Pledge, error) {
+	p := &models.Pledge{}
+	return p, h.db.Model(p).Where("pledge_id = ?", patronID).Limit(1).Select()
+}
+
 func NewHookHandler(db *pg.DB) *Handler {
 	return &Handler{db: db}
 }

@@ -52,6 +52,18 @@ func TestDelete(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestFindPledge(t *testing.T) {
+	pledge := createPledge()
+	hook := createHandler(t)
+
+	err := hook.Handle(pledge, patreon.EventCreatePledge)
+	require.NoError(t, err)
+
+	res, err := hook.FindPledge(pledge.ID)
+	require.NoError(t, err)
+	require.Equal(t, res.AmountCents, pledge.Attributes.AmountCents)
+}
+
 func createHandler(t *testing.T) *Handler {
 	opts, err := pg.ParseURL("postgres://postgres:@localhost/podsync?sslmode=disable")
 	if err != nil {
