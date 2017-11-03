@@ -7,7 +7,7 @@ import (
 	"github.com/go-pg/pg"
 	"github.com/mxpv/patreon-go"
 	"github.com/mxpv/podsync/pkg/api"
-	"github.com/mxpv/podsync/pkg/models"
+	"github.com/mxpv/podsync/pkg/model"
 	"github.com/stretchr/testify/require"
 )
 
