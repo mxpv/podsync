@@ -47,17 +47,17 @@ func (_mr *MockfeedServiceMockRecorder) CreateFeed(arg0, arg1 interface{}) *gomo
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "CreateFeed", reflect.TypeOf((*MockfeedService)(nil).CreateFeed), arg0, arg1)
 }
 
-// GetFeed mocks base method
-func (_m *MockfeedService) GetFeed(hashId string) (*podcast.Podcast, error) {
-	ret := _m.ctrl.Call(_m, "GetFeed", hashId)
+// BuildFeed mocks base method
+func (_m *MockfeedService) BuildFeed(hashID string) (*podcast.Podcast, error) {
+	ret := _m.ctrl.Call(_m, "BuildFeed", hashID)
 	ret0, _ := ret[0].(*podcast.Podcast)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetFeed indicates an expected call of GetFeed
-func (_mr *MockfeedServiceMockRecorder) GetFeed(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetFeed", reflect.TypeOf((*MockfeedService)(nil).GetFeed), arg0)
+// BuildFeed indicates an expected call of BuildFeed
+func (_mr *MockfeedServiceMockRecorder) BuildFeed(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "BuildFeed", reflect.TypeOf((*MockfeedService)(nil).BuildFeed), arg0)
 }
 
 // GetMetadata mocks base method

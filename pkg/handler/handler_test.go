@@ -101,7 +101,7 @@ func TestGetFeed(t *testing.T) {
 	podcast := itunes.New("", "", "", nil, nil)
 
 	feed := NewMockfeedService(ctrl)
-	feed.EXPECT().GetFeed("123").Return(&podcast, nil)
+	feed.EXPECT().BuildFeed("123").Return(&podcast, nil)
 
 	srv := httptest.NewServer(New(feed, nil, cfg))
 	defer srv.Close()

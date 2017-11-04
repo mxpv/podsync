@@ -10,54 +10,6 @@ import (
 	reflect "reflect"
 )
 
-// MockstorageService is a mock of storageService interface
-type MockstorageService struct {
-	ctrl     *gomock.Controller
-	recorder *MockstorageServiceMockRecorder
-}
-
-// MockstorageServiceMockRecorder is the mock recorder for MockstorageService
-type MockstorageServiceMockRecorder struct {
-	mock *MockstorageService
-}
-
-// NewMockstorageService creates a new mock instance
-func NewMockstorageService(ctrl *gomock.Controller) *MockstorageService {
-	mock := &MockstorageService{ctrl: ctrl}
-	mock.recorder = &MockstorageServiceMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use
-func (_m *MockstorageService) EXPECT() *MockstorageServiceMockRecorder {
-	return _m.recorder
-}
-
-// CreateFeed mocks base method
-func (_m *MockstorageService) CreateFeed(feed *model.Feed) error {
-	ret := _m.ctrl.Call(_m, "CreateFeed", feed)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateFeed indicates an expected call of CreateFeed
-func (_mr *MockstorageServiceMockRecorder) CreateFeed(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "CreateFeed", reflect.TypeOf((*MockstorageService)(nil).CreateFeed), arg0)
-}
-
-// GetFeed mocks base method
-func (_m *MockstorageService) GetFeed(hashId string) (*model.Feed, error) {
-	ret := _m.ctrl.Call(_m, "GetFeed", hashId)
-	ret0, _ := ret[0].(*model.Feed)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetFeed indicates an expected call of GetFeed
-func (_mr *MockstorageServiceMockRecorder) GetFeed(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetFeed", reflect.TypeOf((*MockstorageService)(nil).GetFeed), arg0)
-}
-
 // Mockbuilder is a mock of builder interface
 type Mockbuilder struct {
 	ctrl     *gomock.Controller

@@ -24,7 +24,7 @@ const (
 
 type feedService interface {
 	CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error)
-	GetFeed(hashId string) (*itunes.Podcast, error)
+	BuildFeed(hashID string) (*itunes.Podcast, error)
 	GetMetadata(hashId string) (*api.Metadata, error)
 }
 
@@ -154,7 +154,7 @@ func (h handler) getFeed(c *gin.Context) {
 		hashId = strings.TrimSuffix(hashId, ".xml")
 	}
 
-	podcast, err := h.feed.GetFeed(hashId)
+	podcast, err := h.feed.BuildFeed(hashId)
 	if err != nil {
 		code := http.StatusInternalServerError
 		if err == api.ErrNotFound {

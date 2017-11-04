@@ -27,5 +27,6 @@ type Feed struct {
 	Format       api.Format
 	Quality      api.Quality
 	FeatureLevel int
+	CreatedAt    time.Time
 	LastAccess   time.Time // Available features
 }

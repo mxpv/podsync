@@ -42,12 +42,13 @@ CREATE TABLE IF NOT EXISTS feeds (
   hash_id VARCHAR(12) NOT NULL UNIQUE,
   user_id VARCHAR(32) NULL,
   item_id VARCHAR(32) NOT NULL CHECK (item_id <> ''),
-  link_type link_type NOT NULL,
   provider provider NOT NULL,
+  link_type link_type NOT NULL,
   page_size INT NOT NULL DEFAULT 50,
   format format NOT NULL DEFAULT 'video',
   quality quality NOT NULL DEFAULT 'high',
   feature_level INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   last_access TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

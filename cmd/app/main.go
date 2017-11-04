@@ -18,7 +18,6 @@ import (
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/feeds"
 	"github.com/mxpv/podsync/pkg/handler"
-	"github.com/mxpv/podsync/pkg/storage"
 	"github.com/mxpv/podsync/pkg/support"
 	"github.com/pkg/errors"
 )
@@ -33,11 +32,6 @@ func main() {
 	// Create core sevices
 
 	cfg, err := config.ReadConfiguration()
-	if err != nil {
-		panic(err)
-	}
-
-	redis, err := storage.NewRedisStorage(cfg.RedisURL)
 	if err != nil {
 		panic(err)
 	}
@@ -62,7 +56,7 @@ func main() {
 	}
 
 	feed, err := feeds.NewFeedService(
-		feeds.WithStorage(redis),
+		feeds.WithPostgres(database),
 		feeds.WithBuilder(api.ProviderYoutube, youtube),
 		feeds.WithBuilder(api.ProviderVimeo, vimeo),
 	)
