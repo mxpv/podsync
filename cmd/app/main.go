@@ -18,7 +18,6 @@ import (
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/feeds"
 	"github.com/mxpv/podsync/pkg/handler"
-	"github.com/mxpv/podsync/pkg/id"
 	"github.com/mxpv/podsync/pkg/storage"
 	"github.com/mxpv/podsync/pkg/support"
 	"github.com/pkg/errors"
@@ -34,11 +33,6 @@ func main() {
 	// Create core sevices
 
 	cfg, err := config.ReadConfiguration()
-	if err != nil {
-		panic(err)
-	}
-
-	hashIds, err := id.NewIdGenerator()
 	if err != nil {
 		panic(err)
 	}
@@ -67,12 +61,15 @@ func main() {
 		panic(err)
 	}
 
-	feed := feeds.NewFeedService(
-		feeds.WithIdGen(hashIds),
+	feed, err := feeds.NewFeedService(
 		feeds.WithStorage(redis),
 		feeds.WithBuilder(api.ProviderYoutube, youtube),
 		feeds.WithBuilder(api.ProviderVimeo, vimeo),
 	)
+
+	if err != nil {
+		panic(err)
+	}
 
 	srv := http.Server{
 		Addr:    fmt.Sprintf(":%d", 5001),

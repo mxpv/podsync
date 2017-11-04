@@ -10,42 +10,6 @@ import (
 	reflect "reflect"
 )
 
-// MockidService is a mock of idService interface
-type MockidService struct {
-	ctrl     *gomock.Controller
-	recorder *MockidServiceMockRecorder
-}
-
-// MockidServiceMockRecorder is the mock recorder for MockidService
-type MockidServiceMockRecorder struct {
-	mock *MockidService
-}
-
-// NewMockidService creates a new mock instance
-func NewMockidService(ctrl *gomock.Controller) *MockidService {
-	mock := &MockidService{ctrl: ctrl}
-	mock.recorder = &MockidServiceMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use
-func (_m *MockidService) EXPECT() *MockidServiceMockRecorder {
-	return _m.recorder
-}
-
-// Generate mocks base method
-func (_m *MockidService) Generate(feed *model.Feed) (string, error) {
-	ret := _m.ctrl.Call(_m, "Generate", feed)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Generate indicates an expected call of Generate
-func (_mr *MockidServiceMockRecorder) Generate(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "Generate", reflect.TypeOf((*MockidService)(nil).Generate), arg0)
-}
-
 // MockstorageService is a mock of storageService interface
 type MockstorageService struct {
 	ctrl     *gomock.Controller

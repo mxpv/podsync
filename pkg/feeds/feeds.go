@@ -8,15 +8,12 @@ import (
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
 	"github.com/pkg/errors"
+	"github.com/ventu-io/go-shortid"
 )
 
 const (
 	maxPageSize = 150
 )
-
-type idService interface {
-	Generate(feed *model.Feed) (string, error)
-}
 
 type storageService interface {
 	CreateFeed(feed *model.Feed) error
@@ -27,13 +24,13 @@ type builder interface {
 	Build(feed *model.Feed) (podcast *itunes.Podcast, err error)
 }
 
-type service struct {
-	id       idService
+type Service struct {
+	sid      *shortid.Shortid
 	storage  storageService
 	builders map[api.Provider]builder
 }
 
-func (s *service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error) {
+func (s Service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error) {
 	feed, err := parseURL(req.URL)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to create feed for URL: %s", req.URL)
@@ -64,7 +61,7 @@ func (s *service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity)
 	}
 
 	// Generate short id
-	hashId, err := s.id.Generate(feed)
+	hashId, err := s.sid.Generate()
 	if err != nil {
 		return "", errors.Wrap(err, "failed to generate id for feed")
 	}
@@ -79,7 +76,7 @@ func (s *service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity)
 	return hashId, nil
 }
 
-func (s *service) GetFeed(hashId string) (*itunes.Podcast, error) {
+func (s Service) GetFeed(hashId string) (*itunes.Podcast, error) {
 	feed, err := s.storage.GetFeed(hashId)
 	if err != nil {
 		return nil, err
@@ -93,7 +90,7 @@ func (s *service) GetFeed(hashId string) (*itunes.Podcast, error) {
 	return builder.Build(feed)
 }
 
-func (s *service) GetMetadata(hashId string) (*api.Metadata, error) {
+func (s Service) GetMetadata(hashId string) (*api.Metadata, error) {
 	feed, err := s.storage.GetFeed(hashId)
 	if err != nil {
 		return nil, err
@@ -106,36 +103,36 @@ func (s *service) GetMetadata(hashId string) (*api.Metadata, error) {
 	}, nil
 }
 
-type feedOption func(*service)
+type feedOption func(*Service)
 
 //noinspection GoExportedFuncWithUnexportedType
 func WithStorage(storage storageService) feedOption {
-	return func(service *service) {
+	return func(service *Service) {
 		service.storage = storage
 	}
 }
 
 //noinspection GoExportedFuncWithUnexportedType
-func WithIdGen(id idService) feedOption {
-	return func(service *service) {
-		service.id = id
-	}
-}
-
-//noinspection GoExportedFuncWithUnexportedType
 func WithBuilder(provider api.Provider, builder builder) feedOption {
-	return func(service *service) {
+	return func(service *Service) {
 		service.builders[provider] = builder
 	}
 }
 
-func NewFeedService(opts ...feedOption) *service {
-	svc := &service{}
-	svc.builders = make(map[api.Provider]builder)
+func NewFeedService(opts ...feedOption) (*Service, error) {
+	sid, err := shortid.New(1, shortid.DefaultABC, uint64(time.Now().UnixNano()))
+	if err != nil {
+		return nil, err
+	}
+
+	svc := &Service{
+		sid:      sid,
+		builders: make(map[api.Provider]builder),
+	}
 
 	for _, fn := range opts {
 		fn(svc)
 	}
 
-	return svc
+	return svc, nil
 }
