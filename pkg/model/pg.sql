@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS feeds (
   feed_id BIGSERIAL PRIMARY KEY,
   hash_id VARCHAR(12) NOT NULL UNIQUE,
   user_id VARCHAR(32) NULL,
-  item_id VARCHAR(32) NOT NULL CHECK (item_id <> ''),
+  item_id VARCHAR(64) NOT NULL CHECK (item_id <> ''),
   provider provider NOT NULL,
   link_type link_type NOT NULL,
   page_size INT NOT NULL DEFAULT 50,
