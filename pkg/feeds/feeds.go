@@ -2,9 +2,9 @@ package feeds
 
 import (
 	"fmt"
+	"log"
 	"time"
 
-	"github.com/emicklei/go-restful/log"
 	"github.com/go-pg/pg"
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/pkg/api"
@@ -140,7 +140,8 @@ func (s Service) Downgrade(patronID string, featureLevel int) error {
 			Set("page_size = ?", 50).
 			Set("feature_level = ?", 0).
 			Set("format = ?", api.FormatVideo).
-			Set("quality = ?", api.QualityHigh).Where("user_id = ?", patronID).
+			Set("quality = ?", api.QualityHigh).
+			Where("user_id = ?", patronID).
 			Update()
 
 		if err != nil {
