@@ -77,6 +77,37 @@ func TestService_GetMetadata(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestService_DowngradeToAnonymous(t *testing.T) {
+	s := Service{db: createDatabase(t)}
+
+	feed := &model.Feed{
+		HashID:       "123456",
+		UserID:       "123456",
+		ItemID:       "123456",
+		Provider:     api.ProviderVimeo,
+		LinkType:     api.LinkTypeGroup,
+		PageSize:     150,
+		Quality:      api.QualityLow,
+		Format:       api.FormatAudio,
+		FeatureLevel: api.ExtendedFeatures,
+	}
+
+	err := s.db.Insert(feed)
+	require.NoError(t, err)
+
+	err = s.Downgrade(feed.UserID, api.DefaultFeatures)
+	require.NoError(t, err)
+
+	downgraded := &model.Feed{FeedID: feed.FeedID}
+	err = s.db.Select(downgraded)
+	require.NoError(t, err)
+
+	require.Equal(t, 50, downgraded.PageSize)
+	require.Equal(t, api.QualityHigh, downgraded.Quality)
+	require.Equal(t, api.FormatVideo, downgraded.Format)
+	require.Equal(t, api.DefaultFeatures, downgraded.FeatureLevel)
+}
+
 func createDatabase(t *testing.T) *pg.DB {
 	opts, err := pg.ParseURL("postgres://postgres:@localhost/podsync?sslmode=disable")
 	if err != nil {

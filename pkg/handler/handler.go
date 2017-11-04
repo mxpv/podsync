@@ -26,6 +26,7 @@ type feedService interface {
 	CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error)
 	BuildFeed(hashID string) (*itunes.Podcast, error)
 	GetMetadata(hashId string) (*api.Metadata, error)
+	Downgrade(patronID string, featureLevel int) error
 }
 
 type patreonService interface {
@@ -228,6 +229,13 @@ func (h handler) webhook(c *gin.Context) {
 		log.Printf("failed to process patreon event %s (%s): %v", pledge.Data.ID, eventName, err)
 		c.JSON(internalError(err))
 		return
+	}
+
+	if eventName == patreon.EventDeletePledge {
+		if err := h.feed.Downgrade(pledge.Data.Relationships.Patron.Data.ID, api.DefaultFeatures); err != nil {
+			log.Printf("downgrade failed: %v", err)
+			return
+		}
 	}
 
 	log.Printf("sucessfully processed patreon event %s (%s)", pledge.Data.ID, eventName)

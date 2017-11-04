@@ -73,6 +73,18 @@ func (_mr *MockfeedServiceMockRecorder) GetMetadata(arg0 interface{}) *gomock.Ca
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetMetadata", reflect.TypeOf((*MockfeedService)(nil).GetMetadata), arg0)
 }
 
+// Downgrade mocks base method
+func (_m *MockfeedService) Downgrade(patronID string, featureLevel int) error {
+	ret := _m.ctrl.Call(_m, "Downgrade", patronID, featureLevel)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Downgrade indicates an expected call of Downgrade
+func (_mr *MockfeedServiceMockRecorder) Downgrade(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "Downgrade", reflect.TypeOf((*MockfeedService)(nil).Downgrade), arg0, arg1)
+}
+
 // MockpatreonService is a mock of patreonService interface
 type MockpatreonService struct {
 	ctrl     *gomock.Controller

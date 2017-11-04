@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emicklei/go-restful/log"
 	"github.com/go-pg/pg"
 	itunes "github.com/mxpv/podcast"
 	"github.com/mxpv/podsync/pkg/api"
@@ -128,6 +129,30 @@ func (s Service) GetMetadata(hashID string) (*api.Metadata, error) {
 		Format:   feed.Format,
 		Quality:  feed.Quality,
 	}, nil
+}
+
+func (s Service) Downgrade(patronID string, featureLevel int) error {
+	log.Printf("Downgrading patron '%s' to feature level %d", patronID, featureLevel)
+
+	if featureLevel == api.DefaultFeatures {
+		res, err := s.db.
+			Model(&model.Feed{}).
+			Set("page_size = ?", 50).
+			Set("feature_level = ?", 0).
+			Set("format = ?", api.FormatVideo).
+			Set("quality = ?", api.QualityHigh).Where("user_id = ?", patronID).
+			Update()
+
+		if err != nil {
+			log.Printf("failed to downgrade patron '%s' to feature level %d: %v", patronID, featureLevel, err)
+			return err
+		}
+
+		log.Printf("Updated %d feed(s) of user '%s' to feature level %d", res.RowsAffected(), patronID, featureLevel)
+		return nil
+	}
+
+	return errors.New("unsupported downgrade type")
 }
 
 type feedOption func(*Service)
