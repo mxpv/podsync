@@ -27,6 +27,43 @@ func TestRedisStats_IncAndGet(t *testing.T) {
 	require.Equal(t, int64(2), v)
 }
 
+func TestRedisStats_Top(t *testing.T) {
+	t.Skip("run redis tests manually")
+
+	s := createRedisClient(t)
+
+	// 3
+	s.Inc(metric, "123")
+	s.Inc(metric, "123")
+	s.Inc(metric, "123")
+
+	// 2
+	s.Inc(metric, "321")
+	s.Inc(metric, "321")
+
+	// 1
+	s.Inc(metric, "213")
+
+	top, err := s.Top(metric)
+	require.NoError(t, err)
+	require.Len(t, top, 3)
+
+	// 3
+	h3, ok := top["123"]
+	require.True(t, ok)
+	require.Equal(t, int64(3), h3)
+
+	// 2
+	h2, ok := top["321"]
+	require.True(t, ok)
+	require.Equal(t, int64(2), h2)
+
+	// 1
+	h1, ok := top["213"]
+	require.True(t, ok)
+	require.Equal(t, int64(1), h1)
+}
+
 func createRedisClient(t *testing.T) *RedisStats {
 	client, err := NewRedisStats("redis://localhost")
 	require.NoError(t, err)
