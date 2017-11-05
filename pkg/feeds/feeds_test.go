@@ -72,9 +72,20 @@ func TestService_UpdateLastAccess(t *testing.T) {
 }
 
 func TestService_GetMetadata(t *testing.T) {
-	s := Service{db: createDatabase(t)}
-	_, err := s.GetMetadata(feed.HashID)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	stats := NewMockstats(ctrl)
+	stats.EXPECT().Inc(MetricDownloads, feed.HashID).Return(int64(10), nil)
+
+	s := Service{
+		db:    createDatabase(t),
+		stats: stats,
+	}
+
+	m, err := s.GetMetadata(feed.HashID)
 	require.NoError(t, err)
+	require.Equal(t, int64(10), m.Downloads)
 }
 
 func TestService_DowngradeToAnonymous(t *testing.T) {

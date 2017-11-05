@@ -45,9 +45,10 @@ const (
 )
 
 type Metadata struct {
-	Provider Provider `json:"provider"`
-	Format   Format   `json:"format"`
-	Quality  Quality  `json:"quality"`
+	Provider  Provider `json:"provider"`
+	Format    Format   `json:"format"`
+	Quality   Quality  `json:"quality"`
+	Downloads int64    `json:"downloads"`
 }
 
 const (

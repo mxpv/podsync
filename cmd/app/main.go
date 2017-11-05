@@ -18,6 +18,7 @@ import (
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/feeds"
 	"github.com/mxpv/podsync/pkg/handler"
+	"github.com/mxpv/podsync/pkg/stats"
 	"github.com/mxpv/podsync/pkg/support"
 	"github.com/pkg/errors"
 )
@@ -41,6 +42,11 @@ func main() {
 		panic(err)
 	}
 
+	statistics, err := stats.NewRedisStats(cfg.RedisURL)
+	if err != nil {
+		panic(err)
+	}
+
 	patreon := support.NewPatreon(database)
 
 	// Builders
@@ -57,6 +63,7 @@ func main() {
 
 	feed, err := feeds.NewFeedService(
 		feeds.WithPostgres(database),
+		feeds.WithStats(statistics),
 		feeds.WithBuilder(api.ProviderYoutube, youtube),
 		feeds.WithBuilder(api.ProviderVimeo, vimeo),
 	)
@@ -83,6 +90,7 @@ func main() {
 
 	srv.Shutdown(ctx)
 	database.Close()
+	statistics.Close()
 
 	log.Printf("server gracefully stopped")
 }

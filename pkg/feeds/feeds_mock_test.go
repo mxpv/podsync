@@ -10,6 +10,55 @@ import (
 	reflect "reflect"
 )
 
+// Mockstats is a mock of stats interface
+type Mockstats struct {
+	ctrl     *gomock.Controller
+	recorder *MockstatsMockRecorder
+}
+
+// MockstatsMockRecorder is the mock recorder for Mockstats
+type MockstatsMockRecorder struct {
+	mock *Mockstats
+}
+
+// NewMockstats creates a new mock instance
+func NewMockstats(ctrl *gomock.Controller) *Mockstats {
+	mock := &Mockstats{ctrl: ctrl}
+	mock.recorder = &MockstatsMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (_m *Mockstats) EXPECT() *MockstatsMockRecorder {
+	return _m.recorder
+}
+
+// Inc mocks base method
+func (_m *Mockstats) Inc(metric string, hashID string) (int64, error) {
+	ret := _m.ctrl.Call(_m, "Inc", metric, hashID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Inc indicates an expected call of Inc
+func (_mr *MockstatsMockRecorder) Inc(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "Inc", reflect.TypeOf((*Mockstats)(nil).Inc), arg0, arg1)
+}
+
+// Get mocks base method
+func (_m *Mockstats) Get(metric string, hashID string) (int64, error) {
+	ret := _m.ctrl.Call(_m, "Get", metric, hashID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Get indicates an expected call of Get
+func (_mr *MockstatsMockRecorder) Get(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "Get", reflect.TypeOf((*Mockstats)(nil).Get), arg0, arg1)
+}
+
 // Mockbuilder is a mock of builder interface
 type Mockbuilder struct {
 	ctrl     *gomock.Controller

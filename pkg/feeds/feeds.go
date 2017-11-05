@@ -17,12 +17,23 @@ const (
 	maxPageSize = 150
 )
 
+const (
+	MetricQueries   = "queries"
+	MetricDownloads = "downloads"
+)
+
+type stats interface {
+	Inc(metric, hashID string) (int64, error)
+	Get(metric, hashID string) (int64, error)
+}
+
 type builder interface {
 	Build(feed *model.Feed) (podcast *itunes.Podcast, err error)
 }
 
 type Service struct {
 	sid      *shortid.Shortid
+	stats    stats
 	db       *pg.DB
 	builders map[api.Provider]builder
 }
@@ -109,7 +120,17 @@ func (s Service) BuildFeed(hashID string) (*itunes.Podcast, error) {
 		return nil, errors.Wrapf(err, "failed to get builder for feed: %s", hashID)
 	}
 
-	return builder.Build(feed)
+	podcast, err := builder.Build(feed)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.stats.Inc(MetricQueries, feed.HashID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to update metrics for feed: %s", hashID)
+	}
+
+	return podcast, nil
 }
 
 func (s Service) GetMetadata(hashID string) (*api.Metadata, error) {
@@ -117,17 +138,23 @@ func (s Service) GetMetadata(hashID string) (*api.Metadata, error) {
 	err := s.db.
 		Model(feed).
 		Where("hash_id = ?", hashID).
-		Column("provider", "format", "quality").
+		Column("provider", "format", "quality", "user_id").
 		Select()
 
 	if err != nil {
 		return nil, err
 	}
 
+	downloads, err := s.stats.Inc(MetricDownloads, hashID)
+	if err != nil {
+		return nil, err
+	}
+
 	return &api.Metadata{
-		Provider: feed.Provider,
-		Format:   feed.Format,
-		Quality:  feed.Quality,
+		Provider:  feed.Provider,
+		Format:    feed.Format,
+		Quality:   feed.Quality,
+		Downloads: downloads,
 	}, nil
 }
 
@@ -169,6 +196,13 @@ func WithPostgres(db *pg.DB) feedOption {
 func WithBuilder(provider api.Provider, builder builder) feedOption {
 	return func(service *Service) {
 		service.builders[provider] = builder
+	}
+}
+
+//noinspection GoExportedFuncWithUnexportedType
+func WithStats(m stats) feedOption {
+	return func(service *Service) {
+		service.stats = m
 	}
 }
 
