@@ -72,7 +72,17 @@ func (h Patreon) Hook(pledge *patreon.Pledge, event string) error {
 	case patreon.EventCreatePledge:
 		return h.db.Insert(obj)
 	case patreon.EventUpdatePledge:
-		return h.db.Update(obj)
+		err := h.db.Update(obj)
+		if err == pg.ErrNoRows {
+			log.Printf(
+				"! ignoring update for not existing pledge %s for user %s",
+				pledge.ID,
+				pledge.Relationships.Patron.Data.ID)
+
+			return nil
+		}
+
+		return err
 	case patreon.EventDeletePledge:
 		err := h.db.Delete(obj)
 		if err == pg.ErrNoRows {
