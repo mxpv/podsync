@@ -3,6 +3,7 @@ package builders
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -280,6 +281,8 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(playlistItems map[string]*youtu
 		if item.Description == "" {
 			item.Description = " "
 		}
+
+		item.IOrder = strconv.FormatInt(playlistItem.Position, 10)
 
 		_, err = podcast.AddItem(item)
 		if err != nil {
