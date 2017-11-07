@@ -3,6 +3,7 @@ package builders
 import (
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -340,6 +341,14 @@ func (yt *YouTubeBuilder) Build(feed *model.Feed) (*itunes.Podcast, error) {
 	if err := yt.queryItems(itemId, feed, podcast); err != nil {
 		return nil, err
 	}
+
+	// Sort episodes by <itunes:order> tag
+
+	sort.Slice(podcast.Items, func(i, j int) bool {
+		item1, _ := strconv.Atoi(podcast.Items[i].IOrder)
+		item2, _ := strconv.Atoi(podcast.Items[j].IOrder)
+		return item1 < item2
+	})
 
 	return podcast, nil
 }
