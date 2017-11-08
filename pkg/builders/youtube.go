@@ -146,9 +146,9 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 
 		link := ""
 		if feed.LinkType == api.LinkTypeChannel {
-			link = fmt.Sprintf("https://youtube.com/channel/%s", itemId)
+			link = fmt.Sprintf("https://youtube.com/channel/%s", channel.Id)
 		} else {
-			link = fmt.Sprintf("https://youtube.com/user/%s", itemId)
+			link = fmt.Sprintf("https://youtube.com/user/%s", channel.Snippet.CustomUrl)
 		}
 
 		pubDate, err := yt.parseDate(channel.Snippet.PublishedAt)
