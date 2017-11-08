@@ -145,7 +145,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 		itemId := channel.ContentDetails.RelatedPlaylists.Uploads
 
 		link := ""
-		if feed.LinkType == api.LinkTypeChannel {
+		if channel.Kind == "youtube#channel" {
 			link = fmt.Sprintf("https://youtube.com/channel/%s", channel.Id)
 		} else {
 			link = fmt.Sprintf("https://youtube.com/user/%s", channel.Snippet.CustomUrl)
