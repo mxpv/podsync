@@ -377,6 +377,12 @@ a {
     }
 }
 
+@media screen and (max-height: 400px) {
+    .patreon {
+        display: none;
+    }
+}
+
 @media screen and (max-height: 840px) {
     .title {
         padding-top: 1em;
