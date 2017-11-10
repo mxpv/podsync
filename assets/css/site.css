@@ -16,6 +16,10 @@ a {
     text-decoration: none;
 }
 
+.black {
+    color: #000000;
+}
+
 .background-image {
     background-image: url('/assets/img/pc_bg.png');
     -ms-background-repeat: repeat-x;
@@ -88,11 +92,17 @@ a {
 .login-block {
     color: #e18712;
     font-size: 1em;
+    overflow: hidden;
 }
 
-.login-block a {
-    font-size: 1.2em;
-    font-weight: normal;
+.login-border, .login-border a {
+    float: left;
+    background: orange;
+    color: whitesmoke;
+    border: 1px orange;
+    padding: 3px;
+    border-radius: 2px;
+    font-size: 15px;
 }
 
 /* Main block + input */
@@ -370,7 +380,7 @@ a {
 @media screen and (max-height: 840px) {
     .title {
         padding-top: 1em;
-        padding-bottom: 0;
+        padding-bottom: 1em;
     }
 
     .main {

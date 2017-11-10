@@ -30,22 +30,23 @@
         </h2>
 
         <div class="login-block">
-            <template v-if="!userId">
-                <h5>
+            <div class="login-border">
+
+                <template v-if="!userId">
                     <a href="/login">
+                        <i class="fa fa-unlock" aria-hidden="true"></i>
                         Login with Patreon to unlock features
-                        <i class="fa fa-question-circle master-tooltip" aria-hidden="true"
-                           title="We have added advanced features for those who supported development. Login with your Patreon account to unlock them.">
-                        </i>
                     </a>
-                </h5>
-            </template>
-            <template v-else>
-                <p>
-                    Yo, <i class="fa fa-user-circle" aria-hidden="true"></i> {{ .FullName }} ( <a href="/logout"><i
-                        class="fa fa-sign-out" aria-hidden="true"></i>logout</a>)
-                </p>
-            </template>
+                    <a href="https://www.patreon.com/bePatron?c=278915">
+                        <i class="fa fa-question-circle-o" aria-hidden="true"></i>
+                    </a>
+                </template>
+                <template v-else>
+                    <a>Hey, <i class="fa fa-user-o" aria-hidden="true"></i> {{ .FullName }}</a>
+                    <a href="/logout"><i class="fa fa-power-off" aria-hidden="true"></i></a>
+                </template>
+
+            </div>
         </div>
     </div>
 
@@ -69,9 +70,11 @@
             <div class="controls">
                 <div class="controls-icon">
                     <template v-if="locked">
+                        <a href="https://www.patreon.com/bePatron?c=278915" class="black">
                         <i class="fa fa-question-circle master-tooltip"
                            aria-hidden="true"
                            title="This features are available for patrons only. You may support us and unlock this features"></i>
+                        </a>
                     </template>
                     <template v-else>
                         <i class="fa fa-wrench" aria-hidden="true"></i>
