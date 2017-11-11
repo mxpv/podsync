@@ -50,7 +50,7 @@ func (s Service) makeFeed(req *api.CreateFeedRequest, identity *api.Identity) (*
 	feed.CreatedAt = now
 	feed.LastAccess = now
 
-	if identity.FeatureLevel == api.ExtendedPagination {
+	if identity.FeatureLevel >= api.ExtendedPagination {
 		if feed.PageSize > 600 {
 			feed.PageSize = 600
 		}
