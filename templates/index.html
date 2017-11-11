@@ -107,6 +107,8 @@
                         <label for="page_100">100</label>
                         <input type="radio" id="page_150" value="150" name="page_count" v-model.number="count" :disabled="locked" />
                         <label for="page_150">150</label>
+                        <input type="radio" id="page_600" value="600" name="page_count" v-model.number="count" :disabled="locked || !allow600pages" />
+                        <label for="page_600" :class="{ locked: !allow600pages }">600</label>
                     </div>
 
                 </div>

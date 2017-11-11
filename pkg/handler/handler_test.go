@@ -68,7 +68,7 @@ func TestCreateInvalidFeed(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-	query = `{"url": "https://youtube.com/channel/123", "page_size": 151, "quality": "low", "format": "audio"}`
+	query = `{"url": "https://youtube.com/channel/123", "page_size": 1001, "quality": "low", "format": "audio"}`
 	resp, err = http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)

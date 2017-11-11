@@ -45,11 +45,74 @@ func TestService_CreateFeed(t *testing.T) {
 	require.NotEmpty(t, hashId)
 }
 
+func TestService_makeFeed(t *testing.T) {
+	req := &api.CreateFeedRequest{
+		URL:      "youtube.com/channel/123",
+		PageSize: 1000,
+		Quality:  api.QualityLow,
+		Format:   api.FormatAudio,
+	}
+
+	s := Service{
+		sid: shortid.GetDefault(),
+	}
+
+	feed, err := s.makeFeed(req, &api.Identity{})
+	require.NoError(t, err)
+	require.Equal(t, 50, feed.PageSize)
+	require.Equal(t, api.QualityHigh, feed.Quality)
+	require.Equal(t, api.FormatVideo, feed.Format)
+
+	feed, err = s.makeFeed(req, &api.Identity{FeatureLevel: api.ExtendedFeatures})
+	require.NoError(t, err)
+	require.Equal(t, 150, feed.PageSize)
+	require.Equal(t, api.QualityLow, feed.Quality)
+	require.Equal(t, api.FormatAudio, feed.Format)
+
+	feed, err = s.makeFeed(req, &api.Identity{FeatureLevel: api.ExtendedPagination})
+	require.NoError(t, err)
+	require.Equal(t, 600, feed.PageSize)
+	require.Equal(t, api.QualityLow, feed.Quality)
+	require.Equal(t, api.FormatAudio, feed.Format)
+}
+
 func TestService_GetFeed(t *testing.T) {
-	s := Service{db: createDatabase(t)}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	stats := NewMockstats(ctrl)
+	stats.EXPECT().Inc(MetricQueries, feed.HashID).Return(int64(10), nil)
+
+	s := Service{db: createDatabase(t), stats: stats}
 
 	_, err := s.BuildFeed(feed.HashID)
 	require.NoError(t, err)
+}
+
+func TestService_BuildFeedQuotaCheck(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	f := &model.Feed{
+		HashID:   "321",
+		ItemID:   "xyz",
+		Provider: api.ProviderVimeo,
+		LinkType: api.LinkTypeChannel,
+		PageSize: 600,
+		Quality:  api.QualityHigh,
+		Format:   api.FormatVideo,
+	}
+
+	stats := NewMockstats(ctrl)
+	stats.EXPECT().Inc(MetricQueries, f.HashID).Return(int64(api.ExtendedPaginationQueryLimit)+1, nil)
+
+	s := Service{db: createDatabase(t), stats: stats}
+
+	err := s.db.Insert(f)
+	require.NoError(t, err)
+
+	_, err = s.BuildFeed(f.HashID)
+	require.Equal(t, api.ErrQuotaExceeded, err)
 }
 
 func TestService_WrongID(t *testing.T) {
@@ -117,6 +180,37 @@ func TestService_DowngradeToAnonymous(t *testing.T) {
 	require.Equal(t, api.QualityHigh, downgraded.Quality)
 	require.Equal(t, api.FormatVideo, downgraded.Format)
 	require.Equal(t, api.DefaultFeatures, downgraded.FeatureLevel)
+}
+
+func TestService_DowngradeToExtendedFeatures(t *testing.T) {
+	s := Service{db: createDatabase(t)}
+
+	feed := &model.Feed{
+		HashID:       "123456",
+		UserID:       "123456",
+		ItemID:       "123456",
+		Provider:     api.ProviderVimeo,
+		LinkType:     api.LinkTypeGroup,
+		PageSize:     500,
+		Quality:      api.QualityLow,
+		Format:       api.FormatAudio,
+		FeatureLevel: api.ExtendedFeatures,
+	}
+
+	err := s.db.Insert(feed)
+	require.NoError(t, err)
+
+	err = s.Downgrade(feed.UserID, api.ExtendedFeatures)
+	require.NoError(t, err)
+
+	downgraded := &model.Feed{FeedID: feed.FeedID}
+	err = s.db.Select(downgraded)
+	require.NoError(t, err)
+
+	require.Equal(t, 150, downgraded.PageSize)
+	require.Equal(t, feed.Quality, downgraded.Quality)
+	require.Equal(t, feed.Format, downgraded.Format)
+	require.Equal(t, api.ExtendedFeatures, downgraded.FeatureLevel)
 }
 
 func createDatabase(t *testing.T) *pg.DB {

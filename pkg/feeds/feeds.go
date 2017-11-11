@@ -14,10 +14,6 @@ import (
 )
 
 const (
-	maxPageSize = 150
-)
-
-const (
 	MetricQueries   = "queries"
 	MetricDownloads = "downloads"
 )
@@ -38,10 +34,51 @@ type Service struct {
 	builders map[api.Provider]builder
 }
 
-func (s Service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error) {
+func (s Service) makeFeed(req *api.CreateFeedRequest, identity *api.Identity) (*model.Feed, error) {
 	feed, err := parseURL(req.URL)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to create feed for URL: %s", req.URL)
+		return nil, errors.Wrapf(err, "failed to create feed for URL: %s", req.URL)
+	}
+
+	now := time.Now().UTC()
+
+	feed.UserID = identity.UserId
+	feed.FeatureLevel = identity.FeatureLevel
+	feed.Quality = req.Quality
+	feed.Format = req.Format
+	feed.PageSize = req.PageSize
+	feed.CreatedAt = now
+	feed.LastAccess = now
+
+	if identity.FeatureLevel == api.ExtendedPagination {
+		if feed.PageSize > 600 {
+			feed.PageSize = 600
+		}
+	} else if identity.FeatureLevel == api.ExtendedFeatures {
+		if feed.PageSize > 150 {
+			feed.PageSize = 150
+		}
+	} else {
+		feed.Quality = api.QualityHigh
+		feed.Format = api.FormatVideo
+		feed.PageSize = 50
+	}
+
+	// Generate short id
+	hashId, err := s.sid.Generate()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to generate id for feed")
+	}
+
+	feed.HashID = hashId
+
+	return feed, nil
+}
+
+func (s Service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error) {
+	feed, err := s.makeFeed(req, identity)
+	if err != nil {
+		return "", err
 	}
 
 	// Make sure builder exists for this provider
@@ -50,42 +87,13 @@ func (s Service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) 
 		return "", fmt.Errorf("failed to get builder for URL: %s", req.URL)
 	}
 
-	now := time.Now().UTC()
-
-	// Set default fields
-	feed.PageSize = api.DefaultPageSize
-	feed.Format = api.FormatVideo
-	feed.Quality = api.QualityHigh
-	feed.FeatureLevel = api.DefaultFeatures
-	feed.CreatedAt = now
-	feed.LastAccess = now
-
-	if identity.FeatureLevel > 0 {
-		feed.UserID = identity.UserId
-		feed.Quality = req.Quality
-		feed.Format = req.Format
-		feed.FeatureLevel = identity.FeatureLevel
-		feed.PageSize = req.PageSize
-		if feed.PageSize > maxPageSize {
-			feed.PageSize = maxPageSize
-		}
-	}
-
-	// Generate short id
-	hashId, err := s.sid.Generate()
-	if err != nil {
-		return "", errors.Wrap(err, "failed to generate id for feed")
-	}
-
-	feed.HashID = hashId
-
 	// Save to database
 	_, err = s.db.Model(feed).Insert()
 	if err != nil {
 		return "", errors.Wrap(err, "failed to save feed to database")
 	}
 
-	return hashId, nil
+	return feed.HashID, nil
 }
 
 func (s Service) QueryFeed(hashID string) (*model.Feed, error) {
@@ -115,6 +123,15 @@ func (s Service) BuildFeed(hashID string) (*itunes.Podcast, error) {
 		return nil, err
 	}
 
+	count, err := s.stats.Inc(MetricQueries, feed.HashID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to update metrics for feed: %s", hashID)
+	}
+
+	if feed.PageSize > 150 && count > api.ExtendedPaginationQueryLimit {
+		return nil, api.ErrQuotaExceeded
+	}
+
 	builder, ok := s.builders[feed.Provider]
 	if !ok {
 		return nil, errors.Wrapf(err, "failed to get builder for feed: %s", hashID)
@@ -123,11 +140,6 @@ func (s Service) BuildFeed(hashID string) (*itunes.Podcast, error) {
 	podcast, err := builder.Build(feed)
 	if err != nil {
 		return nil, err
-	}
-
-	_, err = s.stats.Inc(MetricQueries, feed.HashID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to update metrics for feed: %s", hashID)
 	}
 
 	return podcast, nil
@@ -161,18 +173,50 @@ func (s Service) GetMetadata(hashID string) (*api.Metadata, error) {
 func (s Service) Downgrade(patronID string, featureLevel int) error {
 	log.Printf("Downgrading patron '%s' to feature level %d", patronID, featureLevel)
 
+	if featureLevel > api.ExtendedFeatures {
+		return nil
+	}
+
+	if featureLevel == api.ExtendedFeatures {
+		const maxPages = 150
+		res, err := s.db.
+			Model(&model.Feed{}).
+			Set("page_size = ?", maxPages).
+			Where("user_id = ? AND page_size > ?", patronID, maxPages).
+			Update()
+
+		if err != nil {
+			log.Printf("! failed to reduce page sizes for patron '%s': %v", patronID, err)
+			return err
+		}
+
+		res, err = s.db.
+			Model(&model.Feed{}).
+			Set("feature_level = ?", api.ExtendedFeatures).
+			Where("user_id = ?", patronID, maxPages).
+			Update()
+
+		if err != nil {
+			log.Printf("! failed to downgrade patron '%s' to feature level %d: %v", patronID, featureLevel, err)
+			return err
+		}
+
+		log.Printf("Updated %d feed(s) of user '%s' to feature level %d", res.RowsAffected(), patronID, featureLevel)
+		return nil
+	}
+
 	if featureLevel == api.DefaultFeatures {
 		res, err := s.db.
 			Model(&model.Feed{}).
 			Set("page_size = ?", 50).
-			Set("feature_level = ?", 0).
+			Set("feature_level = ?", api.DefaultFeatures).
 			Set("format = ?", api.FormatVideo).
 			Set("quality = ?", api.QualityHigh).
 			Where("user_id = ?", patronID).
 			Update()
 
 		if err != nil {
-			log.Printf("failed to downgrade patron '%s' to feature level %d: %v", patronID, featureLevel, err)
+			log.Printf("! failed to downgrade patron '%s' to feature level %d: %v", patronID, featureLevel, err)
 			return err
 		}
 

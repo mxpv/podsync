@@ -31,7 +31,8 @@ type feedService interface {
 
 type patreonService interface {
 	Hook(pledge *patreon.Pledge, event string) error
-	GetFeatureLevel(patronID string) int
+	GetFeatureLevelByID(patronID string) int
+	GetFeatureLevelFromAmount(amount int) int
 }
 
 type handler struct {
@@ -93,7 +94,7 @@ func (h handler) patreonCallback(c *gin.Context) {
 	}
 
 	// Determine feature level
-	level := h.patreon.GetFeatureLevel(user.Data.ID)
+	level := h.patreon.GetFeatureLevelByID(user.Data.ID)
 
 	identity := &api.Identity{
 		UserId:       user.Data.ID,
@@ -133,7 +134,7 @@ func (h handler) create(c *gin.Context) {
 	}
 
 	// Check feature level again if user deleted pledge by still logged in
-	identity.FeatureLevel = h.patreon.GetFeatureLevel(identity.UserId)
+	identity.FeatureLevel = h.patreon.GetFeatureLevelByID(identity.UserId)
 
 	hashId, err := h.feed.CreateFeed(req, identity)
 	if err != nil {
@@ -160,6 +161,8 @@ func (h handler) getFeed(c *gin.Context) {
 		code := http.StatusInternalServerError
 		if err == api.ErrNotFound {
 			code = http.StatusNotFound
+		} else if err == api.ErrQuotaExceeded {
+			code = http.StatusTooManyRequests
 		} else {
 			log.Printf("server error (hash id: %s): %v", hashId, err)
 		}
@@ -237,8 +240,16 @@ func (h handler) webhook(c *gin.Context) {
 		return
 	}
 
-	if eventName == patreon.EventDeletePledge {
-		if err := h.feed.Downgrade(pledge.Data.Relationships.Patron.Data.ID, api.DefaultFeatures); err != nil {
+	patronID := pledge.Data.Relationships.Patron.Data.ID
+
+	if eventName == patreon.EventUpdatePledge {
+		newLevel := h.patreon.GetFeatureLevelFromAmount(pledge.Data.Attributes.AmountCents)
+		if err := h.feed.Downgrade(patronID, newLevel); err != nil {
+			log.Printf("downgrade failed: %v", err)
+			return
+		}
+	} else if eventName == patreon.EventDeletePledge {
+		if err := h.feed.Downgrade(patronID, api.DefaultFeatures); err != nil {
 			log.Printf("downgrade failed: %v", err)
 			return
 		}

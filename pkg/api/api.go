@@ -5,7 +5,8 @@ import (
 )
 
 var (
-	ErrNotFound = errors.New("resource not found")
+	ErrNotFound      = errors.New("resource not found")
+	ErrQuotaExceeded = errors.New("query limit is exceeded")
 )
 
 type Provider string
@@ -39,9 +40,10 @@ const (
 )
 
 const (
-	DefaultPageSize = 50
-	DefaultFormat   = FormatVideo
-	DefaultQuality  = QualityHigh
+	DefaultPageSize              = 50
+	DefaultFormat                = FormatVideo
+	DefaultQuality               = QualityHigh
+	ExtendedPaginationQueryLimit = 5000
 )
 
 type Metadata struct {
@@ -54,12 +56,13 @@ type Metadata struct {
 const (
 	DefaultFeatures = iota
 	ExtendedFeatures
+	ExtendedPagination
 	PodcasterFeature
 )
 
 type CreateFeedRequest struct {
 	URL      string  `json:"url" binding:"url,required"`
-	PageSize int     `json:"page_size" binding:"min=10,max=150,required"`
+	PageSize int     `json:"page_size" binding:"min=10,max=600,required"`
 	Quality  Quality `json:"quality" binding:"eq=high|eq=low"`
 	Format   Format  `json:"format" binding:"eq=video|eq=audio"`
 }

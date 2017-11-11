@@ -84,6 +84,10 @@
             } catch (e) {
                 return false;
             }
+        },
+
+        allow600pages: function() {
+            return !this.locked && this.featureLevel >= 2;
         }
     },
 

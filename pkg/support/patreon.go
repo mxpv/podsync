@@ -100,7 +100,7 @@ func (h Patreon) FindPledge(patronID string) (*model.Pledge, error) {
 	return p, h.db.Model(p).Where("patron_id = ?", patronID).Limit(1).Select()
 }
 
-func (h Patreon) GetFeatureLevel(patronID string) (level int) {
+func (h Patreon) GetFeatureLevelByID(patronID string) (level int) {
 	level = api.DefaultFeatures
 
 	if patronID == "" {
@@ -120,14 +120,24 @@ func (h Patreon) GetFeatureLevel(patronID string) (level int) {
 
 	// Check pledge is valid
 	if pledge.DeclinedSince.IsZero() && !pledge.IsPaused {
-		// Check the amount of pledge
-		if pledge.AmountCents >= 100 {
-			level = api.ExtendedFeatures
-			return
-		}
+		level = h.GetFeatureLevelFromAmount(pledge.AmountCents)
+		return
 	}
 
 	return
+}
+
+func (h Patreon) GetFeatureLevelFromAmount(amount int) int {
+	// Check the amount of pledge
+	if amount >= 300 {
+		return api.ExtendedPagination
+	}
+
+	if amount >= 100 {
+		return api.ExtendedFeatures
+	}
+
+	return api.DefaultFeatures
 }
 
 func NewPatreon(db *pg.DB) *Patreon {

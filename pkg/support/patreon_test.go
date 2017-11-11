@@ -74,7 +74,7 @@ func TestGetFeatureLevel(t *testing.T) {
 
 	require.Equal(t, api.PodcasterFeature, hook.GetFeatureLevel(creatorID))
 	require.Equal(t, api.DefaultFeatures, hook.GetFeatureLevel("xyz"))
-	require.Equal(t, api.ExtendedFeatures, hook.GetFeatureLevel(pledge.Relationships.Patron.Data.ID))
+	require.Equal(t, api.ExtendedPagination, hook.GetFeatureLevel(pledge.Relationships.Patron.Data.ID))
 }
 
 func createHandler(t *testing.T) *Patreon {
