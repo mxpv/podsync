@@ -120,14 +120,26 @@ func (_mr *MockpatreonServiceMockRecorder) Hook(arg0, arg1 interface{}) *gomock.
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "Hook", reflect.TypeOf((*MockpatreonService)(nil).Hook), arg0, arg1)
 }
 
-// GetFeatureLevel mocks base method
-func (_m *MockpatreonService) GetFeatureLevel(patronID string) int {
-	ret := _m.ctrl.Call(_m, "GetFeatureLevel", patronID)
+// GetFeatureLevelByID mocks base method
+func (_m *MockpatreonService) GetFeatureLevelByID(patronID string) int {
+	ret := _m.ctrl.Call(_m, "GetFeatureLevelByID", patronID)
 	ret0, _ := ret[0].(int)
 	return ret0
 }
 
-// GetFeatureLevel indicates an expected call of GetFeatureLevel
-func (_mr *MockpatreonServiceMockRecorder) GetFeatureLevel(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetFeatureLevel", reflect.TypeOf((*MockpatreonService)(nil).GetFeatureLevel), arg0)
+// GetFeatureLevelByID indicates an expected call of GetFeatureLevelByID
+func (_mr *MockpatreonServiceMockRecorder) GetFeatureLevelByID(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetFeatureLevelByID", reflect.TypeOf((*MockpatreonService)(nil).GetFeatureLevelByID), arg0)
+}
+
+// GetFeatureLevelFromAmount mocks base method
+func (_m *MockpatreonService) GetFeatureLevelFromAmount(amount int) int {
+	ret := _m.ctrl.Call(_m, "GetFeatureLevelFromAmount", amount)
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// GetFeatureLevelFromAmount indicates an expected call of GetFeatureLevelFromAmount
+func (_mr *MockpatreonServiceMockRecorder) GetFeatureLevelFromAmount(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetFeatureLevelFromAmount", reflect.TypeOf((*MockpatreonService)(nil).GetFeatureLevelFromAmount), arg0)
 }

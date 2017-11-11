@@ -72,9 +72,9 @@ func TestGetFeatureLevel(t *testing.T) {
 	err := hook.Hook(pledge, patreon.EventCreatePledge)
 	require.NoError(t, err)
 
-	require.Equal(t, api.PodcasterFeature, hook.GetFeatureLevel(creatorID))
-	require.Equal(t, api.DefaultFeatures, hook.GetFeatureLevel("xyz"))
-	require.Equal(t, api.ExtendedPagination, hook.GetFeatureLevel(pledge.Relationships.Patron.Data.ID))
+	require.Equal(t, api.PodcasterFeature, hook.GetFeatureLevelByID(creatorID))
+	require.Equal(t, api.DefaultFeatures, hook.GetFeatureLevelByID("xyz"))
+	require.Equal(t, api.ExtendedPagination, hook.GetFeatureLevelByID(pledge.Relationships.Patron.Data.ID))
 }
 
 func createHandler(t *testing.T) *Patreon {

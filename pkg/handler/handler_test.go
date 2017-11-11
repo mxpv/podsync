@@ -33,7 +33,7 @@ func TestCreateFeed(t *testing.T) {
 	feed.EXPECT().CreateFeed(gomock.Eq(req), gomock.Any()).Times(1).Return("456", nil)
 
 	patreon := NewMockpatreonService(ctrl)
-	patreon.EXPECT().GetFeatureLevel(gomock.Any()).Return(api.DefaultFeatures)
+	patreon.EXPECT().GetFeatureLevelByID(gomock.Any()).Return(api.DefaultFeatures)
 
 	srv := httptest.NewServer(New(feed, patreon, cfg))
 	defer srv.Close()
