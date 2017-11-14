@@ -72,17 +72,29 @@ func (h Patreon) Hook(pledge *patreon.Pledge, event string) error {
 	case patreon.EventCreatePledge:
 		return h.db.Insert(obj)
 	case patreon.EventUpdatePledge:
-		err := h.db.Update(obj)
-		if err == pg.ErrNoRows {
-			log.Printf(
-				"! ignoring update for not existing pledge %s for user %s",
-				pledge.ID,
-				pledge.Relationships.Patron.Data.ID)
+		// Update comes with different PledgeID from Patreon, so do update by user ID
+		patronID := pledge.Relationships.Patron.Data.ID
 
-			return nil
+		updateColumns := []string{
+			"declined_since",
+			"amount_cents",
+			"total_historical_amount_cents",
+			"outstanding_payment_amount_cents",
+			"is_paused",
 		}
 
-		return err
+		res, err := h.db.Model(obj).Column(updateColumns...).Where("patron_id = ?patron_id").Update()
+		if err != nil {
+			log.Printf("! failed to update pledge %s for user %s: %v", pledge.ID, patronID, err)
+			return err
+		}
+
+		if res.RowsAffected() != 1 {
+			log.Printf("! unexpected number of updated rows: %d for user %s", res.RowsAffected(), patronID)
+			return errors.New("unexpected update result")
+		}
+
+		return nil
 	case patreon.EventDeletePledge:
 		err := h.db.Delete(obj)
 		if err == pg.ErrNoRows {
