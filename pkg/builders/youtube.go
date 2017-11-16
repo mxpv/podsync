@@ -296,14 +296,16 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(playlistItems map[string]*youtu
 
 // Cost: (3 units + 5 units) * X pages = 8 units per page
 func (yt *YouTubeBuilder) queryItems(itemId string, feed *model.Feed, podcast *itunes.Podcast) error {
-	pageToken := ""
+	token := ""
 	count := 0
 
 	for {
-		items, pageToken, err := yt.listPlaylistItems(itemId, pageToken)
+		items, pageToken, err := yt.listPlaylistItems(itemId, token)
 		if err != nil {
 			return err
 		}
+
+		token = pageToken
 
 		if len(items) == 0 {
 			return nil
@@ -321,7 +323,7 @@ func (yt *YouTubeBuilder) queryItems(itemId string, feed *model.Feed, podcast *i
 			return err
 		}
 
-		if count >= feed.PageSize || pageToken == "" {
+		if count >= feed.PageSize || token == "" {
 			return nil
 		}
 	}
