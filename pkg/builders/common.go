@@ -21,6 +21,6 @@ func makeEnclosure(feed *model.Feed, id string, lengthInBytes int64) (string, it
 		contentType = itunes.M4A
 	}
 
-	url := fmt.Sprintf("https://podsync.net/download/%s/%s.%s", feed.HashID, id, ext)
+	url := fmt.Sprintf("http://podsync.net/download/%s/%s.%s", feed.HashID, id, ext)
 	return url, contentType, lengthInBytes
 }
