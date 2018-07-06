@@ -38,7 +38,7 @@ services:
     volumes:
       - /data/redis:/data
   nginx:
-    image: gcr.io/pod-sync/nginx:latest
+    image: umputun/nginx-le:latest
     container_name: nginx
     restart: always
     ports:
@@ -47,7 +47,11 @@ services:
     environment:
       - TZ=America/Los_Angeles
       - LETSENCRYPT=true
-      - LE_EMAIL=name@example.com
+      - SSL_CERT=podsync.net.crt
+      - SSL_KEY=podsync.net.key
+      - SSL_CHAIN_CERT=podsync.net.issuer.crt
+      - LE_EMAIL=pavlenko.maksym@gmail.com
       - LE_FQDN=podsync.net,www.podsync.net
     volumes:
       - /data/ssl:/etc/nginx/ssl
+      - /data/podsync.conf:/etc/nginx/service.conf
