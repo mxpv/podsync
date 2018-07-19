@@ -1,4 +1,4 @@
-requests
-youtube_dl
-sanic
-redis
+requests==2.19.1
+youtube_dl==2018.4.25
+sanic==0.7.0
+redis==2.10.6
