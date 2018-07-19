@@ -12,3 +12,6 @@ class TestYtdl(unittest.TestCase):
     def test_vimeo(self):
         self.assertIsNotNone(
             ytdl._resolve('https://vimeo.com/237715420', {'format': 'video', 'quality': 'low', 'provider': 'vimeo'}))
+        self.assertIsNotNone(
+            ytdl._resolve('https://vimeo.com/275211960', {'format': 'video', 'quality': 'high', 'provider': 'vimeo' })
+        )
