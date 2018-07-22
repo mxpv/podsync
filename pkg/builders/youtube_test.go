@@ -7,6 +7,7 @@ import (
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 var ytKey = os.Getenv("YOUTUBE_TEST_API_KEY")
@@ -36,23 +37,48 @@ func TestBuildYTFeed(t *testing.T) {
 	builder, err := NewYouTubeBuilder(ytKey)
 	require.NoError(t, err)
 
-	podcast, err := builder.Build(&model.Feed{
-		Provider: api.ProviderYoutube,
-		LinkType: api.LinkTypeChannel,
-		ItemID:   "UCupvZG-5ko_eiXAupbDfxWw",
-		PageSize: maxYoutubeResults,
-	})
+	feeds := []*model.Feed{
+		{
+			Provider: api.ProviderYoutube,
+			LinkType: api.LinkTypeChannel,
+			ItemID:   "UCupvZG-5ko_eiXAupbDfxWw",
+			PageSize: maxYoutubeResults,
+		},
+		{
+			Provider: api.ProviderYoutube,
+			LinkType: api.LinkTypePlaylist,
+			ItemID: "PLfVk3KMh3VX1yJShGRsJmsqAjvMIviJYQ",
+			PageSize: maxYoutubeResults,
+		},
+	}
 
-	require.NoError(t, err)
+	for _, feed := range feeds {
+		t.Run(feed.ItemID, func(t *testing.T) {
+			podcast, err := builder.Build(feed)
 
-	require.Equal(t, "CNN", podcast.Title)
-	require.NotEmpty(t, podcast.Description)
+			require.NoError(t, err)
 
-	require.Equal(t, 50, len(podcast.Items))
+			assert.NotEmpty(t, podcast.Title)
+			assert.NotEmpty(t, podcast.IAuthor)
+			assert.NotEmpty(t, podcast.Description)
 
-	for _, item := range podcast.Items {
-		require.NotEmpty(t, item.Title)
-		require.NotEmpty(t, item.Link)
-		require.NotEmpty(t, item.IDuration)
+			require.NotNil(t, podcast.ISummary)
+			assert.NotEmpty(t, podcast.ISummary.Text)
+
+			assert.Equal(t, 50, len(podcast.Items))
+
+			for _, item := range podcast.Items {
+				assert.NotEmpty(t, item.Title)
+				assert.NotEmpty(t, item.Link)
+				assert.NotEmpty(t, item.IDuration)
+
+				require.NotNil(t, item.ISummary)
+				assert.NotEmpty(t, item.ISummary.Text)
+
+				assert.NotEmpty(t, item.Title)
+				assert.NotEmpty(t, item.IAuthor)
+				assert.NotEmpty(t, item.Description)
+			}
+		})
 	}
 }
