@@ -47,9 +47,6 @@ services:
     environment:
       - TZ=America/Los_Angeles
       - LETSENCRYPT=true
-      - SSL_CERT=podsync.net.crt
-      - SSL_KEY=podsync.net.key
-      - SSL_CHAIN_CERT=podsync.net.issuer.crt
       - LE_EMAIL=pavlenko.maksym@gmail.com
       - LE_FQDN=podsync.net,www.podsync.net
     volumes:
