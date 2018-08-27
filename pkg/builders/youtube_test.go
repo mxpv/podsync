@@ -6,8 +6,8 @@ import (
 
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var ytKey = os.Getenv("YOUTUBE_TEST_API_KEY")
@@ -38,18 +38,12 @@ func TestBuildYTFeed(t *testing.T) {
 	require.NoError(t, err)
 
 	feeds := []*model.Feed{
-		{
-			Provider: api.ProviderYoutube,
-			LinkType: api.LinkTypeChannel,
-			ItemID:   "UCupvZG-5ko_eiXAupbDfxWw",
-			PageSize: maxYoutubeResults,
-		},
-		{
-			Provider: api.ProviderYoutube,
-			LinkType: api.LinkTypePlaylist,
-			ItemID: "PLfVk3KMh3VX1yJShGRsJmsqAjvMIviJYQ",
-			PageSize: maxYoutubeResults,
-		},
+		{Provider: api.ProviderYoutube, LinkType: api.LinkTypeUser, ItemID: "fxigr1"},
+		{Provider: api.ProviderYoutube, LinkType: api.LinkTypeChannel, ItemID: "UCupvZG-5ko_eiXAupbDfxWw"},
+		{Provider: api.ProviderYoutube, LinkType: api.LinkTypePlaylist, ItemID: "PLfVk3KMh3VX1yJShGRsJmsqAjvMIviJYQ"},
+		{Provider: api.ProviderYoutube, LinkType: api.LinkTypeChannel, ItemID: "UCK9lZ2lHRBgx2LOcqPifukA"},
+		{Provider: api.ProviderYoutube, LinkType: api.LinkTypeUser, ItemID: "WylsaLive"},
+		{Provider: api.ProviderYoutube, LinkType: api.LinkTypePlaylist, ItemID: "PLUVl5pafUrBydT_gsCjRGeCy0hFHloec8"},
 	}
 
 	for _, feed := range feeds {
@@ -65,7 +59,7 @@ func TestBuildYTFeed(t *testing.T) {
 			require.NotNil(t, podcast.ISummary)
 			assert.NotEmpty(t, podcast.ISummary.Text)
 
-			assert.Equal(t, 50, len(podcast.Items))
+			assert.NotZero(t, len(podcast.Items))
 
 			for _, item := range podcast.Items {
 				assert.NotEmpty(t, item.Title)

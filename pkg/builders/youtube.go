@@ -143,27 +143,37 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 		}
 
 		itemId := channel.ContentDetails.RelatedPlaylists.Uploads
+		snippet := channel.Snippet
 
 		link := ""
 		if channel.Kind == "youtube#channel" {
 			link = fmt.Sprintf("https://youtube.com/channel/%s", channel.Id)
 		} else {
-			link = fmt.Sprintf("https://youtube.com/user/%s", channel.Snippet.CustomUrl)
+			link = fmt.Sprintf("https://youtube.com/user/%s", snippet.CustomUrl)
 		}
 
-		pubDate, err := yt.parseDate(channel.Snippet.PublishedAt)
+		pubDate, err := yt.parseDate(snippet.PublishedAt)
 		if err != nil {
 			return nil, "", err
 		}
 
-		title := channel.Snippet.Title
+		title := snippet.Title
 
-		podcast := itunes.New(title, link, channel.Snippet.Description, &pubDate, &now)
+		desc := snippet.Description
+		if desc == "" {
+			desc = fmt.Sprintf("%s (%s)", snippet.Title, snippet.PublishedAt)
+		}
+
+		podcast := itunes.New(title, link, desc, &pubDate, &now)
 		podcast.Generator = podsyncGenerator
 
 		podcast.AddSubTitle(title)
 		podcast.AddCategory(defaultCategory, nil)
-		podcast.AddImage(yt.selectThumbnail(channel.Snippet.Thumbnails, feed.Quality))
+		podcast.AddImage(yt.selectThumbnail(snippet.Thumbnails, feed.Quality))
+
+		// iTunes podcasts
+		podcast.IAuthor = snippet.Title
+		podcast.AddSummary(desc)
 
 		return &podcast, itemId, nil
 	}
@@ -185,12 +195,20 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 
 		title := fmt.Sprintf("%s: %s", snippet.ChannelTitle, snippet.Title)
 
-		podcast := itunes.New(title, link, snippet.Description, &pubDate, &now)
+		desc := snippet.Description
+		if desc == "" {
+			desc = fmt.Sprintf("%s (%s)", snippet.Title, snippet.PublishedAt)
+		}
+
+		podcast := itunes.New(title, link, desc, &pubDate, &now)
 		podcast.Generator = podsyncGenerator
 
 		podcast.AddSubTitle(title)
 		podcast.AddCategory(defaultCategory, nil)
 		podcast.AddImage(yt.selectThumbnail(snippet.Thumbnails, feed.Quality))
+
+		podcast.IAuthor = snippet.ChannelTitle
+		podcast.AddSummary(desc)
 
 		return &podcast, playlist.Id, nil
 	}
@@ -240,6 +258,13 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(playlistItems map[string]*youtu
 		item.Title = snippet.Title
 		item.Description = snippet.Description
 		item.ISubtitle = snippet.Title
+
+		desc := snippet.Description
+		if desc == "" {
+			desc = fmt.Sprintf("%s (%s)", snippet.Title, snippet.PublishedAt)
+		}
+
+		item.AddSummary(desc)
 
 		// Select thumbnail
 
@@ -339,6 +364,10 @@ func (yt *YouTubeBuilder) Build(feed *model.Feed) (*itunes.Podcast, error) {
 	}
 
 	// Get video descriptions
+
+	if feed.PageSize == 0 {
+		feed.PageSize = maxYoutubeResults
+	}
 
 	if err := yt.queryItems(itemId, feed, podcast); err != nil {
 		return nil, err
