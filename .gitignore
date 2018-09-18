@@ -33,3 +33,4 @@ Gopkg.lock
 node_modules/
 package-lock.json
 dist/
+venv/
