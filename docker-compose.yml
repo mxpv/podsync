@@ -2,7 +2,7 @@
 
 services:
   app:
-    image: gcr.io/pod-sync/app:latest
+    image: mxpv/podsync
     container_name: app
     restart: always
     ports:
@@ -23,7 +23,7 @@ services:
     volumes:
       - {PATH_TO_GOOGLE_CREDENTIALS_FILE_FOR_USE_OUTSIDE_GOOGLE_CLOUD}:/google-credentials.json
   ytdl:
-    image: gcr.io/pod-sync/ytdl:latest
+    image: mxpv/ytdl
     container_name: ytdl
     restart: always
     ports:
@@ -31,7 +31,7 @@ services:
     environment:
       - METADATA_URL=http://app:5001/api/metadata/{feed_id}
   redis:
-    image: redis
+    image: redis:4
     container_name: redis
     command: redis-server --appendonly no --save 900 1 --save 300 10 --save 60 10000
     restart: always
