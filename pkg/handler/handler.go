@@ -236,7 +236,7 @@ func (h handler) webhook(c *gin.Context) {
 			pledge.Data.Relationships.Patron.Data.ID,
 			err)
 
-		c.JSON(internalError(err))
+		// Don't return any errors to Patreon, otherwise subsequent notifications will be blocked.
 		return
 	}
 
