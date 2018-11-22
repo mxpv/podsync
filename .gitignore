@@ -6,7 +6,7 @@
 # Folders
 _obj
 _test
-vendor
+vendor/
 
 # Architecture specific extensions/prefixes
 *.[568vq]
@@ -20,18 +20,12 @@ _cgo_export.*
 
 _testmain.go
 
-*.exe
 *.test
 *.prof
-
-glide.lock
-
-Gopkg.lock
 
 .idea/
 
 node_modules/
-package-lock.json
 dist/
 venv/
 
