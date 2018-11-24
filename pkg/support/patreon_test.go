@@ -1,94 +1,111 @@
+//go:generate mockgen -source=patreon.go -destination=patreon_mock_test.go -package=support
+
 package support
 
 import (
 	"testing"
 	"time"
 
-	"github.com/go-pg/pg"
+	"github.com/golang/mock/gomock"
 	"github.com/mxpv/patreon-go"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
+
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
-	"github.com/stretchr/testify/require"
 )
 
-func TestCreate(t *testing.T) {
+func TestToModel(t *testing.T) {
 	pledge := createPledge()
 
-	hook := createHandler(t)
-	err := hook.Hook(pledge, patreon.EventCreatePledge)
+	modelPledge, err := ToModel(pledge)
 	require.NoError(t, err)
 
-	model := &model.Pledge{PledgeID: 12345}
-	err = hook.db.Select(model)
+	require.Equal(t, modelPledge.PledgeID, int64(12345))
+	require.Equal(t, modelPledge.AmountCents, 400)
+	require.Equal(t, modelPledge.PatronID, int64(67890))
+	require.NotNil(t, modelPledge.CreatedAt)
+}
+
+func TestCreate(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	pledge := createPledge()
+	expected, _ := ToModel(pledge)
+
+	storage := NewMockstorage(ctrl)
+	storage.EXPECT().AddPledge(gomock.Eq(expected)).Times(1).Return(nil)
+
+	hook := Patreon{db: storage}
+
+	err := hook.Hook(pledge, patreon.EventCreatePledge)
 	require.NoError(t, err)
-	require.Equal(t, pledge.Attributes.AmountCents, model.AmountCents)
 }
 
 func TestUpdate(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	pledge := createPledge()
+	expected, _ := ToModel(pledge)
 
-	hook := createHandler(t)
-	err := hook.Hook(pledge, patreon.EventCreatePledge)
+	storage := NewMockstorage(ctrl)
+	storage.EXPECT().UpdatePledge("67890", gomock.Eq(expected))
+
+	hook := Patreon{db: storage}
+	err := hook.Hook(pledge, patreon.EventUpdatePledge)
 	require.NoError(t, err)
-
-	pledge.Attributes.AmountCents = 999
-
-	err = hook.Hook(pledge, patreon.EventUpdatePledge)
-	require.NoError(t, err)
-
-	model := &model.Pledge{PledgeID: 12345}
-	err = hook.db.Select(model)
-	require.NoError(t, err)
-	require.Equal(t, 999, model.AmountCents)
 }
 
 func TestDelete(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	pledge := createPledge()
-	hook := createHandler(t)
+	expected, _ := ToModel(pledge)
 
-	err := hook.Hook(pledge, patreon.EventCreatePledge)
-	require.NoError(t, err)
+	storage := NewMockstorage(ctrl)
+	storage.EXPECT().DeletePledge(expected)
 
-	err = hook.Hook(pledge, patreon.EventDeletePledge)
+	hook := Patreon{db: storage}
+	err := hook.Hook(pledge, patreon.EventDeletePledge)
 	require.NoError(t, err)
 }
 
 func TestFindPledge(t *testing.T) {
-	pledge := createPledge()
-	hook := createHandler(t)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	err := hook.Hook(pledge, patreon.EventCreatePledge)
-	require.NoError(t, err)
+	expected := &model.Pledge{}
 
-	res, err := hook.FindPledge("67890")
+	storage := NewMockstorage(ctrl)
+	storage.EXPECT().GetPledge("123").Times(1).Return(expected, nil)
+
+	hook := Patreon{db: storage}
+	res, err := hook.FindPledge("123")
 	require.NoError(t, err)
-	require.Equal(t, res.AmountCents, pledge.Attributes.AmountCents)
+	require.Equal(t, expected, res)
 }
 
 func TestGetFeatureLevel(t *testing.T) {
-	pledge := createPledge()
-	hook := createHandler(t)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	err := hook.Hook(pledge, patreon.EventCreatePledge)
+	pledge := createPledge()
+	storage := NewMockstorage(ctrl)
+
+	ret, err := ToModel(pledge)
 	require.NoError(t, err)
+
+	storage.EXPECT().GetPledge(pledge.Relationships.Patron.Data.ID).Return(ret, nil)
+	storage.EXPECT().GetPledge("xyz").Return(nil, errors.New("not found"))
+
+	hook := Patreon{db: storage}
 
 	require.Equal(t, api.PodcasterFeature, hook.GetFeatureLevelByID(creatorID))
 	require.Equal(t, api.DefaultFeatures, hook.GetFeatureLevelByID("xyz"))
 	require.Equal(t, api.ExtendedPagination, hook.GetFeatureLevelByID(pledge.Relationships.Patron.Data.ID))
-}
-
-func createHandler(t *testing.T) *Patreon {
-	opts, err := pg.ParseURL("postgres://postgres:@localhost/podsync?sslmode=disable")
-	if err != nil {
-		require.NoError(t, err)
-	}
-
-	db := pg.Connect(opts)
-
-	_, err = db.Model(&model.Pledge{}).Where("1=1").Delete()
-	require.NoError(t, err)
-
-	return NewPatreon(db)
 }
 
 func createPledge() *patreon.Pledge {

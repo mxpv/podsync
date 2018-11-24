@@ -5,12 +5,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/go-pg/pg"
 	itunes "github.com/mxpv/podcast"
+	"github.com/pkg/errors"
+
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
-	"github.com/pkg/errors"
-	"github.com/ventu-io/go-shortid"
 )
 
 const (
@@ -27,11 +26,18 @@ type builder interface {
 	Build(feed *model.Feed) (podcast *itunes.Podcast, err error)
 }
 
+type storage interface {
+	SaveFeed(feed *model.Feed) error
+	GetFeed(hashID string) (*model.Feed, error)
+	GetMetadata(hashID string) (*model.Feed, error)
+	Downgrade(userID string, featureLevel int) error
+}
+
 type Service struct {
-	sid      *shortid.Shortid
-	stats    stats
-	db       *pg.DB
-	builders map[api.Provider]builder
+	generator IDGen
+	stats     stats
+	db        storage
+	builders  map[api.Provider]builder
 }
 
 func (s Service) makeFeed(req *api.CreateFeedRequest, identity *api.Identity) (*model.Feed, error) {
@@ -65,7 +71,7 @@ func (s Service) makeFeed(req *api.CreateFeedRequest, identity *api.Identity) (*
 	}
 
 	// Generate short id
-	hashId, err := s.sid.Generate()
+	hashId, err := s.generator.Generate()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate id for feed")
 	}
@@ -87,34 +93,15 @@ func (s Service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) 
 		return "", fmt.Errorf("failed to get builder for URL: %s", req.URL)
 	}
 
-	// Save to database
-	_, err = s.db.Model(feed).Insert()
-	if err != nil {
-		return "", errors.Wrap(err, "failed to save feed to database")
+	if err := s.db.SaveFeed(feed); err != nil {
+		return "", err
 	}
 
 	return feed.HashID, nil
 }
 
 func (s Service) QueryFeed(hashID string) (*model.Feed, error) {
-	lastAccess := time.Now().UTC()
-
-	feed := &model.Feed{}
-	res, err := s.db.Model(feed).
-		Set("last_access = ?", lastAccess).
-		Where("hash_id = ?", hashID).
-		Returning("*").
-		Update()
-
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to query feed: %s", hashID)
-	}
-
-	if res.RowsAffected() != 1 {
-		return nil, api.ErrNotFound
-	}
-
-	return feed, nil
+	return s.db.GetFeed(hashID)
 }
 
 func (s Service) BuildFeed(hashID string) (*itunes.Podcast, error) {
@@ -146,13 +133,7 @@ func (s Service) BuildFeed(hashID string) (*itunes.Podcast, error) {
 }
 
 func (s Service) GetMetadata(hashID string) (*api.Metadata, error) {
-	feed := &model.Feed{}
-	err := s.db.
-		Model(feed).
-		Where("hash_id = ?", hashID).
-		Column("provider", "format", "quality", "user_id").
-		Select()
-
+	feed, err := s.db.GetMetadata(hashID)
 	if err != nil {
 		return nil, err
 	}
@@ -173,64 +154,19 @@ func (s Service) GetMetadata(hashID string) (*api.Metadata, error) {
 func (s Service) Downgrade(patronID string, featureLevel int) error {
 	log.Printf("Downgrading patron '%s' to feature level %d", patronID, featureLevel)
 
-	if featureLevel > api.ExtendedFeatures {
-		return nil
+	if err := s.db.Downgrade(patronID, featureLevel); err != nil {
+		log.Printf("! downgrade failed")
+		return err
 	}
 
-	if featureLevel == api.ExtendedFeatures {
-		const maxPages = 150
-		res, err := s.db.
-			Model(&model.Feed{}).
-			Set("page_size = ?", maxPages).
-			Where("user_id = ? AND page_size > ?", patronID, maxPages).
-			Update()
-
-		if err != nil {
-			log.Printf("! failed to reduce page sizes for patron '%s': %v", patronID, err)
-			return err
-		}
-
-		res, err = s.db.
-			Model(&model.Feed{}).
-			Set("feature_level = ?", api.ExtendedFeatures).
-			Where("user_id = ?", patronID, maxPages).
-			Update()
-
-		if err != nil {
-			log.Printf("! failed to downgrade patron '%s' to feature level %d: %v", patronID, featureLevel, err)
-			return err
-		}
-
-		log.Printf("Updated %d feed(s) of user '%s' to feature level %d", res.RowsAffected(), patronID, featureLevel)
-		return nil
-	}
-
-	if featureLevel == api.DefaultFeatures {
-		res, err := s.db.
-			Model(&model.Feed{}).
-			Set("page_size = ?", 50).
-			Set("feature_level = ?", api.DefaultFeatures).
-			Set("format = ?", api.FormatVideo).
-			Set("quality = ?", api.QualityHigh).
-			Where("user_id = ?", patronID).
-			Update()
-
-		if err != nil {
-			log.Printf("! failed to downgrade patron '%s' to feature level %d: %v", patronID, featureLevel, err)
-			return err
-		}
-
-		log.Printf("Updated %d feed(s) of user '%s' to feature level %d", res.RowsAffected(), patronID, featureLevel)
-		return nil
-	}
-
-	return errors.New("unsupported downgrade type")
+	log.Printf("updated user '%s' to feature level %d", patronID, featureLevel)
+	return nil
 }
 
 type feedOption func(*Service)
 
 //noinspection GoExportedFuncWithUnexportedType
-func WithPostgres(db *pg.DB) feedOption {
+func WithStorage(db storage) feedOption {
 	return func(service *Service) {
 		service.db = db
 	}
@@ -251,14 +187,14 @@ func WithStats(m stats) feedOption {
 }
 
 func NewFeedService(opts ...feedOption) (*Service, error) {
-	sid, err := shortid.New(1, shortid.DefaultABC, uint64(time.Now().UnixNano()))
+	idGen, err := NewIDGen()
 	if err != nil {
 		return nil, err
 	}
 
 	svc := &Service{
-		sid:      sid,
-		builders: make(map[api.Provider]builder),
+		generator: idGen,
+		builders:  make(map[api.Provider]builder),
 	}
 
 	for _, fn := range opts {

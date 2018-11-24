@@ -1,3 +1,7 @@
+package storage
+
+//noinspection SpellCheckingInspection
+const pgsql = `
 BEGIN;
 
 -- Pledges
@@ -56,3 +60,5 @@ CREATE INDEX IF NOT EXISTS feeds_hash_id_idx ON feeds(hash_id);
 CREATE INDEX IF NOT EXISTS feeds_user_id_idx ON feeds(user_id);
 
 COMMIT;
+END;
+`

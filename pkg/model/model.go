@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/mxpv/podsync/pkg/api"
 	"time"
+
+	"github.com/mxpv/podsync/pkg/api"
 )
 
 type Pledge struct {

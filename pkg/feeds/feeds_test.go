@@ -5,12 +5,12 @@ package feeds
 import (
 	"testing"
 
-	"github.com/go-pg/pg"
 	"github.com/golang/mock/gomock"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
+
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
-	"github.com/stretchr/testify/require"
-	"github.com/ventu-io/go-shortid"
 )
 
 var feed = &model.Feed{
@@ -27,10 +27,15 @@ func TestService_CreateFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	db := NewMockstorage(ctrl)
+	db.EXPECT().SaveFeed(gomock.Any()).Times(1).Return(nil)
+
+	gen, _ := NewIDGen()
+
 	s := Service{
-		sid:      shortid.GetDefault(),
-		db:       createDatabase(t),
-		builders: map[api.Provider]builder{api.ProviderYoutube: nil},
+		generator: gen,
+		db:        db,
+		builders:  map[api.Provider]builder{api.ProviderYoutube: nil},
 	}
 
 	req := &api.CreateFeedRequest{
@@ -53,8 +58,10 @@ func TestService_makeFeed(t *testing.T) {
 		Format:   api.FormatAudio,
 	}
 
+	gen, _ := NewIDGen()
+
 	s := Service{
-		sid: shortid.GetDefault(),
+		generator: gen,
 	}
 
 	feed, err := s.makeFeed(req, &api.Identity{})
@@ -76,6 +83,18 @@ func TestService_makeFeed(t *testing.T) {
 	require.Equal(t, api.FormatAudio, feed.Format)
 }
 
+func TestService_QueryFeed(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	db := NewMockstorage(ctrl)
+	db.EXPECT().GetFeed("123").Times(1).Return(nil, nil)
+
+	s := Service{db: db}
+	_, err := s.QueryFeed("123")
+	require.NoError(t, err)
+}
+
 func TestService_GetFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -83,7 +102,10 @@ func TestService_GetFeed(t *testing.T) {
 	stats := NewMockstats(ctrl)
 	stats.EXPECT().Inc(MetricQueries, feed.HashID).Return(int64(10), nil)
 
-	s := Service{db: createDatabase(t), stats: stats}
+	stor := NewMockstorage(ctrl)
+	stor.EXPECT().GetFeed(feed.HashID).Times(1).Return(feed, nil)
+
+	s := Service{db: stor, stats: stats}
 
 	_, err := s.BuildFeed(feed.HashID)
 	require.NoError(t, err)
@@ -106,126 +128,41 @@ func TestService_BuildFeedQuotaCheck(t *testing.T) {
 	stats := NewMockstats(ctrl)
 	stats.EXPECT().Inc(MetricQueries, f.HashID).Return(int64(api.ExtendedPaginationQueryLimit)+1, nil)
 
-	s := Service{db: createDatabase(t), stats: stats}
+	stor := NewMockstorage(ctrl)
+	stor.EXPECT().GetFeed(f.HashID).Times(1).Return(f, nil)
 
-	err := s.db.Insert(f)
-	require.NoError(t, err)
+	s := Service{db: stor, stats: stats}
 
-	_, err = s.BuildFeed(f.HashID)
+	_, err := s.BuildFeed(f.HashID)
 	require.Equal(t, api.ErrQuotaExceeded, err)
 }
 
 func TestService_WrongID(t *testing.T) {
-	s := Service{db: createDatabase(t)}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	stor := NewMockstorage(ctrl)
+	stor.EXPECT().GetFeed(gomock.Any()).Times(1).Return(nil, errors.New("not found"))
+
+	s := Service{db: stor}
 
 	_, err := s.BuildFeed("invalid_feed_id")
 	require.Error(t, err)
-}
-
-func TestService_UpdateLastAccess(t *testing.T) {
-	s := Service{db: createDatabase(t)}
-
-	feed1, err := s.QueryFeed(feed.HashID)
-	require.NoError(t, err)
-
-	feed2, err := s.QueryFeed(feed.HashID)
-	require.NoError(t, err)
-
-	require.True(t, feed2.LastAccess.After(feed1.LastAccess))
 }
 
 func TestService_GetMetadata(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	stor := NewMockstorage(ctrl)
+	stor.EXPECT().GetMetadata(feed.HashID).Times(1).Return(feed, nil)
+
 	stats := NewMockstats(ctrl)
 	stats.EXPECT().Inc(MetricDownloads, feed.HashID).Return(int64(10), nil)
 
-	s := Service{
-		db:    createDatabase(t),
-		stats: stats,
-	}
+	s := Service{db: stor, stats: stats}
 
 	m, err := s.GetMetadata(feed.HashID)
 	require.NoError(t, err)
 	require.Equal(t, int64(10), m.Downloads)
-}
-
-func TestService_DowngradeToAnonymous(t *testing.T) {
-	s := Service{db: createDatabase(t)}
-
-	feed := &model.Feed{
-		HashID:       "123456",
-		UserID:       "123456",
-		ItemID:       "123456",
-		Provider:     api.ProviderVimeo,
-		LinkType:     api.LinkTypeGroup,
-		PageSize:     150,
-		Quality:      api.QualityLow,
-		Format:       api.FormatAudio,
-		FeatureLevel: api.ExtendedFeatures,
-	}
-
-	err := s.db.Insert(feed)
-	require.NoError(t, err)
-
-	err = s.Downgrade(feed.UserID, api.DefaultFeatures)
-	require.NoError(t, err)
-
-	downgraded := &model.Feed{FeedID: feed.FeedID}
-	err = s.db.Select(downgraded)
-	require.NoError(t, err)
-
-	require.Equal(t, 50, downgraded.PageSize)
-	require.Equal(t, api.QualityHigh, downgraded.Quality)
-	require.Equal(t, api.FormatVideo, downgraded.Format)
-	require.Equal(t, api.DefaultFeatures, downgraded.FeatureLevel)
-}
-
-func TestService_DowngradeToExtendedFeatures(t *testing.T) {
-	s := Service{db: createDatabase(t)}
-
-	feed := &model.Feed{
-		HashID:       "123456",
-		UserID:       "123456",
-		ItemID:       "123456",
-		Provider:     api.ProviderVimeo,
-		LinkType:     api.LinkTypeGroup,
-		PageSize:     500,
-		Quality:      api.QualityLow,
-		Format:       api.FormatAudio,
-		FeatureLevel: api.ExtendedFeatures,
-	}
-
-	err := s.db.Insert(feed)
-	require.NoError(t, err)
-
-	err = s.Downgrade(feed.UserID, api.ExtendedFeatures)
-	require.NoError(t, err)
-
-	downgraded := &model.Feed{FeedID: feed.FeedID}
-	err = s.db.Select(downgraded)
-	require.NoError(t, err)
-
-	require.Equal(t, 150, downgraded.PageSize)
-	require.Equal(t, feed.Quality, downgraded.Quality)
-	require.Equal(t, feed.Format, downgraded.Format)
-	require.Equal(t, api.ExtendedFeatures, downgraded.FeatureLevel)
-}
-
-func createDatabase(t *testing.T) *pg.DB {
-	opts, err := pg.ParseURL("postgres://postgres:@localhost/podsync?sslmode=disable")
-	if err != nil {
-		require.NoError(t, err)
-	}
-
-	db := pg.Connect(opts)
-
-	_, err = db.Model(&model.Feed{}).Where("1=1").Delete()
-	require.NoError(t, err)
-
-	err = db.Insert(feed)
-	require.NoError(t, err)
-
-	return db
 }

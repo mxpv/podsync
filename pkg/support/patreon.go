@@ -5,22 +5,29 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/go-pg/pg"
 	"github.com/mxpv/patreon-go"
+	"github.com/pkg/errors"
+
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
-	"github.com/pkg/errors"
 )
 
 const (
 	creatorID = "2822191"
 )
 
-type Patreon struct {
-	db *pg.DB
+type storage interface {
+	AddPledge(pledge *model.Pledge) error
+	UpdatePledge(patronID string, pledge *model.Pledge) error
+	DeletePledge(pledge *model.Pledge) error
+	GetPledge(patronID string) (*model.Pledge, error)
 }
 
-func (h Patreon) toModel(pledge *patreon.Pledge) (*model.Pledge, error) {
+type Patreon struct {
+	db storage
+}
+
+func ToModel(pledge *patreon.Pledge) (*model.Pledge, error) {
 	pledgeID, err := strconv.ParseInt(pledge.ID, 10, 64)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse pledge id: %s", pledge.ID)
@@ -63,53 +70,32 @@ func (h Patreon) toModel(pledge *patreon.Pledge) (*model.Pledge, error) {
 }
 
 func (h Patreon) Hook(pledge *patreon.Pledge, event string) error {
-	obj, err := h.toModel(pledge)
+	obj, err := ToModel(pledge)
 	if err != nil {
 		return err
 	}
 
 	switch event {
 	case patreon.EventCreatePledge:
-		return h.db.Insert(obj)
+		return h.db.AddPledge(obj)
 	case patreon.EventUpdatePledge:
 		// Update comes with different PledgeID from Patreon, so do update by user ID
 		patronID := pledge.Relationships.Patron.Data.ID
 
-		updateColumns := []string{
-			"declined_since",
-			"amount_cents",
-			"total_historical_amount_cents",
-			"outstanding_payment_amount_cents",
-			"is_paused",
-		}
-
-		res, err := h.db.Model(obj).Column(updateColumns...).Where("patron_id = ?patron_id").Update()
-		if err != nil {
-			log.Printf("! failed to update pledge %s for user %s: %v", pledge.ID, patronID, err)
+		if err := h.db.UpdatePledge(patronID, obj); err != nil {
 			return err
-		}
-
-		if res.RowsAffected() != 1 {
-			log.Printf("! unexpected number of updated rows: %d for user %s", res.RowsAffected(), patronID)
-			return errors.New("unexpected update result")
 		}
 
 		return nil
 	case patreon.EventDeletePledge:
-		err := h.db.Delete(obj)
-		if err == pg.ErrNoRows {
-			return nil
-		}
-
-		return err
+		return h.db.DeletePledge(obj)
 	default:
 		return fmt.Errorf("unknown event: %s", event)
 	}
 }
 
 func (h Patreon) FindPledge(patronID string) (*model.Pledge, error) {
-	p := &model.Pledge{}
-	return p, h.db.Model(p).Where("patron_id = ?", patronID).Limit(1).Select()
+	return h.db.GetPledge(patronID)
 }
 
 func (h Patreon) GetFeatureLevelByID(patronID string) (level int) {
@@ -152,6 +138,6 @@ func (h Patreon) GetFeatureLevelFromAmount(amount int) int {
 	return api.DefaultFeatures
 }
 
-func NewPatreon(db *pg.DB) *Patreon {
+func NewPatreon(db storage) *Patreon {
 	return &Patreon{db: db}
 }
