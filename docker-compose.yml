@@ -31,7 +31,7 @@ services:
     environment:
       - METADATA_URL=http://app:5001/api/metadata/{feed_id}
   redis:
-    image: redis:4
+    image: redis:5.0.1
     container_name: redis
     command: redis-server --appendonly no --save 900 1 --save 300 10 --save 60 10000
     restart: always
