@@ -1,4 +1,4 @@
-﻿version: '3'
+﻿version: '2.1'
 
 services:
   app:
@@ -39,6 +39,8 @@ services:
       - /data/redis:/data
     sysctls:
       net.core.somaxconn: 1024
+    mem_limit: 268435456 # 256MB
+    oom_kill_disable: true
   nginx:
     image: umputun/nginx-le:latest
     container_name: nginx
