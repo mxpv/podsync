@@ -176,7 +176,12 @@ func (p Postgres) DeletePledge(pledge *model.Pledge) error {
 
 func (p Postgres) GetPledge(patronID string) (*model.Pledge, error) {
 	pledge := &model.Pledge{}
-	return pledge, p.db.Model(pledge).Where("patron_id = ?", patronID).Limit(1).Select()
+	err := p.db.Model(pledge).Where("patron_id = ?", patronID).Limit(1).Select()
+	if err != nil {
+		return nil, err
+	}
+
+	return pledge, nil
 }
 
 func (p Postgres) Close() error {

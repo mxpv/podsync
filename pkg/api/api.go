@@ -54,9 +54,22 @@ type Metadata struct {
 }
 
 const (
+	// Page size: 50
+	// Format: video
+	// Quality: high
 	DefaultFeatures = iota
+
+	// Max page size: 150
+	// Format: any
+	// Quality: any
 	ExtendedFeatures
+
+	// Max page size: 600
+	// Format: any
+	// Quality: any
 	ExtendedPagination
+
+	// Unlimited
 	PodcasterFeature
 )
 

@@ -5,6 +5,7 @@ require (
 	github.com/BrianHicks/finch v0.0.0-20140409222414-419bd73c29ec
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/GoogleCloudPlatform/cloudsql-proxy v0.0.0-20170929212804-61590edac4c7
+	github.com/aws/aws-sdk-go v1.15.81
 	github.com/boj/redistore v0.0.0-20160128113310-fc113767cd6b // indirect
 	github.com/bradfitz/gomemcache v0.0.0-20180710155616-bc664df96737 // indirect
 	github.com/bradleypeabody/gorilla-sessions-memcache v0.0.0-20180621172731-4e5d6d543851 // indirect
@@ -39,7 +40,6 @@ require (
 	github.com/spf13/jwalterweatherman v0.0.0-20180109140146-7c0cea34c8ec // indirect
 	github.com/spf13/pflag v1.0.1 // indirect
 	github.com/spf13/viper v1.0.2
-	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/stretchr/testify v1.2.2
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // indirect
 	github.com/ugorji/go v1.1.1 // indirect
