@@ -14,6 +14,8 @@ import (
 
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -88,6 +90,11 @@ func NewDynamo(region, endpoint string) (Dynamo, error) {
 }
 
 func (d Dynamo) SaveFeed(feed *model.Feed) error {
+	logger := log.WithFields(log.Fields{
+		"hash_id": feed.HashID,
+		"user_id": feed.UserID,
+	})
+
 	now := time.Now().UTC()
 
 	feed.LastAccess = now
@@ -95,6 +102,7 @@ func (d Dynamo) SaveFeed(feed *model.Feed) error {
 
 	item, err := attr.MarshalMap(feed)
 	if err != nil {
+		logger.WithError(err).Error("failed to marshal feed model")
 		return err
 	}
 
@@ -104,11 +112,19 @@ func (d Dynamo) SaveFeed(feed *model.Feed) error {
 		ConditionExpression: aws.String("attribute_not_exists(HashID)"),
 	}
 
-	_, err = d.dynamo.PutItem(input)
-	return err
+	if _, err := d.dynamo.PutItem(input); err != nil {
+		logger.WithError(err).Error("failed to save feed item")
+		return err
+	}
+
+	return nil
 }
 
 func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
+	logger := log.WithField("hash_id", hashID)
+
+	logger.Debug("getting feed")
+
 	getInput := &dynamodb.GetItemInput{
 		TableName: feedsTableName,
 		Key: map[string]*dynamodb.AttributeValue{
@@ -118,6 +134,7 @@ func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
 
 	getOutput, err := d.dynamo.GetItem(getInput)
 	if err != nil {
+		logger.WithError(err).Error("failed to get feed item")
 		return nil, err
 	}
 
@@ -127,20 +144,26 @@ func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
 
 	var feed model.Feed
 	if err := attr.UnmarshalMap(getOutput.Item, &feed); err != nil {
+		logger.WithError(err).Error("failed to unmarshal feed item")
 		return nil, err
 	}
 
 	// Check if we need to update LastAccess field (no more than once per hour)
 	now := time.Now().UTC()
 	if feed.LastAccess.Add(feedLastAccessUpdatePeriod).Before(now) {
+		logger.Debugf("updating feed's last access timestamp")
+
 		// Set LastAccess field to now
 		// Set ExpirationTime field to now + feedTimeToLive
-		builder := expr.
-			Set(expr.Name("LastAccess"), expr.Value(now)).
-			Set(expr.Name("ExpirationTime"), expr.Value(now.Add(feedTimeToLive)))
+		updateExpression, err := expr.
+			NewBuilder().
+			WithUpdate(expr.
+				Set(expr.Name("LastAccess"), expr.Value(now)).
+				Set(expr.Name("ExpirationTime"), expr.Value(now.Add(feedTimeToLive)))).
+			Build()
 
-		updateExpression, err := expr.NewBuilder().WithUpdate(builder).Build()
 		if err != nil {
+			logger.WithError(err).Error("failed to build update expression")
 			return nil, err
 		}
 
@@ -152,6 +175,7 @@ func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
 
 		_, err = d.dynamo.UpdateItem(updateInput)
 		if err != nil {
+			logger.WithError(err).Error("failed to update feed item")
 			return nil, err
 		}
 
@@ -162,6 +186,10 @@ func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
 }
 
 func (d Dynamo) GetMetadata(hashID string) (*model.Feed, error) {
+	logger := log.WithField("hash_id", hashID)
+
+	logger.Debug("getting metadata")
+
 	projectionExpression, err := expr.
 		NewBuilder().
 		WithProjection(
@@ -174,18 +202,23 @@ func (d Dynamo) GetMetadata(hashID string) (*model.Feed, error) {
 				expr.Name("Quality"))).
 		Build()
 
+	if err != nil {
+		logger.WithError(err).Error("failed to build projection expression")
+		return nil, err
+	}
 
 	input := &dynamodb.GetItemInput{
 		TableName: feedsTableName,
 		Key: map[string]*dynamodb.AttributeValue{
 			"HashID": {S: aws.String(hashID)},
 		},
-		ProjectionExpression: projectionExpression.Projection(),
+		ProjectionExpression:     projectionExpression.Projection(),
 		ExpressionAttributeNames: projectionExpression.Names(),
 	}
 
 	output, err := d.dynamo.GetItem(input)
 	if err != nil {
+		logger.WithError(err).Error("failed to get metadata item")
 		return nil, err
 	}
 
@@ -195,6 +228,7 @@ func (d Dynamo) GetMetadata(hashID string) (*model.Feed, error) {
 
 	var feed model.Feed
 	if err := attr.UnmarshalMap(output.Item, &feed); err != nil {
+		logger.WithError(err).Error("failed to unmarshal metadata item")
 		return nil, err
 	}
 
@@ -202,6 +236,13 @@ func (d Dynamo) GetMetadata(hashID string) (*model.Feed, error) {
 }
 
 func (d Dynamo) Downgrade(userID string, featureLevel int) error {
+	logger := log.WithFields(log.Fields{
+		"user_id":       userID,
+		"feature_level": featureLevel,
+	})
+
+	logger.Debug("downgrading user's feeds")
+
 	if featureLevel > api.ExtendedFeatures {
 		// Max page size: 600
 		// Format: any
@@ -215,10 +256,13 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 		Build()
 
 	if err != nil {
+		logger.WithError(err).Error("failed to build key condition")
 		return err
 	}
 
 	// Query all feed's hash ids for specified
+
+	logger.Debug("querying hash ids")
 
 	queryInput := &dynamodb.QueryInput{
 		TableName:                 feedsTableName,
@@ -241,7 +285,13 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 	})
 
 	if err != nil {
+		logger.WithError(err).Error("query failed")
 		return err
+	}
+
+	logger.Debugf("got %d key(s)", len(keys))
+	if len(keys) == 0 {
+		return nil
 	}
 
 	if featureLevel == api.ExtendedFeatures {
@@ -258,6 +308,7 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 			Build()
 
 		if err != nil {
+			logger.WithError(err).Error("failed to build update expression")
 			return err
 		}
 
@@ -273,6 +324,7 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 
 			_, err := d.dynamo.UpdateItem(input)
 			if err != nil {
+				logger.WithError(err).Error("failed to update item")
 				return err
 			}
 		}
@@ -305,17 +357,25 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 
 			_, err := d.dynamo.UpdateItem(input)
 			if err != nil {
+				logger.WithError(err).Error("failed to update item")
 				return err
 			}
 		}
 	}
 
+	logger.Info("successfully downgraded user's feeds")
 	return nil
 }
 
 func (d Dynamo) AddPledge(pledge *model.Pledge) error {
+	logger := log.WithFields(log.Fields{
+		"pledge_id": pledge.PledgeID,
+		"user_id":   pledge.PatronID,
+	})
+
 	item, err := attr.MarshalMap(pledge)
 	if err != nil {
+		logger.WithError(err).Error("failed to marshal pledge")
 		return err
 	}
 
@@ -325,11 +385,22 @@ func (d Dynamo) AddPledge(pledge *model.Pledge) error {
 		ConditionExpression: aws.String("attribute_not_exists(PatronID)"),
 	}
 
-	_, err = d.dynamo.PutItem(input)
-	return err
+	if _, err := d.dynamo.PutItem(input); err != nil {
+		logger.WithError(err).Error("failed to put item")
+		return err
+	}
+
+	return nil
 }
 
 func (d Dynamo) UpdatePledge(patronID string, pledge *model.Pledge) error {
+	logger := log.WithFields(log.Fields{
+		"pledge_id": pledge.PledgeID,
+		"user_id":   patronID,
+	})
+
+	logger.Infof("updating pledge (new amount: %d)", pledge.AmountCents)
+
 	builder := expr.
 		Set(expr.Name("DeclinedSince"), expr.Value(pledge.DeclinedSince)).
 		Set(expr.Name("AmountCents"), expr.Value(pledge.AmountCents)).
@@ -339,6 +410,7 @@ func (d Dynamo) UpdatePledge(patronID string, pledge *model.Pledge) error {
 
 	updateExpression, err := expr.NewBuilder().WithUpdate(builder).Build()
 	if err != nil {
+		logger.WithError(err).Error("failed to build update expression")
 		return err
 	}
 
@@ -352,8 +424,8 @@ func (d Dynamo) UpdatePledge(patronID string, pledge *model.Pledge) error {
 		ExpressionAttributeValues: updateExpression.Values(),
 	}
 
-	_, err = d.dynamo.UpdateItem(input)
-	if err != nil {
+	if _, err := d.dynamo.UpdateItem(input); err != nil {
+		logger.WithError(err).Error("failed to update pledge")
 		return err
 	}
 
@@ -361,7 +433,13 @@ func (d Dynamo) UpdatePledge(patronID string, pledge *model.Pledge) error {
 }
 
 func (d Dynamo) DeletePledge(pledge *model.Pledge) error {
+	logger := log.WithFields(log.Fields{
+		"pledge_id": pledge.PledgeID,
+		"user_id":   pledge.PatronID,
+	})
+
 	pk := strconv.FormatInt(pledge.PatronID, 10)
+	logger.Infof("deleting pledge %s", pk)
 
 	input := &dynamodb.DeleteItemInput{
 		TableName: pledgesTableName,
@@ -370,11 +448,19 @@ func (d Dynamo) DeletePledge(pledge *model.Pledge) error {
 		},
 	}
 
-	_, err := d.dynamo.DeleteItem(input)
-	return err
+	if _, err := d.dynamo.DeleteItem(input); err != nil {
+		logger.WithError(err).Error("failed to delete pledge")
+		return err
+	}
+
+	return nil
 }
 
 func (d Dynamo) GetPledge(patronID string) (*model.Pledge, error) {
+	logger := log.WithField("user_id", patronID)
+
+	logger.Debug("getting pledge")
+
 	input := &dynamodb.GetItemInput{
 		TableName: pledgesTableName,
 		Key: map[string]*dynamodb.AttributeValue{
@@ -384,6 +470,7 @@ func (d Dynamo) GetPledge(patronID string) (*model.Pledge, error) {
 
 	output, err := d.dynamo.GetItem(input)
 	if err != nil {
+		logger.WithError(err).Error("failed to get pledge item")
 		return nil, err
 	}
 
@@ -393,6 +480,7 @@ func (d Dynamo) GetPledge(patronID string) (*model.Pledge, error) {
 
 	var pledge model.Pledge
 	if err := attr.UnmarshalMap(output.Item, &pledge); err != nil {
+		logger.WithError(err).Error("failed to unmarshal pledge item")
 		return nil, err
 	}
 

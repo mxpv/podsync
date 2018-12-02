@@ -9,7 +9,6 @@ require (
 	github.com/boj/redistore v0.0.0-20160128113310-fc113767cd6b // indirect
 	github.com/bradfitz/gomemcache v0.0.0-20180710155616-bc664df96737 // indirect
 	github.com/bradleypeabody/gorilla-sessions-memcache v0.0.0-20180621172731-4e5d6d543851 // indirect
-	github.com/davecgh/go-spew v1.1.0 // indirect
 	github.com/eduncan911/podcast v1.3.0 // indirect
 	github.com/garyburd/redigo v1.6.0 // indirect
 	github.com/gin-contrib/sessions v0.0.0-20170731012558-a71ea9167c61
@@ -33,8 +32,8 @@ require (
 	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/pelletier/go-toml v1.2.0 // indirect
 	github.com/pkg/errors v0.8.0
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/silentsokolov/go-vimeo v1.2.0
+	github.com/sirupsen/logrus v1.2.0
 	github.com/spf13/afero v1.1.1 // indirect
 	github.com/spf13/cast v1.2.0 // indirect
 	github.com/spf13/jwalterweatherman v0.0.0-20180109140146-7c0cea34c8ec // indirect

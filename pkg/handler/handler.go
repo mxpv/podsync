@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"path"
 	"strings"
@@ -12,10 +11,13 @@ import (
 	"github.com/gin-gonic/gin"
 	patreon "github.com/mxpv/patreon-go"
 	itunes "github.com/mxpv/podcast"
+	"golang.org/x/oauth2"
+
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/session"
-	"golang.org/x/oauth2"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -146,25 +148,25 @@ func (h handler) create(c *gin.Context) {
 }
 
 func (h handler) getFeed(c *gin.Context) {
-	hashId := c.Request.URL.Path[1:]
-	if hashId == "" || len(hashId) > maxHashIDLength {
+	hashID := c.Request.URL.Path[1:]
+	if hashID == "" || len(hashID) > maxHashIDLength {
 		c.String(http.StatusBadRequest, "invalid feed id")
 		return
 	}
 
-	if strings.HasSuffix(hashId, ".xml") {
-		hashId = strings.TrimSuffix(hashId, ".xml")
+	if strings.HasSuffix(hashID, ".xml") {
+		hashID = strings.TrimSuffix(hashID, ".xml")
 	}
 
-	podcast, err := h.feed.BuildFeed(hashId)
+	podcast, err := h.feed.BuildFeed(hashID)
 	if err != nil {
+		log.WithError(err).WithField("hash_id", hashID).Error("failed to build feed")
+
 		code := http.StatusInternalServerError
 		if err == api.ErrNotFound {
 			code = http.StatusNotFound
 		} else if err == api.ErrQuotaExceeded {
 			code = http.StatusTooManyRequests
-		} else {
-			log.Printf("server error (hash id: %s): %v", hashId, err)
 		}
 
 		c.String(code, err.Error())
@@ -194,7 +196,7 @@ func (h handler) webhook(c *gin.Context) {
 	// Read body to byte array in order to verify signature first
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		log.Printf("failed to read webhook body: %v", err)
+		log.WithError(err).Error("failed to read webhook request")
 		c.Status(http.StatusBadRequest)
 		return
 	}
@@ -203,13 +205,13 @@ func (h handler) webhook(c *gin.Context) {
 	signature := c.GetHeader(patreon.HeaderSignature)
 	valid, err := patreon.VerifySignature(body, h.cfg.PatreonWebhooksSecret, signature)
 	if err != nil {
-		log.Printf("failed to verify signature: %v", err)
+		log.WithError(err).Error("failed to verify signature")
 		c.Status(http.StatusBadRequest)
 		return
 	}
 
 	if !valid {
-		log.Printf("! webhooks signatures are not equal (header: %s)", signature)
+		log.Errorf("webhooks signatures are not equal (header: %s)", signature)
 		c.Status(http.StatusUnauthorized)
 		return
 	}
@@ -217,24 +219,24 @@ func (h handler) webhook(c *gin.Context) {
 	// Get event name
 	eventName := c.GetHeader(patreon.HeaderEventType)
 	if eventName == "" {
-		log.Print("event name header is empty")
+		log.Error("event name header is empty")
 		c.Status(http.StatusBadRequest)
 		return
 	}
 
 	pledge := &patreon.WebhookPledge{}
 	if err := json.Unmarshal(body, pledge); err != nil {
+		log.WithError(err).Error("failed to unmarshal pledge")
 		c.JSON(badRequest(err))
 		return
 	}
 
 	if err := h.patreon.Hook(&pledge.Data, eventName); err != nil {
-		log.Printf(
-			"failed to process patreon event %s (event: %s, user: %s): %v",
-			pledge.Data.ID,
-			eventName,
-			pledge.Data.Relationships.Patron.Data.ID,
-			err)
+		log.WithError(err).WithFields(log.Fields{
+			"user_id":      pledge.Data.Relationships.Patron.Data.ID,
+			"pledge_id":    pledge.Data.ID,
+			"pledge_event": eventName,
+		}).Error("failed to process patreon event")
 
 		// Don't return any errors to Patreon, otherwise subsequent notifications will be blocked.
 		return
@@ -245,17 +247,15 @@ func (h handler) webhook(c *gin.Context) {
 	if eventName == patreon.EventUpdatePledge {
 		newLevel := h.patreon.GetFeatureLevelFromAmount(pledge.Data.Attributes.AmountCents)
 		if err := h.feed.Downgrade(patronID, newLevel); err != nil {
-			log.Printf("downgrade failed: %v", err)
 			return
 		}
 	} else if eventName == patreon.EventDeletePledge {
 		if err := h.feed.Downgrade(patronID, api.DefaultFeatures); err != nil {
-			log.Printf("downgrade failed: %v", err)
 			return
 		}
 	}
 
-	log.Printf("sucessfully processed patreon event %s (%s)", pledge.Data.ID, eventName)
+	log.Infof("sucessfully processed patreon event %s (%s)", pledge.Data.ID, eventName)
 }
 
 func New(feed feedService, support patreonService, cfg *config.AppConfig) http.Handler {

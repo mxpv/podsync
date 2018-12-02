@@ -2,7 +2,6 @@ package support
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/mxpv/patreon-go"
@@ -10,6 +9,8 @@ import (
 
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -70,8 +71,15 @@ func ToModel(pledge *patreon.Pledge) (*model.Pledge, error) {
 }
 
 func (h Patreon) Hook(pledge *patreon.Pledge, event string) error {
+	logger := log.WithFields(log.Fields{
+		"module":       "hook",
+		"pledge_id":    pledge.ID,
+		"pledge_event": event,
+	})
+
 	obj, err := ToModel(pledge)
 	if err != nil {
+		logger.WithError(err).Error("failed to convert pledge to model")
 		return err
 	}
 
@@ -81,7 +89,6 @@ func (h Patreon) Hook(pledge *patreon.Pledge, event string) error {
 	case patreon.EventUpdatePledge:
 		// Update comes with different PledgeID from Patreon, so do update by user ID
 		patronID := pledge.Relationships.Patron.Data.ID
-
 		if err := h.db.UpdatePledge(patronID, obj); err != nil {
 			return err
 		}
@@ -112,7 +119,7 @@ func (h Patreon) GetFeatureLevelByID(patronID string) (level int) {
 
 	pledge, err := h.FindPledge(patronID)
 	if err != nil {
-		log.Printf("! can't find pledge for user %s: %v", patronID, err)
+		log.WithError(err).WithField("user_id", patronID).Error("can't find pledge for user")
 		return
 	}
 

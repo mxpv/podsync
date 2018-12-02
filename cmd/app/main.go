@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,6 +16,8 @@ import (
 	"github.com/mxpv/podsync/pkg/stats"
 	"github.com/mxpv/podsync/pkg/storage"
 	"github.com/mxpv/podsync/pkg/support"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -30,17 +31,17 @@ func main() {
 
 	cfg, err := config.ReadConfiguration()
 	if err != nil {
-		panic(err)
+		log.WithError(err).Fatal("failed to read configuration")
 	}
 
 	database, err := storage.NewPG(cfg.PostgresConnectionURL, true)
 	if err != nil {
-		panic(err)
+		log.WithError(err).Fatal("failed to create pg")
 	}
 
 	statistics, err := stats.NewRedisStats(cfg.RedisURL)
 	if err != nil {
-		panic(err)
+		log.WithError(err).Fatal("failed to create redis")
 	}
 
 	patreon := support.NewPatreon(database)
@@ -49,12 +50,12 @@ func main() {
 
 	youtube, err := builders.NewYouTubeBuilder(cfg.YouTubeApiKey)
 	if err != nil {
-		panic(err)
+		log.WithError(err).Fatal("failed to create YouTube builder")
 	}
 
 	vimeo, err := builders.NewVimeoBuilder(ctx, cfg.VimeoApiKey)
 	if err != nil {
-		panic(err)
+		log.WithError(err).Fatal("failed to create Vimeo builder")
 	}
 
 	feed, err := feeds.NewFeedService(
@@ -74,19 +75,27 @@ func main() {
 	}
 
 	go func() {
-		log.Println("running listener")
+		log.Infof("running listener at %s", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil {
-			log.Fatal(err)
+			log.WithError(err).Error("failed to listen")
 		}
 	}()
 
 	<-stop
 
-	log.Printf("shutting down server")
+	log.Info("shutting down server")
 
-	_ = srv.Shutdown(ctx)
-	_ = database.Close()
-	_ = statistics.Close()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.WithError(err).Error("server shutdown failed")
+	}
 
-	log.Printf("server gracefully stopped")
+	if err := database.Close(); err != nil {
+		log.WithError(err).Error("failed to close database")
+	}
+
+	if err := statistics.Close(); err != nil {
+		log.WithError(err).Error("failed to close stats storage")
+	}
+
+	log.Info("server gracefully stopped")
 }
