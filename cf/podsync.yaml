@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  Prefix:
+    Type: String
+    Default: "Prod"
+    MinLength: 1
+    Description: "Prefix to be added to all resources"
+Outputs:
+  AccessKey:
+    Description: "DO user access key"
+    Value: !Ref DOUserKey
+  AccessSecret:
+    Description: "DO user secret key"
+    Value: !GetAtt DOUserKey.SecretAccessKey
+Resources:
+  FeedsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${Prefix}_Feeds"
+      BillingMode: "PROVISIONED"
+      AttributeDefinitions:
+        - AttributeName: "HashID"
+          AttributeType: "S"
+        - AttributeName: "UserID"
+          AttributeType: "S"
+        - AttributeName: "CreatedAt"
+          AttributeType: "N"
+      KeySchema:
+        - AttributeName: "HashID"
+          KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: "UserID-HashID-Index"
+          KeySchema:
+            - AttributeName: "UserID"
+              KeyType: "HASH"
+            - AttributeName: "CreatedAt"
+              KeyType: "RANGE"
+          Projection:
+            ProjectionType: "KEYS_ONLY"
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+      ProvisionedThroughput:
+        ReadCapacityUnits: 10
+        WriteCapacityUnits: 5
+      TimeToLiveSpecification:
+        AttributeName: "ExpirationTime"
+        Enabled: true
+  PledgesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${Prefix}_Pledges"
+      BillingMode: "PROVISIONED"
+      AttributeDefinitions:
+        - AttributeName: "PatronID"
+          AttributeType: "N"
+      KeySchema:
+        - AttributeName: "PatronID"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+  DOUser:
+    Type: AWS::IAM::User
+    DependsOn:
+      - FeedsTable
+      - PledgesTable
+    Properties:
+      Policies:
+        - PolicyName: "DynamoAccess"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dynamodb:ListTables"
+                  - "dynamodb:GetItem"
+                  - "dynamodb:Query"
+                  - "dynamodb:PutItem"
+                  - "dynamodb:UpdateItem"
+                Resource:
+                  - !GetAtt FeedsTable.Arn
+                  - !GetAtt PledgesTable.Arn
+  DOUserKey:
+    Type: AWS::IAM::AccessKey
+    DependsOn: DOUser
+    Properties:
+      UserName: !Ref DOUser

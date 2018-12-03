@@ -47,11 +47,11 @@ Pledges:
 Feeds:
 	Table name:         Feeds
 	Primary key:        HashID (String)
+	RCU:                10
+	WCU:                5
 	Secondary index:
 		Primary key:    UserID (String)
 		Sort key:       HashID (String)
-		RCU:            10
-		WCU:            5
 		Index name:     UserID-HashID-Index
 		Projected attr: Keys only
 		RCU/WCU:        1/1
