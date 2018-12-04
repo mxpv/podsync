@@ -19,8 +19,6 @@ import (
 )
 
 const (
-	defaultRegion = "us-east-1"
-
 	pingTimeout       = 5 * time.Second
 	pledgesPrimaryKey = "PatronID"
 	feedsPrimaryKey   = "HashID"
@@ -61,16 +59,8 @@ type Dynamo struct {
 	dynamo *dynamodb.DynamoDB
 }
 
-func NewDynamo(region, endpoint string) (Dynamo, error) {
-	if region == "" {
-		region = defaultRegion
-	}
-
-	sess, err := session.NewSession(&aws.Config{
-		Region:   aws.String(region),
-		Endpoint: aws.String(endpoint),
-	})
-
+func NewDynamo(cfg ...*aws.Config) (Dynamo, error) {
+	sess, err := session.NewSession(cfg...)
 	if err != nil {
 		return Dynamo{}, err
 	}

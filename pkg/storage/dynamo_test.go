@@ -15,7 +15,10 @@ func TestDynamo(t *testing.T) {
 // docker run -it --rm -p 8000:8000 amazon/dynamodb-local
 // noinspection ALL
 func createDynamo(t *testing.T) storage {
-	d, err := NewDynamo("", "http://localhost:8000/")
+	d, err := NewDynamo(&aws.Config{
+		Region:   aws.String("us-east-1"),
+		Endpoint: aws.String("http://localhost:8000/"),
+	})
 	require.NoError(t, err)
 
 	d.dynamo.DeleteTable(&dynamodb.DeleteTableInput{TableName: pledgesTableName})
