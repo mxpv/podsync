@@ -1,10 +1,4 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Parameters:
-  Prefix:
-    Type: String
-    Default: "Prod"
-    MinLength: 1
-    Description: "Prefix to be added to all resources"
 Outputs:
   AccessKey:
     Description: "DO user access key"
@@ -16,7 +10,7 @@ Resources:
   FeedsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub "${Prefix}_Feeds"
+      TableName: !Sub "${AWS::StackName}_Feeds"
       BillingMode: "PROVISIONED"
       AttributeDefinitions:
         - AttributeName: "HashID"
@@ -49,7 +43,7 @@ Resources:
   PledgesTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub "${Prefix}_Pledges"
+      TableName: !Sub "${AWS::StackName}_Pledges"
       BillingMode: "PROVISIONED"
       AttributeDefinitions:
         - AttributeName: "PatronID"
