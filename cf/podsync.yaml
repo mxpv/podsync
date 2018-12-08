@@ -73,7 +73,6 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - "dynamodb:ListTables"
                   - "dynamodb:GetItem"
                   - "dynamodb:Query"
                   - "dynamodb:PutItem"
@@ -81,6 +80,11 @@ Resources:
                 Resource:
                   - !GetAtt FeedsTable.Arn
                   - !GetAtt PledgesTable.Arn
+              - Effect: Allow
+                Action:
+                  - "dynamodb:ListTables"
+                Resource:
+                  - "*"
   DOUserKey:
     Type: AWS::IAM::AccessKey
     DependsOn: DOUser
