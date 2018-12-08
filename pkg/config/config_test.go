@@ -20,6 +20,8 @@ patreonRedirectUrl: "7"
 assetsPath: "8"
 templatesPath: "9"
 patreonWebhooksSecret: "10"
+dynamoFeedsTableName: "11"
+dynamoPledgesTableName: "12"
 `
 
 func TestReadYaml(t *testing.T) {
@@ -42,6 +44,8 @@ func TestReadYaml(t *testing.T) {
 	require.Equal(t, "8", cfg.AssetsPath)
 	require.Equal(t, "9", cfg.TemplatesPath)
 	require.Equal(t, "10", cfg.PatreonWebhooksSecret)
+	require.Equal(t, "11", cfg.DynamoFeedsTableName)
+	require.Equal(t, "12", cfg.DynamoPledgesTableName)
 }
 
 func TestReadEnv(t *testing.T) {
@@ -58,6 +62,8 @@ func TestReadEnv(t *testing.T) {
 	os.Setenv("ASSETS_PATH", "88")
 	os.Setenv("TEMPLATES_PATH", "99")
 	os.Setenv("PATREON_WEBHOOKS_SECRET", "1010")
+	os.Setenv("DYNAMO_FEEDS_TABLE_NAME", "1111")
+	os.Setenv("DYNAMO_PLEDGES_TABLE_NAME", "1212")
 
 	cfg, err := ReadConfiguration()
 	require.NoError(t, err)
@@ -72,4 +78,6 @@ func TestReadEnv(t *testing.T) {
 	require.Equal(t, "88", cfg.AssetsPath)
 	require.Equal(t, "99", cfg.TemplatesPath)
 	require.Equal(t, "1010", cfg.PatreonWebhooksSecret)
+	require.Equal(t, "1111", cfg.DynamoFeedsTableName)
+	require.Equal(t, "1212", cfg.DynamoPledgesTableName)
 }

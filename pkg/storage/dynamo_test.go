@@ -21,12 +21,12 @@ func createDynamo(t *testing.T) storage {
 	})
 	require.NoError(t, err)
 
-	d.dynamo.DeleteTable(&dynamodb.DeleteTableInput{TableName: pledgesTableName})
-	d.dynamo.DeleteTable(&dynamodb.DeleteTableInput{TableName: feedsTableName})
+	d.dynamo.DeleteTable(&dynamodb.DeleteTableInput{TableName: d.PledgesTableName})
+	d.dynamo.DeleteTable(&dynamodb.DeleteTableInput{TableName: d.FeedsTableName})
 
 	// Create Pledges table
 	_, err = d.dynamo.CreateTable(&dynamodb.CreateTableInput{
-		TableName: pledgesTableName,
+		TableName: d.PledgesTableName,
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
 				AttributeName: aws.String(pledgesPrimaryKey),
@@ -49,7 +49,7 @@ func createDynamo(t *testing.T) storage {
 
 	// Create Feeds table
 	_, err = d.dynamo.CreateTable(&dynamodb.CreateTableInput{
-		TableName: feedsTableName,
+		TableName: d.FeedsTableName,
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
 				AttributeName: aws.String(feedsPrimaryKey),
@@ -100,14 +100,14 @@ func createDynamo(t *testing.T) storage {
 
 	require.NoError(t, err)
 
-	err = d.dynamo.WaitUntilTableExists(&dynamodb.DescribeTableInput{TableName: pledgesTableName})
+	err = d.dynamo.WaitUntilTableExists(&dynamodb.DescribeTableInput{TableName: d.PledgesTableName})
 	require.NoError(t, err)
 
-	err = d.dynamo.WaitUntilTableExists(&dynamodb.DescribeTableInput{TableName: feedsTableName})
+	err = d.dynamo.WaitUntilTableExists(&dynamodb.DescribeTableInput{TableName: d.FeedsTableName})
 	require.NoError(t, err)
 
 	_, err = d.dynamo.UpdateTimeToLive(&dynamodb.UpdateTimeToLiveInput{
-		TableName: feedsTableName,
+		TableName: d.FeedsTableName,
 		TimeToLiveSpecification: &dynamodb.TimeToLiveSpecification{
 			AttributeName: feedTimeToLiveField,
 			Enabled:       aws.Bool(true),

@@ -29,8 +29,6 @@ const (
 )
 
 var (
-	pledgesTableName       = aws.String("Pledges")
-	feedsTableName         = aws.String("Feeds")
 	feedTimeToLiveField    = aws.String("ExpirationTime")
 	feedDowngradeIndexName = aws.String("UserID-HashID-Index")
 )
@@ -56,7 +54,9 @@ Feeds:
 	TTL attr:           ExpirationTime
 */
 type Dynamo struct {
-	dynamo *dynamodb.DynamoDB
+	dynamo           *dynamodb.DynamoDB
+	FeedsTableName   *string
+	PledgesTableName *string
 }
 
 func NewDynamo(cfg ...*aws.Config) (Dynamo, error) {
@@ -76,7 +76,11 @@ func NewDynamo(cfg ...*aws.Config) (Dynamo, error) {
 		return Dynamo{}, err
 	}
 
-	return Dynamo{dynamo: db}, nil
+	return Dynamo{
+		dynamo:           db,
+		FeedsTableName:   aws.String("Feeds"),
+		PledgesTableName: aws.String("Pledges"),
+	}, nil
 }
 
 func (d Dynamo) SaveFeed(feed *model.Feed) error {
@@ -97,7 +101,7 @@ func (d Dynamo) SaveFeed(feed *model.Feed) error {
 	}
 
 	input := &dynamodb.PutItemInput{
-		TableName:           feedsTableName,
+		TableName:           d.FeedsTableName,
 		Item:                item,
 		ConditionExpression: aws.String("attribute_not_exists(HashID)"),
 	}
@@ -116,7 +120,7 @@ func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
 	logger.Debug("getting feed")
 
 	getInput := &dynamodb.GetItemInput{
-		TableName: feedsTableName,
+		TableName: d.FeedsTableName,
 		Key: map[string]*dynamodb.AttributeValue{
 			"HashID": {S: aws.String(hashID)},
 		},
@@ -158,7 +162,7 @@ func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
 		}
 
 		updateInput := &dynamodb.UpdateItemInput{
-			TableName:        feedsTableName,
+			TableName:        d.FeedsTableName,
 			Key:              getInput.Key,
 			UpdateExpression: updateExpression.Update(),
 		}
@@ -198,7 +202,7 @@ func (d Dynamo) GetMetadata(hashID string) (*model.Feed, error) {
 	}
 
 	input := &dynamodb.GetItemInput{
-		TableName: feedsTableName,
+		TableName: d.FeedsTableName,
 		Key: map[string]*dynamodb.AttributeValue{
 			"HashID": {S: aws.String(hashID)},
 		},
@@ -255,7 +259,7 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 	logger.Debug("querying hash ids")
 
 	queryInput := &dynamodb.QueryInput{
-		TableName:                 feedsTableName,
+		TableName:                 d.FeedsTableName,
 		IndexName:                 feedDowngradeIndexName,
 		KeyConditionExpression:    keyConditionExpression.KeyCondition(),
 		ExpressionAttributeNames:  keyConditionExpression.Names(),
@@ -304,7 +308,7 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 
 		for _, key := range keys {
 			input := &dynamodb.UpdateItemInput{
-				TableName:                 feedsTableName,
+				TableName:                 d.FeedsTableName,
 				Key:                       key,
 				ConditionExpression:       updateExpression.Condition(),
 				UpdateExpression:          updateExpression.Update(),
@@ -338,7 +342,7 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 
 		for _, key := range keys {
 			input := &dynamodb.UpdateItemInput{
-				TableName:                 feedsTableName,
+				TableName:                 d.FeedsTableName,
 				Key:                       key,
 				UpdateExpression:          updateExpression.Update(),
 				ExpressionAttributeNames:  updateExpression.Names(),
@@ -370,7 +374,7 @@ func (d Dynamo) AddPledge(pledge *model.Pledge) error {
 	}
 
 	input := &dynamodb.PutItemInput{
-		TableName:           pledgesTableName,
+		TableName:           d.PledgesTableName,
 		Item:                item,
 		ConditionExpression: aws.String("attribute_not_exists(PatronID)"),
 	}
@@ -405,7 +409,7 @@ func (d Dynamo) UpdatePledge(patronID string, pledge *model.Pledge) error {
 	}
 
 	input := &dynamodb.UpdateItemInput{
-		TableName: pledgesTableName,
+		TableName: d.PledgesTableName,
 		Key: map[string]*dynamodb.AttributeValue{
 			pledgesPrimaryKey: {N: aws.String(patronID)},
 		},
@@ -432,7 +436,7 @@ func (d Dynamo) DeletePledge(pledge *model.Pledge) error {
 	logger.Infof("deleting pledge %s", pk)
 
 	input := &dynamodb.DeleteItemInput{
-		TableName: pledgesTableName,
+		TableName: d.PledgesTableName,
 		Key: map[string]*dynamodb.AttributeValue{
 			pledgesPrimaryKey: {N: aws.String(pk)},
 		},
@@ -452,7 +456,7 @@ func (d Dynamo) GetPledge(patronID string) (*model.Pledge, error) {
 	logger.Debug("getting pledge")
 
 	input := &dynamodb.GetItemInput{
-		TableName: pledgesTableName,
+		TableName: d.PledgesTableName,
 		Key: map[string]*dynamodb.AttributeValue{
 			pledgesPrimaryKey: {N: aws.String(patronID)},
 		},
