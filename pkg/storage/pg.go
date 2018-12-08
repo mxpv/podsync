@@ -184,6 +184,16 @@ func (p Postgres) GetPledge(patronID string) (*model.Pledge, error) {
 	return pledge, nil
 }
 
+func (p Postgres) GetAllPledges() (list []*model.Pledge, err error) {
+	err = p.db.Model(&list).Select()
+	return
+}
+
+func (p Postgres) GetAllFeeds() (list []*model.Feed, err error) {
+	err = p.db.Model(&list).Select()
+	return
+}
+
 func (p Postgres) Close() error {
 	return p.db.Close()
 }
