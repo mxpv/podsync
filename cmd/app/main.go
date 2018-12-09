@@ -8,6 +8,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/builders"
 	"github.com/mxpv/podsync/pkg/config"
@@ -34,14 +37,26 @@ func main() {
 		log.WithError(err).Fatal("failed to read configuration")
 	}
 
-	database, err := storage.NewPG(cfg.PostgresConnectionURL, true)
-	if err != nil {
-		log.WithError(err).Fatal("failed to create pg")
-	}
-
 	statistics, err := stats.NewRedisStats(cfg.RedisURL)
 	if err != nil {
 		log.WithError(err).Fatal("failed to create redis")
+	}
+
+	database, err := storage.NewDynamo(&aws.Config{
+		Region:      aws.String("us-east-1"),
+		Credentials: credentials.NewStaticCredentials(cfg.AWSAccessKey, cfg.AWSAccessSecret, ""),
+	})
+
+	if err != nil {
+		log.WithError(err).Fatal("failed to create database")
+	}
+
+	if cfg.DynamoPledgesTableName != "" {
+		database.PledgesTableName = aws.String(cfg.DynamoPledgesTableName)
+	}
+
+	if cfg.DynamoFeedsTableName != "" {
+		database.FeedsTableName = aws.String(cfg.DynamoFeedsTableName)
 	}
 
 	patreon := support.NewPatreon(database)
@@ -66,7 +81,7 @@ func main() {
 	)
 
 	if err != nil {
-		panic(err)
+		log.WithError(err).Fatal("failed to create feed service")
 	}
 
 	srv := http.Server{

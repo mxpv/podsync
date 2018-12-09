@@ -22,6 +22,8 @@ templatesPath: "9"
 patreonWebhooksSecret: "10"
 dynamoFeedsTableName: "11"
 dynamoPledgesTableName: "12"
+awsAccessKey: "13"
+awsAccessSecret: "14"
 `
 
 func TestReadYaml(t *testing.T) {
@@ -46,6 +48,8 @@ func TestReadYaml(t *testing.T) {
 	require.Equal(t, "10", cfg.PatreonWebhooksSecret)
 	require.Equal(t, "11", cfg.DynamoFeedsTableName)
 	require.Equal(t, "12", cfg.DynamoPledgesTableName)
+	require.Equal(t, "13", cfg.AWSAccessKey)
+	require.Equal(t, "14", cfg.AWSAccessSecret)
 }
 
 func TestReadEnv(t *testing.T) {
@@ -64,6 +68,8 @@ func TestReadEnv(t *testing.T) {
 	os.Setenv("PATREON_WEBHOOKS_SECRET", "1010")
 	os.Setenv("DYNAMO_FEEDS_TABLE_NAME", "1111")
 	os.Setenv("DYNAMO_PLEDGES_TABLE_NAME", "1212")
+	os.Setenv("AWS_ACCESS_KEY", "1313")
+	os.Setenv("AWS_ACCESS_SECRET", "1414")
 
 	cfg, err := ReadConfiguration()
 	require.NoError(t, err)
@@ -80,4 +86,6 @@ func TestReadEnv(t *testing.T) {
 	require.Equal(t, "1010", cfg.PatreonWebhooksSecret)
 	require.Equal(t, "1111", cfg.DynamoFeedsTableName)
 	require.Equal(t, "1212", cfg.DynamoPledgesTableName)
+	require.Equal(t, "1313", cfg.AWSAccessKey)
+	require.Equal(t, "1414", cfg.AWSAccessSecret)
 }

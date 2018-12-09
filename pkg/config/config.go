@@ -20,6 +20,8 @@ type AppConfig struct {
 	CookieSecret           string `yaml:"cookieSecret"`
 	AssetsPath             string `yaml:"assetsPath"`
 	TemplatesPath          string `yaml:"templatesPath"`
+	AWSAccessKey           string `yaml:"awsAccessKey"`
+	AWSAccessSecret        string `yaml:"awsAccessSecret"`
 	DynamoFeedsTableName   string `yaml:"dynamoFeedsTableName"`
 	DynamoPledgesTableName string `yaml:"dynamoPledgesTableName"`
 }
@@ -47,6 +49,8 @@ func ReadConfiguration() (cfg *AppConfig, err error) {
 		"cookieSecret":           "COOKIE_SECRET",
 		"assetsPath":             "ASSETS_PATH",
 		"templatesPath":          "TEMPLATES_PATH",
+		"awsAccessKey":           "AWS_ACCESS_KEY",
+		"awsAccessSecret":        "AWS_ACCESS_SECRET",
 		"dynamoFeedsTableName":   "DYNAMO_FEEDS_TABLE_NAME",
 		"dynamoPledgesTableName": "DYNAMO_PLEDGES_TABLE_NAME",
 	}
