@@ -7,6 +7,7 @@ Outputs:
     Description: "DO user secret key"
     Value: !GetAtt DOUserKey.SecretAccessKey
 Resources:
+  # DynamoDB Feeds table
   FeedsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -40,6 +41,8 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: "ExpirationTime"
         Enabled: true
+
+  # DynamoDB Pledges tables
   PledgesTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -54,6 +57,92 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
+
+  # Feeds table read/write scaling targets
+  FeedsTableReadScaling:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 50
+      MinCapacity: 5
+      ResourceId: !Sub
+        - "table/${TableName}"
+        - { TableName: !Ref FeedsTable }
+      RoleARN: !GetAtt DynamoScalingRole.Arn
+      ScalableDimension: dynamodb:table:ReadCapacityUnits
+      ServiceNamespace: dynamodb
+  FeedsTableWriteScaling:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 50
+      MinCapacity: 5
+      ResourceId: !Sub
+        - "table/${TableName}"
+        - { TableName: !Ref FeedsTable }
+      RoleARN: !GetAtt DynamoScalingRole.Arn
+      ScalableDimension: dynamodb:table:WriteCapacityUnits
+      ServiceNamespace: dynamodb
+
+  # Feeds table read/write scaling policies
+  # https://aws.amazon.com/blogs/database/how-to-use-aws-cloudformation-to-configure-auto-scaling-for-amazon-dynamodb-tables-and-indexes/
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-applicationautoscaling-scalingpolicy.html
+  FeedsTableWriteScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}_FeedsTableWriteScalingPolicy"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref FeedsTableWriteScaling
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBWriteCapacityUtilization
+  FeedsTableReadScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}_FeedsTableReadScalingPolicy"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref FeedsTableReadScaling
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBReadCapacityUtilization
+
+  # Common scaling role for DynamoDB
+  DynamoScalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}_DynamoDBScalingRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - application-autoscaling.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: "root"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              Effect: Allow
+              Action:
+                - "dynamodb:DescribeTable"
+                - "dynamodb:UpdateTable"
+                - "cloudwatch:PutMetricAlarm"
+                - "cloudwatch:DescribeAlarms"
+                - "cloudwatch:GetMetricStatistics"
+                - "cloudwatch:SetAlarmState"
+                - "cloudwatch:DeleteAlarms"
+              Resource:
+                - "*"
+
+  # Access from DigitalOcean VM
   DOUser:
     Type: AWS::IAM::User
     DependsOn:
