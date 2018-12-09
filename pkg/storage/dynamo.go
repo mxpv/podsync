@@ -172,9 +172,11 @@ func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
 		}
 
 		updateInput := &dynamodb.UpdateItemInput{
-			TableName:        d.FeedsTableName,
-			Key:              getInput.Key,
-			UpdateExpression: updateExpression.Update(),
+			TableName:                 d.FeedsTableName,
+			Key:                       getInput.Key,
+			UpdateExpression:          updateExpression.Update(),
+			ExpressionAttributeNames:  updateExpression.Names(),
+			ExpressionAttributeValues: updateExpression.Values(),
 		}
 
 		_, err = d.dynamo.UpdateItem(updateInput)
