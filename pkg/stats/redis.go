@@ -7,6 +7,16 @@ import (
 	"github.com/go-redis/redis"
 )
 
+// RedisStats implement stats Redis backend
+// Inside docker can be connected as:
+//      docker exec -it redis redis-cli
+// View available stats keys
+//      127.0.0.1:6379> keys stats/top/*
+// Get stats top:
+//      127.0.0.1:6379> zrevrange stats/top/2018/12/queries 0 100 withscores
+//      127.0.0.1:6379> zrevrange stats/top/2018/12/downloads 0 100 withscores
+// Query specific feed stats:
+//      127.0.0.1:6379> hgetall "stats/2018/12/p2AZoiTNO"
 type RedisStats struct {
 	client *redis.Client
 }
