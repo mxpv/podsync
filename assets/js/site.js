@@ -10,7 +10,6 @@
         showModal: false,
         feedLink: '',
 
-        // Server variables
         featureLevel: 0,
         userId: '',
     },
@@ -99,5 +98,13 @@
                 vm.showModal = false;
             }
         });
+
+        axios.get('/api/user').then(function (response) {
+            vm.userId = response.data.user_id;
+            vm.featureLevel = response.data.feature_level;
+        }).catch(function() {
+            vm.userId = ''
+            vm.featureLevel = 0;
+        })
     }
 });
