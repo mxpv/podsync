@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	patreon "github.com/mxpv/patreon-go"
+	"github.com/mxpv/patreon-go"
 	itunes "github.com/mxpv/podcast"
 	"golang.org/x/oauth2"
 
@@ -42,6 +42,63 @@ type handler struct {
 	cfg     *config.AppConfig
 	oauth2  oauth2.Config
 	patreon patreonService
+}
+
+func New(feed feedService, support patreonService, cfg *config.AppConfig) http.Handler {
+	r := gin.New()
+	r.Use(gin.Recovery())
+
+	store := sessions.NewCookieStore([]byte(cfg.CookieSecret))
+	r.Use(sessions.Sessions("podsync", store))
+
+	// Static files + HTML
+
+	log.Printf("using assets path: %s", cfg.AssetsPath)
+	if cfg.AssetsPath != "" {
+		r.Static("/assets", cfg.AssetsPath)
+	}
+
+	log.Printf("using templates path: %s", cfg.TemplatesPath)
+	if cfg.TemplatesPath != "" {
+		r.LoadHTMLGlob(path.Join(cfg.TemplatesPath, "*.html"))
+	}
+
+	h := handler{
+		feed:    feed,
+		patreon: support,
+		cfg:     cfg,
+	}
+
+	// OAuth 2 configuration
+
+	h.oauth2 = oauth2.Config{
+		ClientID:     cfg.PatreonClientId,
+		ClientSecret: cfg.PatreonSecret,
+		RedirectURL:  cfg.PatreonRedirectURL,
+		Scopes:       []string{"users", "pledges-to-me", "my-campaign"},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  patreon.AuthorizationURL,
+			TokenURL: patreon.AccessTokenURL,
+		},
+	}
+
+	// Handlers
+
+	r.GET("/", h.index)
+	r.GET("/login", h.login)
+	r.GET("/logout", h.logout)
+	r.GET("/patreon", h.patreonCallback)
+	r.GET("/robots.txt", h.robots)
+
+	r.GET("/api/ping", h.ping)
+	r.GET("/api/user", h.user)
+	r.POST("/api/create", h.create)
+	r.GET("/api/metadata/:hashId", h.metadata)
+	r.POST("/api/webhooks", h.webhook)
+
+	r.NoRoute(h.getFeed)
+
+	return r
 }
 
 func (h handler) index(c *gin.Context) {
@@ -119,6 +176,18 @@ Host: www.podsync.net`)
 
 func (h handler) ping(c *gin.Context) {
 	c.String(http.StatusOK, "ok")
+}
+
+func (h handler) user(c *gin.Context) {
+	identity, err := session.GetIdentity(c)
+	if err != nil {
+		identity = &api.Identity{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"user_id":       identity.UserId,
+		"feature_level": identity.FeatureLevel,
+	})
 }
 
 func (h handler) create(c *gin.Context) {
@@ -256,62 +325,6 @@ func (h handler) webhook(c *gin.Context) {
 	}
 
 	log.Infof("sucessfully processed patreon event %s (%s)", pledge.Data.ID, eventName)
-}
-
-func New(feed feedService, support patreonService, cfg *config.AppConfig) http.Handler {
-	r := gin.New()
-	r.Use(gin.Recovery())
-
-	store := sessions.NewCookieStore([]byte(cfg.CookieSecret))
-	r.Use(sessions.Sessions("podsync", store))
-
-	// Static files + HTML
-
-	log.Printf("using assets path: %s", cfg.AssetsPath)
-	if cfg.AssetsPath != "" {
-		r.Static("/assets", cfg.AssetsPath)
-	}
-
-	log.Printf("using templates path: %s", cfg.TemplatesPath)
-	if cfg.TemplatesPath != "" {
-		r.LoadHTMLGlob(path.Join(cfg.TemplatesPath, "*.html"))
-	}
-
-	h := handler{
-		feed:    feed,
-		patreon: support,
-		cfg:     cfg,
-	}
-
-	// OAuth 2 configuration
-
-	h.oauth2 = oauth2.Config{
-		ClientID:     cfg.PatreonClientId,
-		ClientSecret: cfg.PatreonSecret,
-		RedirectURL:  cfg.PatreonRedirectURL,
-		Scopes:       []string{"users", "pledges-to-me", "my-campaign"},
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  patreon.AuthorizationURL,
-			TokenURL: patreon.AccessTokenURL,
-		},
-	}
-
-	// Handlers
-
-	r.GET("/", h.index)
-	r.GET("/login", h.login)
-	r.GET("/logout", h.logout)
-	r.GET("/patreon", h.patreonCallback)
-	r.GET("/robots.txt", h.robots)
-
-	r.GET("/api/ping", h.ping)
-	r.POST("/api/create", h.create)
-	r.GET("/api/metadata/:hashId", h.metadata)
-	r.POST("/api/webhooks", h.webhook)
-
-	r.NoRoute(h.getFeed)
-
-	return r
 }
 
 func badRequest(err error) (int, interface{}) {
