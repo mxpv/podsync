@@ -22,6 +22,7 @@ const (
 	pingTimeout       = 5 * time.Second
 	pledgesPrimaryKey = "PatronID"
 	feedsPrimaryKey   = "HashID"
+	anonymousUserName = "anonymous"
 
 	// Update LastAccess field every hour
 	feedLastAccessUpdatePeriod = time.Hour
@@ -89,8 +90,17 @@ func (d Dynamo) SaveFeed(feed *model.Feed) error {
 		"user_id": feed.UserID,
 	})
 
-	now := time.Now().UTC()
+	// Secondary index uses UserID as primary key and used for downgrading feeds.
+	// However it might be null if user is anonymous and DynamoDB doesn't support null PKs.
+	// So use special user for bypass this. In general this practise is not recommended by
+	// AWS (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-uniform-load.html)
+	// as it would blow up one of the partitions and decrease performance, however we are not
+	// going to query items by anonymous user.
+	if feed.UserID == "" {
+		feed.UserID = anonymousUserName
+	}
 
+	now := time.Now().UTC()
 	feed.LastAccess = now
 	feed.ExpirationTime = now.Add(feedTimeToLive)
 
