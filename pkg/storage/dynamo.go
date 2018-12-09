@@ -162,8 +162,8 @@ func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
 		updateExpression, err := expr.
 			NewBuilder().
 			WithUpdate(expr.
-				Set(expr.Name("LastAccess"), expr.Value(now)).
-				Set(expr.Name("ExpirationTime"), expr.Value(now.Add(feedTimeToLive)))).
+				Set(expr.Name("LastAccess"), expr.Value(now.Unix())).
+				Set(expr.Name("ExpirationTime"), expr.Value(now.Add(feedTimeToLive).Unix()))).
 			Build()
 
 		if err != nil {
