@@ -46,7 +46,7 @@ services:
     mem_limit: 268435456 # 256MB
     oom_kill_disable: true
   nginx:
-    image: umputun/nginx-le:latest
+    image: mxpv/nginx:latest
     container_name: nginx
     restart: always
     ports:
