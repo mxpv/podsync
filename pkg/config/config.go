@@ -18,8 +18,6 @@ type AppConfig struct {
 	PostgresConnectionURL  string `yaml:"postgresConnectionUrl"`
 	RedisURL               string `yaml:"redisUrl"`
 	CookieSecret           string `yaml:"cookieSecret"`
-	AssetsPath             string `yaml:"assetsPath"`
-	TemplatesPath          string `yaml:"templatesPath"`
 	AWSAccessKey           string `yaml:"awsAccessKey"`
 	AWSAccessSecret        string `yaml:"awsAccessSecret"`
 	DynamoFeedsTableName   string `yaml:"dynamoFeedsTableName"`
@@ -47,8 +45,6 @@ func ReadConfiguration() (cfg *AppConfig, err error) {
 		"postgresConnectionUrl":  "POSTGRES_CONNECTION_URL",
 		"redisUrl":               "REDIS_CONNECTION_URL",
 		"cookieSecret":           "COOKIE_SECRET",
-		"assetsPath":             "ASSETS_PATH",
-		"templatesPath":          "TEMPLATES_PATH",
 		"awsAccessKey":           "AWS_ACCESS_KEY",
 		"awsAccessSecret":        "AWS_ACCESS_SECRET",
 		"dynamoFeedsTableName":   "DYNAMO_FEEDS_TABLE_NAME",

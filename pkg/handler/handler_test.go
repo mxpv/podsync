@@ -11,9 +11,10 @@ import (
 
 	"github.com/golang/mock/gomock"
 	itunes "github.com/mxpv/podcast"
+	"github.com/stretchr/testify/require"
+
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/config"
-	"github.com/stretchr/testify/require"
 )
 
 var cfg = &config.AppConfig{}

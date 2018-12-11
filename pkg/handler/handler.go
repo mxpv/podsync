@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"path"
 	"strings"
 
 	"github.com/gin-contrib/sessions"
@@ -51,18 +50,6 @@ func New(feed feedService, support patreonService, cfg *config.AppConfig) http.H
 	store := sessions.NewCookieStore([]byte(cfg.CookieSecret))
 	r.Use(sessions.Sessions("podsync", store))
 
-	// Static files + HTML
-
-	log.Printf("using assets path: %s", cfg.AssetsPath)
-	if cfg.AssetsPath != "" {
-		r.Static("/assets", cfg.AssetsPath)
-	}
-
-	log.Printf("using templates path: %s", cfg.TemplatesPath)
-	if cfg.TemplatesPath != "" {
-		r.LoadHTMLGlob(path.Join(cfg.TemplatesPath, "*.html"))
-	}
-
 	h := handler{
 		feed:    feed,
 		patreon: support,
@@ -84,11 +71,9 @@ func New(feed feedService, support patreonService, cfg *config.AppConfig) http.H
 
 	// Handlers
 
-	r.GET("/", h.index)
 	r.GET("/login", h.login)
 	r.GET("/logout", h.logout)
 	r.GET("/patreon", h.patreonCallback)
-	r.GET("/robots.txt", h.robots)
 
 	r.GET("/api/ping", h.ping)
 	r.GET("/api/user", h.user)
@@ -99,15 +84,6 @@ func New(feed feedService, support patreonService, cfg *config.AppConfig) http.H
 	r.NoRoute(h.getFeed)
 
 	return r
-}
-
-func (h handler) index(c *gin.Context) {
-	identity, err := session.GetIdentity(c)
-	if err != nil {
-		identity = &api.Identity{}
-	}
-
-	c.HTML(http.StatusOK, "index.html", identity)
 }
 
 func (h handler) login(c *gin.Context) {
@@ -165,13 +141,6 @@ func (h handler) patreonCallback(c *gin.Context) {
 
 	session.SetIdentity(c, identity)
 	c.Redirect(http.StatusFound, "/")
-}
-
-func (h handler) robots(c *gin.Context) {
-	c.String(http.StatusOK, `User-agent: *
-Allow: /$
-Disallow: /
-Host: www.podsync.net`)
 }
 
 func (h handler) ping(c *gin.Context) {

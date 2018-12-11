@@ -17,8 +17,6 @@ patreonSecret: "4"
 postgresConnectionUrl: "5"
 cookieSecret: "6"
 patreonRedirectUrl: "7"
-assetsPath: "8"
-templatesPath: "9"
 patreonWebhooksSecret: "10"
 dynamoFeedsTableName: "11"
 dynamoPledgesTableName: "12"
@@ -43,8 +41,6 @@ func TestReadYaml(t *testing.T) {
 	require.Equal(t, "5", cfg.PostgresConnectionURL)
 	require.Equal(t, "6", cfg.CookieSecret)
 	require.Equal(t, "7", cfg.PatreonRedirectURL)
-	require.Equal(t, "8", cfg.AssetsPath)
-	require.Equal(t, "9", cfg.TemplatesPath)
 	require.Equal(t, "10", cfg.PatreonWebhooksSecret)
 	require.Equal(t, "11", cfg.DynamoFeedsTableName)
 	require.Equal(t, "12", cfg.DynamoPledgesTableName)
@@ -63,8 +59,6 @@ func TestReadEnv(t *testing.T) {
 	os.Setenv("POSTGRES_CONNECTION_URL", "55")
 	os.Setenv("COOKIE_SECRET", "66")
 	os.Setenv("PATREON_REDIRECT_URL", "77")
-	os.Setenv("ASSETS_PATH", "88")
-	os.Setenv("TEMPLATES_PATH", "99")
 	os.Setenv("PATREON_WEBHOOKS_SECRET", "1010")
 	os.Setenv("DYNAMO_FEEDS_TABLE_NAME", "1111")
 	os.Setenv("DYNAMO_PLEDGES_TABLE_NAME", "1212")
@@ -81,8 +75,6 @@ func TestReadEnv(t *testing.T) {
 	require.Equal(t, "55", cfg.PostgresConnectionURL)
 	require.Equal(t, "66", cfg.CookieSecret)
 	require.Equal(t, "77", cfg.PatreonRedirectURL)
-	require.Equal(t, "88", cfg.AssetsPath)
-	require.Equal(t, "99", cfg.TemplatesPath)
 	require.Equal(t, "1010", cfg.PatreonWebhooksSecret)
 	require.Equal(t, "1111", cfg.DynamoFeedsTableName)
 	require.Equal(t, "1212", cfg.DynamoPledgesTableName)

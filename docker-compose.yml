@@ -59,4 +59,3 @@ services:
       - LE_FQDN=podsync.net,www.podsync.net
     volumes:
       - /data/ssl:/etc/nginx/ssl
-      - /data/podsync.conf:/etc/nginx/service.conf
