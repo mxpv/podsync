@@ -17,6 +17,7 @@
     "gulp-uglify": "^3.0.0"
   },
   "scripts": {
+    "build": "gulp -v && gulp patch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
