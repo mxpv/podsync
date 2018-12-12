@@ -12,6 +12,7 @@
 
         featureLevel: 0,
         userId: '',
+        fullName: '',
     },
 
     methods: {
@@ -102,9 +103,7 @@
         axios.get('/api/user').then(function (response) {
             vm.userId = response.data.user_id;
             vm.featureLevel = response.data.feature_level;
-        }).catch(function() {
-            vm.userId = ''
-            vm.featureLevel = 0;
-        })
+            vm.fullName = response.data.full_name;
+        }).catch(function() {});
     }
 });

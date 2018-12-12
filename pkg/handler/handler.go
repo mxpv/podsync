@@ -156,6 +156,7 @@ func (h handler) user(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"user_id":       identity.UserId,
 		"feature_level": identity.FeatureLevel,
+		"full_name":     identity.FullName,
 	})
 }
 
