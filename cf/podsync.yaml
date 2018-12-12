@@ -142,6 +142,18 @@ Resources:
               Resource:
                 - "*"
 
+  # CloudWatch
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Ref "AWS::StackName"
+      RetentionInDays: 30
+  BackendLogStream:
+    Type: AWS::Logs::LogStream
+    Properties:
+      LogGroupName: !Ref LogGroup
+      LogStreamName: "Backend"
+
   # Access from DigitalOcean VM
   DOUser:
     Type: AWS::IAM::User
@@ -150,7 +162,7 @@ Resources:
       - PledgesTable
     Properties:
       Policies:
-        - PolicyName: "DynamoAccess"
+        - PolicyName: "DynamoDB"
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -166,6 +178,16 @@ Resources:
               - Effect: Allow
                 Action:
                   - "dynamodb:ListTables"
+                Resource:
+                  - "*"
+        - PolicyName: "CloudWatch"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
                 Resource:
                   - "*"
   DOUserKey:
