@@ -163,13 +163,17 @@ func (h handler) user(c *gin.Context) {
 func (h handler) create(c *gin.Context) {
 	req := &api.CreateFeedRequest{}
 
+	createEventLog := log.WithField("event", "create_feed")
+
 	if err := c.BindJSON(req); err != nil {
+		createEventLog.WithError(err).Error("invalid request")
 		c.JSON(badRequest(err))
 		return
 	}
 
 	identity, err := session.GetIdentity(c)
 	if err != nil {
+		createEventLog.WithError(err).Error("invalid identity")
 		c.JSON(internalError(err))
 		return
 	}
@@ -177,8 +181,16 @@ func (h handler) create(c *gin.Context) {
 	// Check feature level again if user deleted pledge by still logged in
 	identity.FeatureLevel = h.patreon.GetFeatureLevelByID(identity.UserId)
 
+	createEventLog = createEventLog.WithFields(log.Fields{
+		"user_id":       identity.UserId,
+		"feature_level": identity.FeatureLevel,
+	})
+
+	createEventLog.Info("creating feed")
+
 	hashId, err := h.feed.CreateFeed(req, identity)
 	if err != nil {
+		createEventLog.WithError(err).Error("failed to create new feed")
 		c.JSON(internalError(err))
 		return
 	}
@@ -193,14 +205,17 @@ func (h handler) getFeed(c *gin.Context) {
 		return
 	}
 
+	log.WithFields(log.Fields{
+		"event":   "get_feed",
+		"hash_id": hashID,
+	}).Infof("getting feed %s", hashID)
+
 	if strings.HasSuffix(hashID, ".xml") {
 		hashID = strings.TrimSuffix(hashID, ".xml")
 	}
 
 	podcast, err := h.feed.BuildFeed(hashID)
 	if err != nil {
-		log.WithError(err).WithField("hash_id", hashID).Error("failed to build feed")
-
 		code := http.StatusInternalServerError
 		if err == api.ErrNotFound {
 			code = http.StatusNotFound
@@ -208,6 +223,11 @@ func (h handler) getFeed(c *gin.Context) {
 			code = http.StatusTooManyRequests
 		}
 
+		log.WithFields(log.Fields{
+			"event":     "get_feed",
+			"hash_id":   hashID,
+			"http_code": code,
+		}).WithError(err).Error("failed to get feed")
 		c.String(code, err.Error())
 		return
 	}
@@ -216,14 +236,22 @@ func (h handler) getFeed(c *gin.Context) {
 }
 
 func (h handler) metadata(c *gin.Context) {
-	hashId := c.Param("hashId")
-	if hashId == "" || len(hashId) > maxHashIDLength {
+	hashID := c.Param("hashId")
+	if hashID == "" || len(hashID) > maxHashIDLength {
 		c.String(http.StatusBadRequest, "invalid feed id")
 		return
 	}
 
-	feed, err := h.feed.GetMetadata(hashId)
+	log.WithFields(log.Fields{
+		"event":   "get_metadata",
+		"hash_id": hashID,
+	}).Infof("getting metadata for '%s'", hashID)
+	feed, err := h.feed.GetMetadata(hashID)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"event":   "get_metadata",
+			"hash_id": hashID,
+		}).WithError(err).Error("failed to query metadata")
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
