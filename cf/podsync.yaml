@@ -142,7 +142,7 @@ Resources:
               Resource:
                 - "*"
 
-  # CloudWatch
+  # CloudWatch log groups
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -153,6 +153,57 @@ Resources:
     Properties:
       LogGroupName: !Ref LogGroup
       LogStreamName: "Backend"
+
+  # CloudWatch metric filters
+  GetFeedMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref LogGroup
+      FilterPattern: '{ $.event = "get_feed" && $.error NOT EXISTS }'
+      MetricTransformations:
+        - MetricName: "Feed requests"
+          MetricNamespace: !Sub "${AWS::StackName}_Podsync"
+          MetricValue: 1
+
+  GetFeedErrorMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref LogGroup
+      FilterPattern: '{ $.event = "get_feed" && $.error != "" }'
+      MetricTransformations:
+        - MetricName: "Feed errors"
+          MetricNamespace: !Sub "${AWS::StackName}_Podsync"
+          MetricValue: 1
+
+  GetFeedMetadataMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref LogGroup
+      FilterPattern: '{ $.event = "get_metadata" && $.error NOT EXISTS }'
+      MetricTransformations:
+        - MetricName: "Metadata requests"
+          MetricNamespace: !Sub "${AWS::StackName}_Podsync"
+          MetricValue: 1
+
+  CreateFeedMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref LogGroup
+      FilterPattern: '{ $.event = "create_feed" && $.error NOT EXISTS }'
+      MetricTransformations:
+        - MetricName: "Create feed"
+          MetricNamespace: !Sub "${AWS::StackName}_Podsync"
+          MetricValue: 1
+
+  CreateFeedErrorMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref LogGroup
+      FilterPattern: '{ $.event = "create_feed" && $.error != "" }'
+      MetricTransformations:
+        - MetricName: "Create feed error"
+          MetricNamespace: !Sub "${AWS::StackName}_Podsync"
+          MetricValue: 1
 
   # Access from DigitalOcean VM
   DOUser:
