@@ -6,7 +6,7 @@
   "dependencies": {},
   "devDependencies": {
     "del": "^3.0.0",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.0",
     "gulp-autoprefixer": "^4.0.0",
     "gulp-clean-css": "^3.7.0",
     "gulp-if": "^2.0.2",
@@ -17,7 +17,7 @@
     "gulp-uglify": "^3.0.0"
   },
   "scripts": {
-    "build": "gulp -v && gulp patch",
+    "build": "gulp -v && gulp",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

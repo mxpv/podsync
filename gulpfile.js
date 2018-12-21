@@ -12,37 +12,44 @@ var gulp = require('gulp'),
 
 abs = path.join(process.cwd(), 'assets');
 
-gulp.task('clean', function () {
+// Clean up artifacts
+const clean = function() {
     return del(['./dist/**/*'])
-});
+};
 
 // Minify images and output to ./dist folder
-gulp.task('img', ['clean'], function() {
+const img = function() {
     return gulp.src('./assets/**/*.{png,ico}')
         .pipe(imagemin())
         .pipe(size())
-        .pipe(gulp.dest('./dist'))
-});
+        .pipe(gulp.dest('./dist/assets/'))
+};
 
 // Minify scripts, build manifest.json and output to ./dist folder
-gulp.task('js+css', ['clean', 'img'], function() {
+const scripts = function() {
     return gulp.src(['./assets/js/**/*.js', './assets/css/**/*.css'], {base: abs})
         .pipe(gulpif(/js$/, uglify()))
         .pipe(gulpif(/css$/, autoprefixer()))
         .pipe(gulpif(/css$/, cleancss()))
         .pipe(rev())
         .pipe(size())
-        .pipe(gulp.dest('./dist'))
+        .pipe(gulp.dest('./dist/assets'))
         .pipe(rev.manifest('manifest.json', {merge: true}))
-        .pipe(gulp.dest('./dist'));
-});
+        .pipe(gulp.dest('./dist/assets'));
+};
 
 // Rewrite occurrences of scripts in template files
-gulp.task('patch', ['js+css'], function() {
-    var manifest = gulp.src('./dist/manifest.json');
+const patch = function() {
+    var manifest = gulp.src('./dist/assets/manifest.json');
     return gulp.src('./templates/index.html')
         .pipe(revreplace({manifest: manifest}))
-        .pipe(gulp.dest('./templates/'))
-});
+        .pipe(gulp.dest('./dist/html/'))
+};
 
-gulp.task('default', ['js+css']);
+exports.default = gulp.series(
+    clean,
+    gulp.parallel(
+        img,
+        gulp.series(scripts, patch)
+    ),
+);
