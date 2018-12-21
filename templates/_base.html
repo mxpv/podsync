@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=UTF-8"/>
+    <meta charset="utf-8"/>
+    <title>Podsync - Turn YouTube channels into podcast feeds</title>
+    <meta property="og:title" content="Podsync - turn YouTube channels into podcast feeds"/>
+    <meta property="og:description"
+          content="Simple and free service that lets you listen to any YouTube or Vimeo channels, playlists or user videos in podcast format"/>
+    <meta property="og:locale" content="en_US"/>
+    <meta property="og:image" content="/assets/img/og_image.png"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description"
+          content="Simple and free service that lets you listen to any YouTube or Vimeo channels, playlists or user videos in podcast format"/>
+    {% block link %}
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="assets/css/site.css"/>
+    {% endblock %}
+</head>
+
+<body>
+{% block body %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="assets/js/site.js"></script>
+{% endblock %}
+
+{% block analytics %}
+{% include "_analytics.html" %}
+{% endblock %}
+</body>
+</html>

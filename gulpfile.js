@@ -1,4 +1,4 @@
-var gulp = require('gulp'),
+const gulp = require('gulp'),
     del = require('del'),
     path = require('path'),
     uglify = require('gulp-uglify'),
@@ -8,7 +8,8 @@ var gulp = require('gulp'),
     autoprefixer = require('gulp-autoprefixer'),
     size = require('gulp-size'),
     gulpif = require('gulp-if'),
-    imagemin = require('gulp-imagemin');
+    imagemin = require('gulp-imagemin'),
+    nunjucks = require('gulp-nunjucks');
 
 abs = path.join(process.cwd(), 'assets');
 
@@ -41,7 +42,8 @@ const scripts = function() {
 // Rewrite occurrences of scripts in template files
 const patch = function() {
     var manifest = gulp.src('./dist/assets/manifest.json');
-    return gulp.src('./templates/index.html')
+    return gulp.src('./templates/[^_]*.html')
+        .pipe(nunjucks.compile())
         .pipe(revreplace({manifest: manifest}))
         .pipe(gulp.dest('./dist/html/'))
 };
