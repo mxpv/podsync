@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /$
+Allow: /faq.html
 Disallow: /
 Host: www.podsync.net
