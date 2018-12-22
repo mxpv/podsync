@@ -71,9 +71,9 @@ func New(feed feedService, support patreonService, cfg *config.AppConfig) http.H
 
 	// Handlers
 
-	r.GET("/login", h.login)
-	r.GET("/logout", h.logout)
-	r.GET("/patreon", h.patreonCallback)
+	r.GET("/user/login", h.login)
+	r.GET("/user/logout", h.logout)
+	r.GET("/user/patreon", h.patreonCallback)
 
 	r.GET("/api/ping", h.ping)
 	r.GET("/api/user", h.user)

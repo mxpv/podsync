@@ -14,7 +14,7 @@ services:
       - VIMEO_API_KEY={VIMEO_API_KEY}
       - PATREON_CLIENT_ID={PATREON_CLIENT_ID}
       - PATREON_SECRET={PATREON_SECRET}
-      - PATREON_REDIRECT_URL=https://podsync.net/patreon
+      - PATREON_REDIRECT_URL=https://podsync.net/user/patreon
       - PATREON_WEBHOOKS_SECRET={PATREON_WEBHOOKS_SECRET}
       - COOKIE_SECRET={COOKIE_SECRET}
       - GIN_MODE=release

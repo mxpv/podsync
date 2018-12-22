@@ -14,7 +14,7 @@
             <div class="login-border">
 
                 <template v-if="!userId">
-                    <a href="/login">
+                    <a href="/user/login">
                         <i class="fa fa-unlock" aria-hidden="true"></i>
                         Login with Patreon to unlock features
                     </a>
@@ -24,7 +24,7 @@
                 </template>
                 <template v-else>
                     <a>Hey, <i class="fa fa-user-o" aria-hidden="true"></i> {{ fullName }}</a>
-                    <a href="/logout"><i class="fa fa-power-off" aria-hidden="true"></i></a>
+                    <a href="/user/logout"><i class="fa fa-power-off" aria-hidden="true"></i></a>
                 </template>
 
             </div>
