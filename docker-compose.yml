@@ -61,4 +61,5 @@ services:
       - LE_EMAIL=pavlenko.maksym@gmail.com
       - LE_FQDN=podsync.net,www.podsync.net
     volumes:
-      - /data/ssl:/etc/nginx/ssl
+      - /data/ssl:/etc/nginx/ssl/
+      - /data/nginx_cache:/tmp/nginx/
