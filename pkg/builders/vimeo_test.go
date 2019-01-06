@@ -6,9 +6,10 @@ import (
 	"testing"
 
 	itunes "github.com/mxpv/podcast"
+	"github.com/stretchr/testify/require"
+
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -16,6 +17,10 @@ var (
 )
 
 func TestQueryVimeoChannel(t *testing.T) {
+	if vimeoKey == "" {
+		t.Skip("Vimeo API key is not provided")
+	}
+
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
@@ -31,6 +36,10 @@ func TestQueryVimeoChannel(t *testing.T) {
 }
 
 func TestQueryVimeoGroup(t *testing.T) {
+	if vimeoKey == "" {
+		t.Skip("Vimeo API key is not provided")
+	}
+
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
@@ -46,6 +55,10 @@ func TestQueryVimeoGroup(t *testing.T) {
 }
 
 func TestQueryVimeoUser(t *testing.T) {
+	if vimeoKey == "" {
+		t.Skip("Vimeo API key is not provided")
+	}
+
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
@@ -59,6 +72,10 @@ func TestQueryVimeoUser(t *testing.T) {
 }
 
 func TestQueryVimeoVideos(t *testing.T) {
+	if vimeoKey == "" {
+		t.Skip("Vimeo API key is not provided")
+	}
+
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 

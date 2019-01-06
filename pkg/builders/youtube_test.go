@@ -4,17 +4,18 @@ import (
 	"os"
 	"testing"
 
-	"github.com/mxpv/podsync/pkg/api"
-	"github.com/mxpv/podsync/pkg/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/model"
 )
 
 var ytKey = os.Getenv("YOUTUBE_TEST_API_KEY")
 
 func TestQueryYTChannel(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping YT test in short mode")
+	if ytKey == "" {
+		t.Skip("YouTube API key is not provided")
 	}
 
 	builder, err := NewYouTubeBuilder(ytKey)
@@ -30,8 +31,8 @@ func TestQueryYTChannel(t *testing.T) {
 }
 
 func TestBuildYTFeed(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping YT test in short mode")
+	if ytKey == "" {
+		t.Skip("YouTube API key is not provided")
 	}
 
 	builder, err := NewYouTubeBuilder(ytKey)
@@ -56,8 +57,10 @@ func TestBuildYTFeed(t *testing.T) {
 			assert.NotEmpty(t, podcast.IAuthor)
 			assert.NotEmpty(t, podcast.Description)
 
-			require.NotNil(t, podcast.ISummary)
-			assert.NotEmpty(t, podcast.ISummary.Text)
+			assert.NotNil(t, podcast.ISummary)
+			if podcast.ISummary != nil {
+				assert.NotEmpty(t, podcast.ISummary.Text)
+			}
 
 			assert.NotZero(t, len(podcast.Items))
 
@@ -66,8 +69,10 @@ func TestBuildYTFeed(t *testing.T) {
 				assert.NotEmpty(t, item.Link)
 				assert.NotEmpty(t, item.IDuration)
 
-				require.NotNil(t, item.ISummary)
-				assert.NotEmpty(t, item.ISummary.Text)
+				assert.NotNil(t, item.ISummary)
+				if item.ISummary != nil {
+					assert.NotEmpty(t, item.ISummary.Text)
+				}
 
 				assert.NotEmpty(t, item.Title)
 				assert.NotEmpty(t, item.IAuthor)
