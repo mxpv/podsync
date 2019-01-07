@@ -1,0 +1,9 @@
+linters:
+  disable-all: true
+  presets:
+    - bugs
+    - unused
+    - format
+    - style
+    - complexity
+    - performance

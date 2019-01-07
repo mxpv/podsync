@@ -54,6 +54,10 @@ var (
 )
 
 func runStorageTests(t *testing.T, createFn func(t *testing.T) storage) {
+	if testing.Short() {
+		t.Skip("Skipping storage test in short mode")
+	}
+
 	// Feeds
 	t.Run("SaveFeed", makeTest(createFn, testSaveFeed))
 	t.Run("LastAccess", makeTest(createFn, testLastAccess))

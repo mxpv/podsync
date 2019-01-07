@@ -1,0 +1,17 @@
+version: 0.2
+
+env:
+  parameter-store:
+    YOUTUBE_TEST_API_KEY: "youtubeKey"
+    VIMEO_TEST_API_KEY: "vimeoKey"
+
+phases:
+  install:
+    commands:
+      - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.12.5
+      - golangci-lint --version
+  build:
+    commands:
+      - go version
+      - go test -short ./...
+      - golangci-lint run
