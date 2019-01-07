@@ -33,4 +33,6 @@ type Feed struct {
 	CreatedAt      time.Time `dynamodbav:",unixtime"`
 	LastAccess     time.Time `dynamodbav:",unixtime"`
 	ExpirationTime time.Time `sql:"-" dynamodbav:",unixtime"`
+	CoverArt       string    `dynamodbav:",omitempty"`
+	Explicit       bool
 }

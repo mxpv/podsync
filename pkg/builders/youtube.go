@@ -201,6 +201,16 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 		desc = fmt.Sprintf("%s (%s)", title, pubDate)
 	}
 
+	var (
+		image string
+	)
+
+	if feed.CoverArt != "" {
+		image = feed.CoverArt
+	} else {
+		image = yt.selectThumbnail(thumbnails, feed.Quality)
+	}
+
 	// Build iTunes feed
 	buildTime := time.Now()
 	podcast := itunes.New(title, link, desc, &pubDate, &buildTime)
@@ -208,7 +218,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 
 	podcast.AddSubTitle(title)
 	podcast.AddCategory(defaultCategory, nil)
-	podcast.AddImage(yt.selectThumbnail(thumbnails, feed.Quality))
+	podcast.AddImage(image)
 
 	podcast.IAuthor = title
 	podcast.AddSummary(desc)
@@ -252,11 +262,11 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(playlistItems map[string]*youtu
 		snippet := video.Snippet
 
 		item := itunes.Item{
-			GUID: video.Id,
-			Link: fmt.Sprintf("https://youtube.com/watch?v=%s", video.Id),
-			Title: snippet.Title,
+			GUID:        video.Id,
+			Link:        fmt.Sprintf("https://youtube.com/watch?v=%s", video.Id),
+			Title:       snippet.Title,
 			Description: snippet.Description,
-			ISubtitle: snippet.Title,
+			ISubtitle:   snippet.Title,
 		}
 
 		desc := snippet.Description
@@ -301,6 +311,12 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(playlistItems map[string]*youtu
 		// podcast.AddItem requires description to be not empty, use workaround
 		if item.Description == "" {
 			item.Description = " "
+		}
+
+		if feed.Explicit {
+			item.IExplicit = "true"
+		} else {
+			item.IExplicit = "false"
 		}
 
 		item.IOrder = strconv.FormatInt(playlistItem.Position, 10)
