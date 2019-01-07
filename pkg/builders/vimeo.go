@@ -5,12 +5,13 @@ import (
 	"strconv"
 
 	itunes "github.com/mxpv/podcast"
-	"github.com/mxpv/podsync/pkg/api"
-	"github.com/mxpv/podsync/pkg/model"
 	"github.com/pkg/errors"
-	"github.com/silentsokolov/go-vimeo"
+	vimeo "github.com/silentsokolov/go-vimeo"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
+
+	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/model"
 )
 
 const (
@@ -34,15 +35,15 @@ func (v *VimeoBuilder) selectImage(p *vimeo.Pictures, q api.Quality) string {
 }
 
 func (v *VimeoBuilder) queryChannel(feed *model.Feed) (*itunes.Podcast, error) {
-	channelId := feed.ItemID
+	channelID := feed.ItemID
 
-	ch, resp, err := v.client.Channels.Get(channelId)
+	ch, resp, err := v.client.Channels.Get(channelID)
 	if err != nil {
 		if resp.StatusCode == http.StatusNotFound {
 			return nil, api.ErrNotFound
 		}
 
-		return nil, errors.Wrapf(err, "failed to query channel with channelId %s", channelId)
+		return nil, errors.Wrapf(err, "failed to query channel with id %q", channelID)
 	}
 
 	podcast := itunes.New(ch.Name, ch.Link, ch.Description, &ch.CreatedTime, nil)
@@ -56,15 +57,15 @@ func (v *VimeoBuilder) queryChannel(feed *model.Feed) (*itunes.Podcast, error) {
 }
 
 func (v *VimeoBuilder) queryGroup(feed *model.Feed) (*itunes.Podcast, error) {
-	groupId := feed.ItemID
+	groupID := feed.ItemID
 
-	gr, resp, err := v.client.Groups.Get(groupId)
+	gr, resp, err := v.client.Groups.Get(groupID)
 	if err != nil {
 		if resp.StatusCode == http.StatusNotFound {
 			return nil, api.ErrNotFound
 		}
 
-		return nil, errors.Wrapf(err, "failed to query group with id %s", groupId)
+		return nil, errors.Wrapf(err, "failed to query group with id %q", groupID)
 	}
 
 	podcast := itunes.New(gr.Name, gr.Link, gr.Description, &gr.CreatedTime, nil)
@@ -78,15 +79,15 @@ func (v *VimeoBuilder) queryGroup(feed *model.Feed) (*itunes.Podcast, error) {
 }
 
 func (v *VimeoBuilder) queryUser(feed *model.Feed) (*itunes.Podcast, error) {
-	userId := feed.ItemID
+	userID := feed.ItemID
 
-	user, resp, err := v.client.Users.Get(userId)
+	user, resp, err := v.client.Users.Get(userID)
 	if err != nil {
 		if resp.StatusCode == http.StatusNotFound {
 			return nil, api.ErrNotFound
 		}
 
-		return nil, errors.Wrapf(err, "failed to query user with id %s", userId)
+		return nil, errors.Wrapf(err, "failed to query user with id %q", userID)
 	}
 
 	podcast := itunes.New(user.Name, user.Link, user.Bio, &user.CreatedTime, nil)

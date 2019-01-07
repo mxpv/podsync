@@ -45,9 +45,9 @@ func TestService_CreateFeed(t *testing.T) {
 		Format:   api.FormatVideo,
 	}
 
-	hashId, err := s.CreateFeed(req, &api.Identity{})
+	hashID, err := s.CreateFeed(req, &api.Identity{})
 	require.NoError(t, err)
-	require.NotEmpty(t, hashId)
+	require.NotEmpty(t, hashID)
 }
 
 func TestService_makeFeed(t *testing.T) {

@@ -11,7 +11,7 @@ import (
 	"github.com/BrianHicks/finch/duration"
 	itunes "github.com/mxpv/podcast"
 	"github.com/pkg/errors"
-	"google.golang.org/api/youtube/v3"
+	youtube "google.golang.org/api/youtube/v3"
 
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
@@ -64,13 +64,13 @@ func (yt *YouTubeBuilder) listChannels(linkType api.LinkType, id string) (*youtu
 
 // Cost: 3 units (call method: 1, snippet: 2)
 // See https://developers.google.com/youtube/v3/docs/playlists/list#part
-func (yt *YouTubeBuilder) listPlaylists(id, channelId string) (*youtube.Playlist, error) {
+func (yt *YouTubeBuilder) listPlaylists(id, channelID string) (*youtube.Playlist, error) {
 	req := yt.client.Playlists.List("id,snippet")
 
 	if id != "" {
 		req = req.Id(id)
 	} else {
-		req = req.ChannelId(channelId)
+		req = req.ChannelId(channelID)
 	}
 
 	resp, err := req.Do(yt.key)
@@ -88,8 +88,8 @@ func (yt *YouTubeBuilder) listPlaylists(id, channelId string) (*youtube.Playlist
 
 // Cost: 3 units (call: 1, snippet: 2)
 // See https://developers.google.com/youtube/v3/docs/playlistItems/list#part
-func (yt *YouTubeBuilder) listPlaylistItems(itemId string, pageToken string) ([]*youtube.PlaylistItem, string, error) {
-	req := yt.client.PlaylistItems.List("id,snippet").MaxResults(maxYoutubeResults).PlaylistId(itemId)
+func (yt *YouTubeBuilder) listPlaylistItems(itemID string, pageToken string) ([]*youtube.PlaylistItem, string, error) {
+	req := yt.client.PlaylistItems.List("id,snippet").MaxResults(maxYoutubeResults).PlaylistId(itemID)
 	if pageToken != "" {
 		req = req.PageToken(pageToken)
 	}
@@ -331,14 +331,14 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(playlistItems map[string]*youtu
 }
 
 // Cost: (3 units + 5 units) * X pages = 8 units per page
-func (yt *YouTubeBuilder) queryItems(itemId string, feed *model.Feed, podcast *itunes.Podcast) error {
+func (yt *YouTubeBuilder) queryItems(itemID string, feed *model.Feed, podcast *itunes.Podcast) error {
 	var (
 		token string
 		count int
 	)
 
 	for {
-		items, pageToken, err := yt.listPlaylistItems(itemId, token)
+		items, pageToken, err := yt.listPlaylistItems(itemID, token)
 		if err != nil {
 			return err
 		}
@@ -370,7 +370,7 @@ func (yt *YouTubeBuilder) queryItems(itemId string, feed *model.Feed, podcast *i
 func (yt *YouTubeBuilder) Build(feed *model.Feed) (*itunes.Podcast, error) {
 
 	// Query general information about feed (title, description, lang, etc)
-	podcast, itemId, err := yt.queryFeed(feed)
+	podcast, itemID, err := yt.queryFeed(feed)
 	if err != nil {
 		return nil, err
 	}
@@ -380,7 +380,7 @@ func (yt *YouTubeBuilder) Build(feed *model.Feed) (*itunes.Podcast, error) {
 		feed.PageSize = maxYoutubeResults
 	}
 
-	if err := yt.queryItems(itemId, feed, podcast); err != nil {
+	if err := yt.queryItems(itemID, feed, podcast); err != nil {
 		return nil, err
 	}
 

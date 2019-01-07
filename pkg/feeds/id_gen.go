@@ -3,7 +3,7 @@ package feeds
 import (
 	"time"
 
-	"github.com/ventu-io/go-shortid"
+	shortid "github.com/ventu-io/go-shortid"
 )
 
 type IDGen struct {

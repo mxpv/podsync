@@ -79,8 +79,8 @@ func (r RedisStats) Close() error {
 	return r.client.Close()
 }
 
-func NewRedisStats(redisUrl string) (*RedisStats, error) {
-	opts, err := redis.ParseURL(redisUrl)
+func NewRedisStats(redisURL string) (*RedisStats, error) {
+	opts, err := redis.ParseURL(redisURL)
 	if err != nil {
 		return nil, err
 	}

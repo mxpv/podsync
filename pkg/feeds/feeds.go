@@ -48,7 +48,7 @@ func (s Service) makeFeed(req *api.CreateFeedRequest, identity *api.Identity) (*
 
 	now := time.Now().UTC()
 
-	feed.UserID = identity.UserId
+	feed.UserID = identity.UserID
 	feed.FeatureLevel = identity.FeatureLevel
 	feed.Quality = req.Quality
 	feed.Format = req.Format
@@ -71,12 +71,12 @@ func (s Service) makeFeed(req *api.CreateFeedRequest, identity *api.Identity) (*
 	}
 
 	// Generate short id
-	hashId, err := s.generator.Generate()
+	hashID, err := s.generator.Generate()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate id for feed")
 	}
 
-	feed.HashID = hashId
+	feed.HashID = hashID
 
 	return feed, nil
 }
@@ -163,30 +163,30 @@ func (s Service) Downgrade(patronID string, featureLevel int) error {
 	return nil
 }
 
-type feedOption func(*Service)
+type FeedOption func(*Service)
 
 //noinspection GoExportedFuncWithUnexportedType
-func WithStorage(db storage) feedOption {
+func WithStorage(db storage) FeedOption {
 	return func(service *Service) {
 		service.db = db
 	}
 }
 
 //noinspection GoExportedFuncWithUnexportedType
-func WithBuilder(provider api.Provider, builder builder) feedOption {
+func WithBuilder(provider api.Provider, builder builder) FeedOption {
 	return func(service *Service) {
 		service.builders[provider] = builder
 	}
 }
 
 //noinspection GoExportedFuncWithUnexportedType
-func WithStats(m stats) feedOption {
+func WithStats(m stats) FeedOption {
 	return func(service *Service) {
 		service.stats = m
 	}
 }
 
-func NewFeedService(opts ...feedOption) (*Service, error) {
+func NewFeedService(opts ...FeedOption) (*Service, error) {
 	idGen, err := NewIDGen()
 	if err != nil {
 		return nil, err

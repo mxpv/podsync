@@ -54,23 +54,26 @@ type Metadata struct {
 }
 
 const (
+	// DefaultFeatures represent features for Anonymous user
 	// Page size: 50
 	// Format: video
 	// Quality: high
 	DefaultFeatures = iota
 
+	// ExtendedFeatures represent features for 1$ pledges
 	// Max page size: 150
 	// Format: any
 	// Quality: any
 	ExtendedFeatures
 
+	// ExtendedPagination represent extended pagination feature set
 	// Max page size: 600
 	// Format: any
 	// Quality: any
 	ExtendedPagination
 
-	// Unlimited
-	PodcasterFeature
+	// PodcasterFeatures reserved for future
+	PodcasterFeatures
 )
 
 type CreateFeedRequest struct {
@@ -81,7 +84,7 @@ type CreateFeedRequest struct {
 }
 
 type Identity struct {
-	UserId       string `json:"user_id"`
+	UserID       string `json:"user_id"`
 	FullName     string `json:"full_name"`
 	Email        string `json:"email"`
 	ProfileURL   string `json:"profile_url"`

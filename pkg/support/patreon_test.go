@@ -103,7 +103,7 @@ func TestGetFeatureLevel(t *testing.T) {
 
 	hook := Patreon{db: storage}
 
-	require.Equal(t, api.PodcasterFeature, hook.GetFeatureLevelByID(creatorID))
+	require.Equal(t, api.PodcasterFeatures, hook.GetFeatureLevelByID(creatorID))
 	require.Equal(t, api.DefaultFeatures, hook.GetFeatureLevelByID("xyz"))
 	require.Equal(t, api.ExtendedPagination, hook.GetFeatureLevelByID(pledge.Relationships.Patron.Data.ID))
 }

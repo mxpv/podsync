@@ -1,5 +1,4 @@
 linters:
-  disable-all: true
   presets:
     - bugs
     - unused
@@ -7,3 +6,9 @@ linters:
     - style
     - complexity
     - performance
+  disable:
+    - megacheck
+    - typecheck
+issues:
+  exclude:
+    - if block ends with a return statement, so drop this else and outdent its block

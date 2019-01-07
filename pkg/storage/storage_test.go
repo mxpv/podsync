@@ -51,6 +51,18 @@ var (
 		CreatedAt:    time.Now().UTC(),
 		LastAccess:   time.Now().UTC(),
 	}
+
+	testDowngradePledge = &model.Feed{
+		HashID:       "123456",
+		UserID:       "123456",
+		ItemID:       "123456",
+		Provider:     api.ProviderVimeo,
+		LinkType:     api.LinkTypeGroup,
+		PageSize:     200,
+		Quality:      api.QualityLow,
+		Format:       api.FormatAudio,
+		FeatureLevel: api.ExtendedFeatures,
+	}
 )
 
 func runStorageTests(t *testing.T, createFn func(t *testing.T) storage) {
@@ -118,25 +130,13 @@ func testGetMetadata(t *testing.T, storage storage) {
 }
 
 func testDowngradeToDefaultFeatures(t *testing.T, storage storage) {
-	feed := &model.Feed{
-		HashID:       "123456",
-		UserID:       "123456",
-		ItemID:       "123456",
-		Provider:     api.ProviderVimeo,
-		LinkType:     api.LinkTypeGroup,
-		PageSize:     200,
-		Quality:      api.QualityLow,
-		Format:       api.FormatAudio,
-		FeatureLevel: api.ExtendedFeatures,
-	}
-
-	err := storage.SaveFeed(feed)
+	err := storage.SaveFeed(testDowngradePledge)
 	require.NoError(t, err)
 
-	err = storage.Downgrade(feed.UserID, api.DefaultFeatures)
+	err = storage.Downgrade(testDowngradePledge.UserID, api.DefaultFeatures)
 	require.NoError(t, err)
 
-	downgraded, err := storage.GetFeed(feed.HashID)
+	downgraded, err := storage.GetFeed(testDowngradePledge.HashID)
 	require.NoError(t, err)
 
 	require.Equal(t, 50, downgraded.PageSize)
@@ -146,30 +146,18 @@ func testDowngradeToDefaultFeatures(t *testing.T, storage storage) {
 }
 
 func testDowngradeToExtendedFeatures(t *testing.T, storage storage) {
-	feed := &model.Feed{
-		HashID:       "123456",
-		UserID:       "123456",
-		ItemID:       "123456",
-		Provider:     api.ProviderVimeo,
-		LinkType:     api.LinkTypeGroup,
-		PageSize:     500,
-		Quality:      api.QualityLow,
-		Format:       api.FormatAudio,
-		FeatureLevel: api.ExtendedFeatures,
-	}
-
-	err := storage.SaveFeed(feed)
+	err := storage.SaveFeed(testDowngradePledge)
 	require.NoError(t, err)
 
-	err = storage.Downgrade(feed.UserID, api.ExtendedFeatures)
+	err = storage.Downgrade(testDowngradePledge.UserID, api.ExtendedFeatures)
 	require.NoError(t, err)
 
-	downgraded, err := storage.GetFeed(feed.HashID)
+	downgraded, err := storage.GetFeed(testDowngradePledge.HashID)
 	require.NoError(t, err)
 
 	require.Equal(t, 150, downgraded.PageSize)
-	require.Equal(t, feed.Quality, downgraded.Quality)
-	require.Equal(t, feed.Format, downgraded.Format)
+	require.Equal(t, testDowngradePledge.Quality, downgraded.Quality)
+	require.Equal(t, testDowngradePledge.Format, downgraded.Format)
 	require.Equal(t, api.ExtendedFeatures, downgraded.FeatureLevel)
 }
 
@@ -207,14 +195,7 @@ func testAddPledge(t *testing.T, storage storage) {
 	pledge, err := storage.GetPledge(strconv.FormatInt(testPledge.PatronID, 10))
 	require.NoError(t, err)
 
-	require.Equal(t, testPledge.PledgeID, pledge.PledgeID)
-	require.Equal(t, testPledge.PatronID, pledge.PatronID)
-	require.Equal(t, testPledge.CreatedAt.Unix(), pledge.CreatedAt.Unix())
-	require.Equal(t, testPledge.DeclinedSince.Unix(), pledge.DeclinedSince.Unix())
-	require.Equal(t, testPledge.AmountCents, pledge.AmountCents)
-	require.Equal(t, testPledge.TotalHistoricalAmountCents, pledge.TotalHistoricalAmountCents)
-	require.Equal(t, testPledge.OutstandingPaymentAmountCents, pledge.OutstandingPaymentAmountCents)
-	require.Equal(t, testPledge.IsPaused, pledge.IsPaused)
+	compareWithTestPledge(t, pledge)
 }
 
 func testGetPledge(t *testing.T, storage storage) {
@@ -224,6 +205,10 @@ func testGetPledge(t *testing.T, storage storage) {
 	pledge, err := storage.GetPledge(strconv.FormatInt(testPledge.PatronID, 10))
 	require.NoError(t, err)
 
+	compareWithTestPledge(t, pledge)
+}
+
+func compareWithTestPledge(t *testing.T, pledge *model.Pledge) {
 	require.Equal(t, testPledge.PledgeID, pledge.PledgeID)
 	require.Equal(t, testPledge.PatronID, pledge.PatronID)
 	require.Equal(t, testPledge.CreatedAt.Unix(), pledge.CreatedAt.Unix())

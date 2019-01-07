@@ -26,7 +26,7 @@ const (
 type feedService interface {
 	CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error)
 	BuildFeed(hashID string) (*itunes.Podcast, error)
-	GetMetadata(hashId string) (*api.Metadata, error)
+	GetMetadata(hashID string) (*api.Metadata, error)
 	Downgrade(patronID string, featureLevel int) error
 }
 
@@ -59,7 +59,7 @@ func New(feed feedService, support patreonService, cfg *config.AppConfig) http.H
 	// OAuth 2 configuration
 
 	h.oauth2 = oauth2.Config{
-		ClientID:     cfg.PatreonClientId,
+		ClientID:     cfg.PatreonClientID,
 		ClientSecret: cfg.PatreonSecret,
 		RedirectURL:  cfg.PatreonRedirectURL,
 		Scopes:       []string{"users", "pledges-to-me", "my-campaign"},
@@ -132,7 +132,7 @@ func (h handler) patreonCallback(c *gin.Context) {
 	level := h.patreon.GetFeatureLevelByID(user.Data.ID)
 
 	identity := &api.Identity{
-		UserId:       user.Data.ID,
+		UserID:       user.Data.ID,
 		FullName:     user.Data.Attributes.FullName,
 		Email:        user.Data.Attributes.Email,
 		ProfileURL:   user.Data.Attributes.URL,
@@ -154,7 +154,7 @@ func (h handler) user(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user_id":       identity.UserId,
+		"user_id":       identity.UserID,
 		"feature_level": identity.FeatureLevel,
 		"full_name":     identity.FullName,
 	})
@@ -179,23 +179,23 @@ func (h handler) create(c *gin.Context) {
 	}
 
 	// Check feature level again if user deleted pledge by still logged in
-	identity.FeatureLevel = h.patreon.GetFeatureLevelByID(identity.UserId)
+	identity.FeatureLevel = h.patreon.GetFeatureLevelByID(identity.UserID)
 
 	createEventLog = createEventLog.WithFields(log.Fields{
-		"user_id":       identity.UserId,
+		"user_id":       identity.UserID,
 		"feature_level": identity.FeatureLevel,
 	})
 
 	createEventLog.Info("creating feed")
 
-	hashId, err := h.feed.CreateFeed(req, identity)
+	hashID, err := h.feed.CreateFeed(req, identity)
 	if err != nil {
 		createEventLog.WithError(err).Error("failed to create new feed")
 		c.JSON(internalError(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"id": hashId})
+	c.JSON(http.StatusOK, gin.H{"id": hashID})
 }
 
 func (h handler) getFeed(c *gin.Context) {

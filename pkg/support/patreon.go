@@ -113,7 +113,7 @@ func (h Patreon) GetFeatureLevelByID(patronID string) (level int) {
 	}
 
 	if patronID == creatorID {
-		level = api.PodcasterFeature
+		level = api.PodcasterFeatures
 		return
 	}
 

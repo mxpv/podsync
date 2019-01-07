@@ -9,9 +9,9 @@ import (
 const FileName = "podsync"
 
 type AppConfig struct {
-	YouTubeApiKey          string `yaml:"youtubeApiKey"`
-	VimeoApiKey            string `yaml:"vimeoApiKey"`
-	PatreonClientId        string `yaml:"patreonClientId"`
+	YouTubeAPIKey          string `yaml:"youtubeApiKey"`
+	VimeoAPIKey            string `yaml:"vimeoApiKey"`
+	PatreonClientID        string `yaml:"patreonClientId"`
 	PatreonSecret          string `yaml:"patreonSecret"`
 	PatreonRedirectURL     string `yaml:"patreonRedirectUrl"`
 	PatreonWebhooksSecret  string `json:"patreonWebhooksSecret"`

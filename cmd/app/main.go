@@ -65,12 +65,12 @@ func main() {
 
 	// Builders
 
-	youtube, err := builders.NewYouTubeBuilder(cfg.YouTubeApiKey)
+	youtube, err := builders.NewYouTubeBuilder(cfg.YouTubeAPIKey)
 	if err != nil {
 		log.WithError(err).Fatal("failed to create YouTube builder")
 	}
 
-	vimeo, err := builders.NewVimeoBuilder(ctx, cfg.VimeoApiKey)
+	vimeo, err := builders.NewVimeoBuilder(ctx, cfg.VimeoAPIKey)
 	if err != nil {
 		log.WithError(err).Fatal("failed to create Vimeo builder")
 	}
