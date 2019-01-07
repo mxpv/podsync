@@ -2,8 +2,8 @@ version: 0.2
 
 env:
   parameter-store:
-    YOUTUBE_TEST_API_KEY: "youtubeKey"
-    VIMEO_TEST_API_KEY: "vimeoKey"
+    YOUTUBE_TEST_API_KEY: "/CodeBuild/youtubeKey"
+    VIMEO_TEST_API_KEY: "/CodeBuild/vimeoKey"
 
 phases:
   install:
