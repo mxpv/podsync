@@ -1,6 +1,8 @@
 version: 0.2
 
 env:
+  variables:
+    GO111MODULE: on
   parameter-store:
     YOUTUBE_TEST_API_KEY: "/CodeBuild/youtubeKey"
     VIMEO_TEST_API_KEY: "/CodeBuild/vimeoKey"
@@ -8,10 +10,10 @@ env:
 phases:
   install:
     commands:
-      - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.12.5
+      - go version
+      - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b /usr/local/bin v1.12.5
       - golangci-lint --version
   build:
     commands:
-      - go version
       - go test -short ./...
       - golangci-lint run

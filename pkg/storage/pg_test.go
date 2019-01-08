@@ -9,6 +9,10 @@ import (
 )
 
 func TestPostgres_UpdateLastAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping storage test in short mode")
+	}
+
 	stor := createPG(t)
 	defer func() { _ = stor.Close() }()
 
