@@ -1,14 +1,6 @@
-## Handling static files
+![Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiOE52ek1HRWdQeW5pVmozMUNtWm1zcXBDc0FPbTFRRzZRWEhQeGFrOXd6TFFhVnlVOHQ0dWM5SHFZRnloQUFKOUY2NWdMaDBOdnMxUnYyYW9FZC9GbElNPSIsIml2UGFyYW1ldGVyU3BlYyI6ImVwQkN3WjV4MXpTZ2FXTUUiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
+[![Patreon](https://img.shields.io/badge/support-patreon-E6461A.svg)](https://www.patreon.com/podsync)
 
-`ASSETS_PATH` should point to a directory with static files.
-For debugging just 'Copy Path' to `assets` directory.
-
-For production run `gulp patch`.
-Gulp will generate `dist` directory with minified files and update templates to include these files.
-
-`TEMPLATES_PATH` should just point to `templates` directory.
-
-Docker will run `gulp` and include `dist` and `templates` directories during build as well as specify `ASSETS_PATH` and `TEMPLATES_PATH` environment variables.
 
 ## Patreon
 
@@ -16,22 +8,26 @@ In order to login via Patreon the following variables should be configured:
 - `PATREON_REDIRECT_URL` should point to `http://yout_host_here/patreon`
 - `PATREON_CLIENT_ID` and `PATREON_SECRET` should be copied from https://www.patreon.com/platform/documentation/clients
 
-## Deploy Docker images
+## Building Docker images
 
-Build docker image:
-```
-docker build -t ytdl .
-```
-
-Deploy image to Container Registry:
-```
-docker tag ytdl gcr.io/pod-sync/ytdl
-gcloud auth application-default login
-gcloud docker -- push gcr.io/pod-sync/ytdl
+Backend
+```bash
+./build.sh
 ```
 
-or just use `build.sh`
+nginx
+```bash
+./nginx.sh
+```
 
-## Access to Container Registry from docker
+ytdl
+```bash
+cd cmd/ytdl/
+./build.sh
+```
 
-See https://cloud.google.com/container-registry/docs/advanced-authentication for details
+## Running
+```bash
+docker-compose pull
+docker-compose up -d
+```
