@@ -47,7 +47,8 @@ func TestBuildYTFeed(t *testing.T) {
 		{Provider: api.ProviderYoutube, LinkType: api.LinkTypePlaylist, ItemID: "PLUVl5pafUrBydT_gsCjRGeCy0hFHloec8"},
 	}
 
-	for _, feed := range feeds {
+	for _, f := range feeds {
+		feed := f
 		t.Run(feed.ItemID, func(t *testing.T) {
 			podcast, err := builder.Build(feed)
 

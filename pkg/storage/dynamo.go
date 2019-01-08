@@ -276,7 +276,7 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 		KeyConditionExpression:    keyConditionExpression.KeyCondition(),
 		ExpressionAttributeNames:  keyConditionExpression.Names(),
 		ExpressionAttributeValues: keyConditionExpression.Values(),
-		Select: aws.String(dynamodb.SelectAllProjectedAttributes),
+		Select:                    aws.String(dynamodb.SelectAllProjectedAttributes),
 	}
 
 	var keys []map[string]*dynamodb.AttributeValue

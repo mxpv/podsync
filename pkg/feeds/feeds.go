@@ -56,15 +56,16 @@ func (s Service) makeFeed(req *api.CreateFeedRequest, identity *api.Identity) (*
 	feed.CreatedAt = now
 	feed.LastAccess = now
 
-	if identity.FeatureLevel >= api.ExtendedPagination {
+	switch {
+	case identity.FeatureLevel >= api.ExtendedPagination:
 		if feed.PageSize > 600 {
 			feed.PageSize = 600
 		}
-	} else if identity.FeatureLevel == api.ExtendedFeatures {
+	case identity.FeatureLevel == api.ExtendedFeatures:
 		if feed.PageSize > 150 {
 			feed.PageSize = 150
 		}
-	} else {
+	default:
 		feed.Quality = api.QualityHigh
 		feed.Format = api.FormatVideo
 		feed.PageSize = 50

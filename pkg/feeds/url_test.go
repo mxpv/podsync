@@ -4,8 +4,9 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/mxpv/podsync/pkg/api"
 	"github.com/stretchr/testify/require"
+
+	"github.com/mxpv/podsync/pkg/api"
 )
 
 func TestParseYoutubeURL_Playlist(t *testing.T) {

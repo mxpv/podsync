@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/mxpv/patreon-go"
+	patreon "github.com/mxpv/patreon-go"
 	"github.com/pkg/errors"
 
 	"github.com/mxpv/podsync/pkg/api"

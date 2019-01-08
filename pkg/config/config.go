@@ -24,7 +24,7 @@ type AppConfig struct {
 	DynamoPledgesTableName string `yaml:"dynamoPledgesTableName"`
 }
 
-func ReadConfiguration() (cfg *AppConfig, err error) {
+func ReadConfiguration() (*AppConfig, error) {
 	viper.SetConfigName(FileName)
 
 	// Configuration file
@@ -55,18 +55,18 @@ func ReadConfiguration() (cfg *AppConfig, err error) {
 		viper.BindEnv(k, v)
 	}
 
-	err = viper.ReadInConfig()
+	err := viper.ReadInConfig()
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return
+			return nil, err
 		}
-
-		// Ignore file not found error
-		err = nil
 	}
 
-	cfg = &AppConfig{}
+	cfg := &AppConfig{}
 
-	viper.Unmarshal(cfg)
-	return
+	if err := viper.Unmarshal(cfg); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
 }

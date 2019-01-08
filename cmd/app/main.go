@@ -26,7 +26,7 @@ import (
 func main() {
 	log.SetFormatter(&log.JSONFormatter{})
 
-	stop := make(chan os.Signal)
+	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
 	ctx, cancel := context.WithCancel(context.Background())

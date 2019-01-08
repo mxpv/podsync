@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/mxpv/patreon-go"
+	patreon "github.com/mxpv/patreon-go"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 

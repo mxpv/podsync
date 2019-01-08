@@ -51,102 +51,96 @@ func parseURL(link string) (*model.Feed, error) {
 	return nil, errors.New("unsupported URL host")
 }
 
-func parseYoutubeURL(parsed *url.URL) (kind api.LinkType, id string, err error) {
+func parseYoutubeURL(parsed *url.URL) (api.LinkType, string, error) {
 	path := parsed.EscapedPath()
 
 	// https://www.youtube.com/playlist?list=PLCB9F975ECF01953C
 	// https://www.youtube.com/watch?v=rbCbho7aLYw&list=PLMpEfaKcGjpWEgNtdnsvLX6LzQL0UC0EM
 	if strings.HasPrefix(path, "/playlist") || strings.HasPrefix(path, "/watch") {
-		kind = api.LinkTypePlaylist
+		kind := api.LinkTypePlaylist
 
-		id = parsed.Query().Get("list")
+		id := parsed.Query().Get("list")
 		if id != "" {
-			return
+			return kind, id, nil
 		}
 
-		err = errors.New("invalid playlist link")
-		return
+		return "", "", errors.New("invalid playlist link")
 	}
 
 	// - https://www.youtube.com/channel/UC5XPnUk8Vvv_pWslhwom6Og
 	// - https://www.youtube.com/channel/UCrlakW-ewUT8sOod6Wmzyow/videos
 	if strings.HasPrefix(path, "/channel") {
-		kind = api.LinkTypeChannel
+		kind := api.LinkTypeChannel
 		parts := strings.Split(parsed.EscapedPath(), "/")
 		if len(parts) <= 2 {
-			err = errors.New("invalid youtube channel link")
-			return
+			return "", "", errors.New("invalid youtube channel link")
 		}
 
-		id = parts[2]
+		id := parts[2]
 		if id == "" {
-			err = errors.New("invalid id")
+			return "", "", errors.New("invalid id")
 		}
 
-		return
+		return kind, id, nil
 	}
 
 	// - https://www.youtube.com/user/fxigr1
 	if strings.HasPrefix(path, "/user") {
-		kind = api.LinkTypeUser
+		kind := api.LinkTypeUser
 
 		parts := strings.Split(parsed.EscapedPath(), "/")
 		if len(parts) <= 2 {
-			err = errors.New("invalid user link")
-			return
+			return "", "", errors.New("invalid user link")
 		}
 
-		id = parts[2]
+		id := parts[2]
 		if id == "" {
-			err = errors.New("invalid id")
+			return "", "", errors.New("invalid id")
 		}
 
-		return
+		return kind, id, nil
 	}
 
-	err = errors.New("unsupported link format")
-	return
+	return "", "", errors.New("unsupported link format")
 }
 
-func parseVimeoURL(parsed *url.URL) (kind api.LinkType, id string, err error) {
+func parseVimeoURL(parsed *url.URL) (api.LinkType, string, error) {
 	parts := strings.Split(parsed.EscapedPath(), "/")
-
 	if len(parts) <= 1 {
-		err = errors.New("invalid vimeo link path")
-		return
+		return "", "", errors.New("invalid vimeo link path")
 	}
 
-	if parts[1] == "groups" {
+	var kind api.LinkType
+	switch parts[1] {
+	case "groups":
 		kind = api.LinkTypeGroup
-	} else if parts[1] == "channels" {
+	case "channels":
 		kind = api.LinkTypeChannel
-	} else {
+	default:
 		kind = api.LinkTypeUser
 	}
 
 	if kind == api.LinkTypeGroup || kind == api.LinkTypeChannel {
 		if len(parts) <= 2 {
-			err = errors.New("invalid channel link")
-			return
+			return "", "", errors.New("invalid channel link")
 		}
 
-		id = parts[2]
+		id := parts[2]
 		if id == "" {
-			err = errors.New("invalid id")
+			return "", "", errors.New("invalid id")
 		}
 
-		return
+		return kind, id, nil
 	}
 
 	if kind == api.LinkTypeUser {
-		id = parts[1]
+		id := parts[1]
 		if id == "" {
-			err = errors.New("invalid id")
+			return "", "", errors.New("invalid id")
 		}
 
-		return
+		return kind, id, nil
 	}
 
-	err = errors.New("unsupported link format")
-	return
+	return "", "", errors.New("unsupported link format")
 }

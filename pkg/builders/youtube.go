@@ -41,11 +41,12 @@ type YouTubeBuilder struct {
 func (yt *YouTubeBuilder) listChannels(linkType api.LinkType, id string) (*youtube.Channel, error) {
 	req := yt.client.Channels.List("id,snippet,contentDetails")
 
-	if linkType == api.LinkTypeChannel {
+	switch linkType {
+	case api.LinkTypeChannel:
 		req = req.Id(id)
-	} else if linkType == api.LinkTypeUser {
+	case api.LinkTypeUser:
 		req = req.ForUsername(id)
-	} else {
+	default:
 		return nil, errors.New("unsupported link type")
 	}
 
@@ -252,10 +253,13 @@ func (yt *YouTubeBuilder) getSize(duration int64, feed *model.Feed) int64 {
 
 // Cost: 5 units (call: 1, snippet: 2, contentDetails: 2)
 // See https://developers.google.com/youtube/v3/docs/videos/list#part
-func (yt *YouTubeBuilder) queryVideoDescriptions(playlistItems map[string]*youtube.PlaylistItemSnippet, feed *model.Feed, podcast *itunes.Podcast) error {
+func (yt *YouTubeBuilder) queryVideoDescriptions(
+	playlist map[string]*youtube.PlaylistItemSnippet,
+	feed *model.Feed,
+	podcast *itunes.Podcast) error {
 	// Make the list of video ids
-	ids := make([]string, 0, len(playlistItems))
-	for _, s := range playlistItems {
+	ids := make([]string, 0, len(playlist))
+	for _, s := range playlist {
 		ids = append(ids, s.ResourceId.VideoId)
 	}
 
@@ -287,7 +291,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(playlistItems map[string]*youtu
 
 		// Parse date added to playlist / publication date
 		dateStr := ""
-		playlistItem, ok := playlistItems[video.Id]
+		playlistItem, ok := playlist[video.Id]
 		if ok {
 			dateStr = playlistItem.PublishedAt
 		} else {
