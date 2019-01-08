@@ -223,6 +223,12 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 	podcast.IAuthor = title
 	podcast.AddSummary(desc)
 
+	if feed.Explicit {
+		podcast.IExplicit = "yes"
+	} else {
+		podcast.IExplicit = "no"
+	}
+
 	return &podcast, itemID, nil
 }
 
@@ -314,9 +320,9 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(playlistItems map[string]*youtu
 		}
 
 		if feed.Explicit {
-			item.IExplicit = "true"
+			item.IExplicit = "yes"
 		} else {
-			item.IExplicit = "false"
+			item.IExplicit = "no"
 		}
 
 		item.IOrder = strconv.FormatInt(playlistItem.Position, 10)
