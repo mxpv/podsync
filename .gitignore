@@ -24,7 +24,7 @@ _testmain.go
 *.prof
 
 .idea/
-
+bin/
 node_modules/
 dist/
 venv/
