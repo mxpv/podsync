@@ -35,4 +35,5 @@ type Feed struct {
 	ExpirationTime time.Time `sql:"-" dynamodbav:",unixtime"`
 	CoverArt       string    `dynamodbav:",omitempty"`
 	Explicit       bool
+	Language       string `dynamodbav:",omitempty"` // ISO 639
 }

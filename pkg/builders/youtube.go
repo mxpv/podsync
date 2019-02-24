@@ -230,6 +230,10 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 		podcast.IExplicit = "no"
 	}
 
+	if feed.Language != "" {
+		podcast.Language = feed.Language
+	}
+
 	return &podcast, itemID, nil
 }
 
