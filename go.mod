@@ -15,7 +15,6 @@ require (
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
 	github.com/gin-gonic/gin v0.0.0-20170702092826-d459835d2b07
 	github.com/go-pg/pg v6.14.2+incompatible
-	github.com/go-redis/redis v6.12.0+incompatible
 	github.com/golang/mock v1.1.1
 	github.com/google/go-querystring v0.0.0-20170111101155-53e6ce116135 // indirect
 	github.com/gorilla/sessions v1.1.1 // indirect

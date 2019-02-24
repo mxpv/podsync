@@ -16,7 +16,6 @@ import (
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/feeds"
 	"github.com/mxpv/podsync/pkg/handler"
-	"github.com/mxpv/podsync/pkg/stats"
 	"github.com/mxpv/podsync/pkg/storage"
 	"github.com/mxpv/podsync/pkg/support"
 
@@ -37,11 +36,6 @@ func main() {
 	cfg, err := config.ReadConfiguration()
 	if err != nil {
 		log.WithError(err).Fatal("failed to read configuration")
-	}
-
-	statistics, err := stats.NewRedisStats(cfg.RedisURL)
-	if err != nil {
-		log.WithError(err).Fatal("failed to create redis")
 	}
 
 	database, err := storage.NewDynamo(&aws.Config{
@@ -77,7 +71,6 @@ func main() {
 
 	feed, err := feeds.NewFeedService(
 		feeds.WithStorage(database),
-		feeds.WithStats(statistics),
 		feeds.WithBuilder(api.ProviderYoutube, youtube),
 		feeds.WithBuilder(api.ProviderVimeo, vimeo),
 	)
@@ -108,10 +101,6 @@ func main() {
 
 	if err := database.Close(); err != nil {
 		log.WithError(err).Error("failed to close database")
-	}
-
-	if err := statistics.Close(); err != nil {
-		log.WithError(err).Error("failed to close stats storage")
 	}
 
 	log.Info("server gracefully stopped")

@@ -16,7 +16,6 @@ type AppConfig struct {
 	PatreonRedirectURL     string `yaml:"patreonRedirectUrl"`
 	PatreonWebhooksSecret  string `json:"patreonWebhooksSecret"`
 	PostgresConnectionURL  string `yaml:"postgresConnectionUrl"`
-	RedisURL               string `yaml:"redisUrl"`
 	CookieSecret           string `yaml:"cookieSecret"`
 	AWSAccessKey           string `yaml:"awsAccessKey"`
 	AWSAccessSecret        string `yaml:"awsAccessSecret"`

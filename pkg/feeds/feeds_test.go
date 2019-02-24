@@ -99,42 +99,13 @@ func TestService_GetFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	stats := NewMockstats(ctrl)
-	stats.EXPECT().Inc(MetricQueries, feed.HashID).Return(int64(10), nil)
-
 	stor := NewMockstorage(ctrl)
 	stor.EXPECT().GetFeed(feed.HashID).Times(1).Return(feed, nil)
 
-	s := Service{db: stor, stats: stats}
+	s := Service{db: stor}
 
 	_, err := s.BuildFeed(feed.HashID)
 	require.NoError(t, err)
-}
-
-func TestService_BuildFeedQuotaCheck(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	f := &model.Feed{
-		HashID:   "321",
-		ItemID:   "xyz",
-		Provider: api.ProviderVimeo,
-		LinkType: api.LinkTypeChannel,
-		PageSize: 600,
-		Quality:  api.QualityHigh,
-		Format:   api.FormatVideo,
-	}
-
-	stats := NewMockstats(ctrl)
-	stats.EXPECT().Inc(MetricQueries, f.HashID).Return(int64(api.ExtendedPaginationQueryLimit)+1, nil)
-
-	stor := NewMockstorage(ctrl)
-	stor.EXPECT().GetFeed(f.HashID).Times(1).Return(f, nil)
-
-	s := Service{db: stor, stats: stats}
-
-	_, err := s.BuildFeed(f.HashID)
-	require.Equal(t, api.ErrQuotaExceeded, err)
 }
 
 func TestService_WrongID(t *testing.T) {
@@ -157,12 +128,9 @@ func TestService_GetMetadata(t *testing.T) {
 	stor := NewMockstorage(ctrl)
 	stor.EXPECT().GetMetadata(feed.HashID).Times(1).Return(feed, nil)
 
-	stats := NewMockstats(ctrl)
-	stats.EXPECT().Inc(MetricDownloads, feed.HashID).Return(int64(10), nil)
-
-	s := Service{db: stor, stats: stats}
+	s := Service{db: stor}
 
 	m, err := s.GetMetadata(feed.HashID)
 	require.NoError(t, err)
-	require.Equal(t, int64(10), m.Downloads)
+	require.EqualValues(t, 0, m.Downloads)
 }

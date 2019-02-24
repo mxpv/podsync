@@ -30,8 +30,6 @@ github.com/gin-gonic/gin v0.0.0-20170702092826-d459835d2b07 h1:cZPJWzd2oNeoS0oJM
 github.com/gin-gonic/gin v0.0.0-20170702092826-d459835d2b07/go.mod h1:7cKuhb5qV2ggCFctp2fJQ+ErvciLZrIeoOSOm6mUr7Y=
 github.com/go-pg/pg v6.14.2+incompatible h1:FrOgsHDUhC3V3wkBGAIN5LVj4nJczFPyy1YNFnetfIQ=
 github.com/go-pg/pg v6.14.2+incompatible/go.mod h1:a2oXow+aFOrvwcKs3eIA0lNFmMilrxK2sOkB5NWe0vA=
-github.com/go-redis/redis v6.12.0+incompatible h1:s+64XI+z/RXqGHz2fQSgRJOEwqqSXeX3dliF7iVkMbE=
-github.com/go-redis/redis v6.12.0+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
 github.com/golang/mock v1.1.1 h1:G5FRp8JnTd7RQH5kemVNlMeyXQAztQ3mOWV95KxsXH8=
 github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
 github.com/golang/protobuf v1.2.0 h1:P3YflyNX/ehuJFLhxviNdFxQPkGK5cDcApsge1SqnvM=

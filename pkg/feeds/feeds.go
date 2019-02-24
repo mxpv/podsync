@@ -17,11 +17,6 @@ const (
 	MetricDownloads = "downloads"
 )
 
-type stats interface {
-	Inc(metric, hashID string) (int64, error)
-	Get(metric, hashID string) (int64, error)
-}
-
 type builder interface {
 	Build(feed *model.Feed) (podcast *itunes.Podcast, err error)
 }
@@ -35,7 +30,6 @@ type storage interface {
 
 type Service struct {
 	generator IDGen
-	stats     stats
 	db        storage
 	builders  map[api.Provider]builder
 }
@@ -111,15 +105,6 @@ func (s Service) BuildFeed(hashID string) (*itunes.Podcast, error) {
 		return nil, err
 	}
 
-	count, err := s.stats.Inc(MetricQueries, feed.HashID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to update metrics for feed: %s", hashID)
-	}
-
-	if feed.PageSize > 150 && count > api.ExtendedPaginationQueryLimit {
-		return nil, api.ErrQuotaExceeded
-	}
-
 	builder, ok := s.builders[feed.Provider]
 	if !ok {
 		return nil, errors.Wrapf(err, "failed to get builder for feed: %s", hashID)
@@ -139,16 +124,10 @@ func (s Service) GetMetadata(hashID string) (*api.Metadata, error) {
 		return nil, err
 	}
 
-	downloads, err := s.stats.Inc(MetricDownloads, hashID)
-	if err != nil {
-		return nil, err
-	}
-
 	return &api.Metadata{
-		Provider:  feed.Provider,
-		Format:    feed.Format,
-		Quality:   feed.Quality,
-		Downloads: downloads,
+		Provider: feed.Provider,
+		Format:   feed.Format,
+		Quality:  feed.Quality,
 	}, nil
 }
 
@@ -177,13 +156,6 @@ func WithStorage(db storage) FeedOption {
 func WithBuilder(provider api.Provider, builder builder) FeedOption {
 	return func(service *Service) {
 		service.builders[provider] = builder
-	}
-}
-
-//noinspection GoExportedFuncWithUnexportedType
-func WithStats(m stats) FeedOption {
-	return func(service *Service) {
-		service.stats = m
 	}
 }
 
