@@ -25,7 +25,7 @@ require (
 	github.com/mattn/go-isatty v0.0.3 // indirect
 	github.com/memcachier/mc v2.0.1+incompatible // indirect
 	github.com/mitchellh/mapstructure v0.0.0-20180715050151-f15292f7a699 // indirect
-	github.com/mxpv/patreon-go v0.0.0-20171031001022-1d2f253ac700
+	github.com/mxpv/patreon-go v0.0.0-20180807002359-67dbab1ad14c
 	github.com/mxpv/podcast v0.0.0-20170823220358-fe328ad87d18
 	github.com/onsi/ginkgo v1.7.0 // indirect
 	github.com/onsi/gomega v1.4.3 // indirect

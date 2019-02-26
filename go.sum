@@ -64,6 +64,8 @@ github.com/mitchellh/mapstructure v0.0.0-20180715050151-f15292f7a699 h1:KXZJFdun
 github.com/mitchellh/mapstructure v0.0.0-20180715050151-f15292f7a699/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh9fWfEaFds41c1Y=
 github.com/mxpv/patreon-go v0.0.0-20171031001022-1d2f253ac700 h1:39PjdU78pNilVLU9tjWVDGt/rziIKKkKHuzWbH1kBbw=
 github.com/mxpv/patreon-go v0.0.0-20171031001022-1d2f253ac700/go.mod h1:ksYjm2GAbGlgIP7jO9Q5/AdyE4MwwEbgQ+lFMx3hyiM=
+github.com/mxpv/patreon-go v0.0.0-20180807002359-67dbab1ad14c h1:glRDvmNgmckYjQHMQ17XFlci6RehtmGmRQV+Cq6FusI=
+github.com/mxpv/patreon-go v0.0.0-20180807002359-67dbab1ad14c/go.mod h1:ksYjm2GAbGlgIP7jO9Q5/AdyE4MwwEbgQ+lFMx3hyiM=
 github.com/mxpv/podcast v0.0.0-20170823220358-fe328ad87d18 h1:YYsu49Y42JA+CSs9+z2MGBdGxb5jklpagLp5QPJ6BwQ=
 github.com/mxpv/podcast v0.0.0-20170823220358-fe328ad87d18/go.mod h1:bKrqwMF8O3PciTG92w0992h/d7Aj7CuIF5uTNEl3pNY=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
