@@ -1,4 +1,4 @@
-OUT := server
+OUT := api
 SRC := $(wildcard *.go)
 
 build: $(SRC)
@@ -6,8 +6,8 @@ build: $(SRC)
 
 .PHONY: push
 push: build
-	docker build -t mxpv/podsync .
-	docker push mxpv/podsync
+	docker build -t mxpv/podsync_api .
+	docker push mxpv/podsync_api
 
 .PHONY: clean
 clean:

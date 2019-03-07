@@ -1,9 +1,9 @@
 ﻿version: '2.1'
 
 services:
-  app:
-    image: mxpv/podsync
-    container_name: app
+  api:
+    image: mxpv/podsync_api
+    container_name: api
     restart: always
     ports:
       - 5001
@@ -35,7 +35,7 @@ services:
     ports:
       - 5002
     environment:
-      - METADATA_URL=http://app:5001/api/metadata/{feed_id}
+      - METADATA_URL=http://api:5001/api/metadata/{feed_id}
   nginx:
     image: mxpv/nginx:latest
     container_name: nginx
