@@ -8,6 +8,7 @@ services:
     ports:
       - 5001
     environment:
+      - REDIS_CONNECTION_URL=redis://redis
       - POSTGRES_CONNECTION_URL={POSTGRES_CONNECTION_URL}
       - YOUTUBE_API_KEY={YOUTUBE_API_KEY}
       - VIMEO_API_KEY={VIMEO_API_KEY}
@@ -36,6 +37,11 @@ services:
       - 5002
     environment:
       - METADATA_URL=http://api:5001/api/metadata/{feed_id}
+  redis:
+    image: redis:5.0.3
+    container_name: redis
+    command: redis-server --appendonly no --save ""
+    restart: always
   nginx:
     image: mxpv/nginx:latest
     container_name: nginx
