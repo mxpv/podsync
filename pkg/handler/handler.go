@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -36,14 +37,20 @@ type patreonService interface {
 	GetFeatureLevelFromAmount(amount int) int
 }
 
+type cacheService interface {
+	Set(key, value string, ttl time.Duration) error
+	Get(key string) (string, error)
+}
+
 type handler struct {
 	feed    feedService
 	cfg     *config.AppConfig
 	oauth2  oauth2.Config
 	patreon patreonService
+	cache   cacheService
 }
 
-func New(feed feedService, support patreonService, cfg *config.AppConfig) http.Handler {
+func New(feed feedService, support patreonService, cache cacheService, cfg *config.AppConfig) http.Handler {
 	r := gin.New()
 	r.Use(gin.Recovery())
 
@@ -53,6 +60,7 @@ func New(feed feedService, support patreonService, cfg *config.AppConfig) http.H
 	h := handler{
 		feed:    feed,
 		patreon: support,
+		cache:   cache,
 		cfg:     cfg,
 	}
 
@@ -214,6 +222,14 @@ func (h handler) getFeed(c *gin.Context) {
 		hashID = strings.TrimSuffix(hashID, ".xml")
 	}
 
+	const feedContentType = "application/rss+xml; charset=UTF-8"
+
+	cached, err := h.cache.Get(hashID)
+	if err == nil {
+		c.Data(http.StatusOK, feedContentType, []byte(cached))
+		return
+	}
+
 	podcast, err := h.feed.BuildFeed(hashID)
 	if err != nil {
 		code := http.StatusInternalServerError
@@ -232,7 +248,13 @@ func (h handler) getFeed(c *gin.Context) {
 		return
 	}
 
-	c.Data(http.StatusOK, "application/rss+xml; charset=UTF-8", podcast.Bytes())
+	data := podcast.String()
+
+	if err := h.cache.Set(hashID, data, 10*time.Minute); err != nil {
+		log.WithError(err).Warnf("failed to cache feed %q", hashID)
+	}
+
+	c.Data(http.StatusOK, feedContentType, []byte(data))
 }
 
 func (h handler) metadata(c *gin.Context) {

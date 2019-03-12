@@ -21,6 +21,7 @@ type AppConfig struct {
 	AWSAccessSecret        string `yaml:"awsAccessSecret"`
 	DynamoFeedsTableName   string `yaml:"dynamoFeedsTableName"`
 	DynamoPledgesTableName string `yaml:"dynamoPledgesTableName"`
+	RedisURL               string `yaml:"redisUrl"`
 }
 
 func ReadConfiguration() (*AppConfig, error) {

@@ -8,6 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/mxpv/podsync/pkg/cache"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 
@@ -57,6 +59,13 @@ func main() {
 
 	patreon := support.NewPatreon(database)
 
+	// Cache
+
+	redisCache, err := cache.NewRedisCache(cfg.RedisURL)
+	if err != nil {
+		log.WithError(err).Fatal("failed to initialize Redis cache")
+	}
+
 	// Builders
 
 	youtube, err := builders.NewYouTubeBuilder(cfg.YouTubeAPIKey)
@@ -81,7 +90,7 @@ func main() {
 
 	srv := http.Server{
 		Addr:    fmt.Sprintf(":%d", 5001),
-		Handler: handler.New(feed, patreon, cfg),
+		Handler: handler.New(feed, patreon, redisCache, cfg),
 	}
 
 	go func() {
@@ -97,6 +106,10 @@ func main() {
 
 	if err := srv.Shutdown(ctx); err != nil {
 		log.WithError(err).Error("server shutdown failed")
+	}
+
+	if err := redisCache.Close(); err != nil {
+		log.WithError(err).Error("failed to close redis cache")
 	}
 
 	if err := database.Close(); err != nil {
