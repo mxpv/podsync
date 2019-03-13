@@ -1,4 +1,4 @@
 requests==2.19.1
-youtube_dl==2019.01.23
+youtube_dl==2019.03.09
 sanic==0.7.0
 redis==2.10.6
