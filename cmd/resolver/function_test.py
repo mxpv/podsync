@@ -34,3 +34,9 @@ class TestDynamo(unittest.TestCase):
         self.assertIsNotNone(item['format'])
         self.assertIsNotNone(item['quality'])
         self.assertIsNotNone(item['provider'])
+
+    def test_counter(self):
+        counter = ytdl._update_resolve_counter('86qZ')
+        self.assertEqual(counter, 1)
+        counter = ytdl._update_resolve_counter('86qZ')
+        self.assertEqual(counter, 2)

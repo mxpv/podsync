@@ -1,6 +1,8 @@
 import os
 import youtube_dl
 import boto3
+from datetime import datetime, time
+from dateutil.relativedelta import relativedelta
 
 
 class InvalidUsage(Exception):
@@ -10,6 +12,7 @@ class InvalidUsage(Exception):
 dynamodb = boto3.resource('dynamodb')
 
 feeds_table = dynamodb.Table(os.getenv('RESOLVER_DYNAMO_FEEDS_TABLE', 'Feeds'))
+counter_table = dynamodb.Table(os.getenv('RESOLVER_DYNAMO_RESOLVE_COUNTERS_TABLE', 'ResolveCounters'))
 
 opts = {
     'quiet': True,
@@ -30,6 +33,9 @@ url_formats = {
 def handler(event, context):
     feed_id = event['feed_id']
     video_id = event['video_id']
+
+    # Update resolve requests counter
+    _update_resolve_counter(feed_id)
 
     redirect_url = download(feed_id, video_id)
 
@@ -76,6 +82,36 @@ def _get_metadata(feed_id):
 
     # Make dict keys lowercase
     return dict((k.lower(), v) for k, v in item.items())
+
+
+def _update_resolve_counter(feed_id):
+    if not feed_id:
+        return
+
+    now = datetime.utcnow()
+    day = now.strftime('%Y%m%d')
+
+    expires = now + relativedelta(months=3)
+
+    response = counter_table.update_item(
+        Key={
+            'FeedID': feed_id,
+            'Day': int(day),
+        },
+        UpdateExpression='ADD #count :one SET #exp = if_not_exists(#exp, :ttl)',
+        ExpressionAttributeNames={
+            '#count': 'Count',
+            '#exp': 'Expires',
+        },
+        ExpressionAttributeValues={
+            ':one': 1,
+            ':ttl': int(expires.timestamp()),
+        },
+        ReturnValues='UPDATED_NEW',
+    )
+
+    attrs = response['Attributes']
+    return attrs['Count']
 
 
 def _resolve(url, metadata):
