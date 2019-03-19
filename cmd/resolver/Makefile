@@ -7,7 +7,7 @@ build:
 deploy: build
 	aws --profile Podsync lambda create-function \
 		--function-name Resolver \
-		--role $(shell aws --profile Podsync iam get-role --role-name AWSLambdaBasicExecutionRole --query 'Role.Arn' --output text) \
+		--role $(shell aws --profile Podsync iam get-role --role-name PodsyncResolverLambdaRole --query 'Role.Arn' --output text) \
 		--runtime python3.7 \
 		--handler function.handler \
 		--zip-file fileb://function.zip \

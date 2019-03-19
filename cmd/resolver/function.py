@@ -1,14 +1,15 @@
 import os
-import requests
 import youtube_dl
-
-METADATA_URL = os.getenv('METADATA_URL', 'http://podsync.net/api/metadata/{feed_id}')
-print('Using metadata URL template: ' + METADATA_URL)
+import boto3
 
 
 class InvalidUsage(Exception):
     pass
 
+
+dynamodb = boto3.resource('dynamodb')
+
+feeds_table = dynamodb.Table(os.getenv('RESOLVER_DYNAMO_FEEDS_TABLE', 'Feeds'))
 
 opts = {
     'quiet': True,
@@ -46,20 +47,35 @@ def download(feed_id, video_id):
     if not video_id:
         raise InvalidUsage('Invalid video id')
 
-    # Pull metadata from API server
-    metadata_url = METADATA_URL.format(feed_id=feed_id, video_id=video_id)
-    r = requests.get(url=metadata_url)
-    json = r.json()
+    # Query feed metadata info from DynamoDB
+    item = _get_metadata(feed_id)
 
     # Build URL
-    provider = json['provider']
+    provider = item['provider']
     tpl = url_formats[provider]
     if not tpl:
         raise InvalidUsage('Invalid feed')
     url = tpl.format(video_id)
 
-    redirect_url = _resolve(url, json)
+    redirect_url = _resolve(url, item)
     return redirect_url
+
+
+def _get_metadata(feed_id):
+    response = feeds_table.get_item(
+        Key={'HashID': feed_id},
+        ProjectionExpression='#P,#F,#Q',
+        ExpressionAttributeNames={
+            '#P': 'Provider',
+            '#F': 'Format',
+            '#Q': 'Quality',
+        },
+    )
+
+    item = response['Item']
+
+    # Make dict keys lowercase
+    return dict((k.lower(), v) for k, v in item.items())
 
 
 def _resolve(url, metadata):

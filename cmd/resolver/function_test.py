@@ -25,3 +25,12 @@ class TestYtdl(unittest.TestCase):
         self.assertIsNotNone(
             ytdl._resolve('https://vimeo.com/275211960', {'format': 'video', 'quality': 'high', 'provider': 'vimeo'})
         )
+
+
+class TestDynamo(unittest.TestCase):
+    def test_metadata(self):
+        item = ytdl._get_metadata('86qZ')
+        self.assertIsNotNone(item)
+        self.assertIsNotNone(item['format'])
+        self.assertIsNotNone(item['quality'])
+        self.assertIsNotNone(item['provider'])
