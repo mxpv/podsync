@@ -15,16 +15,15 @@ def handler(event, context):
     if not url:
         raise ValueError('Invalid resource URL %s' % url)
 
-    start = int(event['start'])
-    if not start or start is None or start < 1:
-        start = 1
+    start = event.get('start', 1)
+    if start < 1:
+        raise ValueError('Invalid start value')
 
-    end = int(event['end'])
-    if end > 600:
-        end = 600
+    count = event.get('count', 50)
+    if count < 1 or count > 600:
+        raise ValueError('Invalid count value')
 
-    if start > end:
-        raise ValueError('Invalid start/end range')
+    end = start + count - 1
 
     kind = event['kind']
     if not kind:
@@ -63,10 +62,7 @@ def _get_updates(start, end, url, kind, last_id=None):
 
         entries = feed_info['entries']
         for idx, entry in enumerate(entries):
-            # Query video metadata from YouTube
-            result = ytdl.process_ie_result(entry, download=False)
-
-            video_id = result['id']
+            video_id = entry['id']
 
             # If already seen this video previously, stop pulling updates
             if last_id and video_id == last_id:
@@ -75,6 +71,9 @@ def _get_updates(start, end, url, kind, last_id=None):
             # Remember new last id
             if idx == 0:
                 new_last_id = video_id
+
+            # Query video metadata from YouTube
+            result = ytdl.process_ie_result(entry, download=False)
 
             videos.append({
                 'id': video_id,

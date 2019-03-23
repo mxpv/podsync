@@ -20,3 +20,8 @@ class TestUpdater(unittest.TestCase):
         result = function._get_updates(1, 5, 'https://www.youtube.com/user/CNN/videos', 'video_low', last_id)
         self.assertEqual(len(result['items']), 2)
         self.assertEqual(result['items'][0]['id'], result['last_id'])
+
+    def test_last_id(self):
+        result = function._get_updates(1, 1, 'https://www.youtube.com/user/CNN/videos', 'audio_low')
+        self.assertEqual(len(result['items']), 1)
+        self.assertEqual(result['items'][0]['id'], result['last_id'])
