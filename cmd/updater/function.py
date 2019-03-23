@@ -11,7 +11,7 @@ FORMATS = {
 
 
 def handler(event, context):
-    url = event['url']
+    url = event.get('url', None)
     if not url:
         raise ValueError('Invalid resource URL %s' % url)
 
@@ -25,13 +25,10 @@ def handler(event, context):
 
     end = start + count - 1
 
-    kind = event['kind']
-    if not kind:
-        kind = 'video_high'
+    kind = event.get('kind', 'video_high')
+    last_id = event.get('last_id', None)
 
-    last_id = event['last_id']
-
-    print('Getting updated for %s (start=%d, end=%d, kind: %s, last id: %s)', url, start, end, kind, last_id)
+    print('Getting updated for %s (start=%d, end=%d, kind: %s, last id: %s)' % (url, start, end, kind, last_id))
     return _get_updates(start, end, url, kind, last_id)
 
 

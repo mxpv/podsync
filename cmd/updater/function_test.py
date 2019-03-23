@@ -25,3 +25,13 @@ class TestUpdater(unittest.TestCase):
         result = function._get_updates(1, 1, 'https://www.youtube.com/user/CNN/videos', 'audio_low')
         self.assertEqual(len(result['items']), 1)
         self.assertEqual(result['items'][0]['id'], result['last_id'])
+
+    def test_get_50(self):
+        result = function.handler({
+            'url': 'https://www.youtube.com/channel/UCd6MoB9NC6uYN2grvUNT-Zg',
+            'start': 1,
+            'count': 50,
+            'kind': 'video_low',
+        }, None)
+        self.assertEqual(len(result['items']), 50)
+        self.assertEqual(result['items'][0]['id'], result['last_id'])
