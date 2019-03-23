@@ -4,8 +4,14 @@ import boto3
 from datetime import datetime, time
 from dateutil.relativedelta import relativedelta
 
+ANONYMOUS_FEED_REQUESTS_LIMIT = 10000
+
 
 class InvalidUsage(Exception):
+    pass
+
+
+class QuotaExceeded(Exception):
     pass
 
 
@@ -34,9 +40,6 @@ def handler(event, context):
     feed_id = event['feed_id']
     video_id = event['video_id']
 
-    # Update resolve requests counter
-    _update_resolve_counter(feed_id)
-
     redirect_url = download(feed_id, video_id)
 
     return {
@@ -56,6 +59,13 @@ def download(feed_id, video_id):
     # Query feed metadata info from DynamoDB
     item = _get_metadata(feed_id)
 
+    # Update resolve requests counter
+    count = _update_resolve_counter(feed_id)
+    level = int(item['featurelevel'])
+    if count > ANONYMOUS_FEED_REQUESTS_LIMIT and level == 0:
+        raise QuotaExceeded('Too many requests. Daily limit is %d. Consider upgrading account to get unlimited '
+                            'access' % ANONYMOUS_FEED_REQUESTS_LIMIT)
+
     # Build URL
     provider = item['provider']
     tpl = url_formats[provider]
@@ -70,11 +80,12 @@ def download(feed_id, video_id):
 def _get_metadata(feed_id):
     response = feeds_table.get_item(
         Key={'HashID': feed_id},
-        ProjectionExpression='#P,#F,#Q',
+        ProjectionExpression='#P,#F,#Q,#L',
         ExpressionAttributeNames={
             '#P': 'Provider',
             '#F': 'Format',
             '#Q': 'Quality',
+            '#L': 'FeatureLevel',
         },
     )
 

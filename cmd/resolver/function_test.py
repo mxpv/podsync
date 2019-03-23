@@ -40,3 +40,11 @@ class TestDynamo(unittest.TestCase):
         self.assertEqual(counter, 1)
         counter = ytdl._update_resolve_counter('86qZ')
         self.assertEqual(counter, 2)
+
+    def test_download(self):
+        url = ytdl.download('86qZ', '7XJYLq3gviY')
+        self.assertIsNotNone(url)
+
+    def test_quota_check(self):
+        with self.assertRaises(ytdl.QuotaExceeded):
+            ytdl.download('xro548QlJ', 'j51NFs0bZ9c')
