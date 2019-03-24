@@ -29,14 +29,6 @@ services:
         awslogs-group: "Prod"
         awslogs-stream: "Backend"
         awslogs-multiline-pattern: "{"
-  ytdl:
-    image: mxpv/ytdl
-    container_name: ytdl
-    restart: always
-    ports:
-      - 5002
-    environment:
-      - METADATA_URL=http://api:5001/api/metadata/{feed_id}
   redis:
     image: redis:5.0.3
     container_name: redis

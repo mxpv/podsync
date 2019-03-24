@@ -1,4 +1,4 @@
-SUBDIRS := cmd/api cmd/nginx cmd/ytdl
+SUBDIRS := cmd/api cmd/nginx
 GOLANGCI := ./bin/golangci-lint
 
 .PHONY: push
