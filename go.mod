@@ -32,7 +32,7 @@ require (
 	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/pelletier/go-toml v1.2.0 // indirect
 	github.com/pkg/errors v0.8.0
-	github.com/silentsokolov/go-vimeo v1.2.0
+	github.com/silentsokolov/go-vimeo v0.0.0-20190116124215-06829264260c
 	github.com/sirupsen/logrus v1.2.0
 	github.com/spf13/afero v1.1.1 // indirect
 	github.com/spf13/cast v1.2.0 // indirect

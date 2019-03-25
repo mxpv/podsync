@@ -6,7 +6,7 @@ import (
 
 	itunes "github.com/mxpv/podcast"
 	"github.com/pkg/errors"
-	vimeo "github.com/silentsokolov/go-vimeo"
+	vimeo "github.com/silentsokolov/go-vimeo/vimeo"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 
@@ -105,17 +105,16 @@ func (v *VimeoBuilder) getVideoSize(video *vimeo.Video) int64 {
 	return int64(float64(video.Duration*video.Width*video.Height) * 0.38848958333)
 }
 
-type getVideosFunc func(id string, opt *vimeo.ListVideoOptions) ([]*vimeo.Video, *vimeo.Response, error)
+type getVideosFunc func(string, ...vimeo.CallOption) ([]*vimeo.Video, *vimeo.Response, error)
 
 func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, podcast *itunes.Podcast, feed *model.Feed) error {
-	opt := vimeo.ListVideoOptions{}
-	opt.Page = 1
-	opt.PerPage = vimeoDefaultPageSize
-
-	added := 0
+	var (
+		page  = 1
+		added = 0
+	)
 
 	for {
-		videos, response, err := getVideos(feed.ItemID, &opt)
+		videos, response, err := getVideos(feed.ItemID, vimeo.OptPage(page), vimeo.OptPerPage(vimeoDefaultPageSize))
 		if err != nil {
 			return errors.Wrapf(err, "failed to query videos (error %d %s)", response.StatusCode, response.Status)
 		}
@@ -150,7 +149,7 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, podcast *itunes.Podc
 			return nil
 		}
 
-		opt.Page++
+		page++
 	}
 }
 
@@ -187,6 +186,6 @@ func NewVimeoBuilder(ctx context.Context, token string) (*VimeoBuilder, error) {
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	tc := oauth2.NewClient(ctx, ts)
 
-	client := vimeo.NewClient(tc)
+	client := vimeo.NewClient(tc, nil)
 	return &VimeoBuilder{client}, nil
 }
