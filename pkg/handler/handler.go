@@ -5,12 +5,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	patreon "github.com/mxpv/patreon-go"
-	itunes "github.com/mxpv/podcast"
+	"github.com/mxpv/patreon-go"
 	"golang.org/x/oauth2"
 
 	"github.com/mxpv/podsync/pkg/api"
@@ -26,7 +24,7 @@ const (
 
 type feedService interface {
 	CreateFeed(req *api.CreateFeedRequest, identity *api.Identity) (string, error)
-	BuildFeed(hashID string) (*itunes.Podcast, error)
+	BuildFeed(hashID string) ([]byte, error)
 	GetMetadata(hashID string) (*api.Metadata, error)
 	Downgrade(patronID string, featureLevel int) error
 }
@@ -37,20 +35,14 @@ type patreonService interface {
 	GetFeatureLevelFromAmount(amount int) int
 }
 
-type cacheService interface {
-	Set(key, value string, ttl time.Duration) error
-	Get(key string) (string, error)
-}
-
 type handler struct {
 	feed    feedService
 	cfg     *config.AppConfig
 	oauth2  oauth2.Config
 	patreon patreonService
-	cache   cacheService
 }
 
-func New(feed feedService, support patreonService, cache cacheService, cfg *config.AppConfig) http.Handler {
+func New(feed feedService, support patreonService, cfg *config.AppConfig) http.Handler {
 	r := gin.New()
 	r.Use(gin.Recovery())
 
@@ -60,7 +52,6 @@ func New(feed feedService, support patreonService, cache cacheService, cfg *conf
 	h := handler{
 		feed:    feed,
 		patreon: support,
-		cache:   cache,
 		cfg:     cfg,
 	}
 
@@ -222,14 +213,6 @@ func (h handler) getFeed(c *gin.Context) {
 		hashID = strings.TrimSuffix(hashID, ".xml")
 	}
 
-	const feedContentType = "application/rss+xml; charset=UTF-8"
-
-	cached, err := h.cache.Get(hashID)
-	if err == nil {
-		c.Data(http.StatusOK, feedContentType, []byte(cached))
-		return
-	}
-
 	podcast, err := h.feed.BuildFeed(hashID)
 	if err != nil {
 		code := http.StatusInternalServerError
@@ -248,13 +231,8 @@ func (h handler) getFeed(c *gin.Context) {
 		return
 	}
 
-	data := podcast.String()
-
-	if err := h.cache.Set(hashID, data, 10*time.Minute); err != nil {
-		log.WithError(err).Warnf("failed to cache feed %q", hashID)
-	}
-
-	c.Data(http.StatusOK, feedContentType, []byte(data))
+	const feedContentType = "application/rss+xml; charset=UTF-8"
+	c.Data(http.StatusOK, feedContentType, podcast)
 }
 
 func (h handler) metadata(c *gin.Context) {

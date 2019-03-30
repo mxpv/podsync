@@ -12,12 +12,9 @@ import (
 	"github.com/mxpv/podsync/pkg/model"
 )
 
-const (
-	MetricQueries   = "queries"
-	MetricDownloads = "downloads"
-)
+const feedCacheTTL = 15 * time.Minute
 
-type builder interface {
+type Builder interface {
 	Build(feed *model.Feed) (podcast *itunes.Podcast, err error)
 }
 
@@ -28,10 +25,16 @@ type storage interface {
 	Downgrade(userID string, featureLevel int) error
 }
 
+type cacheService interface {
+	Set(key, value string, ttl time.Duration) error
+	Get(key string) (string, error)
+}
+
 type Service struct {
 	generator IDGen
 	db        storage
-	builders  map[api.Provider]builder
+	builders  map[api.Provider]Builder
+	cache     cacheService
 }
 
 func (s Service) makeFeed(req *api.CreateFeedRequest, identity *api.Identity) (*model.Feed, error) {
@@ -99,7 +102,15 @@ func (s Service) QueryFeed(hashID string) (*model.Feed, error) {
 	return s.db.GetFeed(hashID)
 }
 
-func (s Service) BuildFeed(hashID string) (*itunes.Podcast, error) {
+func (s Service) BuildFeed(hashID string) ([]byte, error) {
+	// Check cached version first
+	cached, err := s.cache.Get(hashID)
+	if err == nil {
+		return []byte(cached), nil
+	}
+
+	// Query feed metadata
+
 	feed, err := s.QueryFeed(hashID)
 	if err != nil {
 		return nil, err
@@ -110,12 +121,22 @@ func (s Service) BuildFeed(hashID string) (*itunes.Podcast, error) {
 		return nil, errors.Wrapf(err, "failed to get builder for feed: %s", hashID)
 	}
 
+	// Rebuild feed using YouTube API
+
 	podcast, err := builder.Build(feed)
 	if err != nil {
 		return nil, err
 	}
 
-	return podcast, nil
+	data := podcast.String()
+
+	// Save to cache
+
+	if err := s.cache.Set(hashID, data, feedCacheTTL); err != nil {
+		log.Printf("failed to cache feed %q: %+v", hashID, err)
+	}
+
+	return []byte(data), nil
 }
 
 func (s Service) GetMetadata(hashID string) (*api.Metadata, error) {
@@ -143,23 +164,7 @@ func (s Service) Downgrade(patronID string, featureLevel int) error {
 	return nil
 }
 
-type FeedOption func(*Service)
-
-//noinspection GoExportedFuncWithUnexportedType
-func WithStorage(db storage) FeedOption {
-	return func(service *Service) {
-		service.db = db
-	}
-}
-
-//noinspection GoExportedFuncWithUnexportedType
-func WithBuilder(provider api.Provider, builder builder) FeedOption {
-	return func(service *Service) {
-		service.builders[provider] = builder
-	}
-}
-
-func NewFeedService(opts ...FeedOption) (*Service, error) {
+func NewFeedService(db storage, cache cacheService, builders map[api.Provider]Builder) (*Service, error) {
 	idGen, err := NewIDGen()
 	if err != nil {
 		return nil, err
@@ -167,11 +172,9 @@ func NewFeedService(opts ...FeedOption) (*Service, error) {
 
 	svc := &Service{
 		generator: idGen,
-		builders:  make(map[api.Provider]builder),
-	}
-
-	for _, fn := range opts {
-		fn(svc)
+		db:        db,
+		builders:  builders,
+		cache:     cache,
 	}
 
 	return svc, nil

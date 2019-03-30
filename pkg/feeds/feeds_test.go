@@ -9,6 +9,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
+	itunes "github.com/mxpv/podcast"
+
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
 )
@@ -35,7 +37,7 @@ func TestService_CreateFeed(t *testing.T) {
 	s := Service{
 		generator: gen,
 		db:        db,
-		builders:  map[api.Provider]builder{api.ProviderYoutube: nil},
+		builders:  map[api.Provider]Builder{api.ProviderYoutube: nil},
 	}
 
 	req := &api.CreateFeedRequest{
@@ -102,7 +104,18 @@ func TestService_GetFeed(t *testing.T) {
 	stor := NewMockstorage(ctrl)
 	stor.EXPECT().GetFeed(feed.HashID).Times(1).Return(feed, nil)
 
-	s := Service{db: stor}
+	cache := NewMockcacheService(ctrl)
+	cache.EXPECT().Get(feed.HashID).Return("", errors.New("not found"))
+	cache.EXPECT().Set(feed.HashID, gomock.Any(), gomock.Any()).Return(nil)
+
+	podcast := itunes.New("", "", "", nil, nil)
+
+	builder := NewMockBuilder(ctrl)
+	builder.EXPECT().Build(feed).Return(&podcast, nil)
+
+	s := Service{db: stor, cache: cache, builders: map[api.Provider]Builder{
+		api.ProviderVimeo: builder,
+	}}
 
 	_, err := s.BuildFeed(feed.HashID)
 	require.NoError(t, err)
@@ -112,10 +125,13 @@ func TestService_WrongID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	cache := NewMockcacheService(ctrl)
+	cache.EXPECT().Get(gomock.Any()).Return("", errors.New("not found"))
+
 	stor := NewMockstorage(ctrl)
 	stor.EXPECT().GetFeed(gomock.Any()).Times(1).Return(nil, errors.New("not found"))
 
-	s := Service{db: stor}
+	s := Service{db: stor, cache: cache}
 
 	_, err := s.BuildFeed("invalid_feed_id")
 	require.Error(t, err)

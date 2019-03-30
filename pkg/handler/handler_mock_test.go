@@ -7,10 +7,8 @@ package handler
 import (
 	gomock "github.com/golang/mock/gomock"
 	patreon_go "github.com/mxpv/patreon-go"
-	podcast "github.com/mxpv/podcast"
 	api "github.com/mxpv/podsync/pkg/api"
 	reflect "reflect"
-	time "time"
 )
 
 // MockfeedService is a mock of feedService interface
@@ -52,10 +50,10 @@ func (mr *MockfeedServiceMockRecorder) CreateFeed(req, identity interface{}) *go
 }
 
 // BuildFeed mocks base method
-func (m *MockfeedService) BuildFeed(hashID string) (*podcast.Podcast, error) {
+func (m *MockfeedService) BuildFeed(hashID string) ([]byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BuildFeed", hashID)
-	ret0, _ := ret[0].(*podcast.Podcast)
+	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -158,56 +156,4 @@ func (m *MockpatreonService) GetFeatureLevelFromAmount(amount int) int {
 func (mr *MockpatreonServiceMockRecorder) GetFeatureLevelFromAmount(amount interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureLevelFromAmount", reflect.TypeOf((*MockpatreonService)(nil).GetFeatureLevelFromAmount), amount)
-}
-
-// MockcacheService is a mock of cacheService interface
-type MockcacheService struct {
-	ctrl     *gomock.Controller
-	recorder *MockcacheServiceMockRecorder
-}
-
-// MockcacheServiceMockRecorder is the mock recorder for MockcacheService
-type MockcacheServiceMockRecorder struct {
-	mock *MockcacheService
-}
-
-// NewMockcacheService creates a new mock instance
-func NewMockcacheService(ctrl *gomock.Controller) *MockcacheService {
-	mock := &MockcacheService{ctrl: ctrl}
-	mock.recorder = &MockcacheServiceMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockcacheService) EXPECT() *MockcacheServiceMockRecorder {
-	return m.recorder
-}
-
-// Set mocks base method
-func (m *MockcacheService) Set(key, value string, ttl time.Duration) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Set", key, value, ttl)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Set indicates an expected call of Set
-func (mr *MockcacheServiceMockRecorder) Set(key, value, ttl interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockcacheService)(nil).Set), key, value, ttl)
-}
-
-// Get mocks base method
-func (m *MockcacheService) Get(key string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", key)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Get indicates an expected call of Get
-func (mr *MockcacheServiceMockRecorder) Get(key interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockcacheService)(nil).Get), key)
 }

@@ -8,20 +8,19 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/mxpv/podsync/pkg/cache"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/builders"
+	"github.com/mxpv/podsync/pkg/cache"
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/feeds"
 	"github.com/mxpv/podsync/pkg/handler"
 	"github.com/mxpv/podsync/pkg/storage"
 	"github.com/mxpv/podsync/pkg/support"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -78,11 +77,10 @@ func main() {
 		log.WithError(err).Fatal("failed to create Vimeo builder")
 	}
 
-	feed, err := feeds.NewFeedService(
-		feeds.WithStorage(database),
-		feeds.WithBuilder(api.ProviderYoutube, youtube),
-		feeds.WithBuilder(api.ProviderVimeo, vimeo),
-	)
+	feed, err := feeds.NewFeedService(database, redisCache, map[api.Provider]feeds.Builder{
+		api.ProviderYoutube: youtube,
+		api.ProviderVimeo:   vimeo,
+	})
 
 	if err != nil {
 		log.WithError(err).Fatal("failed to create feed service")
@@ -90,7 +88,7 @@ func main() {
 
 	srv := http.Server{
 		Addr:    fmt.Sprintf(":%d", 5001),
-		Handler: handler.New(feed, patreon, redisCache, cfg),
+		Handler: handler.New(feed, patreon, cfg),
 	}
 
 	go func() {

@@ -9,10 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pkg/errors"
-
 	"github.com/golang/mock/gomock"
-	itunes "github.com/mxpv/podcast"
 	"github.com/stretchr/testify/require"
 
 	"github.com/mxpv/podsync/pkg/api"
@@ -38,7 +35,7 @@ func TestCreateFeed(t *testing.T) {
 	patreon := NewMockpatreonService(ctrl)
 	patreon.EXPECT().GetFeatureLevelByID(gomock.Any()).Return(api.DefaultFeatures)
 
-	srv := httptest.NewServer(New(feed, patreon, nil, cfg))
+	srv := httptest.NewServer(New(feed, patreon, cfg))
 	defer srv.Close()
 
 	query := `{"url": "https://youtube.com/channel/123", "page_size": 55, "quality": "low", "format": "audio"}`
@@ -53,7 +50,7 @@ func TestCreateInvalidFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	srv := httptest.NewServer(New(NewMockfeedService(ctrl), nil, nil, cfg))
+	srv := httptest.NewServer(New(NewMockfeedService(ctrl), nil, cfg))
 	defer srv.Close()
 
 	query := `{}`
@@ -101,16 +98,10 @@ func TestGetFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	podcast := itunes.New("", "", "", nil, nil)
-
 	feed := NewMockfeedService(ctrl)
-	feed.EXPECT().BuildFeed("123").Return(&podcast, nil)
+	feed.EXPECT().BuildFeed("123").Return([]byte("Test"), nil)
 
-	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().Get("123").Times(1).Return("", errors.New("not found"))
-	cache.EXPECT().Set("123", podcast.String(), gomock.Any()).Return(nil).Times(1)
-
-	srv := httptest.NewServer(New(feed, nil, cache, cfg))
+	srv := httptest.NewServer(New(feed, nil, cfg))
 	defer srv.Close()
 
 	resp, err := http.Get(srv.URL + "/123")
@@ -125,7 +116,7 @@ func TestGetMetadata(t *testing.T) {
 	feed := NewMockfeedService(ctrl)
 	feed.EXPECT().GetMetadata("123").Times(1).Return(&api.Metadata{}, nil)
 
-	srv := httptest.NewServer(New(feed, nil, nil, cfg))
+	srv := httptest.NewServer(New(feed, nil, cfg))
 	defer srv.Close()
 
 	resp, err := http.Get(srv.URL + "/api/metadata/123")
