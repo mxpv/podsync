@@ -25,6 +25,8 @@ const (
 	highAudioBytesPerSecond = 128000 / 8
 )
 
+var _ VideoCounter = (*YouTubeBuilder)(nil)
+
 type apiKey string
 
 func (key apiKey) Get() (string, string) {
@@ -38,8 +40,8 @@ type YouTubeBuilder struct {
 
 // Cost: 5 units (call method: 1, snippet: 2, contentDetails: 2)
 // See https://developers.google.com/youtube/v3/docs/channels/list#part
-func (yt *YouTubeBuilder) listChannels(linkType api.LinkType, id string) (*youtube.Channel, error) {
-	req := yt.client.Channels.List("id,snippet,contentDetails")
+func (yt *YouTubeBuilder) listChannels(linkType api.LinkType, id string, parts string) (*youtube.Channel, error) {
+	req := yt.client.Channels.List(parts)
 
 	switch linkType {
 	case api.LinkTypeChannel:
@@ -65,8 +67,8 @@ func (yt *YouTubeBuilder) listChannels(linkType api.LinkType, id string) (*youtu
 
 // Cost: 3 units (call method: 1, snippet: 2)
 // See https://developers.google.com/youtube/v3/docs/playlists/list#part
-func (yt *YouTubeBuilder) listPlaylists(id, channelID string) (*youtube.Playlist, error) {
-	req := yt.client.Playlists.List("id,snippet")
+func (yt *YouTubeBuilder) listPlaylists(id, channelID string, parts string) (*youtube.Playlist, error) {
+	req := yt.client.Playlists.List(parts)
 
 	if id != "" {
 		req = req.Id(id)
@@ -132,9 +134,29 @@ func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, qua
 	return snippet.Default.Url
 }
 
-// Cost:
-// - 5 units for channel or user
-// - 3 units for playlist
+func (yt *YouTubeBuilder) GetVideoCount(feed *model.Feed) (uint64, error) {
+	switch feed.LinkType {
+	case api.LinkTypeChannel, api.LinkTypeUser:
+		// Cost: 3 units
+		if channel, err := yt.listChannels(feed.LinkType, feed.ItemID, "id,statistics"); err != nil {
+			return 0, err
+		} else {
+			return channel.Statistics.VideoCount, nil
+		}
+
+	case api.LinkTypePlaylist:
+		// Cost: 3 units
+		if playlist, err := yt.listPlaylists(feed.ItemID, "", "id,contentDetails"); err != nil {
+			return 0, err
+		} else {
+			return uint64(playlist.ContentDetails.ItemCount), nil
+		}
+
+	default:
+		return 0, errors.New("unsupported link format")
+	}
+}
+
 func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, error) {
 	var (
 		title      string
@@ -147,7 +169,8 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 
 	switch feed.LinkType {
 	case api.LinkTypeChannel, api.LinkTypeUser:
-		channel, err := yt.listChannels(feed.LinkType, feed.ItemID)
+		// Cost: 5 units for channel or user
+		channel, err := yt.listChannels(feed.LinkType, feed.ItemID, "id,snippet,contentDetails")
 		if err != nil {
 			return nil, "", err
 		}
@@ -172,7 +195,8 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 		thumbnails = channel.Snippet.Thumbnails
 
 	case api.LinkTypePlaylist:
-		playlist, err := yt.listPlaylists(feed.ItemID, "")
+		// Cost: 3 units for playlist
+		playlist, err := yt.listPlaylists(feed.ItemID, "", "id,snippet")
 		if err != nil {
 			return nil, "", err
 		}

@@ -13,7 +13,7 @@ import (
 
 var ytKey = os.Getenv("YOUTUBE_TEST_API_KEY")
 
-func TestQueryYTChannel(t *testing.T) {
+func TestYT_QueryChannel(t *testing.T) {
 	if ytKey == "" {
 		t.Skip("YouTube API key is not provided")
 	}
@@ -21,16 +21,16 @@ func TestQueryYTChannel(t *testing.T) {
 	builder, err := NewYouTubeBuilder(ytKey)
 	require.NoError(t, err)
 
-	channel, err := builder.listChannels(api.LinkTypeChannel, "UC2yTVSttx7lxAOAzx1opjoA")
+	channel, err := builder.listChannels(api.LinkTypeChannel, "UC2yTVSttx7lxAOAzx1opjoA", "id")
 	require.NoError(t, err)
 	require.Equal(t, "UC2yTVSttx7lxAOAzx1opjoA", channel.Id)
 
-	channel, err = builder.listChannels(api.LinkTypeUser, "fxigr1")
+	channel, err = builder.listChannels(api.LinkTypeUser, "fxigr1", "id")
 	require.NoError(t, err)
 	require.Equal(t, "UCr_fwF-n-2_olTYd-m3n32g", channel.Id)
 }
 
-func TestBuildYTFeed(t *testing.T) {
+func TestYT_BuildFeed(t *testing.T) {
 	if ytKey == "" {
 		t.Skip("YouTube API key is not provided")
 	}
@@ -79,6 +79,32 @@ func TestBuildYTFeed(t *testing.T) {
 				assert.NotEmpty(t, item.IAuthor)
 				assert.NotEmpty(t, item.Description)
 			}
+		})
+	}
+}
+
+func TestYT_GetVideoCount(t *testing.T) {
+	if ytKey == "" {
+		t.Skip("YouTube API key is not provided")
+	}
+
+	builder, err := NewYouTubeBuilder(ytKey)
+	require.NoError(t, err)
+
+	feeds := []*model.Feed{
+		{Provider: api.ProviderYoutube, LinkType: api.LinkTypeUser, ItemID: "fxigr1"},
+		{Provider: api.ProviderYoutube, LinkType: api.LinkTypeChannel, ItemID: "UCupvZG-5ko_eiXAupbDfxWw"},
+		{Provider: api.ProviderYoutube, LinkType: api.LinkTypePlaylist, ItemID: "PLfVk3KMh3VX1yJShGRsJmsqAjvMIviJYQ"},
+		{Provider: api.ProviderYoutube, LinkType: api.LinkTypeChannel, ItemID: "UCK9lZ2lHRBgx2LOcqPifukA"},
+		{Provider: api.ProviderYoutube, LinkType: api.LinkTypeUser, ItemID: "WylsaLive"},
+		{Provider: api.ProviderYoutube, LinkType: api.LinkTypePlaylist, ItemID: "PLUVl5pafUrBydT_gsCjRGeCy0hFHloec8"},
+	}
+
+	for _, f := range feeds {
+		t.Run(f.ItemID, func(t *testing.T) {
+			count, err := builder.GetVideoCount(f)
+			assert.NoError(t, err)
+			assert.NotZero(t, count)
 		})
 	}
 }
