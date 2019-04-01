@@ -11,6 +11,12 @@ import (
 var ErrNotFound = errors.New("not found")
 
 // RedisCache implements caching layer for feeds using Redis
+//
+// Inside docker can be connected as:
+//  docker exec -it redis redis-cli
+// View available keys:
+//  127.0.0.1:6379> keys *
+//
 type RedisCache struct {
 	client *redis.Client
 }
