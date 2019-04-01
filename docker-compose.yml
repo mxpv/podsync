@@ -32,8 +32,12 @@ services:
   redis:
     image: redis:5.0.3
     container_name: redis
-    command: redis-server --appendonly no --save ""
+    command: redis-server --appendonly no --save 900 1 --save 300 10 --save 60 10000
     restart: always
+    volumes:
+      - /data/redis:/data
+    sysctls:
+      net.core.somaxconn: 1024
   nginx:
     image: mxpv/nginx:latest
     container_name: nginx
