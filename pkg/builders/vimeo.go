@@ -182,6 +182,10 @@ func (v *VimeoBuilder) Build(feed *model.Feed) (podcast *itunes.Podcast, err err
 	return
 }
 
+func (v *VimeoBuilder) GetVideoCount(feed *model.Feed) (uint64, error) {
+	return 0, errors.New("not supported")
+}
+
 func NewVimeoBuilder(ctx context.Context, token string) (*VimeoBuilder, error) {
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	tc := oauth2.NewClient(ctx, ts)

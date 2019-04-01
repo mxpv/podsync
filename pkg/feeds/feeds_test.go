@@ -4,9 +4,11 @@ package feeds
 
 import (
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	itunes "github.com/mxpv/podcast"
@@ -97,7 +99,58 @@ func TestService_QueryFeed(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestService_GetFeed(t *testing.T) {
+func TestService_GetFromCache(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	item := CacheItem{
+		UpdatedAt: time.Now().UTC(),
+		Feed:      []byte("test"),
+	}
+
+	cache := NewMockcacheService(ctrl)
+	cache.EXPECT().GetItem("123", gomock.Any()).DoAndReturn(func(_ string, ret *CacheItem) error {
+		*ret = item
+		return nil
+	})
+
+	s := Service{cache: cache}
+
+	data, err := s.BuildFeed("123")
+	assert.NoError(t, err)
+	assert.Equal(t, item.Feed, data)
+}
+
+func TestService_VerifyCache(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cache := NewMockcacheService(ctrl)
+	cache.EXPECT().GetItem("123", gomock.Any()).DoAndReturn(func(_ string, ret *CacheItem) error {
+		ret.Feed = []byte("test")
+		ret.UpdatedAt = time.Now().UTC().Add(-20 * time.Minute)
+		ret.ItemCount = 30
+		return nil
+	})
+
+	cache.EXPECT().SaveItem("123", gomock.Any(), 15*24*time.Hour).Times(1).Return(nil)
+
+	stor := NewMockstorage(ctrl)
+	stor.EXPECT().GetFeed(feed.HashID).Times(1).Return(feed, nil)
+
+	builder := NewMockBuilder(ctrl)
+	builder.EXPECT().GetVideoCount(feed).Return(uint64(30), nil)
+
+	s := Service{db: stor, cache: cache, builders: map[api.Provider]Builder{
+		api.ProviderVimeo: builder,
+	}}
+
+	data, err := s.BuildFeed(feed.HashID)
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("test"), data)
+}
+
+func TestService_BuildFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -105,13 +158,45 @@ func TestService_GetFeed(t *testing.T) {
 	stor.EXPECT().GetFeed(feed.HashID).Times(1).Return(feed, nil)
 
 	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().Get(feed.HashID).Return("", errors.New("not found"))
-	cache.EXPECT().Set(feed.HashID, gomock.Any(), gomock.Any()).Return(nil)
+	cache.EXPECT().GetItem(feed.HashID, gomock.Any()).Return(errors.New("not found"))
+	cache.EXPECT().SaveItem(feed.HashID, gomock.Any(), gomock.Any()).Return(nil)
 
 	podcast := itunes.New("", "", "", nil, nil)
 
 	builder := NewMockBuilder(ctrl)
 	builder.EXPECT().Build(feed).Return(&podcast, nil)
+	builder.EXPECT().GetVideoCount(feed).Return(uint64(25), nil)
+
+	s := Service{db: stor, cache: cache, builders: map[api.Provider]Builder{
+		api.ProviderVimeo: builder,
+	}}
+
+	_, err := s.BuildFeed(feed.HashID)
+	require.NoError(t, err)
+}
+
+func TestService_RebuildCache(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	stor := NewMockstorage(ctrl)
+	stor.EXPECT().GetFeed(feed.HashID).Times(1).Return(feed, nil)
+
+	cache := NewMockcacheService(ctrl)
+	cache.EXPECT().GetItem("123", gomock.Any()).DoAndReturn(func(_ string, ret *CacheItem) error {
+		ret.Feed = []byte("test")
+		ret.UpdatedAt = time.Now().UTC().Add(-20 * time.Minute)
+		ret.ItemCount = 30
+		return nil
+	})
+
+	cache.EXPECT().SaveItem(feed.HashID, gomock.Any(), gomock.Any()).Return(nil)
+
+	podcast := itunes.New("", "", "", nil, nil)
+
+	builder := NewMockBuilder(ctrl)
+	builder.EXPECT().Build(feed).Return(&podcast, nil)
+	builder.EXPECT().GetVideoCount(feed).Return(uint64(25), nil)
 
 	s := Service{db: stor, cache: cache, builders: map[api.Provider]Builder{
 		api.ProviderVimeo: builder,
@@ -126,7 +211,7 @@ func TestService_WrongID(t *testing.T) {
 	defer ctrl.Finish()
 
 	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().Get(gomock.Any()).Return("", errors.New("not found"))
+	cache.EXPECT().GetItem(gomock.Any(), gomock.Any()).Return(errors.New("not found"))
 
 	stor := NewMockstorage(ctrl)
 	stor.EXPECT().GetFeed(gomock.Any()).Times(1).Return(nil, errors.New("not found"))

@@ -25,8 +25,6 @@ const (
 	highAudioBytesPerSecond = 128000 / 8
 )
 
-var _ VideoCounter = (*YouTubeBuilder)(nil)
-
 type apiKey string
 
 func (key apiKey) Get() (string, string) {

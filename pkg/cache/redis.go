@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/pkg/errors"
+	"github.com/vmihailenco/msgpack"
 )
 
 var ErrNotFound = errors.New("not found")
@@ -39,6 +40,34 @@ func (c RedisCache) Get(key string) (string, error) {
 	} else {
 		return val, err
 	}
+}
+
+func (c RedisCache) SaveItem(key string, item interface{}, exp time.Duration) error {
+	data, err := msgpack.Marshal(item)
+	if err != nil {
+		return err
+	}
+
+	return c.client.Set(key, data, exp).Err()
+}
+
+func (c RedisCache) GetItem(key string, item interface{}) error {
+	data, err := c.client.Get(key).Bytes()
+	if err == redis.Nil {
+		return ErrNotFound
+	} else if err != nil {
+		return err
+	}
+
+	if err := msgpack.Unmarshal(data, item); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c RedisCache) Invalidate(key... string) error {
+	return c.client.Del(key...).Err()
 }
 
 func (c RedisCache) Close() error {

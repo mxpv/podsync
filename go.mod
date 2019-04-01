@@ -17,7 +17,6 @@ require (
 	github.com/go-pg/pg v6.14.2+incompatible
 	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/golang/mock v1.2.0
-	github.com/google/go-querystring v0.0.0-20170111101155-53e6ce116135 // indirect
 	github.com/gorilla/sessions v1.1.1 // indirect
 	github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce // indirect
 	github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a // indirect
@@ -43,11 +42,11 @@ require (
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // indirect
 	github.com/ugorji/go v1.1.1 // indirect
 	github.com/ventu-io/go-shortid v0.0.0-20171029131806-771a37caa5cf
+	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a
 	golang.org/x/oauth2 v0.0.0-20180620175406-ef147856a6dd
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	golang.org/x/sys v0.0.0-20190311152110-c8c8c57fd1e1 // indirect
-	golang.org/x/tools v0.0.0-20190311215038-5c2858a9cfe5 // indirect
 	google.golang.org/api v0.0.0-20180718221112-efcb5f25ac56
 	google.golang.org/appengine v1.1.0 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect

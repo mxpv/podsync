@@ -50,6 +50,21 @@ func (mr *MockBuilderMockRecorder) Build(feed interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Build", reflect.TypeOf((*MockBuilder)(nil).Build), feed)
 }
 
+// GetVideoCount mocks base method
+func (m *MockBuilder) GetVideoCount(feed *model.Feed) (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVideoCount", feed)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVideoCount indicates an expected call of GetVideoCount
+func (mr *MockBuilderMockRecorder) GetVideoCount(feed interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVideoCount", reflect.TypeOf((*MockBuilder)(nil).GetVideoCount), feed)
+}
+
 // Mockstorage is a mock of storage interface
 type Mockstorage struct {
 	ctrl     *gomock.Controller
@@ -118,11 +133,12 @@ func (mr *MockstorageMockRecorder) GetMetadata(hashID interface{}) *gomock.Call 
 }
 
 // Downgrade mocks base method
-func (m *Mockstorage) Downgrade(userID string, featureLevel int) error {
+func (m *Mockstorage) Downgrade(userID string, featureLevel int) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Downgrade", userID, featureLevel)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Downgrade indicates an expected call of Downgrade
@@ -154,31 +170,48 @@ func (m *MockcacheService) EXPECT() *MockcacheServiceMockRecorder {
 	return m.recorder
 }
 
-// Set mocks base method
-func (m *MockcacheService) Set(key, value string, ttl time.Duration) error {
+// SaveItem mocks base method
+func (m *MockcacheService) SaveItem(key string, item interface{}, exp time.Duration) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Set", key, value, ttl)
+	ret := m.ctrl.Call(m, "SaveItem", key, item, exp)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Set indicates an expected call of Set
-func (mr *MockcacheServiceMockRecorder) Set(key, value, ttl interface{}) *gomock.Call {
+// SaveItem indicates an expected call of SaveItem
+func (mr *MockcacheServiceMockRecorder) SaveItem(key, item, exp interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockcacheService)(nil).Set), key, value, ttl)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveItem", reflect.TypeOf((*MockcacheService)(nil).SaveItem), key, item, exp)
 }
 
-// Get mocks base method
-func (m *MockcacheService) Get(key string) (string, error) {
+// GetItem mocks base method
+func (m *MockcacheService) GetItem(key string, item interface{}) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", key)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "GetItem", key, item)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// Get indicates an expected call of Get
-func (mr *MockcacheServiceMockRecorder) Get(key interface{}) *gomock.Call {
+// GetItem indicates an expected call of GetItem
+func (mr *MockcacheServiceMockRecorder) GetItem(key, item interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockcacheService)(nil).Get), key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetItem", reflect.TypeOf((*MockcacheService)(nil).GetItem), key, item)
+}
+
+// Invalidate mocks base method
+func (m *MockcacheService) Invalidate(key ...string) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{}
+	for _, a := range key {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Invalidate", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Invalidate indicates an expected call of Invalidate
+func (mr *MockcacheServiceMockRecorder) Invalidate(key ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Invalidate", reflect.TypeOf((*MockcacheService)(nil).Invalidate), key...)
 }

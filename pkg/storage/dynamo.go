@@ -241,7 +241,7 @@ func (d Dynamo) GetMetadata(hashID string) (*model.Feed, error) {
 	return &feed, nil
 }
 
-func (d Dynamo) Downgrade(userID string, featureLevel int) error {
+func (d Dynamo) Downgrade(userID string, featureLevel int) ([]string, error) {
 	logger := log.WithFields(log.Fields{
 		"user_id":       userID,
 		"feature_level": featureLevel,
@@ -253,7 +253,7 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 		// Max page size: 600
 		// Format: any
 		// Quality: any
-		return nil
+		return []string{}, nil
 	}
 
 	keyConditionExpression, err := expr.
@@ -263,7 +263,7 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 
 	if err != nil {
 		logger.WithError(err).Error("failed to build key condition")
-		return err
+		return nil, err
 	}
 
 	// Query all feed's hash ids for specified
@@ -292,12 +292,12 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 
 	if err != nil {
 		logger.WithError(err).Error("query failed")
-		return err
+		return nil, err
 	}
 
 	logger.Debugf("got %d key(s)", len(keys))
 	if len(keys) == 0 {
-		return nil
+		return []string{}, nil
 	}
 
 	if featureLevel == api.ExtendedFeatures {
@@ -315,7 +315,7 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 
 		if err != nil {
 			logger.WithError(err).Error("failed to build update expression")
-			return err
+			return nil, err
 		}
 
 		for _, key := range keys {
@@ -331,7 +331,7 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 			_, err := d.dynamo.UpdateItem(input)
 			if err != nil {
 				logger.WithError(err).Error("failed to update item")
-				return err
+				return nil, err
 			}
 		}
 
@@ -349,7 +349,7 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 			Build()
 
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		for _, key := range keys {
@@ -364,13 +364,18 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) error {
 			_, err := d.dynamo.UpdateItem(input)
 			if err != nil {
 				logger.WithError(err).Error("failed to update item")
-				return err
+				return nil, err
 			}
 		}
 	}
 
+	hashIDs := make([]string, len(keys))
+	for i, key := range keys {
+		hashIDs[i] = *key[feedsPrimaryKey].S
+	}
+
 	logger.Info("successfully downgraded user's feeds")
-	return nil
+	return hashIDs, nil
 }
 
 func (d Dynamo) AddPledge(pledge *model.Pledge) error {

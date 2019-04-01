@@ -24,7 +24,3 @@ func makeEnclosure(feed *model.Feed, id string, lengthInBytes int64) (string, it
 	url := fmt.Sprintf("http://podsync.net/download/%s/%s.%s", feed.HashID, id, ext)
 	return url, contentType, lengthInBytes
 }
-
-type VideoCounter interface {
-	GetVideoCount(feed *model.Feed) (uint64, error)
-}
