@@ -72,6 +72,42 @@ func (c RedisCache) GetItem(key string, item interface{}) error {
 	return nil
 }
 
+func (c RedisCache) SetMap(key string, fields map[string]interface{}, exp time.Duration) error {
+	if err := c.client.HMSet(key, fields).Err(); err != nil {
+		return err
+	}
+
+	if err := c.client.TTL(key).Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c RedisCache) GetMap(key string, fields ...string) (map[string]string, error) {
+	result, err := c.client.HMGet(key, fields...).Result()
+	if err == redis.Nil {
+		return nil, ErrNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	data := map[string]string{}
+	for idx, key := range fields {
+		if result[idx] == nil {
+			continue
+		}
+
+		data[key] = result[idx].(string)
+	}
+
+	if len(data) == 0 {
+		return nil, ErrNotFound
+	}
+
+	return data, nil
+}
+
 func (c RedisCache) Invalidate(key... string) error {
 	return c.client.Del(key...).Err()
 }

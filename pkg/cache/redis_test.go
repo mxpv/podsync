@@ -46,6 +46,56 @@ func TestNewRedisCache_TTL(t *testing.T) {
 	assert.Equal(t, ErrNotFound, err)
 }
 
+func TestRedisCache_SaveItem(t *testing.T) {
+	type test struct {
+		Feed      []byte    `msgpack:"feed"`
+		UpdatedAt time.Time `msgpack:"updated_at"`
+	}
+
+	s := createRedisClient(t)
+	defer s.Close()
+
+	item := &test{
+		Feed:      []byte("123"),
+		UpdatedAt: time.Now().UTC(),
+	}
+
+	err := s.SaveItem("test", item, time.Minute)
+	assert.NoError(t, err)
+
+	var out test
+	err = s.GetItem("test", &out)
+	assert.NoError(t, err)
+
+	assert.EqualValues(t, item.Feed, &out.Feed)
+	assert.EqualValues(t, item.UpdatedAt.Unix(), out.UpdatedAt.Unix())
+}
+
+func TestRedisCache_Map(t *testing.T) {
+	s := createRedisClient(t)
+	defer s.Close()
+
+	data := map[string]interface{}{
+		"1": "123",
+		"2": "test",
+	}
+
+	err := s.SetMap("2", data, time.Minute)
+	assert.NoError(t, err)
+
+	out, err := s.GetMap("2", "1", "2")
+	assert.NoError(t, err)
+	assert.EqualValues(t, data, out)
+}
+
+func TestRedisCache_GetMapInvalidKey(t *testing.T) {
+	s := createRedisClient(t)
+	defer s.Close()
+
+	_, err := s.GetMap("unknown_key", "1", "2")
+	assert.Equal(t, ErrNotFound, err)
+}
+
 // docker run -it --rm -p 6379:6379 redis
 func createRedisClient(t *testing.T) RedisCache {
 	if testing.Short() {

@@ -2,6 +2,7 @@ package feeds
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	itunes "github.com/mxpv/podcast"
@@ -11,12 +12,6 @@ import (
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
 )
-
-type CacheItem struct {
-	Feed      []byte    `msgpack:"feed"`
-	UpdatedAt time.Time `msgpack:"updated_at"`
-	ItemCount uint64    `msgpack:"item_count"`
-}
 
 type Builder interface {
 	Build(feed *model.Feed) (podcast *itunes.Podcast, err error)
@@ -31,8 +26,15 @@ type storage interface {
 }
 
 type cacheService interface {
+	Set(key, value string, ttl time.Duration) error
+	Get(key string) (string, error)
+
 	SaveItem(key string, item interface{}, exp time.Duration) error
 	GetItem(key string, item interface{}) error
+
+	SetMap(key string, fields map[string]interface{}, exp time.Duration) error
+	GetMap(key string, fields ...string) (map[string]string, error)
+
 	Invalidate(key ...string) error
 }
 
@@ -117,6 +119,48 @@ func (s Service) getVideoCount(feed *model.Feed, builder Builder) (uint64, bool)
 	return videoCount, true
 }
 
+const (
+	feedKey       = "feed"
+	updatedAtKey  = "updatedAt"
+	videoCountKey = "videoCount"
+)
+
+func (s Service) getCachedFeed(hashID string) ([]byte, time.Time, uint64, error) {
+	cached, err := s.cache.GetMap(hashID, feedKey, updatedAtKey, videoCountKey)
+	if err != nil {
+		return nil, time.Time{}, 0, err
+	}
+
+	// Get feed body
+
+	body := []byte(cached[feedKey])
+
+	// Parse updated at
+
+	unixTime, err := strconv.ParseInt(cached[updatedAtKey], 10, 64)
+	if err != nil {
+		return nil, time.Time{}, 0, err
+	}
+
+	updatedAt := time.Unix(unixTime, 0)
+
+	// Parse video count
+
+	var videoCount uint64
+
+	if str, ok := cached[videoCountKey]; ok {
+		count, err := strconv.ParseUint(str, 10, 64)
+		if err != nil {
+			return nil, time.Time{}, 0, err
+		}
+
+		videoCount = count
+	}
+
+	// OK
+	return body, updatedAt, videoCount, nil
+}
+
 func (s Service) BuildFeed(hashID string) ([]byte, error) {
 	const (
 		feedRecordTTL   = 15 * 24 * time.Hour
@@ -124,26 +168,25 @@ func (s Service) BuildFeed(hashID string) ([]byte, error) {
 	)
 
 	var (
-		cached      CacheItem
 		now         = time.Now().UTC()
 		verifyCache bool
 	)
 
 	// Check cached version first
-	err := s.cache.GetItem(hashID, &cached)
+	body, updatedAt, currentCount, err := s.getCachedFeed(hashID)
 	if err == nil {
 		// We've succeded to retrieve data from Redis, check if it's up to date
 
 		// 1. If cached less than 15 minutes ago, just return data
-		if now.Sub(cached.UpdatedAt) < cacheRecheckTTL {
-			return cached.Feed, nil
+		if now.Sub(updatedAt) < cacheRecheckTTL {
+			return body, nil
 		}
 
 		// 2. Verify cache integrity by querying the number of episodes from YouTube
 		verifyCache = true
 	}
 
-	// Query feed metadata
+	// Query feed metadata from DynamoDB
 
 	feed, err := s.QueryFeed(hashID)
 	if err != nil {
@@ -155,55 +198,58 @@ func (s Service) BuildFeed(hashID string) ([]byte, error) {
 		return nil, errors.Wrapf(err, "failed to get builder for feed: %s", hashID)
 	}
 
-	// Check if cached version is still valid
+	// 2. Check if cached version is still valid
 
-	if verifyCache {
-		log.Debugf("pulling the number of videos from %q", feed.Provider)
+	// Query YouTube and check the number of videos.
+	// Most likely it'll remain the same, so we can return previously cached feed.
+	videoCount, videoOk := s.getVideoCount(feed, builder)
 
-		// Query YouTube and check the number of videos.
-		// Most likely it'll remain the same, so we can return previously cached feed.
-		count, ok := s.getVideoCount(feed, builder)
-		if ok {
-			if count == cached.ItemCount {
-				// Cache is up to date, renew and save
-				cached.UpdatedAt = now
+	if verifyCache && videoOk {
 
-				if s.cache.SaveItem(hashID, &cached, feedRecordTTL) != nil {
-					return nil, errors.Wrap(err, "failed to cache item")
-				}
-
-				return cached.Feed, nil
+		if currentCount == videoCount {
+			// Cache is up to date, renew and save
+			err = s.cache.SetMap(hashID, map[string]interface{}{updatedAtKey: now.Unix()}, feedRecordTTL)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to cache item")
 			}
 
-			log.Debugf("the number of episodes is different (%d != %d)", cached.ItemCount, count)
-			cached.ItemCount = count
+			return body, nil
 		}
 	}
 
 	// Rebuild feed using YouTube API
 
+	log.Infof("building new feed %q", hashID)
+
 	podcast, err := builder.Build(feed)
 	if err != nil {
 		log.WithError(err).WithField("feed_id", hashID).Error("failed to build cache")
+
+		// If there is cached version - return it
+		if verifyCache {
+			return body, nil
+		}
+
 		return nil, err
 	}
 
-	data := []byte(podcast.String())
+	newBody := podcast.String()
 
 	// Save to cache
 
-	cached.Feed = data
-	cached.UpdatedAt = now
-
-	if !verifyCache {
-		cached.ItemCount, _ = s.getVideoCount(feed, builder)
+	data := map[string]interface{}{
+		feedKey: newBody,
+		updatedAtKey: now.Unix(),
+		videoCountKey: strconv.FormatUint(videoCount, 10),
 	}
 
-	if err := s.cache.SaveItem(hashID, cached, feedRecordTTL); err != nil {
+	err = s.cache.SetMap(hashID, data, feedRecordTTL)
+
+	if err != nil {
 		log.WithError(err).Warnf("failed to save new feed %q to cache", hashID)
 	}
 
-	return data, nil
+	return []byte(newBody), nil
 }
 
 func (s Service) GetMetadata(hashID string) (*api.Metadata, error) {

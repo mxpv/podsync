@@ -170,6 +170,35 @@ func (m *MockcacheService) EXPECT() *MockcacheServiceMockRecorder {
 	return m.recorder
 }
 
+// Set mocks base method
+func (m *MockcacheService) Set(key, value string, ttl time.Duration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Set", key, value, ttl)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Set indicates an expected call of Set
+func (mr *MockcacheServiceMockRecorder) Set(key, value, ttl interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockcacheService)(nil).Set), key, value, ttl)
+}
+
+// Get mocks base method
+func (m *MockcacheService) Get(key string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Get", key)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Get indicates an expected call of Get
+func (mr *MockcacheServiceMockRecorder) Get(key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockcacheService)(nil).Get), key)
+}
+
 // SaveItem mocks base method
 func (m *MockcacheService) SaveItem(key string, item interface{}, exp time.Duration) error {
 	m.ctrl.T.Helper()
@@ -196,6 +225,40 @@ func (m *MockcacheService) GetItem(key string, item interface{}) error {
 func (mr *MockcacheServiceMockRecorder) GetItem(key, item interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetItem", reflect.TypeOf((*MockcacheService)(nil).GetItem), key, item)
+}
+
+// SetMap mocks base method
+func (m *MockcacheService) SetMap(key string, fields map[string]interface{}, exp time.Duration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetMap", key, fields, exp)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetMap indicates an expected call of SetMap
+func (mr *MockcacheServiceMockRecorder) SetMap(key, fields, exp interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetMap", reflect.TypeOf((*MockcacheService)(nil).SetMap), key, fields, exp)
+}
+
+// GetMap mocks base method
+func (m *MockcacheService) GetMap(key string, fields ...string) (map[string]string, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{key}
+	for _, a := range fields {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetMap", varargs...)
+	ret0, _ := ret[0].(map[string]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMap indicates an expected call of GetMap
+func (mr *MockcacheServiceMockRecorder) GetMap(key interface{}, fields ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{key}, fields...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMap", reflect.TypeOf((*MockcacheService)(nil).GetMap), varargs...)
 }
 
 // Invalidate mocks base method

@@ -3,6 +3,7 @@
 package feeds
 
 import (
+	"strconv"
 	"testing"
 	"time"
 
@@ -103,22 +104,19 @@ func TestService_GetFromCache(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	item := CacheItem{
-		UpdatedAt: time.Now().UTC(),
-		Feed:      []byte("test"),
+	item := map[string]string{
+		updatedAtKey: strconv.FormatInt(time.Now().UTC().Unix(), 10),
+		feedKey: "test",
 	}
 
 	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().GetItem("123", gomock.Any()).DoAndReturn(func(_ string, ret *CacheItem) error {
-		*ret = item
-		return nil
-	})
+	cache.EXPECT().GetMap("123", feedKey, updatedAtKey, videoCountKey).Return(item, nil)
 
 	s := Service{cache: cache}
 
 	data, err := s.BuildFeed("123")
 	assert.NoError(t, err)
-	assert.Equal(t, item.Feed, data)
+	assert.Equal(t, []byte("test"), data)
 }
 
 func TestService_VerifyCache(t *testing.T) {
@@ -126,14 +124,13 @@ func TestService_VerifyCache(t *testing.T) {
 	defer ctrl.Finish()
 
 	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().GetItem("123", gomock.Any()).DoAndReturn(func(_ string, ret *CacheItem) error {
-		ret.Feed = []byte("test")
-		ret.UpdatedAt = time.Now().UTC().Add(-20 * time.Minute)
-		ret.ItemCount = 30
-		return nil
-	})
+	cache.EXPECT().GetMap("123", feedKey, updatedAtKey, videoCountKey).Return(map[string]string{
+		feedKey: "test",
+		updatedAtKey: strconv.FormatInt(time.Now().UTC().Add(-20 * time.Minute).Unix(), 10),
+		videoCountKey: "30",
+	}, nil)
 
-	cache.EXPECT().SaveItem("123", gomock.Any(), 15*24*time.Hour).Times(1).Return(nil)
+	cache.EXPECT().SetMap("123", gomock.Any(), 15*24*time.Hour).Times(1).Return(nil)
 
 	stor := NewMockstorage(ctrl)
 	stor.EXPECT().GetFeed(feed.HashID).Times(1).Return(feed, nil)
@@ -158,8 +155,8 @@ func TestService_BuildFeed(t *testing.T) {
 	stor.EXPECT().GetFeed(feed.HashID).Times(1).Return(feed, nil)
 
 	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().GetItem(feed.HashID, gomock.Any()).Return(errors.New("not found"))
-	cache.EXPECT().SaveItem(feed.HashID, gomock.Any(), gomock.Any()).Return(nil)
+	cache.EXPECT().GetMap(feed.HashID, feedKey, updatedAtKey, videoCountKey).Return(nil, errors.New("not found"))
+	cache.EXPECT().SetMap(feed.HashID, gomock.Any(), gomock.Any()).Return(nil)
 
 	podcast := itunes.New("", "", "", nil, nil)
 
@@ -183,14 +180,13 @@ func TestService_RebuildCache(t *testing.T) {
 	stor.EXPECT().GetFeed(feed.HashID).Times(1).Return(feed, nil)
 
 	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().GetItem("123", gomock.Any()).DoAndReturn(func(_ string, ret *CacheItem) error {
-		ret.Feed = []byte("test")
-		ret.UpdatedAt = time.Now().UTC().Add(-20 * time.Minute)
-		ret.ItemCount = 30
-		return nil
-	})
+	cache.EXPECT().GetMap("123", feedKey, updatedAtKey, videoCountKey).Return(map[string]string{
+		feedKey: "test",
+		updatedAtKey: strconv.FormatInt(time.Now().UTC().Add(-20 * time.Minute).Unix(), 10),
+		videoCountKey: "30",
+	}, nil)
 
-	cache.EXPECT().SaveItem(feed.HashID, gomock.Any(), gomock.Any()).Return(nil)
+	cache.EXPECT().SetMap(feed.HashID, gomock.Any(), gomock.Any()).Return(nil)
 
 	podcast := itunes.New("", "", "", nil, nil)
 
@@ -211,7 +207,7 @@ func TestService_WrongID(t *testing.T) {
 	defer ctrl.Finish()
 
 	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().GetItem(gomock.Any(), gomock.Any()).Return(errors.New("not found"))
+	cache.EXPECT().GetMap(gomock.Any(), feedKey, updatedAtKey, videoCountKey).Return(nil, errors.New("not found"))
 
 	stor := NewMockstorage(ctrl)
 	stor.EXPECT().GetFeed(gomock.Any()).Times(1).Return(nil, errors.New("not found"))
