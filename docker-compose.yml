@@ -32,7 +32,7 @@ services:
   redis:
     image: redis:5.0.3
     container_name: redis
-    command: redis-server --appendonly no --save 900 1 --save 300 10 --save 60 10000
+    command: redis-server --appendonly yes --save 900 1 --save 300 10 --save 60 10000
     restart: always
     volumes:
       - /data/redis:/data
