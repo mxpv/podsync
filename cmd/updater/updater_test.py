@@ -1,4 +1,4 @@
-import function
+import updater
 import unittest
 
 
@@ -7,27 +7,28 @@ class TestUpdater(unittest.TestCase):
         kinds = ['video_high', 'video_low', 'audio_high', 'audio_low']
         for kind in kinds:
             with self.subTest(kind):
-                result = function._get_updates(1, 1, 'https://www.youtube.com/user/CNN/videos', kind)
+                result = updater._get_updates(1, 1, 'https://www.youtube.com/user/CNN/videos', kind)
                 self.assertIsNotNone(result['feed'])
                 self.assertIsNotNone(result['items'])
 
     def test_get_change_list(self):
-        result = function._get_updates(1, 5, 'https://www.youtube.com/user/CNN/videos', 'video_low')
+        result = updater._get_updates(1, 5, 'https://www.youtube.com/user/CNN/videos', 'video_low')
         self.assertEqual(len(result['items']), 5)
         self.assertEqual(result['items'][0]['id'], result['last_id'])
         last_id = result['items'][2]['id']
         self.assertIsNotNone(last_id)
-        result = function._get_updates(1, 5, 'https://www.youtube.com/user/CNN/videos', 'video_low', last_id)
+        result = updater._get_updates(1, 5, 'https://www.youtube.com/user/CNN/videos', 'video_low', last_id)
         self.assertEqual(len(result['items']), 2)
         self.assertEqual(result['items'][0]['id'], result['last_id'])
 
     def test_last_id(self):
-        result = function._get_updates(1, 1, 'https://www.youtube.com/user/CNN/videos', 'audio_low')
+        result = updater._get_updates(1, 1, 'https://www.youtube.com/user/CNN/videos', 'audio_low')
         self.assertEqual(len(result['items']), 1)
         self.assertEqual(result['items'][0]['id'], result['last_id'])
 
+    @unittest.skip('heavy test, run manually')
     def test_get_50(self):
-        result = function.handler({
+        result = updater.handler({
             'url': 'https://www.youtube.com/channel/UCd6MoB9NC6uYN2grvUNT-Zg',
             'start': 1,
             'count': 50,
