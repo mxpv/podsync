@@ -7,7 +7,7 @@ class TestUpdater(unittest.TestCase):
         kinds = ['video_high', 'video_low', 'audio_high', 'audio_low']
         for kind in kinds:
             with self.subTest(kind):
-                result = function._get_updates(1, 2, 'https://www.youtube.com/user/CNN/videos', kind)
+                result = function._get_updates(1, 1, 'https://www.youtube.com/user/CNN/videos', kind)
                 self.assertIsNotNone(result['feed'])
                 self.assertIsNotNone(result['items'])
 

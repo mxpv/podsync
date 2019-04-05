@@ -16,23 +16,24 @@ def handler(event, context):
         raise ValueError('Invalid resource URL %s' % url)
 
     start = event.get('start', 1)
+    count = event.get('count', 50)
+
+    kind = event.get('kind', 'video_high')
+    last_id = event.get('last_id', None)
+
+    print('Getting updated for %s (start=%d, count=%d, kind: %s, last id: %s)' % (url, start, count, kind, last_id))
+    return _get_updates(start, count, url, kind, last_id)
+
+
+def _get_updates(start, count, url, kind, last_id=None):
     if start < 1:
         raise ValueError('Invalid start value')
 
-    count = event.get('count', 50)
     if count < 1 or count > 600:
         raise ValueError('Invalid count value')
 
     end = start + count - 1
 
-    kind = event.get('kind', 'video_high')
-    last_id = event.get('last_id', None)
-
-    print('Getting updated for %s (start=%d, end=%d, kind: %s, last id: %s)' % (url, start, end, kind, last_id))
-    return _get_updates(start, end, url, kind, last_id)
-
-
-def _get_updates(start, end, url, kind, last_id=None):
     opts = {
         'playliststart': start,
         'playlistend': end,
