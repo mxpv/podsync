@@ -133,7 +133,7 @@ func makeEnclosure(feed *model.Feed, id string, lengthInBytes int64) (string, it
 
 func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 	const (
-		cacheTTL = 15 * time.Minute
+		cacheTTL = 30 * time.Minute
 	)
 
 	cached, err := s.cache.Get(hashID)
