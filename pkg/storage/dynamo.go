@@ -199,6 +199,8 @@ func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
 }
 
 func (d Dynamo) UpdateFeed(feed *model.Feed) error {
+	log.Infof("saving feed %q", feed.HashID)
+
 	var (
 		pubDate   = feed.PubDate.Unix()
 		updatedAt = feed.LastAccess.Unix()
