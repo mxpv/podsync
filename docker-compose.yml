@@ -22,13 +22,6 @@ services:
       - AWS_ACCESS_SECRET={AWS_ACCESS_SECRET}
       - DYNAMO_FEEDS_TABLE_NAME=Prod_Feeds
       - DYNAMO_PLEDGES_TABLE_NAME=Prod_Pledges
-    logging:
-      driver: "awslogs"
-      options:
-        awslogs-region: "us-east-1"
-        awslogs-group: "Prod"
-        awslogs-stream: "Backend"
-        awslogs-multiline-pattern: "{"
   redis:
     image: redis:5.0.3
     container_name: redis

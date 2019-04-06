@@ -3,6 +3,7 @@ package builders
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	itunes "github.com/mxpv/podcast"
 	"github.com/pkg/errors"
@@ -53,6 +54,8 @@ func (v *VimeoBuilder) queryChannel(feed *model.Feed) (*itunes.Podcast, error) {
 	podcast.AddCategory(defaultCategory, nil)
 	podcast.IAuthor = ch.User.Name
 
+	feed.PubDate = ch.CreatedTime
+
 	return &podcast, nil
 }
 
@@ -75,6 +78,8 @@ func (v *VimeoBuilder) queryGroup(feed *model.Feed) (*itunes.Podcast, error) {
 	podcast.AddCategory(defaultCategory, nil)
 	podcast.IAuthor = gr.User.Name
 
+	feed.PubDate = gr.CreatedTime
+
 	return &podcast, nil
 }
 
@@ -96,6 +101,8 @@ func (v *VimeoBuilder) queryUser(feed *model.Feed) (*itunes.Podcast, error) {
 	podcast.AddImage(v.selectImage(user.Pictures, feed.Quality))
 	podcast.AddCategory(defaultCategory, nil)
 	podcast.IAuthor = user.Name
+
+	feed.PubDate = user.CreatedTime
 
 	return &podcast, nil
 }
@@ -120,27 +127,46 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, podcast *itunes.Podc
 		}
 
 		for _, video := range videos {
+
+			var (
+				videoID  = strconv.Itoa(video.GetID())
+				videoURL = video.Link
+				duration = int64(video.Duration)
+				size     = v.getVideoSize(video)
+				image    = v.selectImage(video.Pictures, feed.Quality)
+			)
+
 			item := itunes.Item{}
 
-			item.GUID = strconv.Itoa(video.GetID())
-			item.Link = video.Link
+			item.GUID = videoID
+			item.Link = videoURL
 			item.Title = video.Name
 			item.Description = video.Description
 			if item.Description == "" {
 				item.Description = " " // Videos can be without description, workaround for AddItem
 			}
 
-			item.AddDuration(int64(video.Duration))
+			item.AddDuration(duration)
 			item.AddPubDate(&video.CreatedTime)
-			item.AddImage(v.selectImage(video.Pictures, feed.Quality))
+			item.AddImage(image)
 
-			size := v.getVideoSize(video)
 			item.AddEnclosure(makeEnclosure(feed, item.GUID, size))
 
 			_, err = podcast.AddItem(item)
 			if err != nil {
 				return errors.Wrapf(err, "failed to add episode %s (%s)", item.GUID, item.Title)
 			}
+
+			feed.Episodes = append(feed.Episodes, &model.Item{
+				ID:          videoID,
+				Title:       item.Title,
+				Description: item.Description,
+				Duration:    duration,
+				Size:        size,
+				PubDate:     video.CreatedTime,
+				Thumbnail:   image,
+				VideoURL:    videoURL,
+			})
 
 			added++
 		}
@@ -153,33 +179,70 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, podcast *itunes.Podc
 	}
 }
 
-func (v *VimeoBuilder) Build(feed *model.Feed) (podcast *itunes.Podcast, err error) {
+func (v *VimeoBuilder) Build(feed *model.Feed) error {
+	feed.Episodes = []*model.Item{}
+
 	if feed.LinkType == api.LinkTypeChannel {
-		if podcast, err = v.queryChannel(feed); err == nil {
-			err = v.queryVideos(v.client.Channels.ListVideo, podcast, feed)
+		podcast, err := v.queryChannel(feed)
+		if err != nil {
+			return err
 		}
 
-		return
+		if err := v.queryVideos(v.client.Channels.ListVideo, podcast, feed); err != nil {
+			return err
+		}
+
+		v.updateFeed(feed, podcast)
+		return nil
 	}
 
 	if feed.LinkType == api.LinkTypeGroup {
-		if podcast, err = v.queryGroup(feed); err == nil {
-			err = v.queryVideos(v.client.Groups.ListVideo, podcast, feed)
+		podcast, err := v.queryGroup(feed)
+		if err != nil {
+			return err
 		}
 
-		return
+		if err := v.queryVideos(v.client.Groups.ListVideo, podcast, feed); err != nil {
+			return err
+		}
+
+		v.updateFeed(feed, podcast)
+		return nil
 	}
 
 	if feed.LinkType == api.LinkTypeUser {
-		if podcast, err = v.queryUser(feed); err == nil {
-			err = v.queryVideos(v.client.Users.ListVideo, podcast, feed)
+		podcast, err := v.queryUser(feed)
+		if err != nil {
+			return err
 		}
 
-		return
+		if err := v.queryVideos(v.client.Users.ListVideo, podcast, feed); err != nil {
+			return err
+		}
+
+		v.updateFeed(feed, podcast)
+		return nil
 	}
 
-	err = errors.New("unsupported feed type")
-	return
+	return errors.New("unsupported feed type")
+}
+
+func (v *VimeoBuilder) updateFeed(feed *model.Feed, podcast *itunes.Podcast) {
+	feed.Title = podcast.Title
+	feed.Description = podcast.Description
+	feed.Author = podcast.IAuthor
+	feed.ItemURL = podcast.Link
+	feed.UpdatedAt = time.Now().UTC()
+
+	if podcast.IImage != nil {
+		feed.CoverArt = podcast.IImage.HREF
+	}
+
+	if len(feed.Episodes) > 0 {
+		feed.LastID = feed.Episodes[0].ID
+	} else {
+		feed.LastID = ""
+	}
 }
 
 func (v *VimeoBuilder) GetVideoCount(feed *model.Feed) (uint64, error) {

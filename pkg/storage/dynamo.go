@@ -191,6 +191,42 @@ func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
 	return &feed, nil
 }
 
+func (d Dynamo) UpdateFeed(feed *model.Feed) error {
+	var (
+		pubDate   = strconv.FormatInt(feed.PubDate.Unix(), 10)
+		updatedAt = strconv.FormatInt(feed.LastAccess.Unix(), 10)
+	)
+
+	update := expr.
+		Set(expr.Name("Title"), expr.Value(feed.Title)).
+		Set(expr.Name("Description"), expr.Value(feed.Description)).
+		Set(expr.Name("PubDate"), expr.Value(pubDate)).
+		Set(expr.Name("Author"), expr.Value(feed.Author)).
+		Set(expr.Name("ItemURL"), expr.Value(feed.ItemURL)).
+		Set(expr.Name("Episodes"), expr.Value(feed.Episodes)).
+		Set(expr.Name("LastID"), expr.Value(feed.LastID)).
+		Set(expr.Name("UpdatedAt"), expr.Value(updatedAt))
+
+	expression, err := expr.NewBuilder().WithUpdate(update).Build()
+	if err != nil {
+		return err
+	}
+
+	input := &dynamodb.UpdateItemInput{
+		TableName: d.FeedsTableName,
+		Key: map[string]*dynamodb.AttributeValue{
+			"HashID": {S: aws.String(feed.HashID)},
+		},
+
+		UpdateExpression:          expression.Update(),
+		ExpressionAttributeNames:  expression.Names(),
+		ExpressionAttributeValues: expression.Values(),
+	}
+
+	_, err = d.dynamo.UpdateItem(input)
+	return err
+}
+
 func (d Dynamo) GetMetadata(hashID string) (*model.Feed, error) {
 	logger := log.WithField("hash_id", hashID)
 
@@ -308,7 +344,8 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) ([]string, error) {
 			NewBuilder().
 			WithUpdate(expr.
 				Set(expr.Name("PageSize"), expr.Value(150)).
-				Set(expr.Name("FeatureLevel"), expr.Value(api.ExtendedFeatures))).
+				Set(expr.Name("FeatureLevel"), expr.Value(api.ExtendedFeatures)).
+				Set(expr.Name("LastID"), expr.Value(""))).
 			WithCondition(expr.
 				Name("PageSize").GreaterThan(expr.Value(150))).
 			Build()
@@ -345,7 +382,8 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) ([]string, error) {
 				Set(expr.Name("PageSize"), expr.Value(50)).
 				Set(expr.Name("FeatureLevel"), expr.Value(api.DefaultFeatures)).
 				Set(expr.Name("Format"), expr.Value(api.FormatVideo)).
-				Set(expr.Name("Quality"), expr.Value(api.QualityHigh))).
+				Set(expr.Name("Quality"), expr.Value(api.QualityHigh)).
+				Set(expr.Name("LastID"), expr.Value(""))).
 			Build()
 
 		if err != nil {

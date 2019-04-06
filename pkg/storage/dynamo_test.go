@@ -5,16 +5,43 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/model"
 )
 
+var feed = &model.Feed{
+	HashID:   "123",
+	ItemID:   "xyz",
+	Provider: api.ProviderVimeo,
+	LinkType: api.LinkTypeChannel,
+	PageSize: 50,
+	Quality:  api.QualityHigh,
+	Format:   api.FormatVideo,
+}
+
 func TestDynamo(t *testing.T) {
-	runStorageTests(t, createDynamo)
+	runStorageTests(t, func(t *testing.T) storage {
+		return createDynamo(t)
+	})
+}
+
+func TestDynamo_UpdateFeed(t *testing.T) {
+	client := createDynamo(t)
+	defer client.Close()
+
+	err := client.SaveFeed(feed)
+	assert.NoError(t, err)
+
+	err = client.UpdateFeed(feed)
+	assert.NoError(t, err)
 }
 
 // docker run -it --rm -p 8000:8000 amazon/dynamodb-local
 // noinspection ALL
-func createDynamo(t *testing.T) storage {
+func createDynamo(t *testing.T) Dynamo {
 	d, err := NewDynamo(&aws.Config{
 		Region:   aws.String("us-east-1"),
 		Endpoint: aws.String("http://localhost:8000/"),

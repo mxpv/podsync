@@ -18,6 +18,19 @@ type Pledge struct {
 	IsPaused                      bool
 }
 
+type Item struct {
+	ID          string
+	Title       string
+	Description string
+	Thumbnail   string
+	Duration    int64
+	VideoURL    string
+	PubDate     time.Time `dynamodbav:",unixtime"`
+	Size        int64
+
+	Order string `dynamodbav:"-"`
+}
+
 //noinspection SpellCheckingInspection
 type Feed struct {
 	FeedID         int64  `sql:",pk" dynamodbav:"-"`
@@ -36,4 +49,12 @@ type Feed struct {
 	CoverArt       string    `dynamodbav:",omitempty"`
 	Explicit       bool
 	Language       string `dynamodbav:",omitempty"` // ISO 639
+	Title          string
+	Description    string
+	PubDate        time.Time `dynamodbav:",unixtime"`
+	Author         string
+	ItemURL        string    // Platform specific URL
+	Episodes       []*Item   // Array of episodes
+	LastID         string    // Last seen video URL ID (for incremental updater)
+	UpdatedAt      time.Time `dynamodbav:",unixtime"`
 }

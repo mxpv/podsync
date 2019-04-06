@@ -15,7 +15,7 @@ type storage interface {
 	SaveFeed(feed *model.Feed) error
 	GetFeed(hashID string) (*model.Feed, error)
 	GetMetadata(hashID string) (*model.Feed, error)
-	Downgrade(userID string, featureLevel int) error
+	Downgrade(userID string, featureLevel int) ([]string, error)
 
 	// Patreon pledges
 	AddPledge(pledge *model.Pledge) error
@@ -133,7 +133,7 @@ func testDowngradeToDefaultFeatures(t *testing.T, storage storage) {
 	err := storage.SaveFeed(testDowngradePledge)
 	require.NoError(t, err)
 
-	err = storage.Downgrade(testDowngradePledge.UserID, api.DefaultFeatures)
+	_, err = storage.Downgrade(testDowngradePledge.UserID, api.DefaultFeatures)
 	require.NoError(t, err)
 
 	downgraded, err := storage.GetFeed(testDowngradePledge.HashID)
@@ -149,7 +149,7 @@ func testDowngradeToExtendedFeatures(t *testing.T, storage storage) {
 	err := storage.SaveFeed(testDowngradePledge)
 	require.NoError(t, err)
 
-	err = storage.Downgrade(testDowngradePledge.UserID, api.ExtendedFeatures)
+	_, err = storage.Downgrade(testDowngradePledge.UserID, api.ExtendedFeatures)
 	require.NoError(t, err)
 
 	downgraded, err := storage.GetFeed(testDowngradePledge.HashID)

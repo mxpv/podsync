@@ -50,34 +50,25 @@ func TestYT_BuildFeed(t *testing.T) {
 	for _, f := range feeds {
 		feed := f
 		t.Run(feed.ItemID, func(t *testing.T) {
-			podcast, err := builder.Build(feed)
-
+			err := builder.Build(feed)
 			require.NoError(t, err)
 
-			assert.NotEmpty(t, podcast.Title)
-			assert.NotEmpty(t, podcast.IAuthor)
-			assert.NotEmpty(t, podcast.Description)
+			assert.NotEmpty(t, feed.Title)
+			assert.NotEmpty(t, feed.Description)
+			assert.NotEmpty(t, feed.Author)
+			assert.NotEmpty(t, feed.ItemURL)
+			assert.NotEmpty(t, feed.LastID)
 
-			assert.NotNil(t, podcast.ISummary)
-			if podcast.ISummary != nil {
-				assert.NotEmpty(t, podcast.ISummary.Text)
-			}
+			assert.NotZero(t, len(feed.Episodes))
 
-			assert.NotZero(t, len(podcast.Items))
-
-			for _, item := range podcast.Items {
+			for _, item := range feed.Episodes {
 				assert.NotEmpty(t, item.Title)
-				assert.NotEmpty(t, item.Link)
-				assert.NotEmpty(t, item.IDuration)
-
-				assert.NotNil(t, item.ISummary)
-				if item.ISummary != nil {
-					assert.NotEmpty(t, item.ISummary.Text)
-				}
+				assert.NotEmpty(t, item.VideoURL)
+				assert.NotZero(t, item.Duration)
 
 				assert.NotEmpty(t, item.Title)
-				assert.NotEmpty(t, item.IAuthor)
 				assert.NotEmpty(t, item.Description)
+				assert.NotEmpty(t, item.Thumbnail)
 			}
 		})
 	}

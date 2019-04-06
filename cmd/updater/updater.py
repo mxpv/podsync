@@ -34,13 +34,14 @@ def _update_feed(hash_id):
     page_size = int(feed.get('PageSize', DEFAULT_PAGE_SIZE))
     last_id = feed.get('LastID', None)
     episodes = feed.get('Episodes', [])
+    item_url = feed['ItemURL']
 
     # Rebuild episode list from scratch
     if not last_id:
         episodes = []
 
     start = time.time()
-    _, items, new_last_id = _get_updates(1, page_size, _get_url(feed), _get_format(feed), last_id)
+    _, items, new_last_id = _get_updates(1, page_size, item_url, _get_format(feed), last_id)
     end = time.time()
 
     print('Got feed update: new {}, current {}. Update took: {}'.format(len(items), len(episodes), end-start))
@@ -67,7 +68,7 @@ def _update_feed(hash_id):
 def _query_feed(hash_id):
     response = feeds_table.get_item(
         Key={'HashID': hash_id},
-        ProjectionExpression='#prov,#type,#size,#fmt,#quality,#level,#id,#last_id,#episodes,#updated_at',
+        ProjectionExpression='#prov,#type,#size,#fmt,#quality,#level,#id,#last_id,#episodes,#updated_at,#item_url',
         ExpressionAttributeNames={
             '#prov': 'Provider',
             '#type': 'LinkType',
@@ -79,6 +80,7 @@ def _query_feed(hash_id):
             '#last_id': 'LastID',
             '#episodes': 'Episodes',
             '#updated_at': 'UpdatedAt',
+            '#item_url': 'ItemURL',
         },
     )
 
@@ -140,37 +142,6 @@ def _get_format(feed):
             return 'worstaudio'
 
 
-def _get_url(feed):
-    provider = feed['Provider']
-    link_type = feed['LinkType']
-    item_id = feed['ItemID']
-
-    if provider == 'youtube':
-
-        if link_type == 'playlist':
-            return 'https://www.youtube.com/playlist?list={}'.format(item_id)
-        elif link_type == 'channel':
-            return 'https://www.youtube.com/channel/{}'.format(item_id)
-        elif link_type == 'user':
-            return 'https://www.youtube.com/user/{}'.format(item_id)
-        else:
-            raise ValueError('Unsupported link type')
-
-    elif provider == 'vimeo':
-
-        if link_type == 'channel':
-            return 'https://vimeo.com/channels/{}'.format(item_id)
-        elif link_type == 'group':
-            return 'http://vimeo.com/groups/{}'.format(item_id)
-        elif link_type == 'user':
-            return 'https://vimeo.com/{}'.format(item_id)
-        else:
-            raise ValueError('Unsupported link type')
-
-    else:
-        raise ValueError('Unsupported provider')
-
-
 def _get_updates(start, count, url, fmt, last_id=None):
     if start < 1:
         raise ValueError('Invalid start value')
@@ -219,15 +190,18 @@ def _get_updates(start, count, url, fmt, last_id=None):
             # Query video metadata from YouTube
             result = ytdl.process_ie_result(entry, download=False)
 
+            # Convert '20190101' to unix time
+            date_str = result.get('upload_date')
+            date = datetime.strptime(date_str, '%Y%m%d')
+
             videos.append({
                 'ID': video_id,
                 'Title': result.get('title'),
                 'Description': result.get('description'),
                 'Thumbnail': result.get('thumbnail'),
-                'Duration': result.get('duration'),
+                'Duration': int(result.get('duration')),
                 'VideoURL': result.get('webpage_url'),
-                'UploadDate': result.get('upload_date'),
-                'Ext': result.get('ext'),
+                'PubDate': int(date.timestamp()),
                 'Size': _get_size(result, selector),
             })
 

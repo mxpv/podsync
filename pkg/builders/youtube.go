@@ -161,6 +161,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 		desc       string
 		link       string // URL link to YouTube resource
 		itemID     string // ID of YouTube's channel, user or playlist
+		author     string
 		pubDate    time.Time
 		thumbnails *youtube.ThumbnailDetails
 	)
@@ -178,8 +179,10 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 
 		if channel.Kind == "youtube#channel" {
 			link = fmt.Sprintf("https://youtube.com/channel/%s", channel.Id)
+			author = title
 		} else {
 			link = fmt.Sprintf("https://youtube.com/user/%s", channel.Snippet.CustomUrl)
+			author = channel.Snippet.CustomUrl
 		}
 
 		itemID = channel.ContentDetails.RelatedPlaylists.Uploads
@@ -205,6 +208,8 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 		link = fmt.Sprintf("https://youtube.com/playlist?list=%s", playlist.Id)
 
 		itemID = playlist.Id
+
+		author = title
 
 		if date, err := yt.parseDate(playlist.Snippet.PublishedAt); err != nil {
 			return nil, "", err
@@ -256,6 +261,15 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 		podcast.Language = feed.Language
 	}
 
+	// New interface
+	feed.Title = title
+	feed.Description = desc
+	feed.Author = author
+	feed.ItemURL = link
+	feed.UpdatedAt = time.Now().UTC()
+	feed.PubDate = pubDate
+	feed.CoverArt = image
+
 	return &podcast, itemID, nil
 }
 
@@ -297,9 +311,14 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(
 	for _, video := range req.Items {
 		snippet := video.Snippet
 
+		var (
+			videoURL = fmt.Sprintf("https://youtube.com/watch?v=%s", video.Id)
+			image    = yt.selectThumbnail(snippet.Thumbnails, feed.Quality)
+		)
+
 		item := itunes.Item{
 			GUID:        video.Id,
-			Link:        fmt.Sprintf("https://youtube.com/watch?v=%s", video.Id),
+			Link:        videoURL,
 			Title:       snippet.Title,
 			Description: snippet.Description,
 			ISubtitle:   snippet.Title,
@@ -311,9 +330,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(
 		}
 
 		item.AddSummary(desc)
-
-		// Select thumbnail
-		item.AddImage(yt.selectThumbnail(snippet.Thumbnails, feed.Quality))
+		item.AddImage(image)
 
 		// Parse date added to playlist / publication date
 		dateStr := ""
@@ -361,6 +378,22 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(
 		if err != nil {
 			return errors.Wrapf(err, "failed to add item to podcast (id '%s')", video.Id)
 		}
+
+		// New interface
+
+		feed.Episodes = append(feed.Episodes, &model.Item{
+			ID:          video.Id,
+			Title:       item.Title,
+			Description: item.Description,
+			Thumbnail:   image,
+			Duration:    seconds,
+			Size:        size,
+			VideoURL:    videoURL,
+			PubDate:     pubDate,
+
+			// Need for sorting
+			Order: item.IOrder,
+		})
 	}
 
 	return nil
@@ -403,12 +436,13 @@ func (yt *YouTubeBuilder) queryItems(itemID string, feed *model.Feed, podcast *i
 	}
 }
 
-func (yt *YouTubeBuilder) Build(feed *model.Feed) (*itunes.Podcast, error) {
+func (yt *YouTubeBuilder) Build(feed *model.Feed)  error {
+	feed.Episodes = []*model.Item{}
 
 	// Query general information about feed (title, description, lang, etc)
 	podcast, itemID, err := yt.queryFeed(feed)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Get video descriptions
@@ -417,7 +451,7 @@ func (yt *YouTubeBuilder) Build(feed *model.Feed) (*itunes.Podcast, error) {
 	}
 
 	if err := yt.queryItems(itemID, feed, podcast); err != nil {
-		return nil, err
+		return err
 	}
 
 	// Sort episodes by <itunes:order> tag
@@ -428,7 +462,21 @@ func (yt *YouTubeBuilder) Build(feed *model.Feed) (*itunes.Podcast, error) {
 		return item1 < item2
 	})
 
-	return podcast, nil
+	// New interface
+
+	sort.Slice(feed.Episodes, func(i, j int) bool {
+		item1, _ := strconv.Atoi(feed.Episodes[i].Order)
+		item2, _ := strconv.Atoi(feed.Episodes[j].Order)
+		return item1 < item2
+	})
+
+	if len(feed.Episodes) > 0 {
+		feed.LastID = feed.Episodes[0].ID
+	} else {
+		feed.LastID = ""
+	}
+
+	return nil
 }
 
 func NewYouTubeBuilder(key string) (*YouTubeBuilder, error) {

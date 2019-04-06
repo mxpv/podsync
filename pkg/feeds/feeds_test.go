@@ -3,7 +3,6 @@
 package feeds
 
 import (
-	"strconv"
 	"testing"
 	"time"
 
@@ -11,8 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	itunes "github.com/mxpv/podcast"
 
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
@@ -39,7 +36,7 @@ func TestService_CreateFeed(t *testing.T) {
 
 	s := Service{
 		generator: gen,
-		db:        db,
+		storage:   db,
 		builders:  map[api.Provider]Builder{api.ProviderYoutube: nil},
 	}
 
@@ -95,7 +92,7 @@ func TestService_QueryFeed(t *testing.T) {
 	db := NewMockstorage(ctrl)
 	db.EXPECT().GetFeed("123").Times(1).Return(nil, nil)
 
-	s := Service{db: db}
+	s := Service{storage: db}
 	_, err := s.QueryFeed("123")
 	require.NoError(t, err)
 }
@@ -104,45 +101,12 @@ func TestService_GetFromCache(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	item := map[string]string{
-		updatedAtKey: strconv.FormatInt(time.Now().UTC().Unix(), 10),
-		feedKey: "test",
-	}
-
 	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().GetMap("123", feedKey, updatedAtKey, videoCountKey).Return(item, nil)
+	cache.EXPECT().Get("123").Return("test", nil)
 
-	s := Service{cache: cache}
+	s := &Service{cache: cache}
 
 	data, err := s.BuildFeed("123")
-	assert.NoError(t, err)
-	assert.Equal(t, []byte("test"), data)
-}
-
-func TestService_VerifyCache(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().GetMap("123", feedKey, updatedAtKey, videoCountKey).Return(map[string]string{
-		feedKey: "test",
-		updatedAtKey: strconv.FormatInt(time.Now().UTC().Add(-20 * time.Minute).Unix(), 10),
-		videoCountKey: "30",
-	}, nil)
-
-	cache.EXPECT().SetMap("123", gomock.Any(), 15*24*time.Hour).Times(1).Return(nil)
-
-	stor := NewMockstorage(ctrl)
-	stor.EXPECT().GetFeed(feed.HashID).Times(1).Return(feed, nil)
-
-	builder := NewMockBuilder(ctrl)
-	builder.EXPECT().GetVideoCount(feed).Return(uint64(30), nil)
-
-	s := Service{db: stor, cache: cache, builders: map[api.Provider]Builder{
-		api.ProviderVimeo: builder,
-	}}
-
-	data, err := s.BuildFeed(feed.HashID)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("test"), data)
 }
@@ -153,48 +117,16 @@ func TestService_BuildFeed(t *testing.T) {
 
 	stor := NewMockstorage(ctrl)
 	stor.EXPECT().GetFeed(feed.HashID).Times(1).Return(feed, nil)
+	stor.EXPECT().UpdateFeed(feed).Return(nil)
 
 	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().GetMap(feed.HashID, feedKey, updatedAtKey, videoCountKey).Return(nil, errors.New("not found"))
-	cache.EXPECT().SetMap(feed.HashID, gomock.Any(), gomock.Any()).Return(nil)
-
-	podcast := itunes.New("", "", "", nil, nil)
+	cache.EXPECT().Get(feed.HashID).Return("", errors.New("not found"))
+	cache.EXPECT().Set(feed.HashID, gomock.Any(), 15*time.Minute).Return(nil)
 
 	builder := NewMockBuilder(ctrl)
-	builder.EXPECT().Build(feed).Return(&podcast, nil)
-	builder.EXPECT().GetVideoCount(feed).Return(uint64(25), nil)
+	builder.EXPECT().Build(feed).Return(nil)
 
-	s := Service{db: stor, cache: cache, builders: map[api.Provider]Builder{
-		api.ProviderVimeo: builder,
-	}}
-
-	_, err := s.BuildFeed(feed.HashID)
-	require.NoError(t, err)
-}
-
-func TestService_RebuildCache(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	stor := NewMockstorage(ctrl)
-	stor.EXPECT().GetFeed(feed.HashID).Times(1).Return(feed, nil)
-
-	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().GetMap("123", feedKey, updatedAtKey, videoCountKey).Return(map[string]string{
-		feedKey: "test",
-		updatedAtKey: strconv.FormatInt(time.Now().UTC().Add(-20 * time.Minute).Unix(), 10),
-		videoCountKey: "30",
-	}, nil)
-
-	cache.EXPECT().SetMap(feed.HashID, gomock.Any(), gomock.Any()).Return(nil)
-
-	podcast := itunes.New("", "", "", nil, nil)
-
-	builder := NewMockBuilder(ctrl)
-	builder.EXPECT().Build(feed).Return(&podcast, nil)
-	builder.EXPECT().GetVideoCount(feed).Return(uint64(25), nil)
-
-	s := Service{db: stor, cache: cache, builders: map[api.Provider]Builder{
+	s := Service{storage: stor, cache: cache, builders: map[api.Provider]Builder{
 		api.ProviderVimeo: builder,
 	}}
 
@@ -207,12 +139,12 @@ func TestService_WrongID(t *testing.T) {
 	defer ctrl.Finish()
 
 	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().GetMap(gomock.Any(), feedKey, updatedAtKey, videoCountKey).Return(nil, errors.New("not found"))
+	cache.EXPECT().Get(gomock.Any()).Return("", errors.New("not found"))
 
 	stor := NewMockstorage(ctrl)
 	stor.EXPECT().GetFeed(gomock.Any()).Times(1).Return(nil, errors.New("not found"))
 
-	s := Service{db: stor, cache: cache}
+	s := &Service{storage: stor, cache: cache}
 
 	_, err := s.BuildFeed("invalid_feed_id")
 	require.Error(t, err)
@@ -225,7 +157,7 @@ func TestService_GetMetadata(t *testing.T) {
 	stor := NewMockstorage(ctrl)
 	stor.EXPECT().GetMetadata(feed.HashID).Times(1).Return(feed, nil)
 
-	s := Service{db: stor}
+	s := &Service{storage: stor}
 
 	m, err := s.GetMetadata(feed.HashID)
 	require.NoError(t, err)
