@@ -183,7 +183,6 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 	if oldLastID != feed.LastID {
 		if err := s.storage.UpdateFeed(feed); err != nil {
 			log.WithError(err).WithField("feed_id", hashID).Error("failed to save feed")
-			return nil, err
 		}
 	}
 
