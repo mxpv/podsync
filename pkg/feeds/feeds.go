@@ -131,9 +131,19 @@ func makeEnclosure(feed *model.Feed, id string, lengthInBytes int64) (string, it
 	return url, contentType, lengthInBytes
 }
 
+func short(str string, i int) string {
+	runes := []rune(str)
+	if len(runes) > i {
+		return string(runes[:i]) + " ..."
+	}
+
+	return str
+}
+
 func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 	const (
-		cacheTTL = 30 * time.Minute
+		cacheTTL          = 30 * time.Minute
+		maxDescriptionLen = 384
 	)
 
 	cached, err := s.cache.Get(hashID)
@@ -162,6 +172,12 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 	if err := builder.Build(feed); err != nil {
 		log.WithError(err).WithField("feed_id", hashID).Error("failed to build feed")
 		return nil, err
+	}
+
+	if len(feed.Episodes) > 300 {
+		for _, episode := range feed.Episodes {
+			episode.Description = short(episode.Description, maxDescriptionLen)
+		}
 	}
 
 	if oldLastID != feed.LastID {
