@@ -157,14 +157,18 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 
 	log.Infof("building new feed %q", hashID)
 
+	oldLastID := feed.LastID
+
 	if err := builder.Build(feed); err != nil {
 		log.WithError(err).WithField("feed_id", hashID).Error("failed to build feed")
 		return nil, err
 	}
 
-	if err := s.storage.UpdateFeed(feed); err != nil {
-		log.WithError(err).WithField("feed_id", hashID).Error("failed to save feed")
-		return nil, err
+	if oldLastID != feed.LastID {
+		if err := s.storage.UpdateFeed(feed); err != nil {
+			log.WithError(err).WithField("feed_id", hashID).Error("failed to save feed")
+			return nil, err
+		}
 	}
 
 	podcast, err := s.buildPodcast(feed)
