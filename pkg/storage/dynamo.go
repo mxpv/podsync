@@ -148,8 +148,15 @@ func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
 
 	var feed model.Feed
 	if err := attr.UnmarshalMap(getOutput.Item, &feed); err != nil {
-		logger.WithError(err).Error("failed to unmarshal feed item")
-		return nil, err
+		// TODO: remove this
+		delete(getOutput.Item, "UpdatedAt")
+		delete(getOutput.Item, "PubDate")
+
+		err = attr.UnmarshalMap(getOutput.Item, &feed)
+		if err != nil {
+			logger.WithError(err).Error("failed to unmarshal feed item")
+			return nil, err
+		}
 	}
 
 	// Check if we need to update LastAccess field (no more than once per hour)
@@ -193,8 +200,8 @@ func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
 
 func (d Dynamo) UpdateFeed(feed *model.Feed) error {
 	var (
-		pubDate   = strconv.FormatInt(feed.PubDate.Unix(), 10)
-		updatedAt = strconv.FormatInt(feed.LastAccess.Unix(), 10)
+		pubDate   = feed.PubDate.Unix()
+		updatedAt = feed.LastAccess.Unix()
 	)
 
 	update := expr.

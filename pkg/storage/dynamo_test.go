@@ -35,8 +35,14 @@ func TestDynamo_UpdateFeed(t *testing.T) {
 	err := client.SaveFeed(feed)
 	assert.NoError(t, err)
 
+	_, err = client.GetFeed(feed.HashID)
+	assert.NoError(t, err, "can't read feed after save")
+
 	err = client.UpdateFeed(feed)
 	assert.NoError(t, err)
+
+	_, err = client.GetFeed(feed.HashID)
+	assert.NoError(t, err, "can't read feed after update")
 }
 
 // docker run -it --rm -p 8000:8000 amazon/dynamodb-local
