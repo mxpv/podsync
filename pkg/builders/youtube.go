@@ -112,7 +112,16 @@ func (yt *YouTubeBuilder) parseDate(s string) (time.Time, error) {
 	return date, nil
 }
 
-func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, quality api.Quality) string {
+func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, quality api.Quality, videoID string) string {
+	if snippet == nil {
+		if  videoID != "" {
+			return fmt.Sprintf("https://img.youtube.com/vi/%s/default.jpg", videoID)
+		}
+
+		// TODO: use Podsync's preview image if unable to retrieve from YouTube
+		return ""
+	}
+
 	// Use high resolution thumbnails for high quality mode
 	// https://github.com/mxpv/Podsync/issues/14
 	if quality == api.QualityHigh {
@@ -236,7 +245,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 	if feed.CoverArt != "" {
 		image = feed.CoverArt
 	} else {
-		image = yt.selectThumbnail(thumbnails, feed.Quality)
+		image = yt.selectThumbnail(thumbnails, feed.Quality, "")
 	}
 
 	// Build iTunes feed
@@ -312,12 +321,13 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(
 		snippet := video.Snippet
 
 		var (
+			videoID  = video.Id
 			videoURL = fmt.Sprintf("https://youtube.com/watch?v=%s", video.Id)
-			image    = yt.selectThumbnail(snippet.Thumbnails, feed.Quality)
+			image    = yt.selectThumbnail(snippet.Thumbnails, feed.Quality, videoID)
 		)
 
 		item := itunes.Item{
-			GUID:        video.Id,
+			GUID:        videoID,
 			Link:        videoURL,
 			Title:       snippet.Title,
 			Description: snippet.Description,
@@ -436,7 +446,7 @@ func (yt *YouTubeBuilder) queryItems(itemID string, feed *model.Feed, podcast *i
 	}
 }
 
-func (yt *YouTubeBuilder) Build(feed *model.Feed)  error {
+func (yt *YouTubeBuilder) Build(feed *model.Feed) error {
 	feed.Episodes = []*model.Item{}
 
 	// Query general information about feed (title, description, lang, etc)
