@@ -1,133 +1,11 @@
 import youtube_dl
-import boto3
-import os
-import time
 from datetime import datetime
 
 BEST_FORMAT = "bestvideo+bestaudio/best"
 DEFAULT_PAGE_SIZE = 50
 
-dynamodb = boto3.resource('dynamodb')
 
-feeds_table = dynamodb.Table(os.getenv('UPDATER_DYNAMO_FEEDS_TABLE', 'Feeds'))
-
-
-def handler(event, context):
-    url = event.get('url', None)
-    if not url:
-        raise ValueError('Invalid resource URL %s' % url)
-
-    start = event.get('start', 1)
-    count = event.get('count', DEFAULT_PAGE_SIZE)
-
-    kind = event.get('kind', 'video_high')
-    last_id = event.get('last_id', None)
-
-    print('Getting updated for %s (start=%d, count=%d, kind: %s, last id: %s)' % (url, start, count, kind, last_id))
-    return _get_updates(start, count, url, kind, last_id)
-
-
-def _update_feed(hash_id):
-    print('Updating feed {}'.format(hash_id))
-    feed = _query_feed(hash_id)
-
-    page_size = int(feed.get('PageSize', DEFAULT_PAGE_SIZE))
-    last_id = feed.get('LastID', None)
-    episodes = feed.get('Episodes', [])
-    item_url = feed['ItemURL']
-
-    # Rebuild episode list from scratch
-    if not last_id:
-        episodes = []
-
-    start = time.time()
-    _, items, new_last_id = _get_updates(1, page_size, item_url, _get_format(feed), last_id)
-    end = time.time()
-
-    print('Got feed update: new {}, current {}. Update took: {}'.format(len(items), len(episodes), end-start))
-
-    # Update feed and submit back to Dynamo
-
-    unix_time = int(datetime.utcnow().timestamp())
-    feed['UpdatedAt'] = unix_time
-
-    if len(items) > 0:
-        episodes = items + episodes  # Prepand new episodes
-        del episodes[page_size:]  # Truncate list
-        feed['Episodes'] = episodes
-
-        # Update last seen video ID
-        feed['LastID'] = new_last_id
-
-        _update_feed_episodes(hash_id, feed)
-    else:
-        # Update last access field only
-        _update_feed_updated_at(hash_id, unix_time)
-
-
-def _query_feed(hash_id):
-    response = feeds_table.get_item(
-        Key={'HashID': hash_id},
-        ProjectionExpression='#prov,#type,#size,#fmt,#quality,#level,#id,#last_id,#episodes,#updated_at,#item_url',
-        ExpressionAttributeNames={
-            '#prov': 'Provider',
-            '#type': 'LinkType',
-            '#size': 'PageSize',
-            '#fmt': 'Format',
-            '#quality': 'Quality',
-            '#level': 'FeatureLevel',
-            '#id': 'ItemID',
-            '#last_id': 'LastID',
-            '#episodes': 'Episodes',
-            '#updated_at': 'UpdatedAt',
-            '#item_url': 'ItemURL',
-        },
-    )
-
-    item = response['Item']
-    return item
-
-
-def _update_feed_episodes(hash_id, feed):
-    feeds_table.update_item(
-        Key={
-            'HashID': hash_id,
-        },
-        UpdateExpression='SET #updated_at = :updated_at, #episodes = :episodes, #last_id = :last_id',
-        ExpressionAttributeNames={
-            '#updated_at': 'UpdatedAt',
-            '#episodes': 'Episodes',
-            '#last_id': 'LastID',
-        },
-        ExpressionAttributeValues={
-            ':updated_at': feed['UpdatedAt'],
-            ':episodes': feed['Episodes'],
-            ':last_id': feed['LastID'],
-        },
-        ReturnValues='NONE',
-    )
-
-
-def _update_feed_updated_at(hash_id, updated_at):
-    feeds_table.update_item(
-        Key={
-            'HashID': hash_id,
-        },
-        UpdateExpression='SET #updated_at = :updated_at',
-        ExpressionAttributeNames={
-            '#updated_at': 'UpdatedAt',
-        },
-        ExpressionAttributeValues={
-            ':updated_at': updated_at,
-        },
-        ReturnValues='NONE',
-    )
-
-
-def _get_format(feed):
-    fmt = feed.get('Format', 'video')
-    quality = feed.get('Quality', 'high')
-
+def _get_format(fmt, quality):
     if fmt == 'video':
         # Video
         if quality == 'high':
@@ -150,6 +28,9 @@ def _get_updates(start, count, url, fmt, last_id=None):
         raise ValueError('Invalid count value')
 
     end = start + count - 1
+
+    if not url:
+        raise ValueError('Invalid resource URL %s' % url)
 
     opts = {
         'playliststart': start,
