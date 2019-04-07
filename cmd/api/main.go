@@ -39,11 +39,12 @@ func main() {
 		log.WithError(err).Fatal("failed to read configuration")
 	}
 
-	database, err := storage.NewDynamo(&aws.Config{
+	awsCfg := &aws.Config{
 		Region:      aws.String("us-east-1"),
 		Credentials: credentials.NewStaticCredentials(cfg.AWSAccessKey, cfg.AWSAccessSecret, ""),
-	})
+	}
 
+	database, err := storage.NewDynamo(awsCfg)
 	if err != nil {
 		log.WithError(err).Fatal("failed to create database")
 	}
@@ -77,7 +78,7 @@ func main() {
 		log.WithError(err).Fatal("failed to create Vimeo builder")
 	}
 
-	generic, err := builders.NewLambda()
+	generic, err := builders.NewLambda(awsCfg)
 	if err != nil {
 		log.WithError(err).Fatal("failed to create Lambda builder")
 	}
