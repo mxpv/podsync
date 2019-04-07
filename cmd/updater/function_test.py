@@ -5,7 +5,7 @@ TEST_URL = 'https://www.youtube.com/user/CNN/videos'
 
 
 class TestUpdater(unittest.TestCase):
-    #@unittest.skip('heavy test, run manually')
+    @unittest.skip('heavy test, run manually')
     def test_get_50(self):
         resp = function.handler({
             'url': 'https://www.youtube.com/channel/UCd6MoB9NC6uYN2grvUNT-Zg',
