@@ -19,6 +19,6 @@ def handler(event, context):
     _, episodes, new_last_id = _get_updates(start, count, url, ytdl_fmt, last_id)
 
     return {
-        'LastID': new_last_id,
-        'Episodes': episodes,
+        'last_id': new_last_id,
+        'episodes': episodes,
     }

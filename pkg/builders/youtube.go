@@ -114,7 +114,7 @@ func (yt *YouTubeBuilder) parseDate(s string) (time.Time, error) {
 
 func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, quality api.Quality, videoID string) string {
 	if snippet == nil {
-		if  videoID != "" {
+		if videoID != "" {
 			return fmt.Sprintf("https://img.youtube.com/vi/%s/default.jpg", videoID)
 		}
 
@@ -399,7 +399,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(
 			Duration:    seconds,
 			Size:        size,
 			VideoURL:    videoURL,
-			PubDate:     pubDate,
+			PubDate:     model.Timestamp(pubDate),
 
 			// Need for sorting
 			Order: item.IOrder,

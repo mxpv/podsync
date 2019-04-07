@@ -14,6 +14,7 @@ type Provider string
 const (
 	ProviderYoutube = Provider("youtube")
 	ProviderVimeo   = Provider("vimeo")
+	ProviderGeneric = Provider("generic")
 )
 
 type LinkType string

@@ -163,7 +163,7 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, podcast *itunes.Podc
 				Description: item.Description,
 				Duration:    duration,
 				Size:        size,
-				PubDate:     video.CreatedTime,
+				PubDate:     model.Timestamp(video.CreatedTime),
 				Thumbnail:   image,
 				VideoURL:    videoURL,
 			})

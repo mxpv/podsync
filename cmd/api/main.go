@@ -77,9 +77,15 @@ func main() {
 		log.WithError(err).Fatal("failed to create Vimeo builder")
 	}
 
+	generic, err := builders.NewLambda()
+	if err != nil {
+		log.WithError(err).Fatal("failed to create Lambda builder")
+	}
+
 	feed, err := feeds.NewFeedService(database, redisCache, map[api.Provider]feeds.Builder{
 		api.ProviderYoutube: youtube,
 		api.ProviderVimeo:   vimeo,
+		api.ProviderGeneric: generic,
 	})
 
 	if err != nil {

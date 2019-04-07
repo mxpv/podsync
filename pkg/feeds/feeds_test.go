@@ -23,6 +23,9 @@ var feed = &model.Feed{
 	PageSize: 50,
 	Quality:  api.QualityHigh,
 	Format:   api.FormatVideo,
+	Episodes: []*model.Item{
+		{ID: "1", Title: "Title", Description: "Description"},
+	},
 }
 
 func TestService_CreateFeed(t *testing.T) {
@@ -121,10 +124,12 @@ func TestService_BuildFeed(t *testing.T) {
 
 	cache := NewMockcacheService(ctrl)
 	cache.EXPECT().Get(feed.HashID).Return("", errors.New("not found"))
-	cache.EXPECT().Set(feed.HashID, gomock.Any(), 15*time.Minute).Return(nil)
+	cache.EXPECT().Set(feed.HashID, gomock.Any(), 1*time.Hour).Return(nil)
 
 	builder := NewMockBuilder(ctrl)
-	builder.EXPECT().Build(feed).Return(nil)
+	builder.EXPECT().Build(feed).Return(nil).Do(func(feed *model.Feed) {
+		feed.Episodes = append(feed.Episodes, feed.Episodes[0])
+	})
 
 	s := Service{storage: stor, cache: cache, builders: map[api.Provider]Builder{
 		api.ProviderVimeo: builder,

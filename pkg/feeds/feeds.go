@@ -142,7 +142,7 @@ func short(str string, i int) string {
 
 func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 	const (
-		cacheTTL          = 30 * time.Minute
+		cacheTTL          = 1 * time.Hour
 		maxDescriptionLen = 384
 	)
 
@@ -151,6 +151,8 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 		return []byte(cached), nil
 	}
 
+	logger := log.WithField("hash_id", hashID)
+
 	// Query feed from DynamoDB
 
 	feed, err := s.QueryFeed(hashID)
@@ -158,33 +160,39 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 		return nil, err
 	}
 
-	// Rebuild feed using YouTube API
+	oldCount := len(feed.Episodes)
 
-	builder, ok := s.builders[feed.Provider]
+	builderType := feed.Provider
+	if feed.LastID != "" {
+		// Use incremental Lambda updater if have seen this feed before
+		builderType = api.ProviderGeneric
+	}
+
+	builder, ok := s.builders[builderType]
 	if !ok {
 		return nil, errors.Wrapf(err, "failed to get builder for feed: %s", hashID)
 	}
 
-	log.Infof("building new feed %q", hashID)
-
-	oldLastID := feed.LastID
-
 	if err := builder.Build(feed); err != nil {
-		log.WithError(err).WithField("feed_id", hashID).Error("failed to build feed")
+		logger.WithError(err).Error("failed to build feed")
 		return nil, err
 	}
 
+	// Truncate episode description in order to fit 400KB limit of Dynamo
 	if len(feed.Episodes) > 300 {
 		for _, episode := range feed.Episodes {
 			episode.Description = short(episode.Description, maxDescriptionLen)
 		}
 	}
 
-	if oldLastID != feed.LastID {
+	if oldCount != len(feed.Episodes) {
 		if err := s.storage.UpdateFeed(feed); err != nil {
-			log.WithError(err).WithField("feed_id", hashID).Error("failed to save feed")
+			logger.WithError(err).Error("failed to save feed")
+			return nil, err
 		}
 	}
+
+	// Format podcast
 
 	podcast, err := s.buildPodcast(feed)
 	if err != nil {
@@ -239,9 +247,11 @@ func (s *Service) buildPodcast(feed *model.Feed) (*itunes.Podcast, error) {
 			IOrder:      strconv.Itoa(i),
 		}
 
+		pubDate := time.Time(episode.PubDate)
+		item.AddPubDate(&pubDate)
+
 		item.AddSummary(episode.Description)
 		item.AddImage(episode.Thumbnail)
-		item.AddPubDate(&episode.PubDate)
 		item.AddDuration(episode.Duration)
 		item.AddEnclosure(makeEnclosure(feed, episode.ID, episode.Size))
 

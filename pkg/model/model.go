@@ -25,7 +25,7 @@ type Item struct {
 	Thumbnail   string
 	Duration    int64
 	VideoURL    string
-	PubDate     time.Time `dynamodbav:",unixtime"`
+	PubDate     Timestamp `dynamodbav:",unixtime"`
 	Size        int64
 
 	Order string `dynamodbav:"-"`
