@@ -5,6 +5,7 @@ require (
 	github.com/BrianHicks/finch v0.0.0-20140409222414-419bd73c29ec
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/GoogleCloudPlatform/cloudsql-proxy v0.0.0-20170929212804-61590edac4c7
+	github.com/aws/aws-lambda-go v1.10.0
 	github.com/aws/aws-sdk-go v1.15.81
 	github.com/boj/redistore v0.0.0-20160128113310-fc113767cd6b // indirect
 	github.com/bradfitz/gomemcache v0.0.0-20180710155616-bc664df96737 // indirect
