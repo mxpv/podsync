@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/cache"
 	"github.com/mxpv/podsync/pkg/model"
 )
 
@@ -28,6 +29,10 @@ type storage interface {
 type cacheService interface {
 	Set(key, value string, ttl time.Duration) error
 	Get(key string) (string, error)
+
+	SaveItem(key string, item interface{}, exp time.Duration) error
+	GetItem(key string, item interface{}) error
+
 	Invalidate(key ...string) error
 }
 
@@ -141,11 +146,6 @@ func short(str string, i int) string {
 }
 
 func (s *Service) BuildFeed(hashID string) ([]byte, error) {
-	const (
-		cacheTTL          = 1 * time.Hour
-		maxDescriptionLen = 384
-	)
-
 	cached, err := s.cache.Get(hashID)
 	if err == nil {
 		return []byte(cached), nil
@@ -153,14 +153,37 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 
 	logger := log.WithField("hash_id", hashID)
 
-	// Query feed from DynamoDB
+	var (
+		key  = fmt.Sprintf("feeds/%s", hashID)
+		now  = time.Now().UTC()
+		feed = &model.Feed{}
+	)
 
-	feed, err := s.QueryFeed(hashID)
-	if err != nil {
-		return nil, err
+	if err = s.cache.GetItem(key, feed); err != nil {
+		// If not found, get from DynamoDB
+		if err == cache.ErrNotFound {
+			if f, err := s.QueryFeed(hashID); err != nil {
+				return nil, err
+			} else {
+				feed = f
+			}
+		} else {
+			return nil, err
+		}
 	}
 
-	oldCount := len(feed.Episodes)
+	const (
+		updateTTL = 15 * time.Minute
+		recordTTL = 90 * 24 * time.Hour
+	)
+
+	if now.Sub(feed.UpdatedAt) < updateTTL {
+		if podcast, err := s.buildPodcast(feed); err != nil {
+			return nil, err
+		} else {
+			return []byte(podcast.String()), nil
+		}
+	}
 
 	builderType := feed.Provider
 	if feed.LastID != "" {
@@ -177,16 +200,9 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 		logger.WithError(err).Error("failed to build feed")
 
 		// Save error to cache to avoid spamming
-		_ = s.cache.Set(hashID, err.Error(), 10*time.Minute)
+		_ = s.cache.Set(hashID, err.Error(), updateTTL)
 
 		return nil, err
-	}
-
-	// Truncate episode description in order to fit 400KB limit of Dynamo
-	if len(feed.Episodes) > 300 {
-		for _, episode := range feed.Episodes {
-			episode.Description = short(episode.Description, maxDescriptionLen)
-		}
 	}
 
 	// Format podcast
@@ -196,24 +212,15 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 		return nil, err
 	}
 
-	body := podcast.String()
+	// Save to storage
 
-	// Save to cache
-
-	if err := s.cache.Set(hashID, body, cacheTTL); err != nil {
-		log.WithError(err).Errorf("failed to save cache for feed %q", hashID)
+	logger.Infof("saving feed %s", hashID)
+	if err := s.cache.SaveItem(key, feed, recordTTL); err != nil {
+		logger.WithError(err).Error("failed to save feed")
 		return nil, err
 	}
 
-	// Save to database
-
-	if oldCount != len(feed.Episodes) {
-		if err := s.storage.UpdateFeed(feed); err != nil {
-			logger.WithError(err).Error("failed to save feed")
-		}
-	}
-
-	return []byte(body), nil
+	return []byte(podcast.String()), nil
 }
 
 func (s *Service) buildPodcast(feed *model.Feed) (*itunes.Podcast, error) {
