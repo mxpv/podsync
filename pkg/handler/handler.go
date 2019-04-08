@@ -162,17 +162,13 @@ func (h handler) user(c *gin.Context) {
 func (h handler) create(c *gin.Context) {
 	req := &api.CreateFeedRequest{}
 
-	createEventLog := log.WithField("event", "create_feed")
-
 	if err := c.BindJSON(req); err != nil {
-		createEventLog.WithError(err).Error("invalid request")
 		c.JSON(badRequest(err))
 		return
 	}
 
 	identity, err := session.GetIdentity(c)
 	if err != nil {
-		createEventLog.WithError(err).Error("invalid identity")
 		c.JSON(internalError(err))
 		return
 	}
@@ -180,16 +176,8 @@ func (h handler) create(c *gin.Context) {
 	// Check feature level again if user deleted pledge by still logged in
 	identity.FeatureLevel = h.patreon.GetFeatureLevelByID(identity.UserID)
 
-	createEventLog = createEventLog.WithFields(log.Fields{
-		"user_id":       identity.UserID,
-		"feature_level": identity.FeatureLevel,
-	})
-
-	createEventLog.Info("creating feed")
-
 	hashID, err := h.feed.CreateFeed(req, identity)
 	if err != nil {
-		createEventLog.WithError(err).Error("failed to create new feed")
 		c.JSON(internalError(err))
 		return
 	}
@@ -204,11 +192,6 @@ func (h handler) getFeed(c *gin.Context) {
 		return
 	}
 
-	log.WithFields(log.Fields{
-		"event":   "get_feed",
-		"hash_id": hashID,
-	}).Infof("getting feed %s", hashID)
-
 	if strings.HasSuffix(hashID, ".xml") {
 		hashID = strings.TrimSuffix(hashID, ".xml")
 	}
@@ -222,11 +205,6 @@ func (h handler) getFeed(c *gin.Context) {
 			code = http.StatusTooManyRequests
 		}
 
-		log.WithFields(log.Fields{
-			"event":     "get_feed",
-			"hash_id":   hashID,
-			"http_code": code,
-		}).WithError(err).Error("failed to get feed")
 		c.String(code, err.Error())
 		return
 	}
@@ -242,16 +220,8 @@ func (h handler) metadata(c *gin.Context) {
 		return
 	}
 
-	log.WithFields(log.Fields{
-		"event":   "get_metadata",
-		"hash_id": hashID,
-	}).Infof("getting metadata for '%s'", hashID)
 	feed, err := h.feed.GetMetadata(hashID)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"event":   "get_metadata",
-			"hash_id": hashID,
-		}).WithError(err).Error("failed to query metadata")
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
