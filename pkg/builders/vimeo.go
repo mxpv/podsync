@@ -40,7 +40,7 @@ func (v *VimeoBuilder) queryChannel(feed *model.Feed) (*itunes.Podcast, error) {
 
 	ch, resp, err := v.client.Channels.Get(channelID)
 	if err != nil {
-		if resp.StatusCode == http.StatusNotFound {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, api.ErrNotFound
 		}
 
@@ -64,7 +64,7 @@ func (v *VimeoBuilder) queryGroup(feed *model.Feed) (*itunes.Podcast, error) {
 
 	gr, resp, err := v.client.Groups.Get(groupID)
 	if err != nil {
-		if resp.StatusCode == http.StatusNotFound {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, api.ErrNotFound
 		}
 
@@ -88,7 +88,7 @@ func (v *VimeoBuilder) queryUser(feed *model.Feed) (*itunes.Podcast, error) {
 
 	user, resp, err := v.client.Users.Get(userID)
 	if err != nil {
-		if resp.StatusCode == http.StatusNotFound {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, api.ErrNotFound
 		}
 
@@ -123,7 +123,11 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, podcast *itunes.Podc
 	for {
 		videos, response, err := getVideos(feed.ItemID, vimeo.OptPage(page), vimeo.OptPerPage(vimeoDefaultPageSize))
 		if err != nil {
-			return errors.Wrapf(err, "failed to query videos (error %d %s)", response.StatusCode, response.Status)
+			if response != nil {
+				return errors.Wrapf(err, "failed to query videos (error %d %s)", response.StatusCode, response.Status)
+			}
+
+			return err
 		}
 
 		for _, video := range videos {

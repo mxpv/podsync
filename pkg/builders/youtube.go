@@ -358,13 +358,19 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(
 
 		item.AddPubDate(&pubDate)
 
-		// Parse duration
-		d, err := duration.FromString(video.ContentDetails.Duration)
-		if err != nil {
-			return errors.Wrapf(err, "failed to parse duration %s", video.ContentDetails.Duration)
+		// Sometimes YouTube retrun empty content defailt, use arbitrary one
+		var seconds int64 = 1
+
+		if video.ContentDetails != nil {
+			// Parse duration
+			d, err := duration.FromString(video.ContentDetails.Duration)
+			if err != nil {
+				return errors.Wrapf(err, "failed to parse duration %s", video.ContentDetails.Duration)
+			}
+
+			seconds = int64(d.ToDuration().Seconds())
 		}
 
-		seconds := int64(d.ToDuration().Seconds())
 		item.AddDuration(seconds)
 
 		// Add download links
