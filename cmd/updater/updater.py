@@ -75,21 +75,25 @@ def _get_updates(start, count, url, fmt, last_id=None):
             date_str = result.get('upload_date')
             date = datetime.strptime(date_str, '%Y%m%d')
 
+            # Duration in seconds
+            duration = int(result.get('duration'))
+            size = _get_size(result, selector, fmt, duration)
+
             videos.append({
                 'ID': video_id,
                 'Title': result.get('title'),
                 'Description': result.get('description'),
                 'Thumbnail': result.get('thumbnail'),
-                'Duration': int(result.get('duration')),
+                'Duration': duration,
                 'VideoURL': result.get('webpage_url'),
                 'PubDate': int(date.timestamp()),
-                'Size': _get_size(result, selector),
+                'Size': size,
             })
 
     return feed, videos, new_last_id
 
 
-def _get_size(video, selector):
+def _get_size(video, selector, fmt, duration):
     try:
         selected = next(selector(video))
     except KeyError:
@@ -101,4 +105,12 @@ def _get_size(video, selector):
     if selected.get('filesize') is not None:
         return int(selected['filesize'])
 
-    return 0
+    # Calculate approximate file size
+
+    is_high = 'best' in fmt
+    is_audio = 'audio' in fmt
+
+    if is_audio:
+        return [16000 if is_high else 6000] * duration
+    else:
+        return [350000 if is_high else 100000] * duration
