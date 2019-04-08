@@ -69,7 +69,7 @@ func (l *Lambda) Build(feed *model.Feed) error {
 	}
 
 	if out.ErrorMessage != "" {
-		return errors.Errorf("lambda error: %s", out.ErrorMessage)
+		return errors.New(out.ErrorMessage)
 	}
 
 	feed.LastID = out.LastID

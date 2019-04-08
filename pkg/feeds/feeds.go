@@ -175,6 +175,10 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 
 	if err := builder.Build(feed); err != nil {
 		logger.WithError(err).Error("failed to build feed")
+
+		// Save error to cache to avoid spamming
+		_ = s.cache.Set(hashID, err.Error(), 10 * time.Minute)
+
 		return nil, err
 	}
 
