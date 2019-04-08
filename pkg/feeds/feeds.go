@@ -177,7 +177,7 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 		logger.WithError(err).Error("failed to build feed")
 
 		// Save error to cache to avoid spamming
-		_ = s.cache.Set(hashID, err.Error(), 10 * time.Minute)
+		_ = s.cache.Set(hashID, err.Error(), 10*time.Minute)
 
 		return nil, err
 	}
@@ -186,13 +186,6 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 	if len(feed.Episodes) > 300 {
 		for _, episode := range feed.Episodes {
 			episode.Description = short(episode.Description, maxDescriptionLen)
-		}
-	}
-
-	if oldCount != len(feed.Episodes) {
-		if err := s.storage.UpdateFeed(feed); err != nil {
-			logger.WithError(err).Error("failed to save feed")
-			return nil, err
 		}
 	}
 
@@ -210,6 +203,14 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 	if err := s.cache.Set(hashID, body, cacheTTL); err != nil {
 		log.WithError(err).Errorf("failed to save cache for feed %q", hashID)
 		return nil, err
+	}
+
+	// Save to database
+
+	if oldCount != len(feed.Episodes) {
+		if err := s.storage.UpdateFeed(feed); err != nil {
+			logger.WithError(err).Error("failed to save feed")
+		}
 	}
 
 	return []byte(body), nil
