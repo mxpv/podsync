@@ -162,6 +162,7 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 	if err = s.cache.GetItem(key, feed); err != nil {
 		// If not found, get from DynamoDB
 		if err == cache.ErrNotFound {
+			logger.Warnf("getting feed from Dynamo %s", hashID)
 			if f, err := s.QueryFeed(hashID); err != nil {
 				return nil, err
 			} else {
@@ -195,6 +196,8 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 	if !ok {
 		return nil, errors.Wrapf(err, "failed to get builder for feed: %s", hashID)
 	}
+
+	logger.Info("building feed")
 
 	if err := builder.Build(feed); err != nil {
 		logger.WithError(err).Error("failed to build feed")
