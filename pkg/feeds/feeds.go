@@ -263,6 +263,19 @@ func (s *Service) buildPodcast(feed *model.Feed) (*itunes.Podcast, error) {
 		}
 
 		pubDate := time.Time(episode.PubDate)
+		if pubDate.IsZero() {
+			ts := now
+			if i > 0 {
+				if prev := time.Time(feed.Episodes[i-1].PubDate); !prev.IsZero() {
+					ts = prev
+				}
+			}
+
+			// HACK: some dates are cached incorrectly resulting incorrect behavior of some podcast clients.
+			// Use this hack to have sequence ordered by date.
+			pubDate = ts.Add(-time.Duration(i) * time.Hour)
+		}
+
 		item.AddPubDate(&pubDate)
 
 		item.AddSummary(episode.Description)

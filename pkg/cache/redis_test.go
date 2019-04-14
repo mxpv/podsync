@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/mxpv/podsync/pkg/model"
 )
 
 func TestRedisCache_Get(t *testing.T) {
@@ -48,8 +50,8 @@ func TestNewRedisCache_TTL(t *testing.T) {
 
 func TestRedisCache_SaveItem(t *testing.T) {
 	type test struct {
-		Feed      []byte    `msgpack:"feed"`
-		UpdatedAt time.Time `msgpack:"updated_at"`
+		Feed      []byte          `msgpack:"feed"`
+		UpdatedAt model.Timestamp `msgpack:"updated_at"`
 	}
 
 	s := createRedisClient(t)
@@ -57,7 +59,7 @@ func TestRedisCache_SaveItem(t *testing.T) {
 
 	item := &test{
 		Feed:      []byte("123"),
-		UpdatedAt: time.Now().UTC(),
+		UpdatedAt: model.Timestamp(time.Now().UTC()),
 	}
 
 	err := s.SaveItem("test", item, time.Minute)
@@ -67,8 +69,8 @@ func TestRedisCache_SaveItem(t *testing.T) {
 	err = s.GetItem("test", &out)
 	assert.NoError(t, err)
 
-	assert.EqualValues(t, item.Feed, &out.Feed)
-	assert.EqualValues(t, item.UpdatedAt.Unix(), out.UpdatedAt.Unix())
+	assert.EqualValues(t, item.Feed, out.Feed)
+	assert.EqualValues(t, time.Time(item.UpdatedAt).Unix(), time.Time(out.UpdatedAt).Unix())
 }
 
 func TestRedisCache_Map(t *testing.T) {
