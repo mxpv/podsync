@@ -137,7 +137,7 @@ def _resolve(url, metadata):
         with youtube_dl.YoutubeDL(opts) as ytdl:
             info = ytdl.extract_info(url, download=False)
             if provider == 'youtube':
-                return _yt_choose_url(info, metadata)
+                return _yt_choose_url(ytdl, info, metadata)
             elif provider == 'vimeo':
                 return _vimeo_choose_url(info, metadata)
             else:
@@ -147,8 +147,19 @@ def _resolve(url, metadata):
         raise
 
 
-def _yt_choose_url(info, metadata):
+def _yt_choose_url(ytdl, info, metadata):
     is_video = metadata['format'] == 'video'
+    is_high_quality = metadata['quality'] == 'high'
+
+    if not is_video:
+        fmt = 'bestaudio' if is_high_quality else 'worstaudio'
+        selector = ytdl.build_format_selector(fmt)
+        try:
+            selected = next(selector(info))
+            if 'fragment_base_url' in selected:
+                return selected['fragment_base_url']
+        except KeyError:
+            pass
 
     # Filter formats by file extension
     ext = 'mp4' if is_video else 'm4a'
@@ -164,7 +175,6 @@ def _yt_choose_url(info, metadata):
     ordered = sorted(fmt_list, key=lambda x: x[sort_field], reverse=True)
 
     # Choose an item depending on quality, better at the beginning
-    is_high_quality = metadata['quality'] == 'high'
     item = ordered[0] if is_high_quality else ordered[-1]
     return item['url']
 

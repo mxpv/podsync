@@ -26,6 +26,12 @@ class TestYtdl(unittest.TestCase):
             ytdl._resolve('https://vimeo.com/275211960', {'format': 'video', 'quality': 'high', 'provider': 'vimeo'})
         )
 
+    def test_youtube_resolve_audio(self):
+        self.assertIsNotNone(
+            ytdl._resolve('https://youtube.com/watch?v=UMrb1tG38w8',
+                          {'format': 'audio', 'quality': 'high', 'provider': 'youtube'})
+        )
+
 
 class TestDynamo(unittest.TestCase):
     def test_metadata(self):
