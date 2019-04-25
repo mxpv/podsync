@@ -111,6 +111,6 @@ def _get_size(video, selector, fmt, duration):
     is_audio = 'audio' in fmt
 
     if is_audio:
-        return [16000 if is_high else 6000] * duration
+        return (16000 if is_high else 6000) * duration
     else:
-        return [350000 if is_high else 100000] * duration
+        return (350000 if is_high else 100000) * duration
