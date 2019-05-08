@@ -9,9 +9,8 @@ import (
 	"time"
 
 	"github.com/BrianHicks/finch/duration"
-	itunes "github.com/mxpv/podcast"
 	"github.com/pkg/errors"
-	youtube "google.golang.org/api/youtube/v3"
+	"google.golang.org/api/youtube/v3"
 
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
@@ -164,7 +163,7 @@ func (yt *YouTubeBuilder) GetVideoCount(feed *model.Feed) (uint64, error) {
 	}
 }
 
-func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, error) {
+func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (string, error) {
 	var (
 		title      string
 		desc       string
@@ -180,7 +179,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 		// Cost: 5 units for channel or user
 		channel, err := yt.listChannels(feed.LinkType, feed.ItemID, "id,snippet,contentDetails")
 		if err != nil {
-			return nil, "", err
+			return "", err
 		}
 
 		title = channel.Snippet.Title
@@ -197,7 +196,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 		itemID = channel.ContentDetails.RelatedPlaylists.Uploads
 
 		if date, err := yt.parseDate(channel.Snippet.PublishedAt); err != nil {
-			return nil, "", err
+			return "", err
 		} else {
 			pubDate = date
 		}
@@ -208,7 +207,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 		// Cost: 3 units for playlist
 		playlist, err := yt.listPlaylists(feed.ItemID, "", "id,snippet")
 		if err != nil {
-			return nil, "", err
+			return "", err
 		}
 
 		title = fmt.Sprintf("%s: %s", playlist.Snippet.ChannelTitle, playlist.Snippet.Title)
@@ -221,7 +220,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 		author = title
 
 		if date, err := yt.parseDate(playlist.Snippet.PublishedAt); err != nil {
-			return nil, "", err
+			return "", err
 		} else {
 			pubDate = date
 		}
@@ -229,7 +228,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 		thumbnails = playlist.Snippet.Thumbnails
 
 	default:
-		return nil, "", errors.New("unsupported link format")
+		return "", errors.New("unsupported link format")
 	}
 
 	// Apply customizations and default values
@@ -238,36 +237,11 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 		desc = fmt.Sprintf("%s (%s)", title, pubDate)
 	}
 
-	var (
-		image string
-	)
-
+	var image string
 	if feed.CoverArt != "" {
 		image = feed.CoverArt
 	} else {
 		image = yt.selectThumbnail(thumbnails, feed.Quality, "")
-	}
-
-	// Build iTunes feed
-	buildTime := time.Now()
-	podcast := itunes.New(title, link, desc, &pubDate, &buildTime)
-	podcast.Generator = podsyncGenerator
-
-	podcast.AddSubTitle(title)
-	podcast.AddCategory(defaultCategory, nil)
-	podcast.AddImage(image)
-
-	podcast.IAuthor = title
-	podcast.AddSummary(desc)
-
-	if feed.Explicit {
-		podcast.IExplicit = "yes"
-	} else {
-		podcast.IExplicit = "no"
-	}
-
-	if feed.Language != "" {
-		podcast.Language = feed.Language
 	}
 
 	// New interface
@@ -279,7 +253,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (*itunes.Podcast, string, 
 	feed.PubDate = pubDate
 	feed.CoverArt = image
 
-	return &podcast, itemID, nil
+	return itemID, nil
 }
 
 // Video size information requires 1 additional call for each video (1 feed = 50 videos = 50 calls),
@@ -288,24 +262,23 @@ func (yt *YouTubeBuilder) getSize(duration int64, feed *model.Feed) int64 {
 	if feed.Format == api.FormatAudio {
 		if feed.Quality == api.QualityHigh {
 			return highAudioBytesPerSecond * duration
-		} else {
-			return lowAudioBytesPerSecond * duration
 		}
-	} else {
-		if feed.Quality == api.QualityHigh {
-			return duration * hdBytesPerSecond
-		} else {
-			return duration * ldBytesPerSecond
-		}
+
+		return lowAudioBytesPerSecond * duration
 	}
+
+	// Video format
+
+	if feed.Quality == api.QualityHigh {
+		return duration * hdBytesPerSecond
+	}
+
+	return duration * ldBytesPerSecond
 }
 
 // Cost: 5 units (call: 1, snippet: 2, contentDetails: 2)
 // See https://developers.google.com/youtube/v3/docs/videos/list#part
-func (yt *YouTubeBuilder) queryVideoDescriptions(
-	playlist map[string]*youtube.PlaylistItemSnippet,
-	feed *model.Feed,
-	podcast *itunes.Podcast) error {
+func (yt *YouTubeBuilder) queryVideoDescriptions(playlist map[string]*youtube.PlaylistItemSnippet, feed *model.Feed) error {
 	// Make the list of video ids
 	ids := make([]string, 0, len(playlist))
 	for _, s := range playlist {
@@ -318,29 +291,12 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(
 	}
 
 	for _, video := range req.Items {
-		snippet := video.Snippet
-
 		var (
+			snippet  = video.Snippet
 			videoID  = video.Id
 			videoURL = fmt.Sprintf("https://youtube.com/watch?v=%s", video.Id)
 			image    = yt.selectThumbnail(snippet.Thumbnails, feed.Quality, videoID)
 		)
-
-		item := itunes.Item{
-			GUID:        videoID,
-			Link:        videoURL,
-			Title:       snippet.Title,
-			Description: snippet.Description,
-			ISubtitle:   snippet.Title,
-		}
-
-		desc := snippet.Description
-		if desc == "" {
-			desc = fmt.Sprintf("%s (%s)", snippet.Title, snippet.PublishedAt)
-		}
-
-		item.AddSummary(desc)
-		item.AddImage(image)
 
 		// Parse date added to playlist / publication date
 		dateStr := ""
@@ -356,11 +312,8 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(
 			return errors.Wrapf(err, "failed to parse video publish date: %s", dateStr)
 		}
 
-		item.AddPubDate(&pubDate)
-
 		// Sometimes YouTube retrun empty content defailt, use arbitrary one
 		var seconds int64 = 1
-
 		if video.ContentDetails != nil {
 			// Parse duration
 			d, err := duration.FromString(video.ContentDetails.Duration)
@@ -371,36 +324,15 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(
 			seconds = int64(d.ToDuration().Seconds())
 		}
 
-		item.AddDuration(seconds)
-
-		// Add download links
-		size := yt.getSize(seconds, feed)
-		item.AddEnclosure(makeEnclosure(feed, video.Id, size))
-
-		// podcast.AddItem requires description to be not empty, use workaround
-		if item.Description == "" {
-			item.Description = " "
-		}
-
-		if feed.Explicit {
-			item.IExplicit = "yes"
-		} else {
-			item.IExplicit = "no"
-		}
-
-		item.IOrder = strconv.FormatInt(playlistItem.Position, 10)
-
-		_, err = podcast.AddItem(item)
-		if err != nil {
-			return errors.Wrapf(err, "failed to add item to podcast (id '%s')", video.Id)
-		}
-
-		// New interface
+		var (
+			order = strconv.FormatInt(playlistItem.Position, 10)
+			size  = yt.getSize(seconds, feed)
+		)
 
 		feed.Episodes = append(feed.Episodes, &model.Item{
 			ID:          video.Id,
-			Title:       item.Title,
-			Description: item.Description,
+			Title:       snippet.Title,
+			Description: snippet.Description,
 			Thumbnail:   image,
 			Duration:    seconds,
 			Size:        size,
@@ -408,7 +340,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(
 			PubDate:     model.Timestamp(pubDate),
 
 			// Need for sorting
-			Order: item.IOrder,
+			Order: order,
 		})
 	}
 
@@ -416,7 +348,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(
 }
 
 // Cost: (3 units + 5 units) * X pages = 8 units per page
-func (yt *YouTubeBuilder) queryItems(itemID string, feed *model.Feed, podcast *itunes.Podcast) error {
+func (yt *YouTubeBuilder) queryItems(itemID string, feed *model.Feed) error {
 	var (
 		token string
 		count int
@@ -442,7 +374,7 @@ func (yt *YouTubeBuilder) queryItems(itemID string, feed *model.Feed, podcast *i
 		}
 
 		// Query video descriptions from the list of ids
-		if err := yt.queryVideoDescriptions(snippets, feed, podcast); err != nil {
+		if err := yt.queryVideoDescriptions(snippets, feed); err != nil {
 			return err
 		}
 
@@ -456,7 +388,7 @@ func (yt *YouTubeBuilder) Build(feed *model.Feed) error {
 	feed.Episodes = []*model.Item{}
 
 	// Query general information about feed (title, description, lang, etc)
-	podcast, itemID, err := yt.queryFeed(feed)
+	itemID, err := yt.queryFeed(feed)
 	if err != nil {
 		return err
 	}
@@ -466,17 +398,9 @@ func (yt *YouTubeBuilder) Build(feed *model.Feed) error {
 		feed.PageSize = maxYoutubeResults
 	}
 
-	if err := yt.queryItems(itemID, feed, podcast); err != nil {
+	if err := yt.queryItems(itemID, feed); err != nil {
 		return err
 	}
-
-	// Sort episodes by <itunes:order> tag
-
-	sort.Slice(podcast.Items, func(i, j int) bool {
-		item1, _ := strconv.Atoi(podcast.Items[i].IOrder)
-		item2, _ := strconv.Atoi(podcast.Items[j].IOrder)
-		return item1 < item2
-	})
 
 	// New interface
 

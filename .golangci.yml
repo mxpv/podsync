@@ -9,6 +9,7 @@ linters:
   disable:
     - errcheck
     - gochecknoglobals
+    - lll
 issues:
   exclude:
     - if block ends with a return statement, so drop this else and outdent its block

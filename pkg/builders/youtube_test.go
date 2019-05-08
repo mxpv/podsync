@@ -67,7 +67,6 @@ func TestYT_BuildFeed(t *testing.T) {
 				assert.NotZero(t, item.Duration)
 
 				assert.NotEmpty(t, item.Title)
-				assert.NotEmpty(t, item.Description)
 				assert.NotEmpty(t, item.Thumbnail)
 			}
 		})
