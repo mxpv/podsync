@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	itunes "github.com/mxpv/podcast"
 	"github.com/stretchr/testify/require"
 
 	"github.com/mxpv/podsync/pkg/api"
@@ -24,15 +23,15 @@ func TestQueryVimeoChannel(t *testing.T) {
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
-	podcast, err := builder.queryChannel(&model.Feed{ItemID: "staffpicks", Quality: api.QualityHigh})
+	podcast := &model.Feed{ItemID: "staffpicks", Quality: api.QualityHigh}
+	err = builder.queryChannel(podcast)
 	require.NoError(t, err)
 
-	require.Equal(t, "https://vimeo.com/channels/staffpicks", podcast.Link)
+	require.Equal(t, "https://vimeo.com/channels/staffpicks", podcast.ItemURL)
 	require.Equal(t, "Vimeo Staff Picks", podcast.Title)
-	require.Equal(t, "Vimeo Curation", podcast.IAuthor)
+	require.Equal(t, "Vimeo Curation", podcast.Author)
 	require.NotEmpty(t, podcast.Description)
-	require.NotEmpty(t, podcast.Image)
-	require.NotEmpty(t, podcast.IImage)
+	require.NotEmpty(t, podcast.CoverArt)
 }
 
 func TestQueryVimeoGroup(t *testing.T) {
@@ -43,15 +42,15 @@ func TestQueryVimeoGroup(t *testing.T) {
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
-	podcast, err := builder.queryGroup(&model.Feed{ItemID: "motion", Quality: api.QualityHigh})
+	podcast := &model.Feed{ItemID: "motion", Quality: api.QualityHigh}
+	err = builder.queryGroup(podcast)
 	require.NoError(t, err)
 
-	require.Equal(t, "https://vimeo.com/groups/motion", podcast.Link)
+	require.Equal(t, "https://vimeo.com/groups/motion", podcast.ItemURL)
 	require.Equal(t, "Motion Graphic Artists", podcast.Title)
-	require.Equal(t, "Danny Garcia", podcast.IAuthor)
+	require.Equal(t, "Danny Garcia", podcast.Author)
 	require.NotEmpty(t, podcast.Description)
-	require.NotEmpty(t, podcast.Image)
-	require.NotEmpty(t, podcast.IImage)
+	require.NotEmpty(t, podcast.CoverArt)
 }
 
 func TestQueryVimeoUser(t *testing.T) {
@@ -62,12 +61,13 @@ func TestQueryVimeoUser(t *testing.T) {
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
-	podcast, err := builder.queryUser(&model.Feed{ItemID: "motionarray", Quality: api.QualityHigh})
+	podcast := &model.Feed{ItemID: "motionarray", Quality: api.QualityHigh}
+	err = builder.queryUser(podcast)
 	require.NoError(t, err)
 
-	require.Equal(t, "https://vimeo.com/motionarray", podcast.Link)
+	require.Equal(t, "https://vimeo.com/motionarray", podcast.ItemURL)
 	require.Equal(t, "Motion Array", podcast.Title)
-	require.Equal(t, "Motion Array", podcast.IAuthor)
+	require.Equal(t, "Motion Array", podcast.Author)
 	require.NotEmpty(t, podcast.Description)
 }
 
@@ -79,20 +79,19 @@ func TestQueryVimeoVideos(t *testing.T) {
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
-	feed := &itunes.Podcast{}
+	feed := &model.Feed{ItemID: "staffpicks"}
 
-	err = builder.queryVideos(builder.client.Channels.ListVideo, feed, &model.Feed{ItemID: "staffpicks"})
+	err = builder.queryVideos(builder.client.Channels.ListVideo, feed)
 	require.NoError(t, err)
 
-	require.Equal(t, vimeoDefaultPageSize, len(feed.Items))
+	require.Equal(t, vimeoDefaultPageSize, len(feed.Episodes))
 
-	for _, item := range feed.Items {
+	for _, item := range feed.Episodes {
 		require.NotEmpty(t, item.Title)
-		require.NotEmpty(t, item.Link)
-		require.NotEmpty(t, item.GUID)
-		require.NotEmpty(t, item.IDuration)
-		require.NotNil(t, item.Enclosure)
-		require.NotEmpty(t, item.Enclosure.URL)
-		require.True(t, item.Enclosure.Length > 0)
+		require.NotEmpty(t, item.VideoURL)
+		require.NotEmpty(t, item.ID)
+		require.NotEmpty(t, item.Thumbnail)
+		require.NotZero(t, item.Duration)
+		require.NotZero(t, item.Size)
 	}
 }
