@@ -11,17 +11,33 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 
+	"github.com/jessevdk/go-flags"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/builders"
 	"github.com/mxpv/podsync/pkg/cache"
-	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/feeds"
 	"github.com/mxpv/podsync/pkg/handler"
 	"github.com/mxpv/podsync/pkg/storage"
 	"github.com/mxpv/podsync/pkg/support"
 )
+
+type Opts struct {
+	YouTubeAPIKey          string `long:"youtube-key" required:"true" env:"YOUTUBE_API_KEY"`
+	VimeoAPIKey            string `long:"vimeo-key" required:"true" env:"VIMEO_API_KEY"`
+	PatreonClientID        string `long:"patreon-client-id" required:"true" env:"PATREON_CLIENT_ID"`
+	PatreonSecret          string `long:"patreon-secret" required:"true" env:"PATREON_SECRET"`
+	PatreonRedirectURL     string `long:"patreon-redirect-url" required:"true" env:"PATREON_REDIRECT_URL"`
+	PatreonWebhooksSecret  string `long:"patreon-webhook-secret" required:"true" env:"PATREON_WEBHOOKS_SECRET"`
+	PostgresConnectionURL  string `long:"pg-url" env:"POSTGRES_CONNECTION_URL"`
+	CookieSecret           string `long:"cookie-secret" required:"true" env:"COOKIE_SECRET"`
+	AWSAccessKey           string `long:"aws-key" required:"true" env:"AWS_ACCESS_KEY"`
+	AWSAccessSecret        string `long:"aws-secret" required:"true" env:"AWS_ACCESS_SECRET"`
+	DynamoFeedsTableName   string `long:"dynamo-feeds-table" env:"DYNAMO_FEEDS_TABLE_NAME"`
+	DynamoPledgesTableName string `long:"dynamo-pledges-table" env:"DYNAMO_PLEDGES_TABLE_NAME"`
+	RedisURL               string `long:"redis-url" required:"true" env:"REDIS_CONNECTION_URL"`
+}
 
 func main() {
 	log.SetFormatter(&log.JSONFormatter{})
@@ -34,14 +50,14 @@ func main() {
 
 	// Create core services
 
-	cfg, err := config.ReadConfiguration()
-	if err != nil {
+	var opts Opts
+	if _, err := flags.Parse(&opts); err != nil {
 		log.WithError(err).Fatal("failed to read configuration")
 	}
 
 	awsCfg := &aws.Config{
 		Region:      aws.String("us-east-1"),
-		Credentials: credentials.NewStaticCredentials(cfg.AWSAccessKey, cfg.AWSAccessSecret, ""),
+		Credentials: credentials.NewStaticCredentials(opts.AWSAccessKey, opts.AWSAccessSecret, ""),
 	}
 
 	database, err := storage.NewDynamo(awsCfg)
@@ -49,31 +65,31 @@ func main() {
 		log.WithError(err).Fatal("failed to create database")
 	}
 
-	if cfg.DynamoPledgesTableName != "" {
-		database.PledgesTableName = aws.String(cfg.DynamoPledgesTableName)
+	if opts.DynamoPledgesTableName != "" {
+		database.PledgesTableName = aws.String(opts.DynamoPledgesTableName)
 	}
 
-	if cfg.DynamoFeedsTableName != "" {
-		database.FeedsTableName = aws.String(cfg.DynamoFeedsTableName)
+	if opts.DynamoFeedsTableName != "" {
+		database.FeedsTableName = aws.String(opts.DynamoFeedsTableName)
 	}
 
 	patreon := support.NewPatreon(database)
 
 	// Cache
 
-	redisCache, err := cache.NewRedisCache(cfg.RedisURL)
+	redisCache, err := cache.NewRedisCache(opts.RedisURL)
 	if err != nil {
 		log.WithError(err).Fatal("failed to initialize Redis cache")
 	}
 
 	// Builders
 
-	youtube, err := builders.NewYouTubeBuilder(cfg.YouTubeAPIKey)
+	youtube, err := builders.NewYouTubeBuilder(opts.YouTubeAPIKey)
 	if err != nil {
 		log.WithError(err).Fatal("failed to create YouTube builder")
 	}
 
-	vimeo, err := builders.NewVimeoBuilder(ctx, cfg.VimeoAPIKey)
+	vimeo, err := builders.NewVimeoBuilder(ctx, opts.VimeoAPIKey)
 	if err != nil {
 		log.WithError(err).Fatal("failed to create Vimeo builder")
 	}
@@ -93,9 +109,17 @@ func main() {
 		log.WithError(err).Fatal("failed to create feed service")
 	}
 
+	web := handler.New(feed, patreon, handler.Opts{
+		CookieSecret:          opts.CookieSecret,
+		PatreonClientID:       opts.PatreonClientID,
+		PatreonSecret:         opts.PatreonSecret,
+		PatreonRedirectURL:    opts.PatreonRedirectURL,
+		PatreonWebhooksSecret: opts.PatreonWebhooksSecret,
+	})
+
 	srv := http.Server{
 		Addr:    fmt.Sprintf(":%d", 5001),
-		Handler: handler.New(feed, patreon, cfg),
+		Handler: web,
 	}
 
 	go func() {

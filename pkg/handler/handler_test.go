@@ -13,10 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/mxpv/podsync/pkg/api"
-	"github.com/mxpv/podsync/pkg/config"
 )
-
-var cfg = &config.AppConfig{}
 
 func TestCreateFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -35,7 +32,7 @@ func TestCreateFeed(t *testing.T) {
 	patreon := NewMockpatreonService(ctrl)
 	patreon.EXPECT().GetFeatureLevelByID(gomock.Any()).Return(api.DefaultFeatures)
 
-	srv := httptest.NewServer(New(feed, patreon, cfg))
+	srv := httptest.NewServer(New(feed, patreon, Opts{}))
 	defer srv.Close()
 
 	query := `{"url": "https://youtube.com/channel/123", "page_size": 55, "quality": "low", "format": "audio"}`
@@ -50,7 +47,7 @@ func TestCreateInvalidFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	srv := httptest.NewServer(New(NewMockfeedService(ctrl), nil, cfg))
+	srv := httptest.NewServer(New(NewMockfeedService(ctrl), nil, Opts{}))
 	defer srv.Close()
 
 	query := `{}`
@@ -101,7 +98,7 @@ func TestGetFeed(t *testing.T) {
 	feed := NewMockfeedService(ctrl)
 	feed.EXPECT().BuildFeed("123").Return([]byte("Test"), nil)
 
-	srv := httptest.NewServer(New(feed, nil, cfg))
+	srv := httptest.NewServer(New(feed, nil, Opts{}))
 	defer srv.Close()
 
 	resp, err := http.Get(srv.URL + "/123")
@@ -116,7 +113,7 @@ func TestGetMetadata(t *testing.T) {
 	feed := NewMockfeedService(ctrl)
 	feed.EXPECT().GetMetadata("123").Times(1).Return(&api.Metadata{}, nil)
 
-	srv := httptest.NewServer(New(feed, nil, cfg))
+	srv := httptest.NewServer(New(feed, nil, Opts{}))
 	defer srv.Close()
 
 	resp, err := http.Get(srv.URL + "/api/metadata/123")

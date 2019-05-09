@@ -3,7 +3,6 @@ module github.com/mxpv/podsync
 require (
 	cloud.google.com/go v0.25.0 // indirect
 	github.com/BrianHicks/finch v0.0.0-20140409222414-419bd73c29ec
-	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/GoogleCloudPlatform/cloudsql-proxy v0.0.0-20170929212804-61590edac4c7
 	github.com/aws/aws-lambda-go v1.10.0
 	github.com/aws/aws-sdk-go v1.15.81
@@ -19,26 +18,18 @@ require (
 	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/golang/mock v1.2.0
 	github.com/gorilla/sessions v1.1.1 // indirect
-	github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce // indirect
+	github.com/jessevdk/go-flags v1.4.0
 	github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a // indirect
 	github.com/kidstuff/mongostore v0.0.0-20180412085134-db2a8b4fac1f // indirect
-	github.com/magiconair/properties v1.8.0 // indirect
 	github.com/mattn/go-isatty v0.0.3 // indirect
 	github.com/memcachier/mc v2.0.1+incompatible // indirect
-	github.com/mitchellh/mapstructure v0.0.0-20180715050151-f15292f7a699 // indirect
 	github.com/mxpv/patreon-go v0.0.0-20180807002359-67dbab1ad14c
 	github.com/mxpv/podcast v0.0.0-20170823220358-fe328ad87d18
 	github.com/onsi/ginkgo v1.7.0 // indirect
 	github.com/onsi/gomega v1.4.3 // indirect
-	github.com/pelletier/go-toml v1.2.0 // indirect
 	github.com/pkg/errors v0.8.0
 	github.com/silentsokolov/go-vimeo v0.0.0-20190116124215-06829264260c
 	github.com/sirupsen/logrus v1.2.0
-	github.com/spf13/afero v1.1.1 // indirect
-	github.com/spf13/cast v1.2.0 // indirect
-	github.com/spf13/jwalterweatherman v0.0.0-20180109140146-7c0cea34c8ec // indirect
-	github.com/spf13/pflag v1.0.1 // indirect
-	github.com/spf13/viper v1.0.2
 	github.com/stretchr/testify v1.2.2
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // indirect
 	github.com/ugorji/go v1.1.1 // indirect

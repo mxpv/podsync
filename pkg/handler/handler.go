@@ -12,7 +12,6 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/mxpv/podsync/pkg/api"
-	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/session"
 
 	log "github.com/sirupsen/logrus"
@@ -35,32 +34,40 @@ type patreonService interface {
 	GetFeatureLevelFromAmount(amount int) int
 }
 
-type handler struct {
-	feed    feedService
-	cfg     *config.AppConfig
-	oauth2  oauth2.Config
-	patreon patreonService
+type Opts struct {
+	CookieSecret          string
+	PatreonClientID       string
+	PatreonSecret         string
+	PatreonRedirectURL    string
+	PatreonWebhooksSecret string
 }
 
-func New(feed feedService, support patreonService, cfg *config.AppConfig) http.Handler {
+type handler struct {
+	feed                  feedService
+	oauth2                oauth2.Config
+	patreon               patreonService
+	PatreonWebhooksSecret string
+}
+
+func New(feed feedService, support patreonService, opts Opts) http.Handler {
 	r := gin.New()
 	r.Use(gin.Recovery())
 
-	store := sessions.NewCookieStore([]byte(cfg.CookieSecret))
+	store := sessions.NewCookieStore([]byte(opts.CookieSecret))
 	r.Use(sessions.Sessions("podsync", store))
 
 	h := handler{
-		feed:    feed,
-		patreon: support,
-		cfg:     cfg,
+		feed:                  feed,
+		patreon:               support,
+		PatreonWebhooksSecret: opts.PatreonWebhooksSecret,
 	}
 
 	// OAuth 2 configuration
 
 	h.oauth2 = oauth2.Config{
-		ClientID:     cfg.PatreonClientID,
-		ClientSecret: cfg.PatreonSecret,
-		RedirectURL:  cfg.PatreonRedirectURL,
+		ClientID:     opts.PatreonClientID,
+		ClientSecret: opts.PatreonSecret,
+		RedirectURL:  opts.PatreonRedirectURL,
 		Scopes:       []string{"users", "pledges-to-me", "my-campaign"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  patreon.AuthorizationURL,
@@ -240,7 +247,7 @@ func (h handler) webhook(c *gin.Context) {
 
 	// Verify signature
 	signature := c.GetHeader(patreon.HeaderSignature)
-	valid, err := patreon.VerifySignature(body, h.cfg.PatreonWebhooksSecret, signature)
+	valid, err := patreon.VerifySignature(body, h.PatreonWebhooksSecret, signature)
 	if err != nil {
 		log.WithError(err).Error("failed to verify signature")
 		c.Status(http.StatusBadRequest)
