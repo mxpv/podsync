@@ -9,8 +9,6 @@ import (
 	"syscall"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-
 	"github.com/jessevdk/go-flags"
 	log "github.com/sirupsen/logrus"
 
@@ -32,8 +30,6 @@ type Opts struct {
 	PatreonWebhooksSecret  string `long:"patreon-webhook-secret" required:"true" env:"PATREON_WEBHOOKS_SECRET"`
 	PostgresConnectionURL  string `long:"pg-url" env:"POSTGRES_CONNECTION_URL"`
 	CookieSecret           string `long:"cookie-secret" required:"true" env:"COOKIE_SECRET"`
-	AWSAccessKey           string `long:"aws-key" required:"true" env:"AWS_ACCESS_KEY"`
-	AWSAccessSecret        string `long:"aws-secret" required:"true" env:"AWS_ACCESS_SECRET"`
 	DynamoFeedsTableName   string `long:"dynamo-feeds-table" env:"DYNAMO_FEEDS_TABLE_NAME"`
 	DynamoPledgesTableName string `long:"dynamo-pledges-table" env:"DYNAMO_PLEDGES_TABLE_NAME"`
 	RedisURL               string `long:"redis-url" required:"true" env:"REDIS_CONNECTION_URL"`
@@ -55,12 +51,7 @@ func main() {
 		log.WithError(err).Fatal("failed to read configuration")
 	}
 
-	awsCfg := &aws.Config{
-		Region:      aws.String("us-east-1"),
-		Credentials: credentials.NewStaticCredentials(opts.AWSAccessKey, opts.AWSAccessSecret, ""),
-	}
-
-	database, err := storage.NewDynamo(awsCfg)
+	database, err := storage.NewDynamo()
 	if err != nil {
 		log.WithError(err).Fatal("failed to create database")
 	}
@@ -94,7 +85,7 @@ func main() {
 		log.WithError(err).Fatal("failed to create Vimeo builder")
 	}
 
-	generic, err := builders.NewLambda(awsCfg)
+	generic, err := builders.NewLambda()
 	if err != nil {
 		log.WithError(err).Fatal("failed to create Lambda builder")
 	}
