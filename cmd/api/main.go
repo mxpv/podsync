@@ -33,6 +33,7 @@ type Opts struct {
 	DynamoFeedsTableName   string `long:"dynamo-feeds-table" env:"DYNAMO_FEEDS_TABLE_NAME"`
 	DynamoPledgesTableName string `long:"dynamo-pledges-table" env:"DYNAMO_PLEDGES_TABLE_NAME"`
 	RedisURL               string `long:"redis-url" required:"true" env:"REDIS_CONNECTION_URL"`
+	Debug                  bool   `long:"debug" env:"DEBUG"`
 }
 
 func main() {
@@ -49,6 +50,10 @@ func main() {
 	var opts Opts
 	if _, err := flags.Parse(&opts); err != nil {
 		log.WithError(err).Fatal("failed to read configuration")
+	}
+
+	if opts.Debug {
+		log.SetLevel(log.DebugLevel)
 	}
 
 	database, err := storage.NewDynamo()
