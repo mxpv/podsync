@@ -1,17 +1,18 @@
 SUBDIRS := cmd/api cmd/nginx
-GOLANGCI := ./bin/golangci-lint
+BINPATH := $(abspath ./bin)
+GOLANGCI := $(BINPATH)/golangci-lint
 
 .PHONY: push
 push:
 	for d in $(SUBDIRS); do $(MAKE) -C $$d push; done
 
 $(GOLANGCI):
-	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b ./bin v1.15.0
-	./bin/golangci-lint --version
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(BINPATH) v1.16.0
+	$(GOLANGCI) --version
 
 .PHONY: lint
 lint: $(GOLANGCI)
-	./bin/golangci-lint run
+	$(GOLANGCI) run
 
 .PHONY: test
 test:
