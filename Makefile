@@ -22,3 +22,9 @@ test:
 up:
 	docker-compose pull
 	docker-compose up -d
+
+.PHONY: static
+static:
+	- rm -rf dist/
+	npm install
+	npm run build

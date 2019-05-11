@@ -31,3 +31,11 @@ cd cmd/ytdl/
 docker-compose pull
 docker-compose up -d
 ```
+
+## Building frontend
+Node.js and npm are required in order to build the frontend:
+```bash
+brew install node
+make static
+ls -la dist/
+```
