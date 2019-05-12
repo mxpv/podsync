@@ -36,15 +36,41 @@ url_formats = {
 }
 
 
-def handler(event, context):
-    feed_id = event['feed_id']
-    video_id = event['video_id']
-
+def handler(event, lambda_context):
+    feed_id, video_id = _get_ids(event.get('path'))
     redirect_url = download(feed_id, video_id)
-
     return {
-        'redirect_url': redirect_url,
+        'statusCode': 302,
+        'statusDescription': '302 Found',
+        'headers': {
+            'Location': redirect_url,
+        }
     }
+
+
+def _get_ids(path):
+    if not path or not path.startswith('/download'):
+        raise InvalidUsage('Invalid path')
+
+    sections = path.split('/')
+
+    # >>> '/download/feed/video.xml'.split('/', 3)
+    # ['', 'download', 'feed', 'video.xml']
+    if len(sections) != 4:
+        raise InvalidUsage('Invalid path')
+
+    feed_id = sections[2]
+    video_id = sections[3]
+
+    if not feed_id or not video_id:
+        raise InvalidUsage('Invalid feed or video id')
+
+    # Trim extension
+    # >>> os.path.splitext('video.xml')[0]
+    # 'video'
+    video_id = os.path.splitext(video_id)[0]
+
+    return feed_id, video_id
 
 
 def download(feed_id, video_id):

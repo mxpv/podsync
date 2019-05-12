@@ -32,6 +32,34 @@ class TestYtdl(unittest.TestCase):
                           {'format': 'audio', 'quality': 'high', 'provider': 'youtube'})
         )
 
+    def test_get_ids(self):
+        feed_id, video_id = ytdl._get_ids('/download/1/2.xml')
+        self.assertEqual('1', feed_id)
+        self.assertEqual('2', video_id)
+
+        feed_id, video_id = ytdl._get_ids('/download/1/2')
+        self.assertEqual('1', feed_id)
+        self.assertEqual('2', video_id)
+
+    def test_get_invalid_ids(self):
+        with self.assertRaises(ytdl.InvalidUsage):
+            ytdl._get_ids(None)
+
+        with self.assertRaises(ytdl.InvalidUsage):
+            ytdl._get_ids('')
+
+        with self.assertRaises(ytdl.InvalidUsage):
+            ytdl._get_ids('/download/')
+
+        with self.assertRaises(ytdl.InvalidUsage):
+            ytdl._get_ids('/download/1')
+
+        with self.assertRaises(ytdl.InvalidUsage):
+            ytdl._get_ids('/download/1/')
+
+        with self.assertRaises(ytdl.InvalidUsage):
+            ytdl._get_ids('/download/1/2/3')
+
 
 class TestDynamo(unittest.TestCase):
     def test_metadata(self):
