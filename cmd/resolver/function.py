@@ -37,15 +37,23 @@ url_formats = {
 
 
 def handler(event, lambda_context):
-    feed_id, video_id = _get_ids(event.get('path'))
-    redirect_url = download(feed_id, video_id)
-    return {
-        'statusCode': 302,
-        'statusDescription': '302 Found',
-        'headers': {
-            'Location': redirect_url,
+    try:
+        feed_id, video_id = _get_ids(event.get('path'))
+        redirect_url = download(feed_id, video_id)
+        return {
+            'statusCode': 302,
+            'statusDescription': '302 Found',
+            'headers': {
+                'Location': redirect_url,
+            }
         }
-    }
+    except QuotaExceeded:
+        return {
+            'statusCode': 429,
+            'statusDescription': '429 Too Many Requests',
+            'body': 'Too many requests. Daily limit is 1000. Consider upgrading account to get unlimited access',
+            'headers': {'Content-Type': 'text/plain'}
+        }
 
 
 def _get_ids(path):
