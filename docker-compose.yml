@@ -6,7 +6,7 @@ services:
     container_name: api
     restart: always
     ports:
-      - 5001
+      - 8080:5001
     environment:
       - REDIS_CONNECTION_URL=redis://redis
       - POSTGRES_CONNECTION_URL={POSTGRES_CONNECTION_URL}
@@ -37,13 +37,4 @@ services:
     container_name: nginx
     restart: always
     ports:
-      - 80:80
-      - 443:443
-    environment:
-      - TZ=America/Los_Angeles
-      - LETSENCRYPT=true
-      - LE_EMAIL=pavlenko.maksym@gmail.com
-      - LE_FQDN=podsync.net,www.podsync.net
-    volumes:
-      - /data/ssl:/etc/nginx/ssl/
-      - /data/nginx_cache:/tmp/nginx/
+      - 8081:80

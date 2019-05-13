@@ -5,11 +5,11 @@ COPY . .
 RUN npm install
 RUN npm run build
 
-# Build nginx
-FROM umputun/nginx-le:latest
+# Build nginx to host static files
+FROM nginx:stable
 
-COPY cmd/nginx/podsync.conf /etc/nginx/service.conf
-COPY cmd/nginx/robots.txt /var/www/
+COPY cmd/nginx/podsync.conf /etc/nginx/nginx.conf
 
-COPY --from=builder /app/dist/html/ /var/www/
-COPY --from=builder /app/dist/assets/ /var/www/assets/
+COPY cmd/nginx/robots.txt /var/www/podsync/
+COPY --from=builder /app/dist/html/ /var/www/podsync/
+COPY --from=builder /app/dist/assets/ /var/www/podsync/assets/
