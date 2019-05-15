@@ -6,15 +6,15 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/mxpv/patreon-go"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/session"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -52,6 +52,7 @@ type handler struct {
 func New(feed feedService, support patreonService, opts Opts) http.Handler {
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	store := sessions.NewCookieStore([]byte(opts.CookieSecret))
 	r.Use(sessions.Sessions("podsync", store))
