@@ -1,4 +1,4 @@
-import function as ytdl
+import resolver as ytdl
 import unittest
 
 
