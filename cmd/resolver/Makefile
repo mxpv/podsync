@@ -9,7 +9,7 @@ deploy: build
 		--function-name Resolver \
 		--role $(shell aws --profile Podsync iam get-role --role-name PodsyncResolverLambdaRole --query 'Role.Arn' --output text) \
 		--runtime python3.7 \
-		--handler function.handler \
+		--handler lambda.handler \
 		--zip-file fileb://function.zip \
 		--timeout 10 \
 		--memory-size 128
@@ -18,6 +18,12 @@ update: build
 	aws --profile Podsync lambda update-function-code \
 		--function-name Resolver \
 		--zip-file fileb://function.zip
+
+.PHONY: push
+push:
+	docker build -t mxpv/resolver .
+	docker push mxpv/resolver
+
 
 clean:
 	rm -rf package function.zip
