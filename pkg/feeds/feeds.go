@@ -159,7 +159,13 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 	var (
 		logger = log.WithField("hash_id", hashID)
 		now    = time.Now().UTC()
+		errKey = "err/" + hashID
 	)
+
+	cached, err := s.cache.Get(errKey)
+	if err == nil {
+		return []byte(cached), nil
+	}
 
 	feed, err := s.QueryFeed(hashID)
 	if err != nil {
@@ -171,7 +177,10 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 
 	oldLastID := feed.LastID
 
-	const updateTTL = 15 * time.Minute
+	const (
+		updateTTL = 15 * time.Minute
+	)
+
 	if now.Sub(feed.UpdatedAt) < updateTTL {
 		if podcast, err := s.buildPodcast(feed); err != nil {
 			return nil, err
@@ -195,6 +204,9 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 
 	if err := builder.Build(feed); err != nil {
 		logger.WithError(err).Error("failed to build feed")
+
+		// Save error to cache to avoid requests spamming
+		_ = s.cache.Set(errKey, err.Error(), updateTTL)
 
 		return nil, err
 	}
