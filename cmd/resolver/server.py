@@ -6,8 +6,11 @@ from sanic.exceptions import ServerError, InvalidUsage
 app = Sanic()
 
 
-@app.get('/download/<feed_id>/<video_id>')
+@app.route('/download/<feed_id>/<video_id>', methods=['GET', 'HEAD'])
 async def download(req, feed_id, video_id):
+    if req.method == 'HEAD':
+        return response.text('')
+
     try:
         redirect_url = resolver.download(feed_id, video_id)
         return response.redirect(redirect_url)
