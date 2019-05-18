@@ -54,7 +54,8 @@ type Feed struct {
 	PubDate        time.Time `dynamodbav:",unixtime"`
 	Author         string
 	ItemURL        string    // Platform specific URL
-	Episodes       []*Item   // Array of episodes
 	LastID         string    // Last seen video URL ID (for incremental updater)
 	UpdatedAt      time.Time `dynamodbav:",unixtime"`
+	Episodes       []*Item   `dynamodbav:"-"` // Array of episodes, serialized as gziped EpisodesData in DynamoDB
+	EpisodesData   []byte
 }

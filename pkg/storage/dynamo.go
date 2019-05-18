@@ -25,7 +25,7 @@ const (
 	anonymousUserName = "anonymous"
 
 	// Update LastAccess field every hour
-	feedLastAccessUpdatePeriod = time.Hour
+	feedLastAccessUpdatePeriod = time.Hour * 24
 	feedTimeToLive             = time.Hour * 24 * 90
 )
 
@@ -100,15 +100,30 @@ func (d Dynamo) SaveFeed(feed *model.Feed) error {
 		feed.UserID = anonymousUserName
 	}
 
-	now := time.Now().UTC()
+	var (
+		err error
+		now = time.Now().UTC()
+	)
+
 	feed.LastAccess = now
 	feed.ExpirationTime = now.Add(feedTimeToLive)
+
+	// Compress episodes
+
+	feed.EpisodesData, err = compressObj(feed.Episodes)
+	if err != nil {
+		return err
+	}
+
+	// Marshal to DynamoDB's format
 
 	item, err := attr.MarshalMap(feed)
 	if err != nil {
 		logger.WithError(err).Error("failed to marshal feed model")
 		return err
 	}
+
+	// Submit request
 
 	input := &dynamodb.PutItemInput{
 		TableName:           d.FeedsTableName,
@@ -127,7 +142,7 @@ func (d Dynamo) SaveFeed(feed *model.Feed) error {
 func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
 	logger := log.WithField("hash_id", hashID)
 
-	logger.Debug("getting feed")
+	// Submit get request
 
 	getInput := &dynamodb.GetItemInput{
 		TableName: d.FeedsTableName,
@@ -146,6 +161,8 @@ func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
 		return nil, errors.New("not found")
 	}
 
+	// Unmarshal data
+
 	var feed model.Feed
 	if err := attr.UnmarshalMap(getOutput.Item, &feed); err != nil {
 		// TODO: remove this
@@ -160,51 +177,70 @@ func (d Dynamo) GetFeed(hashID string) (*model.Feed, error) {
 	}
 
 	// Check if we need to update LastAccess field (no more than once per hour)
+
 	now := time.Now().UTC()
 	if feed.LastAccess.Add(feedLastAccessUpdatePeriod).Before(now) {
-		logger.Debugf("updating feed's last access timestamp")
-
-		// Set LastAccess field to now
-		// Set ExpirationTime field to now + feedTimeToLive
-		updateExpression, err := expr.
-			NewBuilder().
-			WithUpdate(expr.
-				Set(expr.Name("LastAccess"), expr.Value(now.Unix())).
-				Set(expr.Name("ExpirationTime"), expr.Value(now.Add(feedTimeToLive).Unix()))).
-			Build()
-
-		if err != nil {
-			logger.WithError(err).Error("failed to build update expression")
-			return nil, err
-		}
-
-		updateInput := &dynamodb.UpdateItemInput{
-			TableName:                 d.FeedsTableName,
-			Key:                       getInput.Key,
-			UpdateExpression:          updateExpression.Update(),
-			ExpressionAttributeNames:  updateExpression.Names(),
-			ExpressionAttributeValues: updateExpression.Values(),
-		}
-
-		_, err = d.dynamo.UpdateItem(updateInput)
-		if err != nil {
-			logger.WithError(err).Error("failed to update feed item")
+		if err := d.updateLastAccess(getInput.Key); err != nil {
+			logger.WithError(err).Error("failed to update feed's last access")
 			return nil, err
 		}
 
 		feed.LastAccess = now
 	}
 
+	// Decompress episodes
+
+	if len(feed.EpisodesData) > 0 {
+		if err := decompressObj(feed.EpisodesData, &feed.Episodes); err != nil {
+			return nil, errors.Wrap(err, "failed to decompress episodes")
+		}
+	}
+
 	return &feed, nil
 }
 
-func (d Dynamo) UpdateFeed(feed *model.Feed) error {
-	log.Infof("saving feed %q", feed.HashID)
+func (d Dynamo) updateLastAccess(key map[string]*dynamodb.AttributeValue) error {
+	now := time.Now().UTC()
 
+	// Set LastAccess field to now
+	// Set ExpirationTime field to now + feedTimeToLive
+	updateExpression, err := expr.
+		NewBuilder().
+		WithUpdate(expr.
+			Set(expr.Name("LastAccess"), expr.Value(now.Unix())).
+			Set(expr.Name("ExpirationTime"), expr.Value(now.Add(feedTimeToLive).Unix()))).
+		Build()
+
+	if err != nil {
+		return err
+	}
+
+	updateInput := &dynamodb.UpdateItemInput{
+		TableName:                 d.FeedsTableName,
+		Key:                       key,
+		UpdateExpression:          updateExpression.Update(),
+		ExpressionAttributeNames:  updateExpression.Names(),
+		ExpressionAttributeValues: updateExpression.Values(),
+	}
+
+	_, err = d.dynamo.UpdateItem(updateInput)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d Dynamo) UpdateFeed(feed *model.Feed) error {
 	var (
 		pubDate   = feed.PubDate.Unix()
 		updatedAt = feed.LastAccess.Unix()
 	)
+
+	episodesData, err := compressObj(feed.Episodes)
+	if err != nil {
+		return errors.Wrap(err, "failed to compress episodes for update")
+	}
 
 	update := expr.
 		Set(expr.Name("Title"), expr.Value(feed.Title)).
@@ -212,9 +248,10 @@ func (d Dynamo) UpdateFeed(feed *model.Feed) error {
 		Set(expr.Name("PubDate"), expr.Value(pubDate)).
 		Set(expr.Name("Author"), expr.Value(feed.Author)).
 		Set(expr.Name("ItemURL"), expr.Value(feed.ItemURL)).
-		Set(expr.Name("Episodes"), expr.Value(feed.Episodes)).
 		Set(expr.Name("LastID"), expr.Value(feed.LastID)).
-		Set(expr.Name("UpdatedAt"), expr.Value(updatedAt))
+		Set(expr.Name("UpdatedAt"), expr.Value(updatedAt)).
+		Set(expr.Name("EpisodesData"), expr.Value(episodesData)). // Serialized episodes
+		Remove(expr.Name("Episodes"))                             // Remove old field to save space
 
 	expression, err := expr.NewBuilder().WithUpdate(update).Build()
 	if err != nil {
@@ -353,8 +390,7 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) ([]string, error) {
 			NewBuilder().
 			WithUpdate(expr.
 				Set(expr.Name("PageSize"), expr.Value(150)).
-				Set(expr.Name("FeatureLevel"), expr.Value(api.ExtendedFeatures)).
-				Set(expr.Name("LastID"), expr.Value(""))).
+				Set(expr.Name("FeatureLevel"), expr.Value(api.ExtendedFeatures))).
 			WithCondition(expr.
 				Name("PageSize").GreaterThan(expr.Value(150))).
 			Build()
@@ -391,8 +427,7 @@ func (d Dynamo) Downgrade(userID string, featureLevel int) ([]string, error) {
 				Set(expr.Name("PageSize"), expr.Value(50)).
 				Set(expr.Name("FeatureLevel"), expr.Value(api.DefaultFeatures)).
 				Set(expr.Name("Format"), expr.Value(api.FormatVideo)).
-				Set(expr.Name("Quality"), expr.Value(api.QualityHigh)).
-				Set(expr.Name("LastID"), expr.Value(""))).
+				Set(expr.Name("Quality"), expr.Value(api.QualityHigh))).
 			Build()
 
 		if err != nil {

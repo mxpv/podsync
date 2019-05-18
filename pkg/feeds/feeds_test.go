@@ -4,11 +4,9 @@ package feeds
 
 import (
 	"testing"
-	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/mxpv/podsync/pkg/api"
@@ -100,20 +98,6 @@ func TestService_QueryFeed(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestService_GetFromCache(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().Get("123").Return("test", nil)
-
-	s := &Service{cache: cache}
-
-	data, err := s.BuildFeed("123")
-	assert.NoError(t, err)
-	assert.Equal(t, []byte("test"), data)
-}
-
 func TestService_BuildFeed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -123,12 +107,12 @@ func TestService_BuildFeed(t *testing.T) {
 	stor.EXPECT().UpdateFeed(feed).Return(nil)
 
 	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().Get(feed.HashID).Return("", errors.New("not found"))
-	cache.EXPECT().Set(feed.HashID, gomock.Any(), 1*time.Hour).Return(nil)
+	cache.EXPECT().GetItem("feeds/123", gomock.Any()).Return(errors.New("not found"))
 
 	builder := NewMockBuilder(ctrl)
 	builder.EXPECT().Build(feed).Return(nil).Do(func(feed *model.Feed) {
 		feed.Episodes = append(feed.Episodes, feed.Episodes[0])
+		feed.LastID = "1"
 	})
 
 	s := Service{storage: stor, cache: cache, builders: map[api.Provider]Builder{
@@ -143,13 +127,10 @@ func TestService_WrongID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().Get(gomock.Any()).Return("", errors.New("not found"))
-
 	stor := NewMockstorage(ctrl)
 	stor.EXPECT().GetFeed(gomock.Any()).Times(1).Return(nil, errors.New("not found"))
 
-	s := &Service{storage: stor, cache: cache}
+	s := &Service{storage: stor}
 
 	_, err := s.BuildFeed("invalid_feed_id")
 	require.Error(t, err)

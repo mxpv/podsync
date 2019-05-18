@@ -5,7 +5,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/gin-contrib/cache"
+	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -54,6 +57,8 @@ func New(feed feedService, support patreonService, opts Opts) http.Handler {
 	r.Use(gin.Recovery())
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 
+	cacheStore := persistence.NewRedisCache("redis:6379", "", time.Second)
+
 	store := sessions.NewCookieStore([]byte(opts.CookieSecret))
 	r.Use(sessions.Sessions("podsync", store))
 
@@ -88,7 +93,8 @@ func New(feed feedService, support patreonService, opts Opts) http.Handler {
 	r.GET("/api/metadata/:hashId", h.metadata)
 	r.POST("/api/webhooks", h.webhook)
 
-	r.NoRoute(h.getFeed)
+	const feedTTL = 30 * time.Minute
+	r.NoRoute(cache.CachePage(cacheStore, feedTTL, h.getFeed))
 
 	return r
 }

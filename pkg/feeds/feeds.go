@@ -10,7 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/mxpv/podsync/pkg/api"
-	"github.com/mxpv/podsync/pkg/cache"
 	"github.com/mxpv/podsync/pkg/model"
 )
 
@@ -136,48 +135,43 @@ func makeEnclosure(feed *model.Feed, id string, lengthInBytes int64) (string, it
 	return url, contentType, lengthInBytes
 }
 
-func short(str string, i int) string {
-	runes := []rune(str)
-	if len(runes) > i {
-		return string(runes[:i]) + " ..."
+func (s *Service) updateFromRedis(hashID string, feed *model.Feed) {
+	key := fmt.Sprintf("feeds/%s", hashID)
+	redisFeed := &model.Feed{}
+	if err := s.cache.GetItem(key, redisFeed); err != nil {
+		return
 	}
 
-	return str
+	feed.Episodes = redisFeed.Episodes
+	feed.UpdatedAt = redisFeed.UpdatedAt
+	feed.LastID = redisFeed.LastID
+	feed.ItemURL = redisFeed.ItemURL
+	feed.Author = redisFeed.Author
+	feed.PubDate = redisFeed.PubDate
+	feed.Description = redisFeed.Description
+	feed.Title = redisFeed.Title
+	feed.Language = redisFeed.Language
+	feed.Explicit = redisFeed.Explicit
+	feed.CoverArt = redisFeed.CoverArt
 }
 
 func (s *Service) BuildFeed(hashID string) ([]byte, error) {
-	cached, err := s.cache.Get(hashID)
-	if err == nil {
-		return []byte(cached), nil
-	}
-
-	logger := log.WithField("hash_id", hashID)
-
 	var (
-		key  = fmt.Sprintf("feeds/%s", hashID)
-		now  = time.Now().UTC()
-		feed = &model.Feed{}
+		logger = log.WithField("hash_id", hashID)
+		now    = time.Now().UTC()
 	)
 
-	if err = s.cache.GetItem(key, feed); err != nil {
-		// If not found, get from DynamoDB
-		if err == cache.ErrNotFound {
-			logger.Warnf("getting feed from Dynamo %s", hashID)
-			if f, err := s.QueryFeed(hashID); err != nil {
-				return nil, err
-			} else {
-				feed = f
-			}
-		} else {
-			return nil, err
-		}
+	feed, err := s.QueryFeed(hashID)
+	if err != nil {
+		logger.WithError(err).Error("failed to query feed from dynamodb")
+		return nil, err
 	}
 
-	const (
-		updateTTL = 15 * time.Minute
-		recordTTL = 90 * 24 * time.Hour
-	)
+	s.updateFromRedis(hashID, feed)
 
+	oldLastID := feed.LastID
+
+	const updateTTL = 15 * time.Minute
 	if now.Sub(feed.UpdatedAt) < updateTTL {
 		if podcast, err := s.buildPodcast(feed); err != nil {
 			return nil, err
@@ -202,13 +196,23 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 	if err := builder.Build(feed); err != nil {
 		logger.WithError(err).Error("failed to build feed")
 
-		// Save error to cache to avoid spamming
-		_ = s.cache.Set(hashID, err.Error(), updateTTL)
-
 		return nil, err
 	}
 
 	// Format podcast
+
+	if feed.PageSize < len(feed.Episodes) {
+		feed.Episodes = feed.Episodes[:feed.PageSize]
+	}
+
+	feed.LastAccess = time.Now().UTC()
+
+	// Don't zero last seen ID if failed to get updates
+	if feed.LastID == "" {
+		feed.LastID = oldLastID
+
+		logger.Warnf("failed to get updates for %s (builder: %s)", hashID, builderType)
+	}
 
 	podcast, err := s.buildPodcast(feed)
 	if err != nil {
@@ -217,10 +221,12 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 
 	// Save to storage
 
-	logger.Infof("saving feed %s", hashID)
-	if err := s.cache.SaveItem(key, feed, recordTTL); err != nil {
-		logger.WithError(err).Error("failed to save feed")
-		return nil, err
+	if oldLastID != feed.LastID {
+		logger.Infof("updating feed %s (last id: %q, new id: %q)", hashID, oldLastID, feed.LastID)
+		if err := s.storage.UpdateFeed(feed); err != nil {
+			logger.WithError(err).Error("failed to save feed")
+			return nil, err
+		}
 	}
 
 	return []byte(podcast.String()), nil
