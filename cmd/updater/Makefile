@@ -22,6 +22,11 @@ update: build
 		--function-name $(NAME) \
 		--zip-file fileb://function.zip
 
+.PHONY: push
+push:
+	docker build -t mxpv/updater .
+	docker push mxpv/updater
+
 clean:
 	rm -rf package function.zip
 

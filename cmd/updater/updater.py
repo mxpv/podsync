@@ -5,7 +5,7 @@ BEST_FORMAT = "bestvideo+bestaudio/best"
 DEFAULT_PAGE_SIZE = 50
 
 
-def _get_format(fmt, quality):
+def get_format(fmt, quality):
     if fmt == 'video':
         # Video
         if quality == 'high':
@@ -20,7 +20,7 @@ def _get_format(fmt, quality):
             return 'worstaudio'
 
 
-def _get_updates(start, count, url, fmt, last_id=None):
+def get_updates(start, count, url, fmt, last_id=None):
     if start < 1:
         raise ValueError('Invalid start value')
 

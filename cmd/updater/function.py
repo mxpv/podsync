@@ -1,4 +1,4 @@
-from updater import DEFAULT_PAGE_SIZE, _get_updates, _get_format
+from updater import DEFAULT_PAGE_SIZE, get_updates, get_format
 
 
 # AWS Lambda entry point
@@ -13,10 +13,10 @@ def handler(event, context):
     # Detect item format
     fmt = event.get('format', 'video')
     quality = event.get('quality', 'high')
-    ytdl_fmt = _get_format(fmt, quality)
+    ytdl_fmt = get_format(fmt, quality)
 
     print('Getting updates for %s (start=%d, count=%d, fmt: %s, last id: %s)' % (url, start, count, ytdl_fmt, last_id))
-    _, episodes, new_last_id = _get_updates(start, count, url, ytdl_fmt, last_id)
+    _, episodes, new_last_id = get_updates(start, count, url, ytdl_fmt, last_id)
 
     return {
         'last_id': new_last_id,
