@@ -33,6 +33,7 @@ type Opts struct {
 	DynamoFeedsTableName   string `long:"dynamo-feeds-table" env:"DYNAMO_FEEDS_TABLE_NAME"`
 	DynamoPledgesTableName string `long:"dynamo-pledges-table" env:"DYNAMO_PLEDGES_TABLE_NAME"`
 	RedisURL               string `long:"redis-url" required:"true" env:"REDIS_CONNECTION_URL"`
+	UpdaterURL             string `long:"updater-url" required:"true" env:"UPDATER_URL"`
 	Debug                  bool   `long:"debug" env:"DEBUG"`
 }
 
@@ -90,10 +91,7 @@ func main() {
 		log.WithError(err).Fatal("failed to create Vimeo builder")
 	}
 
-	generic, err := builders.NewLambda()
-	if err != nil {
-		log.WithError(err).Fatal("failed to create Lambda builder")
-	}
+	generic := builders.NewRemote(opts.UpdaterURL)
 
 	feed, err := feeds.NewFeedService(database, redisCache, map[api.Provider]feeds.Builder{
 		api.ProviderYoutube: youtube,

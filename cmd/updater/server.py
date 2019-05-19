@@ -8,8 +8,8 @@ app = Sanic()
 @app.get('/update')
 async def update(req):
     url = req.args.get('url', None)
-    start = req.args.get('start', 1)
-    count = req.args.get('count', updater.DEFAULT_PAGE_SIZE)
+    start = int(req.args.get('start', 1))
+    count = int(req.args.get('count', updater.DEFAULT_PAGE_SIZE))
 
     # Last seen video ID
     last_id = req.args.get('last_id', None)
