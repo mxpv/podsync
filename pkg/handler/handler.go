@@ -93,7 +93,7 @@ func New(feed feedService, support patreonService, opts Opts) http.Handler {
 	r.GET("/api/metadata/:hashId", h.metadata)
 	r.POST("/api/webhooks", h.webhook)
 
-	const feedTTL = 30 * time.Minute
+	const feedTTL = 1 * time.Hour
 	r.NoRoute(cache.CachePage(cacheStore, feedTTL, h.getFeed))
 
 	return r

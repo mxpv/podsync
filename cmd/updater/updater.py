@@ -60,13 +60,13 @@ def get_updates(start, count, url, fmt, last_id=None):
         for idx, entry in enumerate(entries):
             video_id = entry['id']
 
-            # If already seen this video previously, stop pulling updates
-            if last_id and video_id == last_id:
-                break
-
             # Remember new last id
             if idx == 0:
                 new_last_id = video_id
+
+            # If already seen this video previously, stop pulling updates
+            if last_id and video_id == last_id:
+                break
 
             # Query video metadata from YouTube
             result = ytdl.process_ie_result(entry, download=False)

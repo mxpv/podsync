@@ -11,6 +11,7 @@ import (
 
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
+	"github.com/mxpv/podsync/pkg/queue"
 )
 
 type Builder interface {
@@ -25,24 +26,18 @@ type storage interface {
 	Downgrade(userID string, featureLevel int) ([]string, error)
 }
 
-type cacheService interface {
-	Set(key, value string, ttl time.Duration) error
-	Get(key string) (string, error)
-
-	SaveItem(key string, item interface{}, exp time.Duration) error
-	GetItem(key string, item interface{}) error
-
-	Invalidate(key ...string) error
+type Sender interface {
+	Add(item *queue.Item)
 }
 
 type Service struct {
 	generator IDGen
 	storage   storage
 	builders  map[api.Provider]Builder
-	cache     cacheService
+	sender    Sender
 }
 
-func NewFeedService(db storage, cache cacheService, builders map[api.Provider]Builder) (*Service, error) {
+func NewFeedService(db storage, sender Sender, builders map[api.Provider]Builder) (*Service, error) {
 	idGen, err := NewIDGen()
 	if err != nil {
 		return nil, err
@@ -52,7 +47,7 @@ func NewFeedService(db storage, cache cacheService, builders map[api.Provider]Bu
 		generator: idGen,
 		storage:   db,
 		builders:  builders,
-		cache:     cache,
+		sender:    sender,
 	}
 
 	return svc, nil
@@ -64,11 +59,23 @@ func (s *Service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity)
 		return "", err
 	}
 
+	logger := log.WithField("feed_id", feed.HashID)
+
 	// Make sure builder exists for this provider
-	_, ok := s.builders[feed.Provider]
+	builder, ok := s.builders[feed.Provider]
 	if !ok {
 		return "", fmt.Errorf("failed to get builder for URL: %s", req.URL)
 	}
+
+	logger.Infof("creating new feed for %q", feed.ItemURL)
+
+	if err := builder.Build(feed); err != nil {
+		logger.WithError(err).Error("failed to build feed")
+
+		return "", err
+	}
+
+	logger.Infof("saving new feed to database")
 
 	if err := s.storage.SaveFeed(feed); err != nil {
 		return "", err
@@ -135,37 +142,8 @@ func makeEnclosure(feed *model.Feed, id string, lengthInBytes int64) (string, it
 	return url, contentType, lengthInBytes
 }
 
-func (s *Service) updateFromRedis(hashID string, feed *model.Feed) {
-	key := fmt.Sprintf("feeds/%s", hashID)
-	redisFeed := &model.Feed{}
-	if err := s.cache.GetItem(key, redisFeed); err != nil {
-		return
-	}
-
-	feed.Episodes = redisFeed.Episodes
-	feed.UpdatedAt = redisFeed.UpdatedAt
-	feed.LastID = redisFeed.LastID
-	feed.ItemURL = redisFeed.ItemURL
-	feed.Author = redisFeed.Author
-	feed.PubDate = redisFeed.PubDate
-	feed.Description = redisFeed.Description
-	feed.Title = redisFeed.Title
-	feed.Language = redisFeed.Language
-	feed.Explicit = redisFeed.Explicit
-	feed.CoverArt = redisFeed.CoverArt
-}
-
 func (s *Service) BuildFeed(hashID string) ([]byte, error) {
-	var (
-		logger = log.WithField("hash_id", hashID)
-		now    = time.Now().UTC()
-		errKey = "err/" + hashID
-	)
-
-	cached, err := s.cache.Get(errKey)
-	if err == nil {
-		return []byte(cached), nil
-	}
+	logger := log.WithField("hash_id", hashID)
 
 	feed, err := s.QueryFeed(hashID)
 	if err != nil {
@@ -173,72 +151,26 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 		return nil, err
 	}
 
-	s.updateFromRedis(hashID, feed)
+	// Submit to SQS for background update
+	s.sender.Add(&queue.Item{
+		ID:      feed.HashID,
+		URL:     feed.ItemURL,
+		Start:   1,
+		Count:   feed.PageSize,
+		LastID:  feed.LastID,
+		Format:  string(feed.Format),
+		Quality: string(feed.Quality),
+	})
 
-	oldLastID := feed.LastID
-
-	const (
-		updateTTL = 15 * time.Minute
-	)
-
-	if now.Sub(feed.UpdatedAt) < updateTTL {
-		if podcast, err := s.buildPodcast(feed); err != nil {
-			return nil, err
-		} else {
-			return []byte(podcast.String()), nil
-		}
-	}
-
-	builderType := feed.Provider
-	if feed.LastID != "" {
-		// Use incremental Lambda updater if have seen this feed before
-		builderType = api.ProviderGeneric
-	}
-
-	builder, ok := s.builders[builderType]
-	if !ok {
-		return nil, errors.Wrapf(err, "failed to get builder for feed: %s", hashID)
-	}
-
-	logger.Info("building feed")
-
-	if err := builder.Build(feed); err != nil {
-		logger.WithError(err).Error("failed to build feed")
-
-		// Save error to cache to avoid requests spamming
-		_ = s.cache.Set(errKey, err.Error(), updateTTL)
-
-		return nil, err
-	}
-
-	// Format podcast
+	// Output the feed
 
 	if feed.PageSize < len(feed.Episodes) {
 		feed.Episodes = feed.Episodes[:feed.PageSize]
 	}
 
-	feed.LastAccess = time.Now().UTC()
-
-	// Don't zero last seen ID if failed to get updates
-	if feed.LastID == "" {
-		feed.LastID = oldLastID
-
-		logger.Warnf("failed to get updates for %s (builder: %s)", hashID, builderType)
-	}
-
 	podcast, err := s.buildPodcast(feed)
 	if err != nil {
 		return nil, err
-	}
-
-	// Save to storage
-
-	if oldLastID != feed.LastID {
-		logger.Infof("updating feed %s (last id: %q, new id: %q)", hashID, oldLastID, feed.LastID)
-		if err := s.storage.UpdateFeed(feed); err != nil {
-			logger.WithError(err).Error("failed to save feed")
-			return nil, err
-		}
 	}
 
 	return []byte(podcast.String()), nil
@@ -342,14 +274,9 @@ func (s Service) Downgrade(patronID string, featureLevel int) error {
 
 	logger.Info("downgrading patron")
 
-	ids, err := s.storage.Downgrade(patronID, featureLevel)
+	_, err := s.storage.Downgrade(patronID, featureLevel)
 	if err != nil {
 		logger.WithError(err).Error("database error while downgrading patron")
-		return err
-	}
-
-	if s.cache.Invalidate(ids...) != nil {
-		logger.WithError(err).Error("failed to invalidate cached feeds")
 		return err
 	}
 

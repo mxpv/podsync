@@ -14,9 +14,9 @@ import (
 
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/builders"
-	"github.com/mxpv/podsync/pkg/cache"
 	"github.com/mxpv/podsync/pkg/feeds"
 	"github.com/mxpv/podsync/pkg/handler"
+	"github.com/mxpv/podsync/pkg/queue"
 	"github.com/mxpv/podsync/pkg/storage"
 	"github.com/mxpv/podsync/pkg/support"
 )
@@ -34,6 +34,7 @@ type Opts struct {
 	DynamoPledgesTableName string `long:"dynamo-pledges-table" env:"DYNAMO_PLEDGES_TABLE_NAME"`
 	RedisURL               string `long:"redis-url" required:"true" env:"REDIS_CONNECTION_URL"`
 	UpdaterURL             string `long:"updater-url" required:"true" env:"UPDATER_URL"`
+	UpdaterQueueURL        string `long:"updater-queue-url" required:"true" env:"UPDATER_SQS_QUEUE_URL"`
 	Debug                  bool   `long:"debug" env:"DEBUG"`
 }
 
@@ -72,12 +73,9 @@ func main() {
 
 	patreon := support.NewPatreon(database)
 
-	// Cache
+	// Queue
 
-	redisCache, err := cache.NewRedisCache(opts.RedisURL)
-	if err != nil {
-		log.WithError(err).Fatal("failed to initialize Redis cache")
-	}
+	updateQueue := queue.New(ctx, opts.UpdaterQueueURL)
 
 	// Builders
 
@@ -93,7 +91,7 @@ func main() {
 
 	generic := builders.NewRemote(opts.UpdaterURL)
 
-	feed, err := feeds.NewFeedService(database, redisCache, map[api.Provider]feeds.Builder{
+	feed, err := feeds.NewFeedService(database, updateQueue, map[api.Provider]feeds.Builder{
 		api.ProviderYoutube: youtube,
 		api.ProviderVimeo:   vimeo,
 		api.ProviderGeneric: generic,
@@ -131,9 +129,8 @@ func main() {
 		log.WithError(err).Error("server shutdown failed")
 	}
 
-	if err := redisCache.Close(); err != nil {
-		log.WithError(err).Error("failed to close redis cache")
-	}
+	// Close SQS
+	updateQueue.Close()
 
 	if err := database.Close(); err != nil {
 		log.WithError(err).Error("failed to close database")

@@ -11,6 +11,7 @@ import (
 
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
+	"github.com/mxpv/podsync/pkg/queue"
 )
 
 var feed = &model.Feed{
@@ -35,10 +36,13 @@ func TestService_CreateFeed(t *testing.T) {
 
 	gen, _ := NewIDGen()
 
+	builder := NewMockBuilder(ctrl)
+	builder.EXPECT().Build(gomock.Any()).Times(1).Return(nil)
+
 	s := Service{
 		generator: gen,
 		storage:   db,
-		builders:  map[api.Provider]Builder{api.ProviderYoutube: nil},
+		builders:  map[api.Provider]Builder{api.ProviderYoutube: builder},
 	}
 
 	req := &api.CreateFeedRequest{
@@ -104,20 +108,18 @@ func TestService_BuildFeed(t *testing.T) {
 
 	stor := NewMockstorage(ctrl)
 	stor.EXPECT().GetFeed(feed.HashID).Times(1).Return(feed, nil)
-	stor.EXPECT().UpdateFeed(feed).Return(nil)
 
-	cache := NewMockcacheService(ctrl)
-	cache.EXPECT().GetItem("feeds/123", gomock.Any()).Return(errors.New("not found"))
+	q := NewMockSender(ctrl)
+	q.EXPECT().Add(gomock.Eq(&queue.Item{
+		ID:      feed.HashID,
+		URL:     feed.ItemURL,
+		Start:   1,
+		Count:   feed.PageSize,
+		Format:  string(feed.Format),
+		Quality: string(feed.Quality),
+	})).Times(1)
 
-	builder := NewMockBuilder(ctrl)
-	builder.EXPECT().Build(feed).Return(nil).Do(func(feed *model.Feed) {
-		feed.Episodes = append(feed.Episodes, feed.Episodes[0])
-		feed.LastID = "1"
-	})
-
-	s := Service{storage: stor, cache: cache, builders: map[api.Provider]Builder{
-		api.ProviderVimeo: builder,
-	}}
+	s := Service{storage: stor, sender: q}
 
 	_, err := s.BuildFeed(feed.HashID)
 	require.NoError(t, err)
