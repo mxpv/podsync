@@ -3,6 +3,7 @@ import gzip
 import json
 import os
 import boto3
+import youtube_dl
 import updater
 
 sqs = boto3.client('sqs')
@@ -32,6 +33,12 @@ def _update(item):
     print('Updating feed {} (last id: {}, start: {}, count: {}, fmt: {})'.format(
         feed_id, last_id, start, count, ytdl_fmt))
     _, new_episodes, new_last_id = updater.get_updates(start, count, url, ytdl_fmt, last_id)
+
+    if new_last_id is None:
+        # Sometimes youtube-dl fails to pull updates
+        print('! New last id is None, retrying...')
+        _, new_episodes, new_last_id = updater.get_updates(start, count, url, ytdl_fmt, last_id)
+
     if new_last_id == last_id:
         print('No updates found for {}'.format(feed_id))
         return
@@ -62,15 +69,16 @@ def _update(item):
 
     data = bytes(json.dumps(episodes), 'utf-8')
     compressed = gzip.compress(data)
-    print('Sending new compressed data of size: {} bytes'.format(len(compressed)))
+    print('Sending new compressed data of size: {} bytes ({} episodes)'.format(len(compressed), len(episodes)))
 
     feeds_table.update_item(
         Key={
             'HashID': feed_id,
         },
-        UpdateExpression='SET #episodes = :data, #last_id = :last_id, #updated_at = :now',
+        UpdateExpression='SET #episodesData = :data, #last_id = :last_id, #updated_at = :now REMOVE #episodes',
         ExpressionAttributeNames={
-            '#episodes': 'EpisodesData',
+            '#episodesData': 'EpisodesData',
+            '#episodes': 'Episodes',
             '#last_id': 'LastID',
             '#updated_at': 'UpdatedAt',
         },
@@ -90,19 +98,22 @@ if __name__ == '__main__':
         if not messages:
             continue
 
-        print('Got {} new message(s) to process'.format(len(messages)))
+        print('=> Got {} new message(s) to process'.format(len(messages)))
         for msg in messages:
             print('-' * 64)
+
             body = msg.get('Body')
+            receipt_handle = msg.get('ReceiptHandle')
 
             try:
                 # Run updater
                 _update(json.loads(body))
-
                 # Delete message from SQS
-                receipt_handle = msg.get('ReceiptHandle')
                 sqs.delete_message(QueueUrl=sqs_url, ReceiptHandle=receipt_handle)
-
                 print('Done')
+            except (ValueError, youtube_dl.utils.DownloadError) as e:
+                print(str(e))
+                # These kind of errors are not retryable, so delete message from the queue
+                sqs.delete_message(QueueUrl=sqs_url, ReceiptHandle=receipt_handle)
             except Exception as e:
-                print('ERROR: ' + str(e))
+                print('! ERROR ({}): {}'.format(type(e), str(e)))
