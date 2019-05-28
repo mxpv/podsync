@@ -152,7 +152,7 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 	}
 
 	// Submit to SQS for background update
-	s.sender.Add(&queue.Item{
+	item := &queue.Item{
 		ID:      feed.HashID,
 		URL:     feed.ItemURL,
 		Start:   1,
@@ -160,7 +160,16 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 		LastID:  feed.LastID,
 		Format:  string(feed.Format),
 		Quality: string(feed.Quality),
-	})
+	}
+
+	if feed.LinkType == api.LinkTypePlaylist {
+		// Playlist is a special case. Last ID tracks a latest episode on a channel,
+		// it appears as the first one in the list. New playlist items are added to
+		// the end of list, so sync with last seen ID doesn't work here as expected.
+		item.LastID = ""
+	}
+
+	s.sender.Add(item)
 
 	// Output the feed
 
