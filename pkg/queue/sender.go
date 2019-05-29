@@ -10,6 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/mxpv/podsync/pkg/api"
 )
 
 var (
@@ -23,13 +25,14 @@ const (
 )
 
 type Item struct {
-	ID      string `json:"id"`
-	URL     string `json:"url"`
-	Start   int    `json:"start"`
-	Count   int    `json:"count"`
-	LastID  string `json:"last_id"`
-	Format  string `json:"format"`
-	Quality string `json:"quality"`
+	ID       string       `json:"id"`
+	URL      string       `json:"url"`
+	Start    int          `json:"start"`
+	Count    int          `json:"count"`
+	LastID   string       `json:"last_id"`
+	LinkType api.LinkType `json:"link_type"`
+	Format   string       `json:"format"`
+	Quality  string       `json:"quality"`
 }
 
 type Sender struct {

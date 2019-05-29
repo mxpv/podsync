@@ -16,6 +16,18 @@ print('Using DynamoDB table: {}'.format(feeds_table_name))
 feeds_table = dynamodb.Table(feeds_table_name)
 
 
+def _unique(episodes):
+    unique = set()
+    output = []
+    for item in episodes:
+        video_id = item['ID']
+        if video_id in unique:
+            continue
+        unique.add(video_id)
+        output.append(item)
+    return output
+
+
 def _update(item):
     # Unpack fields
 
@@ -24,20 +36,21 @@ def _update(item):
     last_id = item['last_id']
     start = int(item['start'])
     count = int(item['count'])
+    link_type = item.get('link_type')
     fmt = item.get('format', 'video')
     quality = item.get('quality', 'high')
     ytdl_fmt = updater.get_format(fmt, quality)
 
     # Invoke youtube-dl and pull updates
 
-    print('Updating feed {} (last id: {}, start: {}, count: {}, fmt: {})'.format(
-        feed_id, last_id, start, count, ytdl_fmt))
-    _, new_episodes, new_last_id = updater.get_updates(start, count, url, ytdl_fmt, last_id)
+    print('Updating feed {} (last id: {}, start: {}, count: {}, fmt: {}, type: {})'.format(
+        feed_id, last_id, start, count, ytdl_fmt, link_type))
+    _, new_episodes, new_last_id = updater.get_updates(start, count, url, ytdl_fmt, last_id, link_type)
 
     if new_last_id is None:
         # Sometimes youtube-dl fails to pull updates
         print('! New last id is None, retrying...')
-        _, new_episodes, new_last_id = updater.get_updates(start, count, url, ytdl_fmt, last_id)
+        _, new_episodes, new_last_id = updater.get_updates(start, count, url, ytdl_fmt, last_id, link_type)
 
     if new_last_id == last_id:
         print('No updates found for {}'.format(feed_id))
@@ -53,6 +66,7 @@ def _update(item):
         ExpressionAttributeNames={'#D': 'EpisodesData'}
     )
 
+    is_playlist = link_type == 'playlist'
     old_episodes = []
     resp_item = resp['Item']
     raw = resp_item.get('EpisodesData')
@@ -61,7 +75,12 @@ def _update(item):
         old_content = gzip.decompress(raw.value).decode('utf-8')  # Decompress from gzip
         old_episodes = json.loads(old_content)  # Deserialize from string to json
 
-    episodes = new_episodes + old_episodes  # Prepand new episodes to the list
+    if is_playlist:
+        episodes = old_episodes + new_episodes  # Playlist items are added to the end of list
+        episodes = _unique(episodes)
+    else:
+        episodes = new_episodes + old_episodes  # Otherwise prepand the new episodes
+
     if len(episodes) > count:
         del episodes[count:]  # Truncate list
 

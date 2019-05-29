@@ -20,7 +20,7 @@ def get_format(fmt, quality):
             return 'worstaudio'
 
 
-def get_updates(start, count, url, fmt, last_id=None):
+def get_updates(start, count, url, fmt, last_id=None, link_type=None):
     if start < 1:
         raise ValueError('Invalid start value')
 
@@ -55,14 +55,22 @@ def get_updates(start, count, url, fmt, last_id=None):
 
         videos = []
         new_last_id = None
-
+        is_playlist = link_type == 'playlist'
         entries = feed_info['entries']
+
+        if not len(entries):
+            # No episodes
+            return feed, videos, new_last_id
+
+        if is_playlist:
+            # Playlist items are added to the end, so compare 'last_id' by the last episode instead of the first one
+            entries.reverse()
+
+        # Remember new last id
+        new_last_id = entries[0]['id']
+
         for idx, entry in enumerate(entries):
             video_id = entry['id']
-
-            # Remember new last id
-            if idx == 0:
-                new_last_id = video_id
 
             # If already seen this video previously, stop pulling updates
             if last_id and video_id == last_id:
@@ -89,6 +97,9 @@ def get_updates(start, count, url, fmt, last_id=None):
                 'PubDate': int(date.timestamp()),
                 'Size': size,
             })
+
+    if is_playlist:
+        videos.reverse()
 
     return feed, videos, new_last_id
 
