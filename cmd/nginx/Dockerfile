@@ -13,3 +13,4 @@ COPY cmd/nginx/podsync.conf /etc/nginx/nginx.conf
 COPY cmd/nginx/robots.txt /var/www/podsync/
 COPY --from=builder /app/dist/html/ /var/www/podsync/
 COPY --from=builder /app/dist/assets/ /var/www/podsync/assets/
+COPY /assets/favicon.ico /var/www/podsync/

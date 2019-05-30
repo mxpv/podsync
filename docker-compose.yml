@@ -6,7 +6,7 @@ services:
     container_name: api
     restart: always
     ports:
-      - 8080:5001
+      - 5001
     environment:
       - REDIS_CONNECTION_URL=redis://redis
       - POSTGRES_CONNECTION_URL={POSTGRES_CONNECTION_URL}
@@ -37,14 +37,14 @@ services:
     container_name: nginx
     restart: always
     ports:
-      - 8081:80
+      - 80:80
   resolver:
     image: mxpv/resolver:latest
     container_name: resolver
     command: --workers 8
     restart: always
     ports:
-      - 8082:8080
+      - 8080
     environment:
       - AWS_DEFAULT_REGION=us-east-1
       - DYNAMO_FEEDS_TABLE_NAME=Prod_Feeds
