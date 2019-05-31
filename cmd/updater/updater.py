@@ -77,7 +77,10 @@ def get_updates(start, count, url, fmt, last_id=None, link_type=None):
                 break
 
             # Query video metadata from YouTube
-            result = ytdl.process_ie_result(entry, download=False)
+            try:
+                result = ytdl.process_ie_result(entry, download=False)
+            except youtube_dl.utils.DownloadError:
+                continue
 
             # Convert '20190101' to unix time
             date_str = result.get('upload_date')
