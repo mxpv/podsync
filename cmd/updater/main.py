@@ -76,13 +76,13 @@ def _update(item):
         old_episodes = json.loads(old_content)  # Deserialize from string to json
 
     if is_playlist:
-        episodes = old_episodes + new_episodes  # Playlist items are added to the end of list
-        episodes = _unique(episodes)
+        episodes = _unique(old_episodes) + new_episodes  # Playlist items are added to the end of list
+        if len(episodes) > count:
+            episodes = episodes[-count:]  # Leave last X elements
     else:
         episodes = new_episodes + old_episodes  # Otherwise prepand the new episodes
-
-    if len(episodes) > count:
-        del episodes[count:]  # Truncate list
+        if is_playlist:
+            del episodes[count:]
 
     # Compress episodes and submit update query
 
