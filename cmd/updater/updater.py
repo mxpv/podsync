@@ -20,17 +20,17 @@ def get_format(fmt, quality):
             return 'worstaudio'
 
 
-def get_updates(start, count, url, fmt, last_id=None, link_type=None):
+def get_updates(start, count, url, fmt, last_id=None, playlist=None):
     if start < 1:
         raise ValueError('Invalid start value')
 
     if count < 1 or count > 600:
         raise ValueError('Invalid count value')
 
-    end = start + count - 1
-
     if not url:
         raise ValueError('Invalid resource URL %s' % url)
+
+    end = start + count - 1
 
     opts = {
         'playliststart': start,
@@ -42,39 +42,37 @@ def get_updates(start, count, url, fmt, last_id=None, link_type=None):
         'skip_download': True,
     }
 
+    dirty = False
+
     with youtube_dl.YoutubeDL(opts) as ytdl:
         selector = ytdl.build_format_selector(fmt)
         feed_info = ytdl.extract_info(url, download=False)
 
-        # Record basic feed metadata
-        feed = {
-            'ID': feed_info.get('id'),
-            'Title': feed_info.get('uploader'),
-            'PageURL': feed_info.get('webpage_url'),
-        }
-
         videos = []
-        new_last_id = None
-        is_playlist = link_type == 'playlist'
+
         entries = feed_info['entries']
+        if not len(entries):  # No episodes
+            return videos, None
 
-        if not len(entries):
-            # No episodes
-            return feed, videos, new_last_id
-
+        is_playlist = len(playlist) > 0
+        playlist_lookup = {}
         if is_playlist:
-            # Playlist items are added to the end, so compare 'last_id' by the last episode instead of the first one
-            entries.reverse()
-
-        # Remember new last id
-        new_last_id = entries[0]['id']
+            for item in playlist:
+                playlist_lookup[item['ID']] = item
 
         for idx, entry in enumerate(entries):
             video_id = entry['id']
 
-            # If already seen this video previously, stop pulling updates
-            if last_id and video_id == last_id:
-                break
+            if is_playlist:
+                if video_id in playlist_lookup:
+                    videos.append(playlist_lookup[video_id])
+                    continue
+            else:
+                # If already seen this video previously, stop pulling updates
+                if last_id and video_id == last_id:
+                    break
+
+            dirty = True
 
             # Query video metadata from YouTube
             try:
@@ -101,10 +99,9 @@ def get_updates(start, count, url, fmt, last_id=None, link_type=None):
                 'Size': size,
             })
 
-    if is_playlist:
-        videos.reverse()
-
-    return feed, videos, new_last_id
+    idx = 0 if not playlist else -1
+    new_last_id = entries[idx]['id']
+    return videos, new_last_id, dirty
 
 
 def _get_size(video, selector, fmt, duration):

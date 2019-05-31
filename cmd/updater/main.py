@@ -16,16 +16,23 @@ print('Using DynamoDB table: {}'.format(feeds_table_name))
 feeds_table = dynamodb.Table(feeds_table_name)
 
 
-def _unique(episodes):
-    unique = set()
-    output = []
-    for item in episodes:
-        video_id = item['ID']
-        if video_id in unique:
-            continue
-        unique.add(video_id)
-        output.append(item)
-    return output
+def _get_episodes(feed_id):
+    resp = feeds_table.get_item(
+        Key={'HashID': feed_id},
+        ProjectionExpression='#D',
+        ExpressionAttributeNames={'#D': 'EpisodesData'}
+    )
+
+    old_episodes = []
+    resp_item = resp['Item']
+    raw = resp_item.get('EpisodesData')
+    if not raw:
+        return old_episodes
+
+    print('Received episodes compressed data of size: {} bytes'.format(len(raw.value)))
+    old_content = gzip.decompress(raw.value).decode('utf-8')  # Decompress from gzip
+    old_episodes = json.loads(old_content)  # Deserialize from string to json
+    return old_episodes
 
 
 def _update(item):
@@ -36,51 +43,44 @@ def _update(item):
     last_id = item['last_id']
     start = int(item['start'])
     count = int(item['count'])
-    link_type = item.get('link_type')
     fmt = item.get('format', 'video')
     quality = item.get('quality', 'high')
     ytdl_fmt = updater.get_format(fmt, quality)
+
+    # Playlist need special handling
+    link_type = item.get('link_type')
+    is_playlist = link_type == 'playlist'
+
+    old_episodes = []
+
+    if is_playlist:
+        # Query old episodes in advance for playlist in order to compare the diff
+        old_episodes = _get_episodes(feed_id)
 
     # Invoke youtube-dl and pull updates
 
     print('Updating feed {} (last id: {}, start: {}, count: {}, fmt: {}, type: {})'.format(
         feed_id, last_id, start, count, ytdl_fmt, link_type))
-    _, new_episodes, new_last_id = updater.get_updates(start, count, url, ytdl_fmt, last_id, link_type)
+    new_episodes, new_last_id, dirty = updater.get_updates(start, count, url, ytdl_fmt, last_id, old_episodes)
 
     if new_last_id is None:
         # Sometimes youtube-dl fails to pull updates
         print('! New last id is None, retrying...')
-        _, new_episodes, new_last_id = updater.get_updates(start, count, url, ytdl_fmt, last_id, link_type)
+        new_episodes, new_last_id, dirty = updater.get_updates(start, count, url, ytdl_fmt, last_id, old_episodes)
 
-    if new_last_id == last_id:
+    if not dirty:
         print('No updates found for {}'.format(feed_id))
         return
     else:
         print('Found {} new episode(s) (new last id: {})'.format(len(new_episodes), new_last_id))
 
-    # Get record and DynamoDB and decompress episodes
-
-    resp = feeds_table.get_item(
-        Key={'HashID': feed_id},
-        ProjectionExpression='#D',
-        ExpressionAttributeNames={'#D': 'EpisodesData'}
-    )
-
-    is_playlist = link_type == 'playlist'
-    old_episodes = []
-    resp_item = resp['Item']
-    raw = resp_item.get('EpisodesData')
-    if raw:
-        print('Received episodes compressed data of size: {} bytes'.format(len(raw.value)))
-        old_content = gzip.decompress(raw.value).decode('utf-8')  # Decompress from gzip
-        old_episodes = json.loads(old_content)  # Deserialize from string to json
+    # Get records from DynamoDB and decompress episodes
 
     if is_playlist:
-        episodes = _unique(old_episodes) + new_episodes  # Playlist items are added to the end of list
-        if len(episodes) > count:
-            episodes = episodes[-count:]  # Leave last X elements
+        episodes = new_episodes
     else:
-        episodes = new_episodes + old_episodes  # Otherwise prepand the new episodes
+        old_episodes = _get_episodes(feed_id)
+        episodes = new_episodes + old_episodes  # Prepand the new episodes
         if is_playlist:
             del episodes[count:]
 
