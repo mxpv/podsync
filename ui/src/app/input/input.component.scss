@@ -1,0 +1,79 @@
+.main {
+  text-align: center;
+  padding: 5em 2em 10em;
+  max-width: 860px;
+  width: 90%;
+  margin: 0 auto;
+  padding: 3em 0;
+  text-align: left;
+
+  @media screen and (max-width: 840px) {
+    padding: 0;
+  }
+
+  @media screen and (max-height: 840px) {
+    padding-top: 0;
+  }
+}
+
+.main-border {
+  border: thin solid #a39c8e;
+  background: #f4ecda;
+
+  input {
+    border: none;
+    padding: 0.5em 0 0.5em 0.5em;
+    width: calc(100% - 2em);
+    font-size: 2em;
+    line-height: 1;
+    color: #616161;
+    background: transparent;
+  }
+}
+
+.input-border {
+  background-color: #e4dac8;
+  border: none;
+  border-bottom: 1px solid #a39c8e;
+}
+
+*:focus {
+  outline: none;
+}
+
+/* Input button (arrow) */
+
+.arrow-button {
+  float: right;
+  font-size: 2em;
+  padding-top: 0.5em;
+  padding-right: 0.3em;
+
+  a {
+    color: rgb(142, 134, 119);
+  }
+
+  a:hover {
+    background: none;
+    color: rgb(105, 98, 86);
+  }
+}
+
+/* Controls under input */
+
+.controls {
+  padding-left: 1em;
+  word-spacing: 0.15em;
+  margin: 12px 0 12px 0;
+  overflow: hidden;
+}
+
+.controls-icon {
+  float: left;
+  padding-right: 6px;
+}
+
+.locked {
+  -ms-opacity: 0.3;
+  opacity: 0.2;
+}

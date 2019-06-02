@@ -1,0 +1,38 @@
+<div class="main" [hidden]="popupOpened">
+  <div class="main-border shadow">
+    <div class="input-border">
+      <input type="text"
+             placeholder="paste your link here"
+             spellcheck="false"
+             autofocus
+             [(ngModel)]="link"
+             (keydown.enter)="submit()" />
+
+      <div class="arrow-button" [style.display]="link.length > 3 ? 'block' : 'none'">
+        <a href="#" (click)="submit()">
+          <i class="fa fa-arrow-right" aria-hidden="true"></i>
+        </a>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="controls-icon">
+        <ng-container *ngIf="locked">
+          <a href="https://www.patreon.com/bePatron?c=278915" class="black">
+            <i class="fa fa-question-circle master-tooltip"
+               aria-hidden="true"
+               title="This features are available for patrons only. You may support us and unlock this features"></i>
+          </a>
+        </ng-container>
+        <ng-container *ngIf="!locked">
+          <i class="fa fa-wrench" aria-hidden="true"></i>
+        </ng-container>
+      </div>
+
+      <div [class.locked]="locked">
+
+      </div>
+    </div>
+
+  </div>
+</div>
