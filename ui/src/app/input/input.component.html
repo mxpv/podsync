@@ -31,6 +31,82 @@
 
       <div [class.locked]="locked">
 
+        <div class="switch-field">
+          <div class="switch-title">format </div>
+
+          <input type="radio"
+                 id="type_video"
+                 name="episode_format"
+                 value="video"
+                 [disabled]="locked"
+                 [(ngModel)]="format" />
+          <label for="type_video">video</label>
+
+          <input type="radio"
+                 id="type_audio"
+                 name="episode_format"
+                 value="audio"
+                 [disabled]="locked"
+                 [(ngModel)]="format" />
+          <label for="type_audio">audio</label>
+        </div>
+
+        <div class="switch-field" >
+          <div class="switch-title">quality </div>
+
+          <input type="radio"
+                 id="type_low"
+                 name="episode_quality"
+                 value="low"
+                 [disabled]="locked"
+                 [(ngModel)]="quality" />
+          <label for="type_low">low</label>
+
+          <input type="radio"
+                 id="type_high"
+                 name="episode_quality"
+                 value="high"
+                 [disabled]="locked"
+                 [(ngModel)]="quality" />
+          <label for="type_high">high</label>
+        </div>
+
+        <div class="switch-field">
+          <div class="switch-title">episode count </div>
+
+          <input type="radio"
+                 id="type_50"
+                 name="page_count"
+                 [value]="50"
+                 [disabled]="locked"
+                 [(ngModel)]="pageSize" />
+          <label for="type_50">50</label>
+
+          <input type="radio"
+                 id="type_100"
+                 name="page_count"
+                 [value]="100"
+                 [disabled]="locked"
+                 [(ngModel)]="pageSize" />
+          <label for="type_100">100</label>
+
+          <input type="radio"
+                 id="type_150"
+                 name="page_count"
+                 [value]="150"
+                 [disabled]="locked"
+                 [(ngModel)]="pageSize" />
+          <label for="type_150">150</label>
+
+          <input type="radio"
+                 id="type_600"
+                 name="page_count"
+                 [value]="600"
+                 [disabled]="!allow600()"
+                 [(ngModel)]="pageSize" />
+          <label for="type_600" [class.locked]="!allow600()">600</label>
+        </div>
+
       </div>
     </div>
 

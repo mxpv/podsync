@@ -77,3 +77,48 @@
   -ms-opacity: 0.3;
   opacity: 0.2;
 }
+
+/* Switch */
+
+.switch-field {
+  float: left;
+  font-size: 1em;
+  padding-right: 7px;
+
+  input {
+    position: absolute !important;
+    clip: rect(0, 0, 0, 0);
+    height: 1px;
+    width: 1px;
+    border: 0;
+    overflow: hidden;
+  }
+
+  label {
+    float: left;
+    display: inline-block;
+    color: #EB8C11;
+    padding: 0 2px;
+  }
+
+  label:hover {
+    cursor: pointer;
+  }
+
+  input:checked + label {
+    background: orange;
+    color: whitesmoke;
+    border: 1px orange;
+    -ms-border-top-right-radius: 3px;
+    -ms-border-top-left-radius: 3px;
+    -ms-border-bottom-right-radius: 3px;
+    -ms-border-bottom-left-radius: 3px;
+    border-radius: 3px;
+  }
+}
+
+.switch-title {
+  display: inline-block;
+  float: left;
+  padding-right: 5px;
+}

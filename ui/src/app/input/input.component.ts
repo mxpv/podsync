@@ -6,6 +6,7 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./input.component.scss']
 })
 export class InputComponent implements OnInit {
+  featureLevel = 0;
   popupOpened: boolean;
   locked = false;
   format = 'video';
@@ -20,5 +21,9 @@ export class InputComponent implements OnInit {
 
   submit() {
     console.log('input submit');
+  }
+
+  allow600() {
+    return !this.locked && this.featureLevel >= 2;
   }
 }
