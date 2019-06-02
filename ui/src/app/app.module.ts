@@ -6,6 +6,7 @@ import { AppComponent } from './app.component';
 import { IndexComponent } from './index/index.component';
 import { InputComponent } from './input/input.component';
 import {FormsModule} from '@angular/forms';
+import {HttpClientModule} from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -15,6 +16,7 @@ import {FormsModule} from '@angular/forms';
   ],
   imports: [
     BrowserModule,
+    HttpClientModule,
     FormsModule,
     AppRoutingModule
   ],
