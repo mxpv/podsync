@@ -1,0 +1,148 @@
+.background-image {
+  background-image: url('/assets/img/pc_bg.png');
+  -ms-background-repeat: repeat-x;
+  background-repeat: repeat-x;
+  -ms-background-position: center bottom;
+  background-position: center bottom;
+  position: absolute;
+  width: 100%;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 0;
+  -webkit-user-select: text;
+  z-index: 0;
+
+  @media screen and (max-width: 640px) {
+    background-image: url('/assets/img/mobile_bg.png')
+  }
+}
+
+/* Header */
+
+.title {
+  padding: 50px;
+
+  @media screen and (max-width: 640px) {
+    padding: 20px;
+  }
+
+  @media screen and (max-height: 900px) {
+    padding-top: 1em;
+    padding-bottom: 1em;
+  }
+
+  h1 {
+    margin: 0;
+  }
+
+  h2 {
+    max-width: 500px;
+    font-weight: normal;
+    font-size: 1em;
+  }
+}
+
+.login-block {
+  color: #e18712;
+  font-size: 1em;
+  overflow: hidden;
+}
+
+.login-border, .login-border a {
+  float: left;
+  background: orange;
+  color: whitesmoke;
+  border: 1px orange;
+  padding: 3px;
+  border-radius: 2px;
+  font-size: 15px;
+}
+
+/* Man image */
+.man {
+  width: 210px;
+  height: 333px;
+  background-image: url('/assets/img/man.png');
+  -ms-background-repeat: no-repeat;
+  background-repeat: no-repeat;
+  -ms-background-position: center bottom;
+  background-position: center bottom;
+  background-color: transparent;
+  position: absolute;
+  bottom: 100px;
+  left: 30%;
+  margin: 0;
+  padding: 0;
+  z-index: -1;
+
+  @media screen and (max-width: 640px) {
+    background-image: none;
+  }
+
+  @media screen and (max-height: 640px) {
+    display: none;
+  }
+}
+
+/* Patreon block */
+
+.patreon {
+  background: rgb(171, 163, 149);
+  border: 1px rgb(240, 232, 214) solid;
+  bottom: 6em;
+  float: right;
+  position: absolute;
+  right: 2em;
+  z-index: -1;
+
+  @media screen and (max-height: 640px), screen and (max-width: 500px) {
+    width: 300px;
+    bottom: 4em;
+    right: 2em;
+  }
+
+  @media screen and (max-height: 400px) {
+    display: none;
+  }
+}
+
+/* Footer */
+
+.footer {
+  background-image: url('/assets/img/pc_footer.png');
+  -ms-background-position: center bottom;
+  background-position: center bottom;
+  background-color: #aca496;
+  position: absolute;
+  width: 100%;
+  height: 69px;
+  left: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 0;
+  -webkit-user-select: text;
+  z-index: -1;
+
+  @media screen and (max-width: 640px) {
+    background-image: url('/assets/img/mobile_footer.png');
+    height: 50px;
+  }
+}
+
+.footer-links {
+  position: absolute;
+  right: 2em;
+  bottom: 0;
+  font-size: 3em;
+
+  a {
+    color: rgb(62, 62, 41);
+  }
+
+  a:hover {
+    color: rgb(33, 33, 26);
+    background: none;
+  }
+}

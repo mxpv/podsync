@@ -6,10 +6,13 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./index.component.scss']
 })
 export class IndexComponent implements OnInit {
+  loggedIn: boolean;
+  fullName: string;
 
   constructor() { }
 
   ngOnInit() {
+    this.loggedIn = true;
+    this.fullName = 'Full name here';
   }
-
 }

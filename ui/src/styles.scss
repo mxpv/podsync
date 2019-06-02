@@ -1,1 +1,29 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css?family=Ubuntu');
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Ubuntu', sans-serif;
+  background-color: #f4eddb;
+}
+
+a {
+  color: #EB8C11;
+  text-decoration: none;
+}
+
+.pad10 {
+  padding: 10px;
+}
+
+.black {
+  color: #000000;
+}
+
+.shadow {
+  box-shadow: 0 12px 8px -6px #a79d87;
+  box-shadow: 0 12px 8px -6px rgba(167, 157, 135, 0.4);
+}
+
+$fa-font-path: "~font-awesome/fonts";
+@import "~font-awesome/scss/font-awesome";
