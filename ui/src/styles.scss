@@ -25,5 +25,16 @@ a {
   box-shadow: 0 12px 8px -6px rgba(167, 157, 135, 0.4);
 }
 
+.bottom-links {
+  a {
+    color: rgb(62, 62, 41);
+  }
+
+  a:hover {
+    color: rgb(33, 33, 26);
+    background: none;
+  }
+}
+
 $fa-font-path: "~font-awesome/fonts";
 @import "~font-awesome/scss/font-awesome";

@@ -9,6 +9,7 @@ import {FormsModule} from '@angular/forms';
 import {HttpClientModule} from '@angular/common/http';
 import { OutputComponent } from './output/output.component';
 import { FaqComponent } from './faq/faq.component';
+import { FooterComponent } from './widgets/footer/footer.component';
 
 @NgModule({
   declarations: [
@@ -16,7 +17,8 @@ import { FaqComponent } from './faq/faq.component';
     IndexComponent,
     InputComponent,
     OutputComponent,
-    FaqComponent
+    FaqComponent,
+    FooterComponent
   ],
   imports: [
     BrowserModule,
