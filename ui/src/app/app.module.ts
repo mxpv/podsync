@@ -8,13 +8,15 @@ import { InputComponent } from './input/input.component';
 import {FormsModule} from '@angular/forms';
 import {HttpClientModule} from '@angular/common/http';
 import { OutputComponent } from './output/output.component';
+import { FaqComponent } from './faq/faq.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     IndexComponent,
     InputComponent,
-    OutputComponent
+    OutputComponent,
+    FaqComponent
   ],
   imports: [
     BrowserModule,

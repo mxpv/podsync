@@ -1,0 +1,20 @@
+.background-image {
+  background-image: url('/assets/img/pc_bg.png');
+  -ms-background-repeat: repeat-x;
+  background-repeat: repeat-x;
+  -ms-background-position: center bottom;
+  background-position: center bottom;
+  position: absolute;
+  width: 100%;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 0;
+  -webkit-user-select: text;
+  z-index: 0;
+
+  @media screen and (max-width: 640px) {
+    background-image: url('/assets/img/mobile_bg.png')
+  }
+}

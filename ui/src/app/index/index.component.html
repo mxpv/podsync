@@ -1,52 +1,48 @@
-<div class="background-image">
+<div class="title">
+  <h1>Podsync</h1>
 
-  <div class="title">
-    <h1>Podsync</h1>
+  <h2>
+    Simple and free service that lets you listen to any YouTube or
+    Vimeo channels, playlists or user videos in podcast format.
+  </h2>
 
-    <h2>
-      Simple and free service that lets you listen to any YouTube or
-      Vimeo channels, playlists or user videos in podcast format.
-    </h2>
+  <div class="login-block">
+    <div class="login-border">
 
-    <div class="login-block">
-      <div class="login-border">
+      <ng-container *ngIf="!loggedIn">
+        <a href="/user/login">
+          <i aria-hidden="true" class="fa fa-unlock"></i>
+          Login with Patreon to unlock features
+        </a>
+        <a href="https://www.patreon.com/bePatron?c=278915">
+          <i aria-hidden="true" class="fa fa-question-circle-o"></i>
+        </a>
+      </ng-container>
+      <ng-container *ngIf="loggedIn">
+        <a>Hey, <i aria-hidden="true" class="fa fa-user-o"></i> {{ user?.full_name }}</a>
+        <a href="/user/logout"><i aria-hidden="true" class="fa fa-power-off"></i></a>
+      </ng-container>
 
-        <ng-container *ngIf="!loggedIn">
-          <a href="/user/login">
-            <i class="fa fa-unlock" aria-hidden="true"></i>
-            Login with Patreon to unlock features
-          </a>
-          <a href="https://www.patreon.com/bePatron?c=278915">
-            <i class="fa fa-question-circle-o" aria-hidden="true"></i>
-          </a>
-        </ng-container>
-        <ng-container *ngIf="loggedIn">
-          <a>Hey, <i class="fa fa-user-o" aria-hidden="true"></i> {{ user?.full_name }}</a>
-          <a href="/user/logout"><i class="fa fa-power-off" aria-hidden="true"></i></a>
-        </ng-container>
-
-      </div>
     </div>
   </div>
+</div>
 
-  <app-input [featureLevel]="user?.feature_level"
-             [locked]="!loggedIn">
-  </app-input>
+<app-input [featureLevel]="user?.feature_level"
+           [locked]="!loggedIn">
+</app-input>
 
-  <div class="man"></div>
+<div class="man"></div>
 
-  <div>
-    <a href="https://www.patreon.com/podsync" target="_blank">
-      <img class="patreon shadow" width="400" src="assets/img/become_patreon.png"
-           alt="Become my patron on Patreon"/>
-    </a>
+<div>
+  <a href="https://www.patreon.com/podsync" target="_blank">
+    <img alt="Become my patron on Patreon" class="patreon shadow" src="assets/img/become_patreon.png"
+         width="400"/>
+  </a>
+</div>
+
+<div class="footer">
+  <div class="footer-links">
+    <a routerLink="/faq"><i aria-hidden="true" class="fa fa-question-circle"></i></a>
+    <a href="https://twitter.com/pod_sync"><i aria-hidden="true" class="fa fa-twitter"></i></a>
   </div>
-
-  <div class="footer">
-    <div class="footer-links">
-      <a href="./faq.html"><i class="fa fa-question-circle" aria-hidden="true"></i></a>
-      <a href="https://twitter.com/pod_sync"><i class="fa fa-twitter" aria-hidden="true"></i></a>
-    </div>
-  </div>
-
 </div>
