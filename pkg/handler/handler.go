@@ -162,8 +162,9 @@ func (h handler) ping(c *gin.Context) {
 
 func (h handler) user(c *gin.Context) {
 	identity, err := session.GetIdentity(c)
-	if err != nil {
-		identity = &api.Identity{}
+	if err != nil || identity.UserID == "" {
+		c.Status(http.StatusUnauthorized)
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{

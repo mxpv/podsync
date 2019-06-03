@@ -10,6 +10,7 @@ import {HttpClientModule} from '@angular/common/http';
 import { OutputComponent } from './output/output.component';
 import { FaqComponent } from './faq/faq.component';
 import { FooterComponent } from './widgets/footer/footer.component';
+import {ToppyModule} from 'toppy';
 
 @NgModule({
   declarations: [
@@ -24,7 +25,11 @@ import { FooterComponent } from './widgets/footer/footer.component';
     BrowserModule,
     HttpClientModule,
     FormsModule,
+    ToppyModule,
     AppRoutingModule
+  ],
+  entryComponents: [
+    OutputComponent,
   ],
   providers: [],
   bootstrap: [AppComponent]
