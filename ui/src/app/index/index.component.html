@@ -21,7 +21,7 @@
           </a>
         </ng-container>
         <ng-container *ngIf="loggedIn">
-          <a>Hey, <i class="fa fa-user-o" aria-hidden="true"></i> {{ fullName }}</a>
+          <a>Hey, <i class="fa fa-user-o" aria-hidden="true"></i> {{ user?.full_name }}</a>
           <a href="/user/logout"><i class="fa fa-power-off" aria-hidden="true"></i></a>
         </ng-container>
 
@@ -29,7 +29,9 @@
     </div>
   </div>
 
-  <app-input></app-input>
+  <app-input [featureLevel]="user?.feature_level"
+             [locked]="!loggedIn">
+  </app-input>
 
   <div class="man"></div>
 

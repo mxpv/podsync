@@ -7,12 +7,14 @@ import { IndexComponent } from './index/index.component';
 import { InputComponent } from './input/input.component';
 import {FormsModule} from '@angular/forms';
 import {HttpClientModule} from '@angular/common/http';
+import { OutputComponent } from './output/output.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     IndexComponent,
-    InputComponent
+    InputComponent,
+    OutputComponent
   ],
   imports: [
     BrowserModule,

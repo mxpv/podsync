@@ -1,0 +1,28 @@
+.frame {
+  background: #56524b;
+  text-align: center;
+  z-index: 10;
+  outline: 9999px solid rgba(0,0,0,0.8);
+  padding: 5px;
+
+  input {
+    width: auto;
+    font-size: 3em;
+    border: none;
+    background: none;
+    border-bottom: 1px dotted black;
+  }
+}
+
+.links {
+  padding-top: 5px;
+
+  span {
+    padding-right: 15px;
+  }
+
+  a:hover {
+    color: #EB8C11;
+    background: rgb(68, 65, 60);
+  }
+}

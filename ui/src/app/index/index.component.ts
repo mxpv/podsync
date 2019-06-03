@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import {APIService, UserResponse} from '../api.service';
 
 @Component({
   selector: 'app-index',
@@ -6,13 +7,15 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./index.component.scss']
 })
 export class IndexComponent implements OnInit {
-  loggedIn: boolean;
-  fullName: string;
+  loggedIn = false;
+  user: UserResponse;
 
-  constructor() { }
+  constructor(private apiService: APIService) { }
 
   ngOnInit() {
-    this.loggedIn = true;
-    this.fullName = 'Full name here';
+    this.apiService.getUser().subscribe(resp => {
+      this.loggedIn = true;
+      this.user = resp;
+    });
   }
 }
