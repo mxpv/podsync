@@ -1,5 +1,9 @@
 User-agent: *
 Allow: /$
-Allow: /faq.html
+Allow: /*.js
+Allow: /*.css
+Allow: /faq
+Allow: /assets/*
+Allow: /fontawesome-webfont*
 Disallow: /
 Host: www.podsync.net
