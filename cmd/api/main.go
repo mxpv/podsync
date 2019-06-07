@@ -103,6 +103,7 @@ func main() {
 
 	web := handler.New(feed, patreon, handler.Opts{
 		CookieSecret:          opts.CookieSecret,
+		RedisHost:             opts.RedisURL,
 		PatreonClientID:       opts.PatreonClientID,
 		PatreonSecret:         opts.PatreonSecret,
 		PatreonRedirectURL:    opts.PatreonRedirectURL,

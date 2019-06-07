@@ -39,6 +39,7 @@ type patreonService interface {
 
 type Opts struct {
 	CookieSecret          string
+	RedisHost             string
 	PatreonClientID       string
 	PatreonSecret         string
 	PatreonRedirectURL    string
@@ -57,7 +58,7 @@ func New(feed feedService, support patreonService, opts Opts) http.Handler {
 	r.Use(gin.Recovery())
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 
-	cacheStore := persistence.NewRedisCache("redis:6379", "", time.Second)
+	cacheStore := persistence.NewRedisCache(opts.RedisHost, "", time.Second)
 
 	store := sessions.NewCookieStore([]byte(opts.CookieSecret))
 	r.Use(sessions.Sessions("podsync", store))
