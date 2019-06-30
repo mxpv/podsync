@@ -1,2 +1,2 @@
 boto3==1.9.129
-youtube_dl==2019.04.24
+youtube_dl==2019.06.27
