@@ -13,6 +13,7 @@ require (
 	github.com/gin-contrib/gzip v0.0.1
 	github.com/gin-contrib/sessions v0.0.0-20170731012558-a71ea9167c61
 	github.com/gin-gonic/gin v1.3.0
+	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-pg/pg v6.14.2+incompatible
 	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/golang/mock v1.2.0
