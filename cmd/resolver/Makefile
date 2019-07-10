@@ -2,7 +2,7 @@
 build:
 	pip3 install --requirement requirements.txt --target package
 	cd package && zip -r9 ../function.zip .
-	zip -g function.zip function.py
+	zip -g function.zip lambda.py resolver.py
 
 deploy: build
 	aws --profile Podsync lambda create-function \
