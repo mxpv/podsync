@@ -39,16 +39,13 @@ services:
     ports:
       - 80:80
   resolver:
-    image: mxpv/resolver:latest
+    image: mxpv/podsync_lambda:latest
     container_name: resolver
-    command: --workers 8
     restart: always
     ports:
-      - 8080
+      - 5002
     environment:
-      - AWS_DEFAULT_REGION=us-east-1
-      - DYNAMO_FEEDS_TABLE_NAME=Prod_Feeds
-      - DYNAMO_RESOLVE_COUNTERS_TABLE=Prod_ResolveCounters
+      - AWS_REGION=us-east-1
   updater:
     image: mxpv/updater:latest
     restart: always
