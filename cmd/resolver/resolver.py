@@ -4,7 +4,7 @@ import boto3
 from datetime import datetime, time
 from dateutil.relativedelta import relativedelta
 
-ANONYMOUS_FEED_REQUESTS_LIMIT = 1000
+ANONYMOUS_FEED_REQUESTS_LIMIT = 100
 
 
 class InvalidUsage(Exception):
