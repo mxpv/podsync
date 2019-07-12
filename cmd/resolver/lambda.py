@@ -15,8 +15,8 @@ def handler(event, lambda_context):
     except QuotaExceeded:
         return {
             'statusCode': 429,
-            'statusDescription': '429 Too Many Requests',
-            'body': 'Too many requests. Daily limit is 1000. Consider upgrading account to get unlimited access',
+            'statusDescription': '429 Too Many Requests. Daily limit is 100. '
+                                 'Consider upgrading account to get unlimited access.',
             'headers': {'Content-Type': 'text/plain'}
         }
 
