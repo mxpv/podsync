@@ -10,6 +10,7 @@ def handler(event, lambda_context):
             'statusDescription': '302 Found',
             'headers': {
                 'Location': redirect_url,
+                'Content-Type': 'text/plain',
             }
         }
     except QuotaExceeded:
