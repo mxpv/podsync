@@ -140,32 +140,17 @@ def _yt_choose_url(ytdl, info, metadata):
     is_video = metadata['format'] == 'video'
     is_high_quality = metadata['quality'] == 'high'
 
-    if not is_video:
+    if is_video:
+        fmt = 'best[ext=mp4]' if is_high_quality else 'worst[ext=mp4]'
+    else:
         fmt = 'bestaudio' if is_high_quality else 'worstaudio'
-        selector = ytdl.build_format_selector(fmt)
-        try:
-            selected = next(selector(info))
-            if 'fragment_base_url' in selected:
-                return selected['fragment_base_url']
-        except KeyError:
-            pass
 
-    # Filter formats by file extension
-    ext = 'mp4' if is_video else 'm4a'
-    fmt_list = [x for x in info['formats'] if x['ext'] == ext and 'acodec' in x and x['acodec'] != 'none']
-    if not len(fmt_list):
-        return info['url']
+    selector = ytdl.build_format_selector(fmt)
+    selected = next(selector(info))
+    if 'fragment_base_url' in selected:
+        return selected['fragment_base_url']
 
-    # Sort list by field (width for videos, file size for audio)
-    sort_field = 'width' if is_video else 'filesize'
-    # Sometime 'filesize' field can be None
-    if not all(x[sort_field] is not None for x in fmt_list):
-        sort_field = 'format_id'
-    ordered = sorted(fmt_list, key=lambda x: x[sort_field], reverse=True)
-
-    # Choose an item depending on quality, better at the beginning
-    item = ordered[0] if is_high_quality else ordered[-1]
-    return item['url']
+    return selected['url']
 
 
 def _vimeo_choose_url(info, metadata):
