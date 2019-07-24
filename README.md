@@ -1,32 +1,25 @@
-![Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiOE52ek1HRWdQeW5pVmozMUNtWm1zcXBDc0FPbTFRRzZRWEhQeGFrOXd6TFFhVnlVOHQ0dWM5SHFZRnloQUFKOUY2NWdMaDBOdnMxUnYyYW9FZC9GbElNPSIsIml2UGFyYW1ldGVyU3BlYyI6ImVwQkN3WjV4MXpTZ2FXTUUiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
 [![Patreon](https://img.shields.io/badge/support-patreon-E6461A.svg)](https://www.patreon.com/podsync)
 
+Podsync - is a simple, free service that lets you listen to any YouTube / Vimeo channels, playlists or user videos in podcast format.
 
-## Patreon
+Podcast applications have a rich functionality for content delivery - automatic download of new episodes, remembering last played position, sync between devices and offline listening. This functionality is not available on YouTube and Vimeo. So the aim of Podsync is to make your life easier and enable you to view/listen to content on any device in podcast client.
 
-In order to login via Patreon the following variables should be configured:
-- `PATREON_REDIRECT_URL` should point to `http://yout_host_here/patreon`
-- `PATREON_CLIENT_ID` and `PATREON_SECRET` should be copied from https://www.patreon.com/platform/documentation/clients
+## Architecture
+
+![Architecture](docs/architecture.png)
 
 ## Building Docker images
 
-Backend
+Every project contains a `Makefile` for building and pushing to a registry:
+
 ```bash
-./build.sh
+make build
+make push
+make update
 ```
 
-nginx
-```bash
-./nginx.sh
-```
+Use docker-compose to run containers:
 
-ytdl
-```bash
-cd cmd/ytdl/
-./build.sh
-```
-
-## Running
 ```bash
 docker-compose pull
 docker-compose up -d
