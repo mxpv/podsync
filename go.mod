@@ -15,7 +15,6 @@ require (
 	github.com/gin-gonic/gin v1.3.0
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-pg/pg v6.14.2+incompatible
-	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/golang/mock v1.2.0
 	github.com/gorilla/sessions v1.1.1 // indirect
 	github.com/jessevdk/go-flags v1.4.0

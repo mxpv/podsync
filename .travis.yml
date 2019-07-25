@@ -1,0 +1,20 @@
+dist: bionic
+
+language: go
+go:
+  - 1.12.x
+
+env:
+  - GO111MODULE=on
+
+cache:
+  directories:
+    - $HOME/gopath/pkg/mod
+    - $HOME/.cache/go-build
+
+install:
+  - go mod download
+
+script:
+  - make lint
+  - make test
