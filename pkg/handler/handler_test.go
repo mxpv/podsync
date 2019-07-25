@@ -53,41 +53,49 @@ func TestCreateInvalidFeed(t *testing.T) {
 	query := `{}`
 	resp, err := http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
+	resp.Body.Close()
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	query = `{"url": "not a url", "page_size": 55, "quality": "low", "format": "audio"}`
 	resp, err = http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
+	resp.Body.Close()
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	query = `{"url": "https://youtube.com/channel/123", "page_size": 1, "quality": "low", "format": "audio"}`
 	resp, err = http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
+	resp.Body.Close()
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	query = `{"url": "https://youtube.com/channel/123", "page_size": 1001, "quality": "low", "format": "audio"}`
 	resp, err = http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
+	resp.Body.Close()
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	query = `{"url": "https://youtube.com/channel/123", "page_size": 50, "quality": "xyz", "format": "audio"}`
 	resp, err = http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
+	resp.Body.Close()
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	query = `{"url": "https://youtube.com/channel/123", "page_size": 50, "quality": "low", "format": "xyz"}`
 	resp, err = http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
+	resp.Body.Close()
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	query = `{"url": "https://youtube.com/channel/123", "page_size": 50, "quality": "low", "format": ""}`
 	resp, err = http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
+	resp.Body.Close()
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	query = `{"url": "https://youtube.com/channel/123", "page_size": 50, "quality": "", "format": "audio"}`
 	resp, err = http.Post(srv.URL+"/api/create", "application/json", strings.NewReader(query))
 	require.NoError(t, err)
+	resp.Body.Close()
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
@@ -103,6 +111,7 @@ func TestGetFeed(t *testing.T) {
 
 	resp, err := http.Get(srv.URL + "/123")
 	require.NoError(t, err)
+	resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
@@ -118,6 +127,7 @@ func TestGetMetadata(t *testing.T) {
 
 	resp, err := http.Get(srv.URL + "/api/metadata/123")
 	require.NoError(t, err)
+	resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 }
 

@@ -111,12 +111,14 @@ func TestService_BuildFeed(t *testing.T) {
 
 	q := NewMockSender(ctrl)
 	q.EXPECT().Add(gomock.Eq(&queue.Item{
-		ID:      feed.HashID,
-		URL:     feed.ItemURL,
-		Start:   1,
-		Count:   feed.PageSize,
-		Format:  string(feed.Format),
-		Quality: string(feed.Quality),
+		ID:       feed.HashID,
+		URL:      feed.ItemURL,
+		Start:    1,
+		Count:    feed.PageSize,
+		LastID:   feed.LastID,
+		LinkType: feed.LinkType,
+		Format:   string(feed.Format),
+		Quality:  string(feed.Quality),
 	})).Times(1)
 
 	s := Service{storage: stor, sender: q}

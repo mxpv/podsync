@@ -308,7 +308,7 @@ func (h handler) webhook(c *gin.Context) {
 		}
 	}
 
-	log.Infof("sucessfully processed patreon event %s (%s)", pledge.Data.ID, eventName)
+	log.Infof("successfully processed patreon event %s (%s)", pledge.Data.ID, eventName)
 }
 
 func badRequest(err error) (int, interface{}) {

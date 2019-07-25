@@ -29,6 +29,10 @@ func TestDynamo(t *testing.T) {
 }
 
 func TestDynamo_UpdateFeed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping storage test in short mode")
+	}
+
 	client := createDynamo(t)
 	defer client.Close()
 

@@ -9,6 +9,10 @@ import (
 )
 
 func TestRemote_makeURL(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping remote test in short mode")
+	}
+
 	feed := &model.Feed{
 		ItemURL:  "https://youtube.com/channel/UCupvZG-5ko_eiXAupbDfxWw",
 		PageSize: 2,

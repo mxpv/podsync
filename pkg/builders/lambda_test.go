@@ -9,6 +9,10 @@ import (
 )
 
 func TestLambda_Invoke(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping lambda test in short mode")
+	}
+
 	lambda, err := NewLambda()
 	assert.NoError(t, err)
 

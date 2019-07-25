@@ -91,8 +91,9 @@ func TestYT_GetVideoCount(t *testing.T) {
 	}
 
 	for _, f := range feeds {
+		feed := f
 		t.Run(f.ItemID, func(t *testing.T) {
-			count, err := builder.GetVideoCount(f)
+			count, err := builder.GetVideoCount(feed)
 			assert.NoError(t, err)
 			assert.NotZero(t, count)
 		})
