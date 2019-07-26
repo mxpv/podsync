@@ -1,4 +1,9 @@
+# Podsync
+
+![Podsync](docs/img/logo.png)
+
 [![Build Status](https://travis-ci.com/mxpv/podsync.svg?branch=master)](https://travis-ci.com/mxpv/podsync)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mxpv/podsync)](https://goreportcard.com/report/github.com/mxpv/podsync)
 [![Patreon](https://img.shields.io/badge/support-patreon-E6461A.svg)](https://www.patreon.com/podsync)
 
 Podsync - is a simple, free service that lets you listen to any YouTube / Vimeo channels, playlists or user videos in podcast format.
@@ -7,7 +12,7 @@ Podcast applications have a rich functionality for content delivery - automatic 
 
 ## Architecture
 
-![Architecture](docs/architecture.png)
+![Architecture](docs/img/architecture.png)
 
 ## Building Docker images
 
