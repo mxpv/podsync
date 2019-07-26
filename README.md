@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.com/mxpv/podsync.svg?branch=master)](https://travis-ci.com/mxpv/podsync)
 [![Patreon](https://img.shields.io/badge/support-patreon-E6461A.svg)](https://www.patreon.com/podsync)
 
 Podsync - is a simple, free service that lets you listen to any YouTube / Vimeo channels, playlists or user videos in podcast format.
