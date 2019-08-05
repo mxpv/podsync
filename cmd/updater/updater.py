@@ -30,6 +30,9 @@ def get_updates(start, count, url, fmt, last_id=None, playlist=None):
     if not url:
         raise ValueError('Invalid resource URL %s' % url)
 
+    if playlist is None:
+        playlist = []
+
     end = start + count - 1
 
     opts = {

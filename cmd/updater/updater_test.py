@@ -14,23 +14,29 @@ class TestUpdater(unittest.TestCase):
         ]
         for kind in kinds:
             with self.subTest(kind):
-                feed, items, _ = updater.get_updates(1, 1, TEST_URL, kind)
-                self.assertIsNotNone(feed)
+                items, last_id, _ = updater.get_updates(1, 1, TEST_URL, kind)
                 self.assertIsNotNone(items)
+                self.assertIsNotNone(last_id)
 
     def test_get_change_list(self):
-        feed, items, last_id = updater.get_updates(1, 5, TEST_URL, 'worst[ext=mp4]')
+        items, last_id, _ = updater.get_updates(1, 5, TEST_URL, 'worst[ext=mp4]')
 
         self.assertEqual(len(items), 5)
         self.assertEqual(items[0]['ID'], last_id)
         test_last_id = items[2]['ID']
         self.assertIsNotNone(test_last_id)
 
-        feed, items, last_id = updater.get_updates(1, 5, TEST_URL, 'worst[ext=mp4]', test_last_id)
+        items, last_id, _ = updater.get_updates(1, 5, TEST_URL, 'worst[ext=mp4]', test_last_id)
         self.assertEqual(len(items), 2)
         self.assertEqual(items[0]['ID'], last_id)
 
     def test_last_id(self):
-        feed, items, last_id = updater.get_updates(1, 1, TEST_URL, 'worstaudio')
+        items, last_id, _ = updater.get_updates(1, 1, TEST_URL, 'worstaudio')
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0]['ID'], last_id)
+
+    def test_get_title_issue33(self):
+        url = 'https://youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA'
+        items, _, _ = updater.get_updates(1, 1, url, 'best[ext=mp4]')
+        for item in items:
+            self.assertNotEqual('_', item.get('Title'))
