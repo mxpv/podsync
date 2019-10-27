@@ -146,7 +146,7 @@ func (yt *YouTubeBuilder) GetVideoCount(feed *model.Feed) (uint64, error) {
 		// Cost: 3 units
 		if channel, err := yt.listChannels(feed.LinkType, feed.ItemID, "id,statistics"); err != nil {
 			return 0, err
-		} else {
+		} else { // nolint:golint
 			return channel.Statistics.VideoCount, nil
 		}
 
@@ -154,7 +154,7 @@ func (yt *YouTubeBuilder) GetVideoCount(feed *model.Feed) (uint64, error) {
 		// Cost: 3 units
 		if playlist, err := yt.listPlaylists(feed.ItemID, "", "id,contentDetails"); err != nil {
 			return 0, err
-		} else {
+		} else { // nolint:golint
 			return uint64(playlist.ContentDetails.ItemCount), nil
 		}
 
@@ -197,7 +197,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (string, error) {
 
 		if date, err := yt.parseDate(channel.Snippet.PublishedAt); err != nil {
 			return "", err
-		} else {
+		} else { // nolint:golint
 			pubDate = date
 		}
 
@@ -221,7 +221,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (string, error) {
 
 		if date, err := yt.parseDate(playlist.Snippet.PublishedAt); err != nil {
 			return "", err
-		} else {
+		} else { // nolint:golint
 			pubDate = date
 		}
 

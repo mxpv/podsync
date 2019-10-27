@@ -1,15 +1,20 @@
 linters:
-  presets:
-    - bugs
+  enable:
+    - structcheck
+    - varcheck
+    - staticcheck
+    - unconvert
+    - gofmt
+    - goimports
+    - golint
+    - ineffassign
+    - vet
     - unused
-    - format
-    - style
-    - complexity
-    - performance
+    - misspell
   disable:
     - errcheck
-    - gochecknoglobals
-    - lll
-issues:
-  exclude:
-    - if block ends with a return statement, so drop this else and outdent its block
+
+run:
+  skip-dirs:
+    - bin
+    - docs
