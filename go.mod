@@ -3,6 +3,7 @@ module github.com/mxpv/podsync
 require (
 	cloud.google.com/go v0.25.0 // indirect
 	github.com/BrianHicks/finch v0.0.0-20140409222414-419bd73c29ec
+	github.com/BurntSushi/toml v0.3.1
 	github.com/GoogleCloudPlatform/cloudsql-proxy v0.0.0-20170929212804-61590edac4c7
 	github.com/aws/aws-sdk-go v1.15.81
 	github.com/boj/redistore v0.0.0-20160128113310-fc113767cd6b // indirect
@@ -13,7 +14,6 @@ require (
 	github.com/gin-contrib/gzip v0.0.1
 	github.com/gin-contrib/sessions v0.0.0-20170731012558-a71ea9167c61
 	github.com/gin-gonic/gin v1.3.0
-	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-pg/pg v6.14.2+incompatible
 	github.com/golang/mock v1.2.0
 	github.com/gorilla/sessions v1.1.1 // indirect
@@ -38,3 +38,5 @@ require (
 	google.golang.org/appengine v1.1.0 // indirect
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
 )
+
+go 1.13
