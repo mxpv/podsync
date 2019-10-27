@@ -11,7 +11,6 @@ import (
 
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
-	"github.com/mxpv/podsync/pkg/queue"
 )
 
 type Builder interface {
@@ -26,18 +25,13 @@ type storage interface {
 	Downgrade(userID string, featureLevel int) ([]string, error)
 }
 
-type Sender interface {
-	Add(item *queue.Item)
-}
-
 type Service struct {
 	generator IDGen
 	storage   storage
 	builders  map[api.Provider]Builder
-	sender    Sender
 }
 
-func NewFeedService(db storage, sender Sender, builders map[api.Provider]Builder) (*Service, error) {
+func NewFeedService(db storage, builders map[api.Provider]Builder) (*Service, error) {
 	idGen, err := NewIDGen()
 	if err != nil {
 		return nil, err
@@ -47,7 +41,6 @@ func NewFeedService(db storage, sender Sender, builders map[api.Provider]Builder
 		generator: idGen,
 		storage:   db,
 		builders:  builders,
-		sender:    sender,
 	}
 
 	return svc, nil
@@ -150,20 +143,6 @@ func (s *Service) BuildFeed(hashID string) ([]byte, error) {
 		logger.WithError(err).Error("failed to query feed from dynamodb")
 		return nil, err
 	}
-
-	// Submit to SQS for background update
-	item := &queue.Item{
-		ID:       feed.HashID,
-		URL:      feed.ItemURL,
-		Start:    1,
-		Count:    feed.PageSize,
-		LastID:   feed.LastID,
-		LinkType: feed.LinkType,
-		Format:   string(feed.Format),
-		Quality:  string(feed.Quality),
-	}
-
-	s.sender.Add(item)
 
 	// Output the feed
 

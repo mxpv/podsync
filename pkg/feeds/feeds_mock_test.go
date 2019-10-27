@@ -7,7 +7,6 @@ package feeds
 import (
 	gomock "github.com/golang/mock/gomock"
 	model "github.com/mxpv/podsync/pkg/model"
-	queue "github.com/mxpv/podsync/pkg/queue"
 	reflect "reflect"
 )
 
@@ -142,39 +141,4 @@ func (m *Mockstorage) Downgrade(userID string, featureLevel int) ([]string, erro
 func (mr *MockstorageMockRecorder) Downgrade(userID, featureLevel interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Downgrade", reflect.TypeOf((*Mockstorage)(nil).Downgrade), userID, featureLevel)
-}
-
-// MockSender is a mock of Sender interface
-type MockSender struct {
-	ctrl     *gomock.Controller
-	recorder *MockSenderMockRecorder
-}
-
-// MockSenderMockRecorder is the mock recorder for MockSender
-type MockSenderMockRecorder struct {
-	mock *MockSender
-}
-
-// NewMockSender creates a new mock instance
-func NewMockSender(ctrl *gomock.Controller) *MockSender {
-	mock := &MockSender{ctrl: ctrl}
-	mock.recorder = &MockSenderMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockSender) EXPECT() *MockSenderMockRecorder {
-	return m.recorder
-}
-
-// Add mocks base method
-func (m *MockSender) Add(item *queue.Item) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Add", item)
-}
-
-// Add indicates an expected call of Add
-func (mr *MockSenderMockRecorder) Add(item interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockSender)(nil).Add), item)
 }

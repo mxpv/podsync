@@ -11,7 +11,6 @@ import (
 
 	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/model"
-	"github.com/mxpv/podsync/pkg/queue"
 )
 
 var feed = &model.Feed{
@@ -109,19 +108,7 @@ func TestService_BuildFeed(t *testing.T) {
 	stor := NewMockstorage(ctrl)
 	stor.EXPECT().GetFeed(feed.HashID).Times(1).Return(feed, nil)
 
-	q := NewMockSender(ctrl)
-	q.EXPECT().Add(gomock.Eq(&queue.Item{
-		ID:       feed.HashID,
-		URL:      feed.ItemURL,
-		Start:    1,
-		Count:    feed.PageSize,
-		LastID:   feed.LastID,
-		LinkType: feed.LinkType,
-		Format:   string(feed.Format),
-		Quality:  string(feed.Quality),
-	})).Times(1)
-
-	s := Service{storage: stor, sender: q}
+	s := Service{storage: stor}
 
 	_, err := s.BuildFeed(feed.HashID)
 	require.NoError(t, err)
