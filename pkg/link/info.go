@@ -1,0 +1,24 @@
+package link
+
+type Type string
+
+const (
+	TypeChannel  = Type("channel")
+	TypePlaylist = Type("playlist")
+	TypeUser     = Type("user")
+	TypeGroup    = Type("group")
+)
+
+type Provider string
+
+const (
+	ProviderYoutube = Provider("youtube")
+	ProviderVimeo   = Provider("vimeo")
+)
+
+// Info represents data extracted from URL
+type Info struct {
+	LinkType Type     // Either group, channel or user
+	Provider Provider // Youtube or Vimeo
+	ItemID   string
+}

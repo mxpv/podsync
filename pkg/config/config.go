@@ -7,6 +7,29 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Quality to use when downloading episodes
+type Quality string
+
+const (
+	QualityHigh = Quality("high")
+	QualityLow  = Quality("low")
+)
+
+// Format to convert episode when downloading episodes
+type Format string
+
+const (
+	FormatAudio = Format("audio")
+	FormatVideo = Format("video")
+)
+
+const (
+	DefaultFormat       = FormatVideo
+	DefaultQuality      = QualityHigh
+	DefaultPageSize     = 50
+	DefaultUpdatePeriod = 24 * time.Hour
+)
+
 // Feed is a configuration for a feed
 type Feed struct {
 	// URL is a full URL of the field
@@ -19,6 +42,12 @@ type Feed struct {
 	// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 	// NOTE: too often update check might drain your API token.
 	UpdatePeriod Duration `toml:"update_period"`
+	// Quality to use for this feed
+	Quality Quality `toml:"quality"`
+	// Format to use for this feed
+	Format Format `toml:"format"`
+	// Custom image to use
+	CoverArt string `toml:"cover_art"`
 }
 
 type Tokens struct {
@@ -30,14 +59,20 @@ type Tokens struct {
 	Vimeo string `toml:"vimeo"`
 }
 
-type Config struct {
-	// DataDir is a path to a directory to keep XML feeds and downloaded episodes
-	DataDir string `toml:"data_dir"`
+type Server struct {
 	// Port is a server port to listen to
 	Port int `toml:"port"`
+	// DataDir is a path to a directory to keep XML feeds and downloaded episodes,
+	// that will be available to user via web server for download.
+	DataDir string `toml:"data_dir"`
+}
+
+type Config struct {
+	// Server is the web server configuration
+	Server Server `toml:"server"`
 	// Feeds is a list of feeds to host by this app.
 	// ID will be used as feed ID in http://podsync.net/{FEED_ID}.xml
-	Feeds map[string]Feed
+	Feeds map[string]*Feed
 	// Tokens is API keys to use to access YouTube/Vimeo APIs.
 	Tokens Tokens `toml:"tokens"`
 }
@@ -47,7 +82,26 @@ func LoadConfig(path string) (*Config, error) {
 	config := Config{}
 	_, err := toml.DecodeFile(path, &config)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to load config file %q", path)
+		return nil, errors.Wrap(err, "failed to load config file")
+	}
+
+	// Apply defaults
+	for _, feed := range config.Feeds {
+		if feed.UpdatePeriod.Duration == 0 {
+			feed.UpdatePeriod.Duration = DefaultUpdatePeriod
+		}
+
+		if feed.Quality == "" {
+			feed.Quality = DefaultQuality
+		}
+
+		if feed.Format == "" {
+			feed.Format = DefaultFormat
+		}
+
+		if feed.PageSize == 0 {
+			feed.PageSize = DefaultPageSize
+		}
 	}
 
 	return &config, nil

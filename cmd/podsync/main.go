@@ -47,14 +47,16 @@ func main() {
 	}
 
 	// Create web server
-	if cfg.Port == 0 {
-		log.Debug("using default port 8080")
-		cfg.Port = 8080
+	port := cfg.Server.Port
+	if port == 0 {
+		port = 8080
 	}
 
 	srv := http.Server{
-		Addr: fmt.Sprintf(":%d", cfg.Port),
+		Addr: fmt.Sprintf(":%d", port),
 	}
+
+	log.Debugf("using address %s", srv.Addr)
 
 	// Run listener
 	go func() {

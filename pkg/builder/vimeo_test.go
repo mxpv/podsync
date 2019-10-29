@@ -1,4 +1,4 @@
-package builders
+package builder
 
 import (
 	"context"
@@ -7,8 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/mxpv/podsync/pkg/api"
-	"github.com/mxpv/podsync/pkg/model"
+	"github.com/mxpv/podsync/pkg/config"
 )
 
 var (
@@ -23,8 +22,8 @@ func TestQueryVimeoChannel(t *testing.T) {
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
-	podcast := &model.Feed{ItemID: "staffpicks", Quality: api.QualityHigh}
-	err = builder.queryChannel(podcast)
+	podcast := &Feed{ItemID: "staffpicks"}
+	err = builder.queryChannel(podcast, &config.Feed{Quality: config.QualityHigh})
 	require.NoError(t, err)
 
 	require.Equal(t, "https://vimeo.com/channels/staffpicks", podcast.ItemURL)
@@ -42,8 +41,8 @@ func TestQueryVimeoGroup(t *testing.T) {
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
-	podcast := &model.Feed{ItemID: "motion", Quality: api.QualityHigh}
-	err = builder.queryGroup(podcast)
+	podcast := &Feed{ItemID: "motion"}
+	err = builder.queryGroup(podcast, &config.Feed{Quality: config.QualityHigh})
 	require.NoError(t, err)
 
 	require.Equal(t, "https://vimeo.com/groups/motion", podcast.ItemURL)
@@ -61,8 +60,8 @@ func TestQueryVimeoUser(t *testing.T) {
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
-	podcast := &model.Feed{ItemID: "motionarray", Quality: api.QualityHigh}
-	err = builder.queryUser(podcast)
+	podcast := &Feed{ItemID: "motionarray"}
+	err = builder.queryUser(podcast, &config.Feed{Quality: config.QualityHigh})
 	require.NoError(t, err)
 
 	require.Equal(t, "https://vimeo.com/motionarray", podcast.ItemURL)
@@ -79,9 +78,9 @@ func TestQueryVimeoVideos(t *testing.T) {
 	builder, err := NewVimeoBuilder(context.Background(), vimeoKey)
 	require.NoError(t, err)
 
-	feed := &model.Feed{ItemID: "staffpicks"}
+	feed := &Feed{ItemID: "staffpicks"}
 
-	err = builder.queryVideos(builder.client.Channels.ListVideo, feed)
+	err = builder.queryVideos(builder.client.Channels.ListVideo, feed, &config.Feed{Quality: config.QualityHigh})
 	require.NoError(t, err)
 
 	require.Equal(t, vimeoDefaultPageSize, len(feed.Episodes))

@@ -1,4 +1,4 @@
-package builders
+package builder
 
 import (
 	"fmt"
@@ -13,7 +13,8 @@ import (
 	"google.golang.org/api/youtube/v3"
 
 	"github.com/mxpv/podsync/pkg/api"
-	"github.com/mxpv/podsync/pkg/model"
+	"github.com/mxpv/podsync/pkg/config"
+	"github.com/mxpv/podsync/pkg/link"
 )
 
 const (
@@ -37,13 +38,13 @@ type YouTubeBuilder struct {
 
 // Cost: 5 units (call method: 1, snippet: 2, contentDetails: 2)
 // See https://developers.google.com/youtube/v3/docs/channels/list#part
-func (yt *YouTubeBuilder) listChannels(linkType api.LinkType, id string, parts string) (*youtube.Channel, error) {
+func (yt *YouTubeBuilder) listChannels(linkType link.Type, id string, parts string) (*youtube.Channel, error) {
 	req := yt.client.Channels.List(parts)
 
 	switch linkType {
-	case api.LinkTypeChannel:
+	case link.TypeChannel:
 		req = req.Id(id)
-	case api.LinkTypeUser:
+	case link.TypeUser:
 		req = req.ForUsername(id)
 	default:
 		return nil, errors.New("unsupported link type")
@@ -111,7 +112,7 @@ func (yt *YouTubeBuilder) parseDate(s string) (time.Time, error) {
 	return date, nil
 }
 
-func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, quality api.Quality, videoID string) string {
+func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, quality config.Quality, videoID string) string {
 	if snippet == nil {
 		if videoID != "" {
 			return fmt.Sprintf("https://img.youtube.com/vi/%s/default.jpg", videoID)
@@ -123,7 +124,7 @@ func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, qua
 
 	// Use high resolution thumbnails for high quality mode
 	// https://github.com/mxpv/Podsync/issues/14
-	if quality == api.QualityHigh {
+	if quality == config.QualityHigh {
 		if snippet.Maxres != nil {
 			return snippet.Maxres.Url
 		}
@@ -140,19 +141,19 @@ func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, qua
 	return snippet.Default.Url
 }
 
-func (yt *YouTubeBuilder) GetVideoCount(feed *model.Feed) (uint64, error) {
-	switch feed.LinkType {
-	case api.LinkTypeChannel, api.LinkTypeUser:
+func (yt *YouTubeBuilder) GetVideoCount(info *link.Info) (uint64, error) {
+	switch info.LinkType {
+	case link.TypeChannel, link.TypeUser:
 		// Cost: 3 units
-		if channel, err := yt.listChannels(feed.LinkType, feed.ItemID, "id,statistics"); err != nil {
+		if channel, err := yt.listChannels(info.LinkType, info.ItemID, "id,statistics"); err != nil {
 			return 0, err
 		} else { // nolint:golint
 			return channel.Statistics.VideoCount, nil
 		}
 
-	case api.LinkTypePlaylist:
+	case link.TypePlaylist:
 		// Cost: 3 units
-		if playlist, err := yt.listPlaylists(feed.ItemID, "", "id,contentDetails"); err != nil {
+		if playlist, err := yt.listPlaylists(info.ItemID, "", "id,contentDetails"); err != nil {
 			return 0, err
 		} else { // nolint:golint
 			return uint64(playlist.ContentDetails.ItemCount), nil
@@ -163,104 +164,94 @@ func (yt *YouTubeBuilder) GetVideoCount(feed *model.Feed) (uint64, error) {
 	}
 }
 
-func (yt *YouTubeBuilder) queryFeed(feed *model.Feed) (string, error) {
+func (yt *YouTubeBuilder) queryFeed(info *link.Info, config *config.Feed) (*Feed, error) {
 	var (
-		title      string
-		desc       string
-		link       string // URL link to YouTube resource
-		itemID     string // ID of YouTube's channel, user or playlist
-		author     string
-		pubDate    time.Time
 		thumbnails *youtube.ThumbnailDetails
 	)
 
-	switch feed.LinkType {
-	case api.LinkTypeChannel, api.LinkTypeUser:
+	feed := Feed{
+		ItemID:    info.ItemID,
+		Provider:  info.Provider,
+		LinkType:  info.LinkType,
+		UpdatedAt: time.Now().UTC(),
+	}
+
+	switch info.LinkType {
+	case link.TypeChannel, link.TypeUser:
 		// Cost: 5 units for channel or user
-		channel, err := yt.listChannels(feed.LinkType, feed.ItemID, "id,snippet,contentDetails")
+		channel, err := yt.listChannels(info.LinkType, info.ItemID, "id,snippet,contentDetails")
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		title = channel.Snippet.Title
-		desc = channel.Snippet.Description
+		feed.Title = channel.Snippet.Title
+		feed.Description = channel.Snippet.Description
 
 		if channel.Kind == "youtube#channel" {
-			link = fmt.Sprintf("https://youtube.com/channel/%s", channel.Id)
-			author = title
+			feed.ItemURL = fmt.Sprintf("https://youtube.com/channel/%s", channel.Id)
+			feed.Author = "<notfound>"
 		} else {
-			link = fmt.Sprintf("https://youtube.com/user/%s", channel.Snippet.CustomUrl)
-			author = channel.Snippet.CustomUrl
+			feed.ItemURL = fmt.Sprintf("https://youtube.com/user/%s", channel.Snippet.CustomUrl)
+			feed.Author = channel.Snippet.CustomUrl
 		}
 
-		itemID = channel.ContentDetails.RelatedPlaylists.Uploads
+		feed.ItemID = channel.ContentDetails.RelatedPlaylists.Uploads
 
 		if date, err := yt.parseDate(channel.Snippet.PublishedAt); err != nil {
-			return "", err
+			return nil, err
 		} else { // nolint:golint
-			pubDate = date
+			feed.PubDate = date
 		}
 
 		thumbnails = channel.Snippet.Thumbnails
 
-	case api.LinkTypePlaylist:
+	case link.TypePlaylist:
 		// Cost: 3 units for playlist
-		playlist, err := yt.listPlaylists(feed.ItemID, "", "id,snippet")
+		playlist, err := yt.listPlaylists(info.ItemID, "", "id,snippet")
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		title = fmt.Sprintf("%s: %s", playlist.Snippet.ChannelTitle, playlist.Snippet.Title)
-		desc = playlist.Snippet.Description
+		feed.Title = fmt.Sprintf("%s: %s", playlist.Snippet.ChannelTitle, playlist.Snippet.Title)
+		feed.Description = playlist.Snippet.Description
 
-		link = fmt.Sprintf("https://youtube.com/playlist?list=%s", playlist.Id)
+		feed.ItemURL = fmt.Sprintf("https://youtube.com/playlist?list=%s", playlist.Id)
+		feed.ItemID = playlist.Id
 
-		itemID = playlist.Id
-
-		author = title
+		feed.Author = "<notfound>"
 
 		if date, err := yt.parseDate(playlist.Snippet.PublishedAt); err != nil {
-			return "", err
+			return nil, err
 		} else { // nolint:golint
-			pubDate = date
+			feed.PubDate = date
 		}
 
 		thumbnails = playlist.Snippet.Thumbnails
 
 	default:
-		return "", errors.New("unsupported link format")
+		return nil, errors.New("unsupported link format")
 	}
 
 	// Apply customizations and default values
 
-	if desc == "" {
-		desc = fmt.Sprintf("%s (%s)", title, pubDate)
+	if feed.Description == "" {
+		feed.Description = fmt.Sprintf("%s (%s)", feed.Title, feed.PubDate)
 	}
 
-	var image string
-	if feed.CoverArt != "" {
-		image = feed.CoverArt
+	if config.CoverArt != "" {
+		feed.CoverArt = config.CoverArt
 	} else {
-		image = yt.selectThumbnail(thumbnails, feed.Quality, "")
+		feed.CoverArt = yt.selectThumbnail(thumbnails, config.Quality, "")
 	}
 
-	// New interface
-	feed.Title = title
-	feed.Description = desc
-	feed.Author = author
-	feed.ItemURL = link
-	feed.UpdatedAt = time.Now().UTC()
-	feed.PubDate = pubDate
-	feed.CoverArt = image
-
-	return itemID, nil
+	return &feed, nil
 }
 
 // Video size information requires 1 additional call for each video (1 feed = 50 videos = 50 calls),
 // which is too expensive, so get approximated size depending on duration and definition params
-func (yt *YouTubeBuilder) getSize(duration int64, feed *model.Feed) int64 {
-	if feed.Format == api.FormatAudio {
-		if feed.Quality == api.QualityHigh {
+func (yt *YouTubeBuilder) getSize(duration int64, cfg *config.Feed) int64 {
+	if cfg.Format == config.FormatAudio {
+		if cfg.Quality == config.QualityHigh {
 			return highAudioBytesPerSecond * duration
 		}
 
@@ -269,7 +260,7 @@ func (yt *YouTubeBuilder) getSize(duration int64, feed *model.Feed) int64 {
 
 	// Video format
 
-	if feed.Quality == api.QualityHigh {
+	if cfg.Quality == config.QualityHigh {
 		return duration * hdBytesPerSecond
 	}
 
@@ -278,7 +269,7 @@ func (yt *YouTubeBuilder) getSize(duration int64, feed *model.Feed) int64 {
 
 // Cost: 5 units (call: 1, snippet: 2, contentDetails: 2)
 // See https://developers.google.com/youtube/v3/docs/videos/list#part
-func (yt *YouTubeBuilder) queryVideoDescriptions(playlist map[string]*youtube.PlaylistItemSnippet, feed *model.Feed) error {
+func (yt *YouTubeBuilder) queryVideoDescriptions(playlist map[string]*youtube.PlaylistItemSnippet, feed *Feed, cfg *config.Feed) error {
 	// Make the list of video ids
 	ids := make([]string, 0, len(playlist))
 	for _, s := range playlist {
@@ -295,7 +286,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(playlist map[string]*youtube.Pl
 			snippet  = video.Snippet
 			videoID  = video.Id
 			videoURL = fmt.Sprintf("https://youtube.com/watch?v=%s", video.Id)
-			image    = yt.selectThumbnail(snippet.Thumbnails, feed.Quality, videoID)
+			image    = yt.selectThumbnail(snippet.Thumbnails, cfg.Quality, videoID)
 		)
 
 		// Parse date added to playlist / publication date
@@ -326,10 +317,10 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(playlist map[string]*youtube.Pl
 
 		var (
 			order = strconv.FormatInt(playlistItem.Position, 10)
-			size  = yt.getSize(seconds, feed)
+			size  = yt.getSize(seconds, cfg)
 		)
 
-		feed.Episodes = append(feed.Episodes, &model.Item{
+		feed.Episodes = append(feed.Episodes, &Item{
 			ID:          video.Id,
 			Title:       snippet.Title,
 			Description: snippet.Description,
@@ -337,10 +328,8 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(playlist map[string]*youtube.Pl
 			Duration:    seconds,
 			Size:        size,
 			VideoURL:    videoURL,
-			PubDate:     model.Timestamp(pubDate),
-
-			// Need for sorting
-			Order: order,
+			PubDate:     pubDate,
+			Order:       order,
 		})
 	}
 
@@ -348,14 +337,14 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(playlist map[string]*youtube.Pl
 }
 
 // Cost: (3 units + 5 units) * X pages = 8 units per page
-func (yt *YouTubeBuilder) queryItems(itemID string, feed *model.Feed) error {
+func (yt *YouTubeBuilder) queryItems(feed *Feed, cfg *config.Feed) error {
 	var (
 		token string
 		count int
 	)
 
 	for {
-		items, pageToken, err := yt.listPlaylistItems(itemID, token)
+		items, pageToken, err := yt.listPlaylistItems(feed.ItemID, token)
 		if err != nil {
 			return err
 		}
@@ -374,35 +363,31 @@ func (yt *YouTubeBuilder) queryItems(itemID string, feed *model.Feed) error {
 		}
 
 		// Query video descriptions from the list of ids
-		if err := yt.queryVideoDescriptions(snippets, feed); err != nil {
+		if err := yt.queryVideoDescriptions(snippets, feed, cfg); err != nil {
 			return err
 		}
 
-		if count >= feed.PageSize || token == "" {
+		if count >= cfg.PageSize || token == "" {
 			return nil
 		}
 	}
 }
 
-func (yt *YouTubeBuilder) Build(feed *model.Feed) error {
-	feed.Episodes = []*model.Item{}
+func (yt *YouTubeBuilder) Build(cfg *config.Feed) (*Feed, error) {
+	info, err := link.Parse(cfg.URL)
+	if err != nil {
+		return nil, err
+	}
 
 	// Query general information about feed (title, description, lang, etc)
-	itemID, err := yt.queryFeed(feed)
+	feed, err := yt.queryFeed(&info, cfg)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	// Get video descriptions
-	if feed.PageSize == 0 {
-		feed.PageSize = maxYoutubeResults
+	if err := yt.queryItems(feed, cfg); err != nil {
+		return nil, err
 	}
-
-	if err := yt.queryItems(itemID, feed); err != nil {
-		return err
-	}
-
-	// New interface
 
 	sort.Slice(feed.Episodes, func(i, j int) bool {
 		item1, _ := strconv.Atoi(feed.Episodes[i].Order)
@@ -410,13 +395,7 @@ func (yt *YouTubeBuilder) Build(feed *model.Feed) error {
 		return item1 < item2
 	})
 
-	if len(feed.Episodes) > 0 {
-		feed.LastID = feed.Episodes[0].ID
-	} else {
-		feed.LastID = ""
-	}
-
-	return nil
+	return feed, nil
 }
 
 func NewYouTubeBuilder(key string) (*YouTubeBuilder, error) {

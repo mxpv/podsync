@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/mxpv/podsync/pkg/api"
+	"github.com/mxpv/podsync/pkg/link"
 	"github.com/mxpv/podsync/pkg/model"
 )
 
@@ -78,10 +79,12 @@ func (s *Service) CreateFeed(req *api.CreateFeedRequest, identity *api.Identity)
 }
 
 func (s *Service) makeFeed(req *api.CreateFeedRequest, identity *api.Identity) (*model.Feed, error) {
-	feed, err := parseURL(req.URL)
+	_, err := link.Parse(req.URL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create feed for URL: %s", req.URL)
 	}
+
+	feed := &model.Feed{}
 
 	now := time.Now().UTC()
 

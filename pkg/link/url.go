@@ -1,15 +1,13 @@
-package feeds
+package link
 
 import (
 	"net/url"
 	"strings"
 
-	"github.com/mxpv/podsync/pkg/api"
-	"github.com/mxpv/podsync/pkg/model"
 	"github.com/pkg/errors"
 )
 
-func parseURL(link string) (*model.Feed, error) {
+func Parse(link string) (Info, error) {
 	if !strings.HasPrefix(link, "http") {
 		link = "https://" + link
 	}
@@ -17,47 +15,47 @@ func parseURL(link string) (*model.Feed, error) {
 	parsed, err := url.Parse(link)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to parse url: %s", link)
-		return nil, err
+		return Info{}, err
 	}
 
-	feed := &model.Feed{}
+	info := Info{}
 
 	if strings.HasSuffix(parsed.Host, "youtube.com") {
 		kind, id, err := parseYoutubeURL(parsed)
 		if err != nil {
-			return nil, err
+			return Info{}, err
 		}
 
-		feed.Provider = api.ProviderYoutube
-		feed.LinkType = kind
-		feed.ItemID = id
+		info.Provider = ProviderYoutube
+		info.LinkType = kind
+		info.ItemID = id
 
-		return feed, nil
+		return info, nil
 	}
 
 	if strings.HasSuffix(parsed.Host, "vimeo.com") {
 		kind, id, err := parseVimeoURL(parsed)
 		if err != nil {
-			return nil, err
+			return Info{}, err
 		}
 
-		feed.Provider = api.ProviderVimeo
-		feed.LinkType = kind
-		feed.ItemID = id
+		info.Provider = ProviderVimeo
+		info.LinkType = kind
+		info.ItemID = id
 
-		return feed, nil
+		return info, nil
 	}
 
-	return nil, errors.New("unsupported URL host")
+	return Info{}, errors.New("unsupported URL host")
 }
 
-func parseYoutubeURL(parsed *url.URL) (api.LinkType, string, error) {
+func parseYoutubeURL(parsed *url.URL) (Type, string, error) {
 	path := parsed.EscapedPath()
 
 	// https://www.youtube.com/playlist?list=PLCB9F975ECF01953C
 	// https://www.youtube.com/watch?v=rbCbho7aLYw&list=PLMpEfaKcGjpWEgNtdnsvLX6LzQL0UC0EM
 	if strings.HasPrefix(path, "/playlist") || strings.HasPrefix(path, "/watch") {
-		kind := api.LinkTypePlaylist
+		kind := TypePlaylist
 
 		id := parsed.Query().Get("list")
 		if id != "" {
@@ -70,7 +68,7 @@ func parseYoutubeURL(parsed *url.URL) (api.LinkType, string, error) {
 	// - https://www.youtube.com/channel/UC5XPnUk8Vvv_pWslhwom6Og
 	// - https://www.youtube.com/channel/UCrlakW-ewUT8sOod6Wmzyow/videos
 	if strings.HasPrefix(path, "/channel") {
-		kind := api.LinkTypeChannel
+		kind := TypeChannel
 		parts := strings.Split(parsed.EscapedPath(), "/")
 		if len(parts) <= 2 {
 			return "", "", errors.New("invalid youtube channel link")
@@ -86,7 +84,7 @@ func parseYoutubeURL(parsed *url.URL) (api.LinkType, string, error) {
 
 	// - https://www.youtube.com/user/fxigr1
 	if strings.HasPrefix(path, "/user") {
-		kind := api.LinkTypeUser
+		kind := TypeUser
 
 		parts := strings.Split(parsed.EscapedPath(), "/")
 		if len(parts) <= 2 {
@@ -104,23 +102,23 @@ func parseYoutubeURL(parsed *url.URL) (api.LinkType, string, error) {
 	return "", "", errors.New("unsupported link format")
 }
 
-func parseVimeoURL(parsed *url.URL) (api.LinkType, string, error) {
+func parseVimeoURL(parsed *url.URL) (Type, string, error) {
 	parts := strings.Split(parsed.EscapedPath(), "/")
 	if len(parts) <= 1 {
 		return "", "", errors.New("invalid vimeo link path")
 	}
 
-	var kind api.LinkType
+	var kind Type
 	switch parts[1] {
 	case "groups":
-		kind = api.LinkTypeGroup
+		kind = TypeGroup
 	case "channels":
-		kind = api.LinkTypeChannel
+		kind = TypeChannel
 	default:
-		kind = api.LinkTypeUser
+		kind = TypeUser
 	}
 
-	if kind == api.LinkTypeGroup || kind == api.LinkTypeChannel {
+	if kind == TypeGroup || kind == TypeChannel {
 		if len(parts) <= 2 {
 			return "", "", errors.New("invalid channel link")
 		}
@@ -133,7 +131,7 @@ func parseVimeoURL(parsed *url.URL) (api.LinkType, string, error) {
 		return kind, id, nil
 	}
 
-	if kind == api.LinkTypeUser {
+	if kind == TypeUser {
 		id := parts[1]
 		if id == "" {
 			return "", "", errors.New("invalid id")
