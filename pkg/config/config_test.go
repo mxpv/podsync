@@ -61,6 +61,9 @@ data_dir = "test/data/"
 
 func TestApplyDefaults(t *testing.T) {
 	const file = `
+[server]
+data_dir = "/data"
+
 [feeds]
   [feeds.A]
   url = "https://youtube.com/watch?v=ygIUF678y40"

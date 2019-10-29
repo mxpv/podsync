@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 
 	"github.com/mxpv/podsync/pkg/model"
@@ -68,7 +69,31 @@ func LoadConfig(path string) (*Config, error) {
 
 	config.applyDefaults()
 
+	if err := config.validate(); err != nil {
+		return nil, err
+	}
+
 	return &config, nil
+}
+
+func (c *Config) validate() error {
+	var result *multierror.Error
+
+	if c.Server.DataDir == "" {
+		result = multierror.Append(result, errors.New("data directory is required"))
+	}
+
+	if len(c.Feeds) == 0 {
+		result = multierror.Append(result, errors.New("at least one feed must be speficied"))
+	}
+
+	for id, feed := range c.Feeds {
+		if feed.URL == "" {
+			result = multierror.Append(result, errors.Errorf("URL is required for %q", id))
+		}
+	}
+
+	return result.ErrorOrNil()
 }
 
 func (c *Config) applyDefaults() {

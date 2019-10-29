@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/jessevdk/go-flags"
 	log "github.com/sirupsen/logrus"
@@ -47,6 +48,48 @@ func main() {
 		log.WithError(err).Fatal("failed to load configuration file")
 	}
 
+	// Queue of feeds to update
+	updates := make(chan *config.Feed, 16)
+	defer close(updates)
+
+	// Run updater thread
+	updater, err := NewUpdater(cfg)
+	if err != nil {
+		log.WithError(err).Fatal("failed to create updater")
+	}
+
+	group.Go(func() error {
+		for {
+			select {
+			case feed := <-updates:
+				if err := updater.Update(ctx, feed); err != nil {
+					log.WithError(err).Errorf("failed to update feed: %s", feed.URL)
+				}
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
+	})
+
+	// Run wait goroutines for each feed configuration
+	for _, feed := range cfg.Feeds {
+		_feed := feed
+		group.Go(func() error {
+			timer := time.NewTicker(_feed.UpdatePeriod.Duration)
+			defer timer.Stop()
+
+			for {
+				select {
+				case <-timer.C:
+					updates <- _feed
+				case <-ctx.Done():
+					return ctx.Err()
+				}
+			}
+		})
+	}
+
+	// Run web server
 	srv := NewServer(cfg)
 
 	group.Go(func() error {
