@@ -10,9 +10,9 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 
-	"github.com/mxpv/podsync/pkg/api"
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/link"
+	"github.com/mxpv/podsync/pkg/model"
 )
 
 const (
@@ -23,25 +23,25 @@ type VimeoBuilder struct {
 	client *vimeo.Client
 }
 
-func (v *VimeoBuilder) selectImage(p *vimeo.Pictures, q config.Quality) string {
+func (v *VimeoBuilder) selectImage(p *vimeo.Pictures, q model.Quality) string {
 	if p == nil || len(p.Sizes) == 0 {
 		return ""
 	}
 
-	if q == config.QualityLow {
+	if q == model.QualityLow {
 		return p.Sizes[0].Link
 	}
 
 	return p.Sizes[len(p.Sizes)-1].Link
 }
 
-func (v *VimeoBuilder) queryChannel(feed *Feed, cfg *config.Feed) error {
+func (v *VimeoBuilder) queryChannel(feed *model.Feed) error {
 	channelID := feed.ItemID
 
 	ch, resp, err := v.client.Channels.Get(channelID)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return api.ErrNotFound
+			return ErrNotFound
 		}
 
 		return errors.Wrapf(err, "failed to query channel with id %q", channelID)
@@ -50,7 +50,7 @@ func (v *VimeoBuilder) queryChannel(feed *Feed, cfg *config.Feed) error {
 	feed.Title = ch.Name
 	feed.ItemURL = ch.Link
 	feed.Description = ch.Description
-	feed.CoverArt = v.selectImage(ch.Pictures, cfg.Quality)
+	feed.CoverArt = v.selectImage(ch.Pictures, feed.Quality)
 	feed.Author = ch.User.Name
 	feed.PubDate = ch.CreatedTime
 	feed.UpdatedAt = time.Now().UTC()
@@ -58,13 +58,13 @@ func (v *VimeoBuilder) queryChannel(feed *Feed, cfg *config.Feed) error {
 	return nil
 }
 
-func (v *VimeoBuilder) queryGroup(feed *Feed, cfg *config.Feed) error {
+func (v *VimeoBuilder) queryGroup(feed *model.Feed) error {
 	groupID := feed.ItemID
 
 	gr, resp, err := v.client.Groups.Get(groupID)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return api.ErrNotFound
+			return ErrNotFound
 		}
 
 		return errors.Wrapf(err, "failed to query group with id %q", groupID)
@@ -73,7 +73,7 @@ func (v *VimeoBuilder) queryGroup(feed *Feed, cfg *config.Feed) error {
 	feed.Title = gr.Name
 	feed.ItemURL = gr.Link
 	feed.Description = gr.Description
-	feed.CoverArt = v.selectImage(gr.Pictures, cfg.Quality)
+	feed.CoverArt = v.selectImage(gr.Pictures, feed.Quality)
 	feed.Author = gr.User.Name
 	feed.PubDate = gr.CreatedTime
 	feed.UpdatedAt = time.Now().UTC()
@@ -81,13 +81,13 @@ func (v *VimeoBuilder) queryGroup(feed *Feed, cfg *config.Feed) error {
 	return nil
 }
 
-func (v *VimeoBuilder) queryUser(feed *Feed, cfg *config.Feed) error {
+func (v *VimeoBuilder) queryUser(feed *model.Feed) error {
 	userID := feed.ItemID
 
 	user, resp, err := v.client.Users.Get(userID)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return api.ErrNotFound
+			return ErrNotFound
 		}
 
 		return errors.Wrapf(err, "failed to query user with id %q", userID)
@@ -96,7 +96,7 @@ func (v *VimeoBuilder) queryUser(feed *Feed, cfg *config.Feed) error {
 	feed.Title = user.Name
 	feed.ItemURL = user.Link
 	feed.Description = user.Bio
-	feed.CoverArt = v.selectImage(user.Pictures, cfg.Quality)
+	feed.CoverArt = v.selectImage(user.Pictures, feed.Quality)
 	feed.Author = user.Name
 	feed.PubDate = user.CreatedTime
 	feed.UpdatedAt = time.Now().UTC()
@@ -111,7 +111,7 @@ func (v *VimeoBuilder) getVideoSize(video *vimeo.Video) int64 {
 
 type getVideosFunc func(string, ...vimeo.CallOption) ([]*vimeo.Video, *vimeo.Response, error)
 
-func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, feed *Feed, cfg *config.Feed) error {
+func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, feed *model.Feed) error {
 	var (
 		page  = 1
 		added = 0
@@ -133,10 +133,10 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, feed *Feed, cfg *con
 				videoURL = video.Link
 				duration = int64(video.Duration)
 				size     = v.getVideoSize(video)
-				image    = v.selectImage(video.Pictures, cfg.Quality)
+				image    = v.selectImage(video.Pictures, feed.Quality)
 			)
 
-			feed.Episodes = append(feed.Episodes, &Item{
+			feed.Episodes = append(feed.Episodes, &model.Episode{
 				ID:          videoID,
 				Title:       video.Name,
 				Description: video.Description,
@@ -150,7 +150,7 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, feed *Feed, cfg *con
 			added++
 		}
 
-		if added >= cfg.PageSize || response.NextPage == "" {
+		if added >= feed.PageSize || response.NextPage == "" {
 			return nil
 		}
 
@@ -158,20 +158,28 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, feed *Feed, cfg *con
 	}
 }
 
-func (v *VimeoBuilder) Build(cfg *config.Feed) (*Feed, error) {
+func (v *VimeoBuilder) Build(cfg *config.Feed) (*model.Feed, error) {
 	info, err := link.Parse(cfg.URL)
 	if err != nil {
 		return nil, err
 	}
 
-	feed := &Feed{}
+	feed := &model.Feed{
+		ItemID:    info.ItemID,
+		Provider:  info.Provider,
+		LinkType:  info.LinkType,
+		Format:    cfg.Format,
+		Quality:   cfg.Quality,
+		PageSize:  cfg.PageSize,
+		UpdatedAt: time.Now().UTC(),
+	}
 
 	if info.LinkType == link.TypeChannel {
-		if err := v.queryChannel(feed, cfg); err != nil {
+		if err := v.queryChannel(feed); err != nil {
 			return nil, err
 		}
 
-		if err := v.queryVideos(v.client.Channels.ListVideo, feed, cfg); err != nil {
+		if err := v.queryVideos(v.client.Channels.ListVideo, feed); err != nil {
 			return nil, err
 		}
 
@@ -179,11 +187,11 @@ func (v *VimeoBuilder) Build(cfg *config.Feed) (*Feed, error) {
 	}
 
 	if info.LinkType == link.TypeGroup {
-		if err := v.queryGroup(feed, cfg); err != nil {
+		if err := v.queryGroup(feed); err != nil {
 			return nil, err
 		}
 
-		if err := v.queryVideos(v.client.Groups.ListVideo, feed, cfg); err != nil {
+		if err := v.queryVideos(v.client.Groups.ListVideo, feed); err != nil {
 			return nil, err
 		}
 
@@ -191,11 +199,11 @@ func (v *VimeoBuilder) Build(cfg *config.Feed) (*Feed, error) {
 	}
 
 	if info.LinkType == link.TypeUser {
-		if err := v.queryUser(feed, cfg); err != nil {
+		if err := v.queryUser(feed); err != nil {
 			return nil, err
 		}
 
-		if err := v.queryVideos(v.client.Users.ListVideo, feed, cfg); err != nil {
+		if err := v.queryVideos(v.client.Users.ListVideo, feed); err != nil {
 			return nil, err
 		}
 
@@ -206,6 +214,10 @@ func (v *VimeoBuilder) Build(cfg *config.Feed) (*Feed, error) {
 }
 
 func NewVimeoBuilder(ctx context.Context, token string) (*VimeoBuilder, error) {
+	if token == "" {
+		return nil, errors.New("empty Vimeo access token")
+	}
+
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	tc := oauth2.NewClient(ctx, ts)
 

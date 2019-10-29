@@ -1,4 +1,4 @@
-package web
+package main
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ type Server struct {
 	http.Server
 }
 
-func New(cfg *config.Config) *Server {
+func NewServer(cfg *config.Config) *Server {
 	port := cfg.Server.Port
 	if port == 0 {
 		port = 8080

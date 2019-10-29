@@ -1,4 +1,4 @@
-package builder
+package model
 
 import (
 	"time"
@@ -6,7 +6,23 @@ import (
 	"github.com/mxpv/podsync/pkg/link"
 )
 
-type Item struct {
+// Quality to use when downloading episodes
+type Quality string
+
+const (
+	QualityHigh = Quality("high")
+	QualityLow  = Quality("low")
+)
+
+// Format to convert episode when downloading episodes
+type Format string
+
+const (
+	FormatAudio = Format("audio")
+	FormatVideo = Format("video")
+)
+
+type Episode struct {
 	// ID of episode
 	ID          string
 	Title       string
@@ -27,6 +43,9 @@ type Feed struct {
 	CreatedAt      time.Time
 	LastAccess     time.Time
 	ExpirationTime time.Time
+	Format         Format
+	Quality        Quality
+	PageSize       int
 	CoverArt       string
 	Explicit       bool
 	Language       string // ISO 639
@@ -34,7 +53,7 @@ type Feed struct {
 	Description    string
 	PubDate        time.Time
 	Author         string
-	ItemURL        string  // Platform specific URL
-	Episodes       []*Item // Array of episodes, serialized as gziped EpisodesData in DynamoDB
+	ItemURL        string     // Platform specific URL
+	Episodes       []*Episode // Array of episodes, serialized as gziped EpisodesData in DynamoDB
 	UpdatedAt      time.Time
 }

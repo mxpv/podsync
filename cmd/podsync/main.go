@@ -11,7 +11,6 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/mxpv/podsync/pkg/config"
-	"github.com/mxpv/podsync/pkg/web"
 )
 
 type Opts struct {
@@ -48,7 +47,7 @@ func main() {
 		log.WithError(err).Fatal("failed to load configuration file")
 	}
 
-	srv := web.New(cfg)
+	srv := NewServer(cfg)
 
 	group.Go(func() error {
 		log.Infof("running listener at %s", srv.Addr)

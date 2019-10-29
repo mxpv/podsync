@@ -8,13 +8,8 @@ import (
 )
 
 func Parse(link string) (Info, error) {
-	if !strings.HasPrefix(link, "http") {
-		link = "https://" + link
-	}
-
-	parsed, err := url.Parse(link)
+	parsed, err := parseURL(link)
 	if err != nil {
-		err = errors.Wrapf(err, "failed to parse url: %s", link)
 		return Info{}, err
 	}
 
@@ -47,6 +42,19 @@ func Parse(link string) (Info, error) {
 	}
 
 	return Info{}, errors.New("unsupported URL host")
+}
+
+func parseURL(link string) (*url.URL, error) {
+	if !strings.HasPrefix(link, "http") {
+		link = "https://" + link
+	}
+
+	parsed, err := url.Parse(link)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to parse url: %s", link)
+	}
+
+	return parsed, nil
 }
 
 func parseYoutubeURL(parsed *url.URL) (Type, string, error) {

@@ -5,27 +5,13 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
-)
 
-// Quality to use when downloading episodes
-type Quality string
-
-const (
-	QualityHigh = Quality("high")
-	QualityLow  = Quality("low")
-)
-
-// Format to convert episode when downloading episodes
-type Format string
-
-const (
-	FormatAudio = Format("audio")
-	FormatVideo = Format("video")
+	"github.com/mxpv/podsync/pkg/model"
 )
 
 const (
-	DefaultFormat       = FormatVideo
-	DefaultQuality      = QualityHigh
+	DefaultFormat       = model.FormatVideo
+	DefaultQuality      = model.QualityHigh
 	DefaultPageSize     = 50
 	DefaultUpdatePeriod = 24 * time.Hour
 )
@@ -43,9 +29,9 @@ type Feed struct {
 	// NOTE: too often update check might drain your API token.
 	UpdatePeriod Duration `toml:"update_period"`
 	// Quality to use for this feed
-	Quality Quality `toml:"quality"`
+	Quality model.Quality `toml:"quality"`
 	// Format to use for this feed
-	Format Format `toml:"format"`
+	Format model.Format `toml:"format"`
 	// Custom image to use
 	CoverArt string `toml:"cover_art"`
 }
@@ -60,6 +46,8 @@ type Tokens struct {
 }
 
 type Server struct {
+	// Hostname to use for download links
+	Hostname string `toml:"name"`
 	// Port is a server port to listen to
 	Port int `toml:"port"`
 	// DataDir is a path to a directory to keep XML feeds and downloaded episodes,
@@ -86,6 +74,10 @@ func LoadConfig(path string) (*Config, error) {
 	}
 
 	// Apply defaults
+	if config.Server.Hostname == "" {
+		config.Server.Hostname = "http://localhost"
+	}
+
 	for _, feed := range config.Feeds {
 		if feed.UpdatePeriod.Duration == 0 {
 			feed.UpdatePeriod.Duration = DefaultUpdatePeriod
