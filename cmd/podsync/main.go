@@ -2,16 +2,16 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/jessevdk/go-flags"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/mxpv/podsync/pkg/config"
+	"github.com/mxpv/podsync/pkg/web"
 )
 
 type Opts struct {
@@ -27,6 +27,8 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	group, ctx := errgroup.WithContext(ctx)
 
 	// Parse args
 	opts := Opts{}
@@ -46,32 +48,35 @@ func main() {
 		log.WithError(err).Fatal("failed to load configuration file")
 	}
 
-	// Create web server
-	port := cfg.Server.Port
-	if port == 0 {
-		port = 8080
-	}
+	srv := web.New(cfg)
 
-	srv := http.Server{
-		Addr: fmt.Sprintf(":%d", port),
-	}
-
-	log.Debugf("using address %s", srv.Addr)
-
-	// Run listener
-	go func() {
+	group.Go(func() error {
 		log.Infof("running listener at %s", srv.Addr)
-		if err := srv.ListenAndServe(); err != nil {
-			log.WithError(err).Error("failed to listen")
+		return srv.ListenAndServe()
+	})
+
+	group.Go(func() error {
+		// Shutdown web server
+		defer func() {
+			log.Info("shutting down web server")
+			if err := srv.Shutdown(ctx); err != nil {
+				log.WithError(err).Error("server shutdown failed")
+			}
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-stop:
+				cancel()
+				return nil
+			}
 		}
-	}()
+	})
 
-	<-stop
-
-	log.Info("shutting down")
-
-	if err := srv.Shutdown(ctx); err != nil {
-		log.WithError(err).Error("server shutdown failed")
+	if err := group.Wait(); err != nil && err != context.Canceled {
+		log.WithError(err).Error("wait error")
 	}
 
 	log.Info("gracefully stopped")
