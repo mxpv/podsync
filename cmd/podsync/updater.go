@@ -33,7 +33,7 @@ func (u *Updater) Update(ctx context.Context, feed *config.Feed) error {
 	}
 
 	// Query API to get episodes
-	result, err := provider.Build(feed)
+	result, err := provider.Build(ctx, feed)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (u *Updater) Update(ctx context.Context, feed *config.Feed) error {
 	// Save XML to disk
 	xmlName := fmt.Sprintf("%s.xml", result.ItemID)
 	xmlPath := filepath.Join(u.config.Server.DataDir, xmlName)
-	if err := ioutil.WriteFile(xmlPath, []byte(podcast.String()), 600); err != nil {
+	if err := ioutil.WriteFile(xmlPath, []byte(podcast.String()), 0600); err != nil {
 		return errors.Wrapf(err, "failed to write XML feed to disk")
 	}
 

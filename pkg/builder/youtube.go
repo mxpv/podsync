@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sort"
@@ -38,7 +39,7 @@ type YouTubeBuilder struct {
 
 // Cost: 5 units (call method: 1, snippet: 2, contentDetails: 2)
 // See https://developers.google.com/youtube/v3/docs/channels/list#part
-func (yt *YouTubeBuilder) listChannels(linkType link.Type, id string, parts string) (*youtube.Channel, error) {
+func (yt *YouTubeBuilder) listChannels(ctx context.Context, linkType link.Type, id string, parts string) (*youtube.Channel, error) {
 	req := yt.client.Channels.List(parts)
 
 	switch linkType {
@@ -50,7 +51,7 @@ func (yt *YouTubeBuilder) listChannels(linkType link.Type, id string, parts stri
 		return nil, errors.New("unsupported link type")
 	}
 
-	resp, err := req.Do(yt.key)
+	resp, err := req.Context(ctx).Do(yt.key)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query channel")
 	}
@@ -65,7 +66,7 @@ func (yt *YouTubeBuilder) listChannels(linkType link.Type, id string, parts stri
 
 // Cost: 3 units (call method: 1, snippet: 2)
 // See https://developers.google.com/youtube/v3/docs/playlists/list#part
-func (yt *YouTubeBuilder) listPlaylists(id, channelID string, parts string) (*youtube.Playlist, error) {
+func (yt *YouTubeBuilder) listPlaylists(ctx context.Context, id, channelID string, parts string) (*youtube.Playlist, error) {
 	req := yt.client.Playlists.List(parts)
 
 	if id != "" {
@@ -74,7 +75,7 @@ func (yt *YouTubeBuilder) listPlaylists(id, channelID string, parts string) (*yo
 		req = req.ChannelId(channelID)
 	}
 
-	resp, err := req.Do(yt.key)
+	resp, err := req.Context(ctx).Do(yt.key)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query playlist")
 	}
@@ -89,13 +90,13 @@ func (yt *YouTubeBuilder) listPlaylists(id, channelID string, parts string) (*yo
 
 // Cost: 3 units (call: 1, snippet: 2)
 // See https://developers.google.com/youtube/v3/docs/playlistItems/list#part
-func (yt *YouTubeBuilder) listPlaylistItems(itemID string, pageToken string) ([]*youtube.PlaylistItem, string, error) {
+func (yt *YouTubeBuilder) listPlaylistItems(ctx context.Context, itemID string, pageToken string) ([]*youtube.PlaylistItem, string, error) {
 	req := yt.client.PlaylistItems.List("id,snippet").MaxResults(maxYoutubeResults).PlaylistId(itemID)
 	if pageToken != "" {
 		req = req.PageToken(pageToken)
 	}
 
-	resp, err := req.Do(yt.key)
+	resp, err := req.Context(ctx).Do(yt.key)
 	if err != nil {
 		return nil, "", errors.Wrap(err, "failed to query playlist items")
 	}
@@ -141,11 +142,11 @@ func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, qua
 	return snippet.Default.Url
 }
 
-func (yt *YouTubeBuilder) GetVideoCount(info *link.Info) (uint64, error) {
+func (yt *YouTubeBuilder) GetVideoCount(ctx context.Context, info *link.Info) (uint64, error) {
 	switch info.LinkType {
 	case link.TypeChannel, link.TypeUser:
 		// Cost: 3 units
-		if channel, err := yt.listChannels(info.LinkType, info.ItemID, "id,statistics"); err != nil {
+		if channel, err := yt.listChannels(ctx, info.LinkType, info.ItemID, "id,statistics"); err != nil {
 			return 0, err
 		} else { // nolint:golint
 			return channel.Statistics.VideoCount, nil
@@ -153,7 +154,7 @@ func (yt *YouTubeBuilder) GetVideoCount(info *link.Info) (uint64, error) {
 
 	case link.TypePlaylist:
 		// Cost: 3 units
-		if playlist, err := yt.listPlaylists(info.ItemID, "", "id,contentDetails"); err != nil {
+		if playlist, err := yt.listPlaylists(ctx, info.ItemID, "", "id,contentDetails"); err != nil {
 			return 0, err
 		} else { // nolint:golint
 			return uint64(playlist.ContentDetails.ItemCount), nil
@@ -164,7 +165,7 @@ func (yt *YouTubeBuilder) GetVideoCount(info *link.Info) (uint64, error) {
 	}
 }
 
-func (yt *YouTubeBuilder) queryFeed(feed *model.Feed, info *link.Info) error {
+func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info *link.Info) error {
 	var (
 		thumbnails *youtube.ThumbnailDetails
 	)
@@ -172,7 +173,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed, info *link.Info) error {
 	switch info.LinkType {
 	case link.TypeChannel, link.TypeUser:
 		// Cost: 5 units for channel or user
-		channel, err := yt.listChannels(info.LinkType, info.ItemID, "id,snippet,contentDetails")
+		channel, err := yt.listChannels(ctx, info.LinkType, info.ItemID, "id,snippet,contentDetails")
 		if err != nil {
 			return err
 		}
@@ -200,7 +201,7 @@ func (yt *YouTubeBuilder) queryFeed(feed *model.Feed, info *link.Info) error {
 
 	case link.TypePlaylist:
 		// Cost: 3 units for playlist
-		playlist, err := yt.listPlaylists(info.ItemID, "", "id,snippet")
+		playlist, err := yt.listPlaylists(ctx, info.ItemID, "", "id,snippet")
 		if err != nil {
 			return err
 		}
@@ -258,14 +259,14 @@ func (yt *YouTubeBuilder) getSize(duration int64, feed *model.Feed) int64 {
 
 // Cost: 5 units (call: 1, snippet: 2, contentDetails: 2)
 // See https://developers.google.com/youtube/v3/docs/videos/list#part
-func (yt *YouTubeBuilder) queryVideoDescriptions(playlist map[string]*youtube.PlaylistItemSnippet, feed *model.Feed) error {
+func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist map[string]*youtube.PlaylistItemSnippet, feed *model.Feed) error {
 	// Make the list of video ids
 	ids := make([]string, 0, len(playlist))
 	for _, s := range playlist {
 		ids = append(ids, s.ResourceId.VideoId)
 	}
 
-	req, err := yt.client.Videos.List("id,snippet,contentDetails").Id(strings.Join(ids, ",")).Do(yt.key)
+	req, err := yt.client.Videos.List("id,snippet,contentDetails").Id(strings.Join(ids, ",")).Context(ctx).Do(yt.key)
 	if err != nil {
 		return errors.Wrap(err, "failed to query video descriptions")
 	}
@@ -326,14 +327,14 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(playlist map[string]*youtube.Pl
 }
 
 // Cost: (3 units + 5 units) * X pages = 8 units per page
-func (yt *YouTubeBuilder) queryItems(feed *model.Feed) error {
+func (yt *YouTubeBuilder) queryItems(ctx context.Context, feed *model.Feed) error {
 	var (
 		token string
 		count int
 	)
 
 	for {
-		items, pageToken, err := yt.listPlaylistItems(feed.ItemID, token)
+		items, pageToken, err := yt.listPlaylistItems(ctx, feed.ItemID, token)
 		if err != nil {
 			return err
 		}
@@ -352,7 +353,7 @@ func (yt *YouTubeBuilder) queryItems(feed *model.Feed) error {
 		}
 
 		// Query video descriptions from the list of ids
-		if err := yt.queryVideoDescriptions(snippets, feed); err != nil {
+		if err := yt.queryVideoDescriptions(ctx, snippets, feed); err != nil {
 			return err
 		}
 
@@ -362,7 +363,7 @@ func (yt *YouTubeBuilder) queryItems(feed *model.Feed) error {
 	}
 }
 
-func (yt *YouTubeBuilder) Build(cfg *config.Feed) (*model.Feed, error) {
+func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *config.Feed) (*model.Feed, error) {
 	info, err := link.Parse(cfg.URL)
 	if err != nil {
 		return nil, err
@@ -380,11 +381,11 @@ func (yt *YouTubeBuilder) Build(cfg *config.Feed) (*model.Feed, error) {
 	}
 
 	// Query general information about feed (title, description, lang, etc)
-	if err := yt.queryFeed(feed, &info); err != nil {
+	if err := yt.queryFeed(ctx, feed, &info); err != nil {
 		return nil, err
 	}
 
-	if err := yt.queryItems(feed); err != nil {
+	if err := yt.queryItems(ctx, feed); err != nil {
 		return nil, err
 	}
 

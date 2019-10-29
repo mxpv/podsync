@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"context"
 	"errors"
 
 	"github.com/mxpv/podsync/pkg/config"
@@ -13,5 +14,5 @@ var (
 )
 
 type Builder interface {
-	Build(cfg *config.Feed) (*model.Feed, error)
+	Build(ctx context.Context, cfg *config.Feed) (*model.Feed, error)
 }

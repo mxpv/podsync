@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -11,7 +12,10 @@ import (
 	"github.com/mxpv/podsync/pkg/link"
 )
 
-var ytKey = os.Getenv("YOUTUBE_TEST_API_KEY")
+var (
+	testCtx = context.Background()
+	ytKey   = os.Getenv("YOUTUBE_TEST_API_KEY")
+)
 
 func TestYT_QueryChannel(t *testing.T) {
 	if ytKey == "" {
@@ -21,11 +25,11 @@ func TestYT_QueryChannel(t *testing.T) {
 	builder, err := NewYouTubeBuilder(ytKey)
 	require.NoError(t, err)
 
-	channel, err := builder.listChannels(link.TypeChannel, "UC2yTVSttx7lxAOAzx1opjoA", "id")
+	channel, err := builder.listChannels(testCtx, link.TypeChannel, "UC2yTVSttx7lxAOAzx1opjoA", "id")
 	require.NoError(t, err)
 	require.Equal(t, "UC2yTVSttx7lxAOAzx1opjoA", channel.Id)
 
-	channel, err = builder.listChannels(link.TypeUser, "fxigr1", "id")
+	channel, err = builder.listChannels(testCtx, link.TypeUser, "fxigr1", "id")
 	require.NoError(t, err)
 	require.Equal(t, "UCr_fwF-n-2_olTYd-m3n32g", channel.Id)
 }
@@ -49,7 +53,7 @@ func TestYT_BuildFeed(t *testing.T) {
 
 	for _, addr := range urls {
 		t.Run(addr, func(t *testing.T) {
-			feed, err := builder.Build(&config.Feed{URL: addr})
+			feed, err := builder.Build(testCtx, &config.Feed{URL: addr})
 			require.NoError(t, err)
 
 			assert.NotEmpty(t, feed.Title)
@@ -91,7 +95,7 @@ func TestYT_GetVideoCount(t *testing.T) {
 	for _, f := range feeds {
 		feed := f
 		t.Run(f.ItemID, func(t *testing.T) {
-			count, err := builder.GetVideoCount(feed)
+			count, err := builder.GetVideoCount(testCtx, feed)
 			assert.NoError(t, err)
 			assert.NotZero(t, count)
 		})
