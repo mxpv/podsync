@@ -9,13 +9,6 @@ import (
 	"github.com/mxpv/podsync/pkg/model"
 )
 
-const (
-	DefaultFormat       = model.FormatVideo
-	DefaultQuality      = model.QualityHigh
-	DefaultPageSize     = 50
-	DefaultUpdatePeriod = 24 * time.Hour
-)
-
 // Feed is a configuration for a feed
 type Feed struct {
 	// URL is a full URL of the field
@@ -73,30 +66,33 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, errors.Wrap(err, "failed to load config file")
 	}
 
-	// Apply defaults
-	if config.Server.Hostname == "" {
-		config.Server.Hostname = "http://localhost"
+	config.applyDefaults()
+
+	return &config, nil
+}
+
+func (c *Config) applyDefaults() {
+	if c.Server.Hostname == "" {
+		c.Server.Hostname = model.DefaultHostname
 	}
 
-	for _, feed := range config.Feeds {
+	for _, feed := range c.Feeds {
 		if feed.UpdatePeriod.Duration == 0 {
-			feed.UpdatePeriod.Duration = DefaultUpdatePeriod
+			feed.UpdatePeriod.Duration = model.DefaultUpdatePeriod
 		}
 
 		if feed.Quality == "" {
-			feed.Quality = DefaultQuality
+			feed.Quality = model.DefaultQuality
 		}
 
 		if feed.Format == "" {
-			feed.Format = DefaultFormat
+			feed.Format = model.DefaultFormat
 		}
 
 		if feed.PageSize == 0 {
-			feed.PageSize = DefaultPageSize
+			feed.PageSize = model.DefaultPageSize
 		}
 	}
-
-	return &config, nil
 }
 
 type Duration struct {

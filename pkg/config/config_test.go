@@ -8,6 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/mxpv/podsync/pkg/model"
 )
 
 func TestLoadConfig(t *testing.T) {
@@ -79,7 +81,7 @@ func TestApplyDefaults(t *testing.T) {
 	feed, ok := config.Feeds["A"]
 	require.True(t, ok)
 
-	assert.EqualValues(t, feed.UpdatePeriod, Duration{DefaultUpdatePeriod})
+	assert.EqualValues(t, feed.UpdatePeriod, Duration{model.DefaultUpdatePeriod})
 	assert.EqualValues(t, feed.PageSize, 50)
 	assert.EqualValues(t, feed.Quality, "high")
 	assert.EqualValues(t, feed.Format, "video")
