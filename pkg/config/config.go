@@ -12,6 +12,7 @@ import (
 
 // Feed is a configuration for a feed
 type Feed struct {
+	ID string `toml:"-"`
 	// URL is a full URL of the field
 	URL string `toml:"url"`
 	// PageSize is the number of pages to query from YouTube API.
@@ -65,6 +66,10 @@ func LoadConfig(path string) (*Config, error) {
 	_, err := toml.DecodeFile(path, &config)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load config file")
+	}
+
+	for id, feed := range config.Feeds {
+		feed.ID = id
 	}
 
 	config.applyDefaults()

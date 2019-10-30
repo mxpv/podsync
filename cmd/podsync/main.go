@@ -15,8 +15,8 @@ import (
 )
 
 type Opts struct {
-	Config string `long:"config" short:"c" default:"config.toml"`
-	Debug  bool   `long:"debug" short:"d"`
+	ConfigPath string `long:"config" short:"c" default:"config.toml" env:"PODSYNC_CONFIG_PATH"`
+	Debug      bool   `long:"debug"`
 }
 
 func main() {
@@ -42,8 +42,8 @@ func main() {
 	}
 
 	// Load TOML file
-	log.Debugf("loading configuration %q", opts.Config)
-	cfg, err := config.LoadConfig(opts.Config)
+	log.Debugf("loading configuration %q", opts.ConfigPath)
+	cfg, err := config.LoadConfig(opts.ConfigPath)
 	if err != nil {
 		log.WithError(err).Fatal("failed to load configuration file")
 	}
@@ -53,6 +53,7 @@ func main() {
 	defer close(updates)
 
 	// Run updater thread
+	log.Debug("creating updater")
 	updater, err := NewUpdater(cfg)
 	if err != nil {
 		log.WithError(err).Fatal("failed to create updater")
@@ -75,12 +76,18 @@ func main() {
 	for _, feed := range cfg.Feeds {
 		_feed := feed
 		group.Go(func() error {
+			log.Debugf("-> %s (update every %s)", _feed.URL, _feed.UpdatePeriod)
+
+			// Perform initial update after CLI restart
+			updates <- _feed
+
 			timer := time.NewTicker(_feed.UpdatePeriod.Duration)
 			defer timer.Stop()
 
 			for {
 				select {
 				case <-timer.C:
+					log.Debugf("adding %q to update queue", _feed.URL)
 					updates <- _feed
 				case <-ctx.Done():
 					return ctx.Err()
