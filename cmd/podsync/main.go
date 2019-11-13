@@ -17,10 +17,25 @@ import (
 type Opts struct {
 	ConfigPath string `long:"config" short:"c" default:"config.toml" env:"PODSYNC_CONFIG_PATH"`
 	Debug      bool   `long:"debug"`
+	NoBanner   bool   `long:"no-banner"`
 }
 
+const banner = `
+ _______  _______  ______   _______           _        _______ 
+(  ____ )(  ___  )(  __  \ (  ____ \|\     /|( (    /|(  ____ \
+| (    )|| (   ) || (  \  )| (    \/( \   / )|  \  ( || (    \/
+| (____)|| |   | || |   ) || (_____  \ (_) / |   \ | || |      
+|  _____)| |   | || |   | |(_____  )  \   /  | (\ \) || |      
+| (      | |   | || |   ) |      ) |   ) (   | | \   || |      
+| )      | (___) || (__/  )/\____) |   | |   | )  \  || (____/\
+|/       (_______)(______/ \_______)   \_/   |/    )_)(_______/
+`
+
 func main() {
-	log.SetFormatter(&log.TextFormatter{})
+	log.SetFormatter(&log.TextFormatter{
+		TimestampFormat: time.RFC3339,
+		FullTimestamp:   true,
+	})
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
@@ -39,6 +54,10 @@ func main() {
 
 	if opts.Debug {
 		log.SetLevel(log.DebugLevel)
+	}
+
+	if !opts.NoBanner {
+		log.Info(banner)
 	}
 
 	// Load TOML file
