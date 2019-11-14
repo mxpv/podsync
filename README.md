@@ -15,7 +15,7 @@ Podcast applications have a rich functionality for content delivery - automatic 
 - Add and push version tag
   ```
   $ git tag -a v0.1.0 -m "First release"
-  $ git push origin v0.1.0
+  $ git push origin --tags
   ```
 - Run GoReleaser at the root of your repository:
   ```
