@@ -49,7 +49,7 @@ vimeo = "{VIMEO_API_TOKEN}"
   page_size = 50 # The number of episodes to query each update (keep in mind, that this might drain API token)
   update_period = "12h" # How often query for updates, examples: "60m", "4h", "2h45m"
   quality = "high" # or "low"
-  format = "video" # or "low"
+  format = "video" # or "audio"
 ```
 
 Episodes files will be kept at: `/path/to/data/directory/ID1`
