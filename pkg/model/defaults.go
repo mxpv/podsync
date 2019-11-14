@@ -9,5 +9,5 @@ const (
 	DefaultFormat       = FormatVideo
 	DefaultQuality      = QualityHigh
 	DefaultPageSize     = 50
-	DefaultUpdatePeriod = 24 * time.Hour
+	DefaultUpdatePeriod = 6 * time.Hour
 )
