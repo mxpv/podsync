@@ -42,7 +42,7 @@ type Tokens struct {
 
 type Server struct {
 	// Hostname to use for download links
-	Hostname string `toml:"name"`
+	Hostname string `toml:"hostname"`
 	// Port is a server port to listen to
 	Port int `toml:"port"`
 	// DataDir is a path to a directory to keep XML feeds and downloaded episodes,
