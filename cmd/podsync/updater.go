@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -18,46 +19,101 @@ import (
 	"github.com/mxpv/podsync/pkg/model"
 )
 
+type Downloader interface {
+	Download(ctx context.Context, feedConfig *config.Feed, url string, destPath string) (string, error)
+}
+
 type Updater struct {
-	config *config.Config
+	config     *config.Config
+	downloader Downloader
 }
 
-func NewUpdater(config *config.Config) (*Updater, error) {
-	return &Updater{config: config}, nil
+func NewUpdater(config *config.Config, downloader Downloader) (*Updater, error) {
+	return &Updater{config: config, downloader: downloader}, nil
 }
 
-func (u *Updater) Update(ctx context.Context, cfg *config.Feed) error {
+func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 	log.WithFields(log.Fields{
-		"id":      cfg.ID,
-		"format":  cfg.Format,
-		"quality": cfg.Quality,
-	}).Infof("-> updating %s", cfg.URL)
+		"feed_id": feedConfig.ID,
+		"format":  feedConfig.Format,
+		"quality": feedConfig.Quality,
+	}).Infof("-> updating %s", feedConfig.URL)
 	started := time.Now()
 
+	// Make sure feed directory exists
+	feedPath := filepath.Join(u.config.Server.DataDir, feedConfig.ID)
+	log.Debugf("creating directory for feed %q", feedPath)
+	if err := os.MkdirAll(feedPath, 0755); err != nil {
+		return errors.Wrapf(err, "failed to create directory for feed %q", feedConfig.ID)
+	}
+
 	// Create an updater for this feed type
-	provider, err := u.makeBuilder(ctx, cfg)
+	provider, err := u.makeBuilder(ctx, feedConfig)
 	if err != nil {
 		return err
 	}
 
 	// Query API to get episodes
 	log.Debug("building feed")
-	result, err := provider.Build(ctx, cfg)
+	result, err := provider.Build(ctx, feedConfig)
 	if err != nil {
 		return err
 	}
 
 	log.Debugf("received %d episode(s) for %q", len(result.Episodes), result.Title)
 
+	// Since there is no way to detect the size of an episode after download and encoding via API,
+	// we'll patch XML feed with values from this map
+	sizes := map[string]int64{}
+
+	// The number of episodes downloaded during this update
+	downloaded := 0
+
+	// Download and encode episodes
+	for idx, episode := range result.Episodes {
+		logger := log.WithFields(log.Fields{
+			"index":      idx,
+			"episode_id": episode.ID,
+		})
+
+		episodePath := filepath.Join(feedPath, u.episodeName(feedConfig, episode))
+		_, err := os.Stat(episodePath)
+		if err != nil && !os.IsNotExist(err) {
+			return errors.Wrap(err, "failed to check whether episode exists")
+		}
+
+		if os.IsNotExist(err) {
+			// There is no file on disk, download episode
+			logger.Infof("! downloading episode %s", episode.VideoURL)
+			if output, err := u.downloader.Download(ctx, feedConfig, episode.VideoURL, episodePath); err != nil {
+				logger.WithError(err).Errorf("youtube-dl error: %s", output)
+				return errors.Wrapf(err, "failed to download episode %s at %q", episode.ID, episode.VideoURL)
+			}
+
+			downloaded++
+		} else {
+			// Episode already downloaded
+			logger.Debug("skipping download of episode")
+		}
+
+		// Record file size
+		if size, err := u.fileSize(episodePath); err != nil {
+			return errors.Wrap(err, "failed to get episode file size")
+		} else {
+			logger.Debugf("file size %d", size)
+			sizes[episode.ID] = size
+		}
+	}
+
 	// Build iTunes XML feed with data received from builder
 	log.Debug("building iTunes podcast feed")
-	podcast, err := u.buildPodcast(result, cfg)
+	podcast, err := u.buildPodcast(result, feedConfig, sizes)
 	if err != nil {
 		return err
 	}
 
 	// Save XML to disk
-	xmlName := fmt.Sprintf("%s.xml", cfg.ID)
+	xmlName := fmt.Sprintf("%s.xml", feedConfig.ID)
 	xmlPath := filepath.Join(u.config.Server.DataDir, xmlName)
 	log.Debugf("saving feed XML file to %s", xmlPath)
 	if err := ioutil.WriteFile(xmlPath, []byte(podcast.String()), 0600); err != nil {
@@ -65,12 +121,17 @@ func (u *Updater) Update(ctx context.Context, cfg *config.Feed) error {
 	}
 
 	elapsed := time.Since(started)
-	nextUpdate := time.Now().Add(cfg.UpdatePeriod.Duration)
-	log.Infof("successfully updated feed in %s, next update at %s", elapsed, nextUpdate.Format(time.Kitchen))
+	nextUpdate := time.Now().Add(feedConfig.UpdatePeriod.Duration)
+	log.Infof(
+		"successfully updated feed in %s, downloaded: %d episode(s), next update at %s",
+		elapsed,
+		downloaded,
+		nextUpdate.Format(time.Kitchen),
+	)
 	return nil
 }
 
-func (u *Updater) buildPodcast(feed *model.Feed, cfg *config.Feed) (*itunes.Podcast, error) {
+func (u *Updater) buildPodcast(feed *model.Feed, cfg *config.Feed, sizes map[string]int64) (*itunes.Podcast, error) {
 	const (
 		podsyncGenerator = "Podsync generator (support us at https://github.com/mxpv/podsync)"
 		defaultCategory  = "TV & Film"
@@ -97,6 +158,11 @@ func (u *Updater) buildPodcast(feed *model.Feed, cfg *config.Feed) (*itunes.Podc
 	}
 
 	for i, episode := range feed.Episodes {
+		// Fixup episode size after downloading and encoding
+		if size, ok := sizes[episode.ID]; ok {
+			episode.Size = size
+		}
+
 		item := itunes.Item{
 			GUID:        episode.ID,
 			Link:        episode.VideoURL,
@@ -148,6 +214,24 @@ func (u *Updater) makeEnclosure(feed *model.Feed, episode *model.Episode, cfg *c
 
 	url := fmt.Sprintf("%s/%s/%s.%s", u.config.Server.Hostname, cfg.ID, episode.ID, ext)
 	return url, contentType, episode.Size
+}
+
+func (u *Updater) episodeName(feedConfig *config.Feed, episode *model.Episode) string {
+	ext := "mp4"
+	if feedConfig.Format == model.FormatAudio {
+		ext = "mp3"
+	}
+
+	return fmt.Sprintf("%s.%s", episode.ID, ext)
+}
+
+func (u *Updater) fileSize(path string) (int64, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return 0, err
+	}
+
+	return info.Size(), nil
 }
 
 func (u *Updater) makeBuilder(ctx context.Context, cfg *config.Feed) (builder.Builder, error) {

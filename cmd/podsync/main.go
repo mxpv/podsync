@@ -12,6 +12,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/mxpv/podsync/pkg/config"
+	"github.com/mxpv/podsync/pkg/ytdl"
 )
 
 type Opts struct {
@@ -67,13 +68,18 @@ func main() {
 		log.WithError(err).Fatal("failed to load configuration file")
 	}
 
+	downloader, err := ytdl.New(ctx)
+	if err != nil {
+		log.WithError(err).Fatal("youtube-dl error")
+	}
+
 	// Queue of feeds to update
 	updates := make(chan *config.Feed, 16)
 	defer close(updates)
 
 	// Run updater thread
 	log.Debug("creating updater")
-	updater, err := NewUpdater(cfg)
+	updater, err := NewUpdater(cfg, downloader)
 	if err != nil {
 		log.WithError(err).Fatal("failed to create updater")
 	}
