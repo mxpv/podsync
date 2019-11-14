@@ -32,6 +32,12 @@ const banner = `
 |/       (_______)(______/ \_______)   \_/   |/    )_)(_______/
 `
 
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 func main() {
 	log.SetFormatter(&log.TextFormatter{
 		TimestampFormat: time.RFC3339,
@@ -60,6 +66,12 @@ func main() {
 	if !opts.NoBanner {
 		log.Info(banner)
 	}
+
+	log.WithFields(log.Fields{
+		"version": version,
+		"commit":  commit,
+		"date":    date,
+	}).Info("running podsync")
 
 	// Load TOML file
 	log.Debugf("loading configuration %q", opts.ConfigPath)

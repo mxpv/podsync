@@ -1,0 +1,53 @@
+project_name: "Podsync"
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - main: ./cmd/podsync/
+    binary: podsync
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - 386
+      - amd64
+
+dockers:
+  - image_templates:
+    - 'mxpv/podsync:{{ .Tag }}'
+    - 'mxpv/podsync:v{{ .Major }}.{{ .Minor }}'
+    - 'mxpv/podsync:latest'
+    - 'docker.pkg.github.com/mxpv/podsync/cli:{{ .Tag }}'
+    - 'docker.pkg.github.com/mxpv/podsync/cli:v{{ .Major }}.{{ .Minor }}'
+    - 'docker.pkg.github.com/mxpv/podsync/cli:latest'
+    binaries:
+      - podsync
+    dockerfile: Dockerfile
+
+archives:
+- replacements:
+    darwin: Darwin
+    linux: Linux
+    windows: Windows
+    386: i386
+    amd64: x86_64
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ .Tag }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+    - Merge pull request
+    - Merge branch

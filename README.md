@@ -10,31 +10,14 @@ Podsync - is a simple, free service that lets you listen to any YouTube / Vimeo 
 
 Podcast applications have a rich functionality for content delivery - automatic download of new episodes, remembering last played position, sync between devices and offline listening. This functionality is not available on YouTube and Vimeo. So the aim of Podsync is to make your life easier and enable you to view/listen to content on any device in podcast client.
 
-## Architecture
+## How to release
 
-![Architecture](docs/img/architecture.png)
-
-## Building Docker images
-
-Every project contains a `Makefile` for building and pushing to a registry:
-
-```bash
-make build
-make push
-make update
-```
-
-Use docker-compose to run containers:
-
-```bash
-docker-compose pull
-docker-compose up -d
-```
-
-## Building frontend
-Node.js and npm are required in order to build the frontend:
-```bash
-brew install node
-make static
-ls -la dist/
-```
+- Add and push version tag
+  ```
+  $ git tag -a v0.1.0 -m "First release"
+  $ git push origin v0.1.0
+  ```
+- Run GoReleaser at the root of your repository:
+  ```
+  $ goreleaser --rm-dist
+  ```
