@@ -87,7 +87,11 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 			logger.Infof("! downloading episode %s", episode.VideoURL)
 			if output, err := u.downloader.Download(ctx, feedConfig, episode.VideoURL, episodePath); err != nil {
 				logger.WithError(err).Errorf("youtube-dl error: %s", output)
-				return errors.Wrapf(err, "failed to download episode %s at %q", episode.ID, episode.VideoURL)
+
+				// YouTube might block host with HTTP Error 429: Too Many Requests
+				// We still need to generate XML, so just stop sending download requests and
+				// retry next time
+				break
 			}
 
 			downloaded++
