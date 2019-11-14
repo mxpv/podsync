@@ -1,0 +1,13 @@
+version: '2.2'
+
+services:
+  podsync:
+    container_name: podsync
+    image: mxpv/podsync
+    restart: always
+    ports:
+      - 80:80
+    command: --config /app/config.toml
+    volumes:
+      - ./data:/app/data/
+      - ./config.toml:/app/config.toml
