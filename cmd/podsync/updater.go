@@ -212,8 +212,8 @@ func (u *Updater) makeEnclosure(feed *model.Feed, episode *model.Episode, cfg *c
 	ext := "mp4"
 	contentType := itunes.MP4
 	if feed.Format == model.FormatAudio {
-		ext = "m4a"
-		contentType = itunes.M4A
+		ext = "mp3"
+		contentType = itunes.MP3
 	}
 
 	url := fmt.Sprintf("%s/%s/%s.%s", u.config.Server.Hostname, cfg.ID, episode.ID, ext)
