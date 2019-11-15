@@ -3,7 +3,7 @@ version: '2.2'
 services:
   podsync:
     container_name: podsync
-    image: mxpv/podsync
+    image: mxpv/podsync:latest
     restart: always
     ports:
       - 80:80
