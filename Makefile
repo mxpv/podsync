@@ -16,7 +16,7 @@ build:
 #
 .PHONY: docker
 docker:
-	docker build -t mxpv/podsync .
+	docker build -t podsync .
 
 #
 # Pull GolangCI-Lint dependency
