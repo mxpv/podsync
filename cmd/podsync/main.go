@@ -73,16 +73,16 @@ func main() {
 		"date":    date,
 	}).Info("running podsync")
 
+	downloader, err := ytdl.New(ctx)
+	if err != nil {
+		log.WithError(err).Fatal("youtube-dl error")
+	}
+
 	// Load TOML file
 	log.Debugf("loading configuration %q", opts.ConfigPath)
 	cfg, err := config.LoadConfig(opts.ConfigPath)
 	if err != nil {
 		log.WithError(err).Fatal("failed to load configuration file")
-	}
-
-	downloader, err := ytdl.New(ctx)
-	if err != nil {
-		log.WithError(err).Fatal("youtube-dl error")
 	}
 
 	// Queue of feeds to update
