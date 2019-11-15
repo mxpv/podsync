@@ -37,7 +37,7 @@ In order to query YouTube or Vimeo API you have to obtain an API token first.
 [server]
 port = 8080
 data_dir = "/path/to/data/directory"
-hostname = "http://hostname"
+hostname = "hostname"
 
 [tokens]
 youtube = "{YOUTUBE_API_TOKEN}"
@@ -54,7 +54,7 @@ vimeo = "{VIMEO_API_TOKEN}"
 
 Episodes files will be kept at: `/path/to/data/directory/ID1`
 
-Feed will be accessible from: `http://hostname/ID1.xml`
+Feed will be accessible from: `http://hostname:8080/ID1.xml`
 
 ## How to run
 

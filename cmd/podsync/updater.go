@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	itunes "github.com/mxpv/podcast"
@@ -216,7 +217,18 @@ func (u *Updater) makeEnclosure(feed *model.Feed, episode *model.Episode, cfg *c
 		contentType = itunes.MP3
 	}
 
-	url := fmt.Sprintf("%s/%s/%s.%s", u.config.Server.Hostname, cfg.ID, episode.ID, ext)
+	// Make sure there is no http:// prefix
+	hostname := strings.TrimPrefix(u.config.Server.Hostname, "http://")
+
+	url := fmt.Sprintf(
+		"http://%s:%d/%s/%s.%s",
+		hostname,
+		u.config.Server.Port,
+		cfg.ID,
+		episode.ID,
+		ext,
+	)
+
 	return url, contentType, episode.Size
 }
 
