@@ -25,7 +25,7 @@ data_dir = "test/data/"
 [feeds]
   [feeds.XYZ]
   url = "https://youtube.com/watch?v=ygIUF678y40"
-  page_size = 50
+  page_size = 48
   update_period = "5h"
   format = "audio"
   quality = "low"
@@ -53,7 +53,7 @@ data_dir = "test/data/"
 	feed, ok := config.Feeds["XYZ"]
 	assert.True(t, ok)
 	assert.Equal(t, "https://youtube.com/watch?v=ygIUF678y40", feed.URL)
-	assert.EqualValues(t, 50, feed.PageSize)
+	assert.EqualValues(t, 48, feed.PageSize)
 	assert.EqualValues(t, Duration{5 * time.Hour}, feed.UpdatePeriod)
 	assert.EqualValues(t, "audio", feed.Format)
 	assert.EqualValues(t, "low", feed.Quality)

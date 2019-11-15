@@ -90,8 +90,14 @@ func (yt *YouTubeBuilder) listPlaylists(ctx context.Context, id, channelID strin
 
 // Cost: 3 units (call: 1, snippet: 2)
 // See https://developers.google.com/youtube/v3/docs/playlistItems/list#part
-func (yt *YouTubeBuilder) listPlaylistItems(ctx context.Context, itemID string, pageToken string) ([]*youtube.PlaylistItem, string, error) {
-	req := yt.client.PlaylistItems.List("id,snippet").MaxResults(maxYoutubeResults).PlaylistId(itemID)
+func (yt *YouTubeBuilder) listPlaylistItems(ctx context.Context, feed *model.Feed, pageToken string) ([]*youtube.PlaylistItem, string, error) {
+	count := maxYoutubeResults
+	if count > feed.PageSize {
+		// If we need less than 50
+		count = feed.PageSize
+	}
+
+	req := yt.client.PlaylistItems.List("id,snippet").MaxResults(int64(count)).PlaylistId(feed.ItemID)
 	if pageToken != "" {
 		req = req.PageToken(pageToken)
 	}
@@ -334,7 +340,7 @@ func (yt *YouTubeBuilder) queryItems(ctx context.Context, feed *model.Feed) erro
 	)
 
 	for {
-		items, pageToken, err := yt.listPlaylistItems(ctx, feed.ItemID, token)
+		items, pageToken, err := yt.listPlaylistItems(ctx, feed, token)
 		if err != nil {
 			return err
 		}
@@ -380,6 +386,10 @@ func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *config.Feed) (*model.F
 		UpdatedAt: time.Now().UTC(),
 	}
 
+	if feed.PageSize == 0 {
+		feed.PageSize = maxYoutubeResults
+	}
+
 	// Query general information about feed (title, description, lang, etc)
 	if err := yt.queryFeed(ctx, feed, &info); err != nil {
 		return nil, err
@@ -387,6 +397,12 @@ func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *config.Feed) (*model.F
 
 	if err := yt.queryItems(ctx, feed); err != nil {
 		return nil, err
+	}
+
+	// YT API client gets 50 episodes per query.
+	// Round up to page size.
+	if len(feed.Episodes) > feed.PageSize {
+		feed.Episodes = feed.Episodes[:feed.PageSize]
 	}
 
 	sort.Slice(feed.Episodes, func(i, j int) bool {
