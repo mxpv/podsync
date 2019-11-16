@@ -2,10 +2,11 @@
 
 ![Podsync](docs/img/logo.png)
 
-![](https://github.com/mxpv/podsync/workflows/CI/badge.svg)
-[![Build Status](https://travis-ci.com/mxpv/podsync.svg?branch=master)](https://travis-ci.com/mxpv/podsync)
+[![](https://github.com/mxpv/podsync/workflows/CI/badge.svg)](https://github.com/mxpv/podsync/actions?query=workflow%3ACI)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/mxpv/podsync)](https://github.com/mxpv/podsync/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mxpv/podsync)](https://goreportcard.com/report/github.com/mxpv/podsync)
 [![Patreon](https://img.shields.io/badge/support-patreon-E6461A.svg)](https://www.patreon.com/podsync)
+[![Twitter Follow](https://img.shields.io/twitter/follow/pod_sync?style=social)](https://twitter.com/pod_sync)
 
 Podsync - is a simple, free service that lets you listen to any YouTube / Vimeo channels, playlists or user videos in
 podcast format.
