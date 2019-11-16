@@ -53,7 +53,7 @@ func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, url s
 				destPath,
 				url,
 			)
-		} else {
+		} else { //nolint
 			// Low quality audio (encoded to mp3)
 			return dl.exec(ctx,
 				"--extract-audio",
@@ -79,7 +79,7 @@ func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, url s
 				destPath,
 				url,
 			)
-		} else {
+		} else { //nolint
 			// Low quality
 			return dl.exec(ctx,
 				"--format",

@@ -104,7 +104,7 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 		// Record file size
 		if size, err := u.fileSize(episodePath); err != nil {
 			return errors.Wrap(err, "failed to get episode file size")
-		} else {
+		} else { //nolint
 			logger.Debugf("file size %d", size)
 			sizes[episode.ID] = size
 		}
