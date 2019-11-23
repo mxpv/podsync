@@ -86,16 +86,18 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 		if os.IsNotExist(err) {
 			// There is no file on disk, download episode
 			logger.Infof("! downloading episode %s", episode.VideoURL)
-			if output, err := u.downloader.Download(ctx, feedConfig, episode.VideoURL, episodePath); err != nil {
-				logger.WithError(err).Errorf("youtube-dl error: %s", output)
-
+			if output, err := u.downloader.Download(ctx, feedConfig, episode.VideoURL, episodePath); err == nil {
+				downloaded++
+			} else {
 				// YouTube might block host with HTTP Error 429: Too Many Requests
 				// We still need to generate XML, so just stop sending download requests and
 				// retry next time
-				break
-			}
+				if strings.Contains(output, "HTTP Error 429") {
+					break
+				}
 
-			downloaded++
+				logger.WithError(err).Errorf("youtube-dl error: %s", output)
+			}
 		} else {
 			// Episode already downloaded
 			logger.Debug("skipping download of episode")
