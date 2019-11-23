@@ -219,19 +219,24 @@ func (u *Updater) makeEnclosure(feed *model.Feed, episode *model.Episode, cfg *c
 		contentType = itunes.MP3
 	}
 
-	// Make sure there is no http:// prefix
-	hostname := strings.TrimPrefix(u.config.Server.Hostname, "http://")
-
 	url := fmt.Sprintf(
-		"http://%s:%d/%s/%s.%s",
-		hostname,
-		u.config.Server.Port,
+		"%s/%s/%s.%s",
+		u.hostname(),
 		cfg.ID,
 		episode.ID,
 		ext,
 	)
 
 	return url, contentType, episode.Size
+}
+
+func (u *Updater) hostname() string {
+	hostname := strings.TrimSuffix(u.config.Server.Hostname, "/")
+	if !strings.HasPrefix(hostname, "http") {
+		hostname = fmt.Sprintf("http://%s", hostname)
+	}
+
+	return hostname
 }
 
 func (u *Updater) episodeName(feedConfig *config.Feed, episode *model.Episode) string {

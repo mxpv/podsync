@@ -39,7 +39,6 @@ In order to query YouTube or Vimeo API you have to obtain an API token first.
 [server]
 port = 8080
 data_dir = "/path/to/data/directory"
-hostname = "hostname"
 
 [tokens]
 youtube = "{YOUTUBE_API_TOKEN}"
@@ -54,9 +53,21 @@ vimeo = "{VIMEO_API_TOKEN}"
   format = "video" # or "audio"
 ```
 
-Episodes files will be kept at: `/path/to/data/directory/ID1`
+Episodes files will be kept at: `/path/to/data/directory/ID1`, feed will be accessible from: `http://localhost/ID1.xml`
 
-Feed will be accessible from: `http://hostname:8080/ID1.xml`
+If you want to hide Podsync behind reverse proxy like nginx, you can use `hostname` field:
+
+```toml
+[server]
+port = 8080
+hostname = "https://my.test.host:4443"
+
+[feeds]
+  [feeds.ID1]
+  ...
+```
+
+Server will be accessible from `http://localhost:8080`, but episode links will point to `https://my.test.host:4443/ID1/...`
 
 ## How to run
 

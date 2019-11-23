@@ -5,7 +5,6 @@ import (
 )
 
 const (
-	DefaultHostname     = "http://localhost"
 	DefaultFormat       = FormatVideo
 	DefaultQuality      = QualityHigh
 	DefaultPageSize     = 50

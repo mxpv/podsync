@@ -89,3 +89,28 @@ data_dir = "/data"
 	assert.EqualValues(t, feed.Quality, "high")
 	assert.EqualValues(t, feed.Format, "video")
 }
+
+func TestDefaultHostname(t *testing.T) {
+	cfg := Config{
+		Server: Server{},
+	}
+
+	t.Run("empty hostname", func(t *testing.T) {
+		cfg.applyDefaults()
+		assert.Equal(t, "http://localhost", cfg.Server.Hostname)
+	})
+
+	t.Run("empty hostname with port", func(t *testing.T) {
+		cfg.Server.Hostname = ""
+		cfg.Server.Port = 7979
+		cfg.applyDefaults()
+		assert.Equal(t, "http://localhost:7979", cfg.Server.Hostname)
+	})
+
+	t.Run("skip overwrite", func(t *testing.T) {
+		cfg.Server.Hostname = "https://my.host:4443"
+		cfg.Server.Port = 80
+		cfg.applyDefaults()
+		assert.Equal(t, "https://my.host:4443", cfg.Server.Hostname)
+	})
+}

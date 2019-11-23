@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -103,7 +104,11 @@ func (c *Config) validate() error {
 
 func (c *Config) applyDefaults() {
 	if c.Server.Hostname == "" {
-		c.Server.Hostname = model.DefaultHostname
+		if c.Server.Port != 0 && c.Server.Port != 80 {
+			c.Server.Hostname = fmt.Sprintf("http://localhost:%d", c.Server.Port)
+		} else {
+			c.Server.Hostname = "http://localhost"
+		}
 	}
 
 	for _, feed := range c.Feeds {
