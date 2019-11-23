@@ -100,5 +100,5 @@ $ docker-compose up
   ```
 - Run GoReleaser at the root of your repository:
   ```
-  $ goreleaser --rm-dist
+  $ make release
   ```

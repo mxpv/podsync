@@ -21,6 +21,13 @@ docker:
 	docker push mxpv/podsync:unstable
 
 #
+# Run goreleaser to build and upload release binaries
+#
+.PHONY: release
+release:
+	goreleaser --rm-dist
+
+#
 # Pull GolangCI-Lint dependency
 #
 $(GOLANGCI):
