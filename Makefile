@@ -16,7 +16,9 @@ build:
 #
 .PHONY: docker
 docker:
-	docker build -t mxpv/podsync:latest .
+	GOOS=linux GOARCH=amd64 go build -o podsync ./cmd/podsync
+	docker build -t mxpv/podsync:unstable .
+	docker push mxpv/podsync:unstable
 
 #
 # Pull GolangCI-Lint dependency
@@ -37,4 +39,4 @@ lint: $(GOLANGCI)
 #
 .PHONY: test
 test:
-	go test ./...
+	go test -v ./...
