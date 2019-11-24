@@ -30,6 +30,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
       - name: Test
+        env:
+          VIMEO_TEST_API_KEY: ${{ secrets.VIMEO_ACCESS_TOKEN }}
+          YOUTUBE_TEST_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
           make test
 
