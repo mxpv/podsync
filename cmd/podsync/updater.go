@@ -21,7 +21,7 @@ import (
 )
 
 type Downloader interface {
-	Download(ctx context.Context, feedConfig *config.Feed, url string, destPath string) (string, error)
+	Download(ctx context.Context, feedConfig *config.Feed, url string, feedPath string, episode *model.Episode) (string, error)
 }
 
 type Updater struct {
@@ -86,7 +86,7 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 		if os.IsNotExist(err) {
 			// There is no file on disk, download episode
 			logger.Infof("! downloading episode %s", episode.VideoURL)
-			if output, err := u.downloader.Download(ctx, feedConfig, episode.VideoURL, episodePath); err == nil {
+			if output, err := u.downloader.Download(ctx, feedConfig, episode.VideoURL, feedPath, episode); err == nil {
 				downloaded++
 			} else {
 				// YouTube might block host with HTTP Error 429: Too Many Requests
