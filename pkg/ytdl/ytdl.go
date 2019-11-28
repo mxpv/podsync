@@ -40,8 +40,12 @@ func New(ctx context.Context) (*YoutubeDl, error) {
 	return ytdl, nil
 }
 
-func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, url string, feedPath string, episode *model.Episode) (string, error) {
-	outputTemplate := youtubeDlOutputTemplate(feedPath, episode)
+func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episode *model.Episode, feedPath string) (string, error) {
+	var (
+		outputTemplate = makeOutputTemplate(feedPath, episode)
+		url            = episode.VideoURL
+	)
+
 	if feedConfig.Format == model.FormatAudio {
 		// Audio
 		if feedConfig.Quality == model.QualityHigh {
@@ -109,7 +113,7 @@ func (YoutubeDl) exec(ctx context.Context, args ...string) (string, error) {
 	return string(output), nil
 }
 
-func youtubeDlOutputTemplate(feedPath string, episode *model.Episode) string {
+func makeOutputTemplate(feedPath string, episode *model.Episode) string {
 	filename := fmt.Sprintf("%s.%s", episode.ID, "%(ext)s")
 	return filepath.Join(feedPath, filename)
 }

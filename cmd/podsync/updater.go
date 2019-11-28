@@ -21,7 +21,7 @@ import (
 )
 
 type Downloader interface {
-	Download(ctx context.Context, feedConfig *config.Feed, url string, feedPath string, episode *model.Episode) (string, error)
+	Download(ctx context.Context, feedConfig *config.Feed, episode *model.Episode, feedPath string) (string, error)
 }
 
 type Updater struct {
@@ -86,7 +86,7 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 		if os.IsNotExist(err) {
 			// There is no file on disk, download episode
 			logger.Infof("! downloading episode %s", episode.VideoURL)
-			if output, err := u.downloader.Download(ctx, feedConfig, episode.VideoURL, feedPath, episode); err == nil {
+			if output, err := u.downloader.Download(ctx, feedConfig, episode, feedPath); err == nil {
 				downloaded++
 			} else {
 				// YouTube might block host with HTTP Error 429: Too Many Requests
@@ -212,7 +212,11 @@ func (u *Updater) buildPodcast(feed *model.Feed, cfg *config.Feed, sizes map[str
 	return &p, nil
 }
 
-func (u *Updater) makeEnclosure(feed *model.Feed, episode *model.Episode, cfg *config.Feed) (string, itunes.EnclosureType, int64) {
+func (u *Updater) makeEnclosure(
+	feed *model.Feed,
+	episode *model.Episode,
+	cfg *config.Feed,
+) (string, itunes.EnclosureType, int64) {
 	ext := "mp4"
 	contentType := itunes.MP4
 	if feed.Format == model.FormatAudio {
