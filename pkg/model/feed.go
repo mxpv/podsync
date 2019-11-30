@@ -24,36 +24,36 @@ const (
 
 type Episode struct {
 	// ID of episode
-	ID          string
-	Title       string
-	Description string
-	Thumbnail   string
-	Duration    int64
-	VideoURL    string
-	PubDate     time.Time
-	Size        int64
-	Order       string
+	ID          string    `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Thumbnail   string    `json:"thumbnail"`
+	Duration    int64     `json:"duration"`
+	VideoURL    string    `json:"video_url"`
+	PubDate     time.Time `json:"pub_date"`
+	Size        int64     `json:"size"`
+	Order       string    `json:"order"`
 }
 
 type Feed struct {
-	FeedID         string
-	ItemID         string
-	LinkType       link.Type     // Either group, channel or user
-	Provider       link.Provider // Youtube or Vimeo
-	CreatedAt      time.Time
-	LastAccess     time.Time
-	ExpirationTime time.Time
-	Format         Format
-	Quality        Quality
-	PageSize       int
-	CoverArt       string
-	Explicit       bool
-	Language       string // ISO 639
-	Title          string
-	Description    string
-	PubDate        time.Time
-	Author         string
-	ItemURL        string     // Platform specific URL
-	Episodes       []*Episode // Array of episodes, serialized as gziped EpisodesData in DynamoDB
-	UpdatedAt      time.Time
+	FeedID         string        `json:"feed_id"`
+	ItemID         string        `json:"item_id"`
+	LinkType       link.Type     `json:"link_type"` // Either group, channel or user
+	Provider       link.Provider `json:"provider"`  // Youtube or Vimeo
+	CreatedAt      time.Time     `json:"created_at"`
+	LastAccess     time.Time     `json:"last_access"`
+	ExpirationTime time.Time     `json:"expiration_time"`
+	Format         Format        `json:"format"`
+	Quality        Quality       `json:"quality"`
+	PageSize       int           `json:"page_size"`
+	CoverArt       string        `json:"cover_art"`
+	Explicit       bool          `json:"explicit"`
+	Language       string        `json:"language"` // ISO 639
+	Title          string        `json:"title"`
+	Description    string        `json:"description"`
+	PubDate        time.Time     `json:"pub_date"`
+	Author         string        `json:"author"`
+	ItemURL        string        `json:"item_url"` // Platform specific URL
+	Episodes       []*Episode    `json:"-"`        // Array of episodes, serialized as gziped EpisodesData in DynamoDB
+	UpdatedAt      time.Time     `json:"updated_at"`
 }
