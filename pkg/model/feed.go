@@ -36,7 +36,7 @@ type Episode struct {
 }
 
 type Feed struct {
-	FeedID         string        `json:"feed_id"`
+	ID             string        `json:"feed_id"`
 	ItemID         string        `json:"item_id"`
 	LinkType       link.Type     `json:"link_type"` // Either group, channel or user
 	Provider       link.Provider `json:"provider"`  // Youtube or Vimeo
@@ -56,4 +56,19 @@ type Feed struct {
 	ItemURL        string        `json:"item_url"` // Platform specific URL
 	Episodes       []*Episode    `json:"-"`        // Array of episodes, serialized as gziped EpisodesData in DynamoDB
 	UpdatedAt      time.Time     `json:"updated_at"`
+}
+
+type EpisodeStatus string
+
+const (
+	EpisodeNew        = EpisodeStatus("new")        // New episode received via API
+	EpisodeDownloaded = EpisodeStatus("downloaded") // Downloaded, encoded and available for download
+	EpisodeCleaned    = EpisodeStatus("cleaned")    // Downloaded and later removed from disk due to update strategy
+)
+
+type File struct {
+	EpisodeID string        `json:"episode_id"`
+	FeedID    string        `json:"feed_id"`
+	Size      int64         `json:"size"` // Size on disk after encoding
+	Status    EpisodeStatus `json:"status"`
 }
