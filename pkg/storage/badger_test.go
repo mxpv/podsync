@@ -53,8 +53,28 @@ func TestBadger_AddFeed(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	err = db.AddFeed(context.Background(), getFeed())
+	err = db.AddFeed(testCtx, getFeed())
 	assert.NoError(t, err)
+}
+
+func TestBadger_GetFeed(t *testing.T) {
+	dir, err := ioutil.TempDir("", "podsync-badger-")
+	assert.NoError(t, err)
+	defer os.RemoveAll(dir)
+
+	db, err := NewBadger(dir)
+	require.NoError(t, err)
+	defer db.Close()
+
+	feed := getFeed()
+	feed.Episodes = nil
+
+	err = db.AddFeed(testCtx, feed)
+	require.NoError(t, err)
+
+	actual, err := db.GetFeed(testCtx, feed.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, feed, actual)
 }
 
 func TestBadger_WalkFeeds(t *testing.T) {
@@ -145,7 +165,6 @@ func TestBadger_WalkFiles(t *testing.T) {
 	assert.Equal(t, 2, called)
 }
 
-
 func TestBadger_UpdateFile(t *testing.T) {
 	dir, err := ioutil.TempDir("", "podsync-badger-")
 	assert.NoError(t, err)
@@ -159,14 +178,9 @@ func TestBadger_UpdateFile(t *testing.T) {
 	err = db.AddFeed(testCtx, feed)
 	assert.NoError(t, err)
 
-	update := &model.File{
-		EpisodeID: feed.Episodes[0].ID,
-		FeedID:    feed.ID,
-		Size:      333,
-		Status:    model.EpisodeDownloaded,
-	}
-
-	err = db.UpdateFile(update, func() error {
+	err = db.UpdateFile(feed.ID, feed.Episodes[0].ID, func(file *model.File) error {
+		file.Size = 333
+		file.Status = model.EpisodeDownloaded
 		return nil
 	})
 	assert.NoError(t, err)
@@ -175,7 +189,10 @@ func TestBadger_UpdateFile(t *testing.T) {
 
 	err = db.WalkFiles(testCtx, feed.ID, func(file *model.File) error {
 		if first {
-			assert.Equal(t, update, file)
+			assert.Equal(t, feed.ID, file.FeedID)
+			assert.Equal(t, feed.Episodes[0].ID, file.EpisodeID)
+			assert.EqualValues(t, 333, file.Size)
+			assert.Equal(t, model.EpisodeDownloaded, file.Status)
 			first = false
 		}
 

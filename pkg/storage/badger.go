@@ -105,6 +105,42 @@ func (b *Badger) AddFeed(_ context.Context, feed *model.Feed) error {
 	})
 }
 
+func (b *Badger) GetFeed(_ context.Context, feedID string) (*model.Feed, error) {
+	var (
+		feed    = model.Feed{}
+		feedKey = b.getKey(feedPath, feedID)
+	)
+
+	if err := b.db.View(func(txn *badger.Txn) error {
+		// Query feed
+		if err := b.getObj(txn, feedKey, &feed); err != nil {
+			return err
+		}
+
+		// Query episodes
+		opts := badger.DefaultIteratorOptions
+		opts.Prefix = b.getKey(episodePrefix, feedID)
+		opts.PrefetchValues = true
+		if err := b.iterator(txn, opts, func(item *badger.Item) error {
+			episode := &model.Episode{}
+			if err := b.getObj(txn, item.Key(), &episode); err != nil {
+				return err
+			}
+
+			feed.Episodes = append(feed.Episodes, episode)
+			return nil
+		}); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return &feed, nil
+}
+
 func (b *Badger) WalkFeeds(_ context.Context, cb func(feed *model.Feed) error) error {
 	return b.db.View(func(txn *badger.Txn) error {
 		opts := badger.DefaultIteratorOptions
@@ -153,11 +189,26 @@ func (b *Badger) DeleteFeed(_ context.Context, feedID string) error {
 	})
 }
 
+func (b *Badger) GetEpisode(_ context.Context, feedID string, episodeID string) (*model.Episode, error) {
+	var (
+		episode model.Episode
+		err     error
+		key     = b.getKey(episodePath, feedID, episodeID)
+	)
+
+	err = b.db.View(func(txn *badger.Txn) error {
+		return b.getObj(txn, key, &episode)
+	})
+
+	return &episode, err
+}
+
 func (b *Badger) WalkFiles(_ context.Context, feedID string, cb func(file *model.File) error) error {
+	opts := badger.DefaultIteratorOptions
+	opts.Prefix = b.getKey(filePrefix, feedID)
+	opts.PrefetchValues = true
+
 	return b.db.View(func(txn *badger.Txn) error {
-		opts := badger.DefaultIteratorOptions
-		opts.Prefix = b.getKey(filePrefix, feedID)
-		opts.PrefetchValues = true
 		return b.iterator(txn, opts, func(item *badger.Item) error {
 			file := &model.File{}
 			if err := b.unmarshalObj(item, file); err != nil {
@@ -169,30 +220,30 @@ func (b *Badger) WalkFiles(_ context.Context, feedID string, cb func(file *model
 	})
 }
 
-func (b *Badger) UpdateFile(file *model.File, cb func() error) error {
+func (b *Badger) UpdateFile(feedID string, episodeID string, cb func(file *model.File) error) error {
+	var (
+		key  = b.getKey(filePath, feedID, episodeID)
+		file = &model.File{}
+	)
+
 	return b.db.Update(func(txn *badger.Txn) error {
-		fileKey := b.getKey(filePath, file.FeedID, file.EpisodeID)
-
-		fileOld := &model.File{}
-		if err := b.getObj(txn, fileKey, fileOld); err != nil {
+		if err := b.getObj(txn, key, file); err != nil {
 			return err
 		}
 
-		if file.Size > 0 {
-			fileOld.Size = file.Size
-		}
-
-		fileOld.Status = file.Status
-
-		if err := b.setObj(txn, fileKey, fileOld, true); err != nil {
+		if err := cb(file); err != nil {
 			return err
 		}
 
-		if cb != nil {
-			return cb()
+		if file.FeedID != feedID {
+			return errors.New("can't change feed ID")
 		}
 
-		return nil
+		if file.EpisodeID != episodeID {
+			return errors.New("can't change episode ID")
+		}
+
+		return b.setObj(txn, key, file, true)
 	})
 }
 

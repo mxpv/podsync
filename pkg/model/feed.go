@@ -63,6 +63,7 @@ type EpisodeStatus string
 const (
 	EpisodeNew        = EpisodeStatus("new")        // New episode received via API
 	EpisodeDownloaded = EpisodeStatus("downloaded") // Downloaded, encoded and available for download
+	EpisodeError      = EpisodeStatus("error")      // Could not download, will retry
 	EpisodeCleaned    = EpisodeStatus("cleaned")    // Downloaded and later removed from disk due to update strategy
 )
 

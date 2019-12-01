@@ -27,16 +27,21 @@ type Storage interface {
 	// - Insert File model for each new episode
 	AddFeed(ctx context.Context, feed *model.Feed) error
 
+	// GetFeed gets a feed by ID
+	GetFeed(ctx context.Context, feedID string) (*model.Feed, error)
+
 	// WalkFeeds iterates over feeds saved to database
 	WalkFeeds(ctx context.Context, cb func(feed *model.Feed) error) error
 
 	// DeleteFeed deletes feed and all related data from database
 	DeleteFeed(ctx context.Context, feedID string) error
 
+	// GetEpisode gets episode by identifier
+	GetEpisode(ctx context.Context, feedID string, episodeID string) (*model.Episode, error)
+
 	// WalkFiles walks all files for the given feed ID
 	WalkFiles(ctx context.Context, feedID string, cb func(file *model.File) error) error
 
-	// UpdateFile updates file's status and (optionally) size.
-	// Callback can be used to rollback update transaction.
-	UpdateFile(file *model.File, cb func() error) error
+	// UpdateFile updates file via callback function.
+	UpdateFile(feedID string, episodeID string, cb func(file *model.File) error) error
 }
