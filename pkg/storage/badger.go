@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/dgraph-io/badger"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/model"
 )
 
@@ -28,8 +30,17 @@ type Badger struct {
 
 var _ Storage = (*Badger)(nil)
 
-func NewBadger(dir string) (*Badger, error) {
+func NewBadger(config *config.Database) (*Badger, error) {
+	var (
+		dir = config.Dir
+	)
+
 	log.Infof("opening database %q", dir)
+
+	// Make sure database directory exists
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, errors.Wrap(err, "could not mkdir database dir")
+	}
 
 	opts := badger.DefaultOptions(dir)
 	opts.Logger = log.New()
