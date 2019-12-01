@@ -53,7 +53,10 @@ func NewBadger(config *config.Database) (*Badger, error) {
 	storage := &Badger{db: db}
 
 	if err := db.Update(func(txn *badger.Txn) error {
-		return storage.setObj(txn, []byte(versionPath), CurrentVersion, false)
+		if err := storage.setObj(txn, []byte(versionPath), CurrentVersion, false); err != nil && err != ErrAlreadyExists {
+			return err
+		}
+		return nil
 	}); err != nil {
 		return nil, errors.Wrap(err, "failed to read database version")
 	}
@@ -62,6 +65,7 @@ func NewBadger(config *config.Database) (*Badger, error) {
 }
 
 func (b *Badger) Close() error {
+	log.Debug("closing database")
 	return b.db.Close()
 }
 
