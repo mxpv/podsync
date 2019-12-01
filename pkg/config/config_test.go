@@ -22,6 +22,9 @@ vimeo = "321"
 port = 80
 data_dir = "test/data/"
 
+[database]
+dir = "/home/user/db/"
+
 [feeds]
   [feeds.XYZ]
   url = "https://youtube.com/watch?v=ygIUF678y40"
@@ -45,6 +48,8 @@ data_dir = "test/data/"
 
 	assert.Equal(t, "test/data/", config.Server.DataDir)
 	assert.EqualValues(t, 80, config.Server.Port)
+
+	assert.Equal(t, "/home/user/db/", config.Database.Dir)
 
 	assert.Equal(t, "123", config.Tokens.YouTube)
 	assert.Equal(t, "321", config.Tokens.Vimeo)
@@ -96,21 +101,27 @@ func TestDefaultHostname(t *testing.T) {
 	}
 
 	t.Run("empty hostname", func(t *testing.T) {
-		cfg.applyDefaults()
+		cfg.applyDefaults("")
 		assert.Equal(t, "http://localhost", cfg.Server.Hostname)
 	})
 
 	t.Run("empty hostname with port", func(t *testing.T) {
 		cfg.Server.Hostname = ""
 		cfg.Server.Port = 7979
-		cfg.applyDefaults()
+		cfg.applyDefaults("")
 		assert.Equal(t, "http://localhost:7979", cfg.Server.Hostname)
 	})
 
 	t.Run("skip overwrite", func(t *testing.T) {
 		cfg.Server.Hostname = "https://my.host:4443"
 		cfg.Server.Port = 80
-		cfg.applyDefaults()
+		cfg.applyDefaults("")
 		assert.Equal(t, "https://my.host:4443", cfg.Server.Hostname)
 	})
+}
+
+func TestDefaultDatabasePath(t *testing.T) {
+	cfg := Config{}
+	cfg.applyDefaults("/home/user/podsync/config.toml")
+	assert.Equal(t, "/home/user/podsync/db", cfg.Database.Dir)
 }

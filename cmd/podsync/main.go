@@ -86,7 +86,7 @@ func main() {
 		log.WithError(err).Fatal("failed to load configuration file")
 	}
 
-	db, err := storage.NewBadger(opts.ConfigPath)
+	db, err := storage.NewBadger(&cfg.Database)
 	if err != nil {
 		log.WithError(err).Fatal("failed to open database")
 	}

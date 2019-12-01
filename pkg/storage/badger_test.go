@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/link"
 	"github.com/mxpv/podsync/pkg/model"
 )
@@ -20,7 +21,7 @@ func TestNewBadger(t *testing.T) {
 	dir, err := ioutil.TempDir("", "podsync-badger-")
 	require.NoError(t, err)
 
-	db, err := NewBadger(dir)
+	db, err := NewBadger(&config.Database{Dir: dir})
 	require.NoError(t, err)
 
 	err = db.Close()
@@ -35,7 +36,7 @@ func TestBadger_Version(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	db, err := NewBadger(dir)
+	db, err := NewBadger(&config.Database{Dir: dir})
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -49,7 +50,7 @@ func TestBadger_AddFeed(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	db, err := NewBadger(dir)
+	db, err := NewBadger(&config.Database{Dir: dir})
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -62,7 +63,7 @@ func TestBadger_GetFeed(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	db, err := NewBadger(dir)
+	db, err := NewBadger(&config.Database{Dir: dir})
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -82,7 +83,7 @@ func TestBadger_WalkFeeds(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	db, err := NewBadger(dir)
+	db, err := NewBadger(&config.Database{Dir: dir})
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -108,7 +109,7 @@ func TestBadger_DeleteFeed(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	db, err := NewBadger(dir)
+	db, err := NewBadger(&config.Database{Dir: dir})
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -141,7 +142,7 @@ func TestBadger_WalkFiles(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	db, err := NewBadger(dir)
+	db, err := NewBadger(&config.Database{Dir: dir})
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -170,7 +171,7 @@ func TestBadger_UpdateFile(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	db, err := NewBadger(dir)
+	db, err := NewBadger(&config.Database{Dir: dir})
 	require.NoError(t, err)
 	defer db.Close()
 
