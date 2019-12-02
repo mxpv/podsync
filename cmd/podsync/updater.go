@@ -89,7 +89,7 @@ func (u *Updater) updateFeed(ctx context.Context, feedConfig *config.Feed) error
 
 	log.Debugf("received %d episode(s) for %q", len(result.Episodes), result.Title)
 
-	if err := u.db.AddFeed(ctx, result); err != nil {
+	if err := u.db.AddFeed(ctx, feedConfig.ID, result); err != nil {
 		return err
 	}
 
@@ -121,7 +121,17 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed,
 		return errors.Wrapf(err, "failed to build update list")
 	}
 
-	log.Debugf("update list: %+v", updateList)
+	var (
+		updateListLen = len(updateList)
+		downloaded    = 0
+	)
+
+	if updateListLen > 0 {
+		log.Infof("update list size: %d", updateListLen)
+	} else {
+		log.Info("no episodes to download")
+		return nil
+	}
 
 	// Download pending episodes
 	for idx, episode := range updateList {
@@ -181,12 +191,15 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed,
 
 		// Update file status in database
 
+		logger.Infof("successfully downloaded file %q", episode.ID)
+
 		if err := u.db.UpdateFile(feedID, episode.ID, func(file *model.File) error {
 			// Record file size of newly downloaded file
 			size, err := u.fileSize(episodePath)
 			if err != nil {
 				logger.WithError(err).Error("failed to get episode file size")
 			} else {
+				logger.Debugf("file size: %d bytes", file.Size)
 				file.Size = size
 			}
 
@@ -195,8 +208,11 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed,
 		}); err != nil {
 			return err
 		}
+
+		downloaded++
 	}
 
+	log.Infof("downloaded %d episode(s)", downloaded)
 	return nil
 }
 

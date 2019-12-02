@@ -25,7 +25,7 @@ type Storage interface {
 	// - Insert or update feed info
 	// - Append new episodes to the existing list of episodes
 	// - Insert File model for each new episode
-	AddFeed(ctx context.Context, feed *model.Feed) error
+	AddFeed(ctx context.Context, feedID string, feed *model.Feed) error
 
 	// GetFeed gets a feed by ID
 	GetFeed(ctx context.Context, feedID string) (*model.Feed, error)

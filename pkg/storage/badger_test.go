@@ -54,7 +54,8 @@ func TestBadger_AddFeed(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	err = db.AddFeed(testCtx, getFeed())
+	feed := getFeed()
+	err = db.AddFeed(testCtx, feed.ID, feed)
 	assert.NoError(t, err)
 }
 
@@ -70,7 +71,7 @@ func TestBadger_GetFeed(t *testing.T) {
 	feed := getFeed()
 	feed.Episodes = nil
 
-	err = db.AddFeed(testCtx, feed)
+	err = db.AddFeed(testCtx, feed.ID, feed)
 	require.NoError(t, err)
 
 	actual, err := db.GetFeed(testCtx, feed.ID)
@@ -90,7 +91,7 @@ func TestBadger_WalkFeeds(t *testing.T) {
 	feed := getFeed()
 	feed.Episodes = nil // These are not serialized to database
 
-	err = db.AddFeed(testCtx, feed)
+	err = db.AddFeed(testCtx, feed.ID, feed)
 	assert.NoError(t, err)
 
 	called := 0
@@ -114,7 +115,7 @@ func TestBadger_DeleteFeed(t *testing.T) {
 	defer db.Close()
 
 	feed := getFeed()
-	err = db.AddFeed(testCtx, feed)
+	err = db.AddFeed(testCtx, feed.ID, feed)
 	require.NoError(t, err)
 
 	err = db.DeleteFeed(testCtx, feed.ID)
@@ -147,7 +148,7 @@ func TestBadger_WalkFiles(t *testing.T) {
 	defer db.Close()
 
 	feed := getFeed()
-	err = db.AddFeed(testCtx, feed)
+	err = db.AddFeed(testCtx, feed.ID, feed)
 	assert.NoError(t, err)
 
 	called := 0
@@ -176,7 +177,7 @@ func TestBadger_UpdateFile(t *testing.T) {
 	defer db.Close()
 
 	feed := getFeed()
-	err = db.AddFeed(testCtx, feed)
+	err = db.AddFeed(testCtx, feed.ID, feed)
 	assert.NoError(t, err)
 
 	err = db.UpdateFile(feed.ID, feed.Episodes[0].ID, func(file *model.File) error {
