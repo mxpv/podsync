@@ -81,31 +81,31 @@ func (b *Badger) Version() (int, error) {
 	return version, err
 }
 
-func (b *Badger) AddFeed(_ context.Context, feed *model.Feed) error {
+func (b *Badger) AddFeed(_ context.Context, feedID string, feed *model.Feed) error {
 	return b.db.Update(func(txn *badger.Txn) error {
 		// Insert or update feed info
-		feedKey := b.getKey(feedPath, feed.ID)
+		feedKey := b.getKey(feedPath, feedID)
 		if err := b.setObj(txn, feedKey, feed, true); err != nil {
 			return err
 		}
 
 		// Append new episodes
 		for _, episode := range feed.Episodes {
-			episodeKey := b.getKey(episodePath, feed.ID, episode.ID)
+			episodeKey := b.getKey(episodePath, feedID, episode.ID)
 			err := b.setObj(txn, episodeKey, episode, false)
 			if err == nil || err == ErrAlreadyExists {
 				// Do nothing
 			} else {
-				return errors.Wrapf(err, "failed to save episode %q", feed.ID)
+				return errors.Wrapf(err, "failed to save episode %q", feedID)
 			}
 		}
 
 		// Update download file statuses
 		for _, episode := range feed.Episodes {
-			fileKey := b.getKey(filePath, feed.ID, episode.ID)
+			fileKey := b.getKey(filePath, feedID, episode.ID)
 			file := &model.File{
 				EpisodeID: episode.ID,
-				FeedID:    feed.ID,
+				FeedID:    feedID,
 				Size:      episode.Size, // Use estimated file size
 				Status:    model.EpisodeNew,
 			}
