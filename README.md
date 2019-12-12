@@ -35,13 +35,16 @@ In order to query YouTube or Vimeo API you have to obtain an API token first.
 
 ## Configuration example
 
+You need to create a configuration file (for instance `config.toml`) and specify the list of feeds that you're going to host.
+Here is an example how configuration might look like:
+
 ```toml
 [server]
 port = 8080
 data_dir = "/path/to/data/directory"
 
 [tokens]
-youtube = "{YOUTUBE_API_TOKEN}"
+youtube = "{YOUTUBE_API_TOKEN}" # Tokens from `Access tokens` section
 vimeo = "{VIMEO_API_TOKEN}"
 
 [feeds]
