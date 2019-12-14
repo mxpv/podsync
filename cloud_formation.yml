@@ -1,0 +1,241 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    Description: EC2 machine instance size (see https://aws.amazon.com/ec2/instance-types/)
+
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: SSH key to use for logging in (see https://docs.aws.amazon.com/ground-station/latest/ug/create-ec2-ssh-key-pair.html)
+
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+    Description: Amazon Linux 2 image ID (leave this as is)
+
+  VolumeSize:
+    Type: Number
+    Default: 64
+    MinValue: 16
+    Description: Disk size in Gb to allocate for storing downloaded episodes
+
+  PodsyncVersion:
+    Type: String
+    Default: latest
+    Description: Podsync version to use (see https://github.com/mxpv/podsync/releases)
+
+  PodsyncPort:
+    Type: Number
+    Default: 8080
+    MaxValue: 65535
+    Description: Server port to use
+
+  YouTubeApiKey:
+    Type: String
+    Default: ''
+    Description: |
+      Key to use for YouTube API access (see https://github.com/mxpv/podsync/blob/master/docs/how_to_get_youtube_api_key.md)
+
+  VimeoAccessToken:
+    Type: String
+    Default: ''
+    Description: |
+      Key to use for Vimeo API access (see https://github.com/mxpv/podsync/blob/master/docs/how_to_get_vimeo_token.md)
+
+  FeedId:
+    Type: String
+    Default: 'ID1'
+    AllowedPattern: '.+' # Required
+    Description: |
+      ID to use for the feed (you'll access it as http://localhost/ID1.xml)
+
+  FeedUrl:
+    Type: String
+    AllowedPattern: '.+'
+    Description: |
+      YouTube or Vimeo URL to host with Podsync (for example: https://www.youtube.com/user/XYZ)
+
+  PageSize:
+    Type: Number
+    Default: 50
+    MinValue: 10
+    Description: |
+      The number of episodes to query each time
+
+  Format:
+    Type: String
+    AllowedValues:
+      - 'audio'
+      - 'video'
+    Default: 'video'
+    Description: Feed format (audio or video)
+
+  Quality:
+    Type: String
+    AllowedValues:
+      - 'high'
+      - 'low'
+    Default: 'high'
+    Description: Feed quality (high or low)
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: 'VM configuration'
+        Parameters:
+          - InstanceType
+          - KeyName
+          - AmiId
+          - VolumeSize
+      - Label:
+          default: 'Podsync configuration'
+        Parameters:
+          - PodsyncVersion
+          - PodsyncPort
+          - YouTubeApiKey
+          - VimeoAccessToken
+      - Label:
+          default: 'Feed configuration'
+        Parameters:
+          - FeedId
+          - FeedUrl
+          - PageSize
+          - Format
+          - Quality
+
+    ParameterLabels:
+      InstanceType:
+        default: 'Instance type'
+      KeyName:
+        default: 'SSH key name'
+      AmiId:
+        default: 'AMI ID'
+      VolumeSize:
+        default: 'Volume size'
+      PodsyncVersion:
+        default: 'Version'
+      PodsyncPort:
+        default: 'Server port'
+      YouTubeApiKey:
+        default: 'YouTube API Key'
+      VimeoAccessToken:
+        default: 'Vimeo Token'
+      FeedId:
+        default: 'Feed ID'
+      FeedUrl:
+        default: 'Feed URL'
+      PageSize:
+        default: 'Page size'
+
+Resources:
+  Ec2Instance:
+    Type: AWS::EC2::Instance
+    CreationPolicy:
+      ResourceSignal:
+        Count: 1
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: !Ref AmiId
+      SecurityGroups:
+        - !Ref AccessSecurityGroup
+      EbsOptimized: true
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: !Ref VolumeSize
+      IamInstanceProfile: !Ref SsmInstanceProfile
+      Tags:
+        - Key: 'Name'
+          Value: !Sub "${AWS::StackName}"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/usr/bin/env bash
+          set -ex
+          trap '/opt/aws/bin/cfn-signal --exit-code 1 --resource Ec2Instance --region ${AWS::Region} --stack ${AWS::StackName}' ERR
+
+          # Install Docker
+          yum update -y
+          amazon-linux-extras install docker
+          systemctl start docker
+          usermod -a -G docker ec2-user
+
+          # Create configuration file
+          mkdir -p /home/ec2-user/podsync/data
+          tee /home/ec2-user/podsync/config.toml <<EOF
+          [server]
+          port = ${PodsyncPort}
+          data_dir = "/home/ec2-user/podsync/data"
+
+          [tokens]
+          youtube = "${YouTubeApiKey}"
+          vimeo = "${VimeoAccessToken}"
+
+          [feeds]
+            [feeds.${FeedId}]
+            url = "${FeedUrl}"
+            page_size = ${PageSize}
+            quality = "${Quality}"
+            format = "${Format}"
+          EOF
+
+          # Pull image and run CLI
+          docker pull mxpv/podsync:${PodsyncVersion}
+          docker run -d \
+            -p ${PodsyncPort}:${PodsyncPort} \
+            -v /home/ec2-user/podsync/data:/app/data \
+            -v /home/ec2-user/podsync/config.toml:/app/config.toml \
+            --restart always \
+            mxpv/podsync:${PodsyncVersion}
+
+          # Signal ok
+          /opt/aws/bin/cfn-signal --exit-code 0 --resource Ec2Instance --region ${AWS::Region} --stack ${AWS::StackName}
+
+  # Setup instance profile with SSM policy. This let's connect to the EC2 machine via SSM console
+  SsmIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+
+  SsmInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub "${AWS::StackName}"
+      Roles:
+        - !Ref SsmIamRole
+
+  # Limit access to SSH and CLI server
+  AccessSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub "Podsync CLI security group for ${AWS::StackName}"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref PodsyncPort
+          ToPort: !Ref PodsyncPort
+          CidrIp: 0.0.0.0/0
+          Description: Access to Podsync server
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: SSH access to EC2 machine
+
+Outputs:
+  PodsyncUrl:
+    Description: 'Feed URL'
+    Value: !Sub "http://${Ec2Instance.PublicDnsName}:${PodsyncPort}/${FeedId}/"
