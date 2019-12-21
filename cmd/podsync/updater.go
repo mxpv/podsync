@@ -93,6 +93,7 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 				// We still need to generate XML, so just stop sending download requests and
 				// retry next time
 				if strings.Contains(output, "HTTP Error 429") {
+					logger.WithError(err).Warnf("got too many requests error, will retry download next time")
 					break
 				}
 
