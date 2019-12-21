@@ -14,8 +14,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/mxpv/podsync/pkg/builder"
 	"github.com/mxpv/podsync/pkg/config"
+	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/mxpv/podsync/pkg/link"
 	"github.com/mxpv/podsync/pkg/model"
 )
@@ -263,9 +263,9 @@ func (u *Updater) fileSize(path string) (int64, error) {
 	return info.Size(), nil
 }
 
-func (u *Updater) makeBuilder(ctx context.Context, cfg *config.Feed) (builder.Builder, error) {
+func (u *Updater) makeBuilder(ctx context.Context, cfg *config.Feed) (feed.Builder, error) {
 	var (
-		provider builder.Builder
+		provider feed.Builder
 		err      error
 	)
 
@@ -276,9 +276,9 @@ func (u *Updater) makeBuilder(ctx context.Context, cfg *config.Feed) (builder.Bu
 
 	switch info.Provider {
 	case link.ProviderYoutube:
-		provider, err = builder.NewYouTubeBuilder(u.config.Tokens.YouTube)
+		provider, err = feed.NewYouTubeBuilder(u.config.Tokens.YouTube)
 	case link.ProviderVimeo:
-		provider, err = builder.NewVimeoBuilder(ctx, u.config.Tokens.Vimeo)
+		provider, err = feed.NewVimeoBuilder(ctx, u.config.Tokens.Vimeo)
 	default:
 		return nil, errors.Errorf("unsupported provider %q", info.Provider)
 	}
