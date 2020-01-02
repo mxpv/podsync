@@ -54,6 +54,7 @@ vimeo = "{VIMEO_API_TOKEN}"
   update_period = "12h" # How often query for updates, examples: "60m", "4h", "2h45m"
   quality = "high" # or "low"
   format = "video" # or "audio"
+  cover_art = "{IMAGE_URL}" # Optional URL address of an image file
 ```
 
 Episodes files will be kept at: `/path/to/data/directory/ID1`, feed will be accessible from: `http://localhost/ID1.xml`
