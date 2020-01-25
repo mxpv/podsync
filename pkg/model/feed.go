@@ -24,15 +24,16 @@ const (
 
 type Episode struct {
 	// ID of episode
-	ID          string    `json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	Thumbnail   string    `json:"thumbnail"`
-	Duration    int64     `json:"duration"`
-	VideoURL    string    `json:"video_url"`
-	PubDate     time.Time `json:"pub_date"`
-	Size        int64     `json:"size"`
-	Order       string    `json:"order"`
+	ID          string        `json:"id"`
+	Title       string        `json:"title"`
+	Description string        `json:"description"`
+	Thumbnail   string        `json:"thumbnail"`
+	Duration    int64         `json:"duration"`
+	VideoURL    string        `json:"video_url"`
+	PubDate     time.Time     `json:"pub_date"`
+	Size        int64         `json:"size"`
+	Order       string        `json:"order"`
+	Status      EpisodeStatus `json:"status"` // Disk status
 }
 
 type Feed struct {
@@ -54,7 +55,7 @@ type Feed struct {
 	PubDate        time.Time     `json:"pub_date"`
 	Author         string        `json:"author"`
 	ItemURL        string        `json:"item_url"` // Platform specific URL
-	Episodes       []*Episode    `json:"-"`        // Array of episodes, serialized as gziped EpisodesData in DynamoDB
+	Episodes       []*Episode    `json:"-"`        // Array of episodes
 	UpdatedAt      time.Time     `json:"updated_at"`
 }
 
@@ -66,10 +67,3 @@ const (
 	EpisodeError      = EpisodeStatus("error")      // Could not download, will retry
 	EpisodeCleaned    = EpisodeStatus("cleaned")    // Downloaded and later removed from disk due to update strategy
 )
-
-type File struct {
-	EpisodeID string        `json:"episode_id"`
-	FeedID    string        `json:"feed_id"`
-	Size      int64         `json:"size"` // Size on disk after encoding
-	Status    EpisodeStatus `json:"status"`
-}
