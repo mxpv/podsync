@@ -20,8 +20,6 @@ const (
 	feedPath      = "feed/%s"
 	episodePrefix = "episode/%s/"
 	episodePath   = "episode/%s/%s" // FeedID + EpisodeID
-	filePrefix    = "file/%s/"
-	filePath      = "file/%s/%s" // FeedID + EpisodeID
 )
 
 type Badger struct {
@@ -100,22 +98,6 @@ func (b *Badger) AddFeed(_ context.Context, feedID string, feed *model.Feed) err
 			}
 		}
 
-		// Update download file statuses
-		for _, episode := range feed.Episodes {
-			fileKey := b.getKey(filePath, feedID, episode.ID)
-			file := &model.File{
-				EpisodeID: episode.ID,
-				FeedID:    feedID,
-				Size:      episode.Size, // Use estimated file size
-				Status:    model.EpisodeNew,
-			}
-
-			err := b.setObj(txn, fileKey, file, false)
-			if err != nil && err != ErrAlreadyExists {
-				return errors.Wrapf(err, "failed to set %q status for %q", model.EpisodeNew, episode.ID)
-			}
-		}
-
 		return nil
 	})
 }
@@ -190,16 +172,6 @@ func (b *Badger) DeleteFeed(_ context.Context, feedID string) error {
 			return errors.Wrapf(err, "failed to iterate episodes for feed %q", feedID)
 		}
 
-		// Files
-		opts = badger.DefaultIteratorOptions
-		opts.Prefix = b.getKey(filePrefix, feedID)
-		opts.PrefetchValues = false
-		if err := b.iterator(txn, opts, func(item *badger.Item) error {
-			return txn.Delete(item.KeyCopy(nil))
-		}); err != nil {
-			return errors.Wrapf(err, "failed to iterate files for feed %q", feedID)
-		}
-
 		return nil
 	})
 }
@@ -218,47 +190,42 @@ func (b *Badger) GetEpisode(_ context.Context, feedID string, episodeID string) 
 	return &episode, err
 }
 
-func (b *Badger) WalkFiles(_ context.Context, feedID string, cb func(file *model.File) error) error {
-	opts := badger.DefaultIteratorOptions
-	opts.Prefix = b.getKey(filePrefix, feedID)
-	opts.PrefetchValues = true
-
-	return b.db.View(func(txn *badger.Txn) error {
-		return b.iterator(txn, opts, func(item *badger.Item) error {
-			file := &model.File{}
-			if err := b.unmarshalObj(item, file); err != nil {
-				return err
-			}
-
-			return cb(file)
-		})
-	})
-}
-
-func (b *Badger) UpdateFile(feedID string, episodeID string, cb func(file *model.File) error) error {
+func (b *Badger) UpdateEpisode(feedID string, episodeID string, cb func(episode *model.Episode) error) error {
 	var (
-		key  = b.getKey(filePath, feedID, episodeID)
-		file = &model.File{}
+		key     = b.getKey(episodePath, feedID, episodeID)
+		episode model.Episode
 	)
 
 	return b.db.Update(func(txn *badger.Txn) error {
-		if err := b.getObj(txn, key, file); err != nil {
+		if err := b.getObj(txn, key, &episode); err != nil {
 			return err
 		}
 
-		if err := cb(file); err != nil {
+		if err := cb(&episode); err != nil {
 			return err
 		}
 
-		if file.FeedID != feedID {
-			return errors.New("can't change feed ID")
-		}
-
-		if file.EpisodeID != episodeID {
+		if episode.ID != episodeID {
 			return errors.New("can't change episode ID")
 		}
 
-		return b.setObj(txn, key, file, true)
+		return b.setObj(txn, key, &episode, true)
+	})
+}
+
+func (b *Badger) WalkEpisodes(ctx context.Context, feedID string, cb func(episode *model.Episode) error) error {
+	return b.db.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.Prefix = b.getKey(episodePrefix, feedID)
+		opts.PrefetchValues = true
+		return b.iterator(txn, opts, func(item *badger.Item) error {
+			feed := &model.Episode{}
+			if err := b.unmarshalObj(item, feed); err != nil {
+				return err
+			}
+
+			return cb(feed)
+		})
 	})
 }
 

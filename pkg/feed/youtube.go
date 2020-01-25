@@ -326,6 +326,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 			VideoURL:    videoURL,
 			PubDate:     pubDate,
 			Order:       order,
+			Status:      model.EpisodeNew,
 		})
 	}
 

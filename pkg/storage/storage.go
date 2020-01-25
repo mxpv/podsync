@@ -23,8 +23,7 @@ type Storage interface {
 
 	// AddFeed will:
 	// - Insert or update feed info
-	// - Append new episodes to the existing list of episodes
-	// - Insert File model for each new episode
+	// - Append new episodes to the existing list of episodes (existing episodes are not overwritten!)
 	AddFeed(ctx context.Context, feedID string, feed *model.Feed) error
 
 	// GetFeed gets a feed by ID
@@ -39,9 +38,9 @@ type Storage interface {
 	// GetEpisode gets episode by identifier
 	GetEpisode(ctx context.Context, feedID string, episodeID string) (*model.Episode, error)
 
-	// WalkFiles walks all files for the given feed ID
-	WalkFiles(ctx context.Context, feedID string, cb func(file *model.File) error) error
+	// UpdateEpisode updates episode fields
+	UpdateEpisode(feedID string, episodeID string, cb func(episode *model.Episode) error) error
 
-	// UpdateFile updates file via callback function.
-	UpdateFile(feedID string, episodeID string, cb func(file *model.File) error) error
+	// WalkEpisodes iterates over episodes that belong to the given feed ID
+	WalkEpisodes(ctx context.Context, feedID string, cb func(episode *model.Episode) error) error
 }

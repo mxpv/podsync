@@ -99,58 +99,54 @@ func (u *Updater) updateFeed(ctx context.Context, feedConfig *config.Feed) error
 
 func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed, targetDir string) error {
 	var (
-		feedID     = feedConfig.ID
-		updateList []*model.Episode
+		feedID       = feedConfig.ID
+		downloadList []*model.Episode
 	)
 
 	// Build the list of files to download
-	if err := u.db.WalkFiles(ctx, feedID, func(file *model.File) error {
-		if file.Status != model.EpisodeNew && file.Status != model.EpisodeError {
+	if err := u.db.WalkEpisodes(ctx, feedID, func(episode *model.Episode) error {
+		if episode.Status != model.EpisodeNew && episode.Status != model.EpisodeError {
 			// File already downloaded
 			return nil
 		}
 
-		episode, err := u.db.GetEpisode(ctx, feedID, file.EpisodeID)
-		if err != nil {
-			return errors.Wrapf(err, "failed to query episode %q from database", file.EpisodeID)
-		}
-
-		updateList = append(updateList, episode)
+		downloadList = append(downloadList, episode)
 		return nil
 	}); err != nil {
 		return errors.Wrapf(err, "failed to build update list")
 	}
 
 	var (
-		updateListLen = len(updateList)
+		downloadCount = len(downloadList)
 		downloaded    = 0
 	)
 
-	if updateListLen > 0 {
-		log.Infof("update list size: %d", updateListLen)
+	if downloadCount > 0 {
+		log.Infof("download count: %d", downloadCount)
 	} else {
 		log.Info("no episodes to download")
 		return nil
 	}
 
 	// Download pending episodes
-	for idx, episode := range updateList {
+
+	for idx, episode := range downloadList {
 		logger := log.WithFields(log.Fields{
 			"index":      idx,
 			"episode_id": episode.ID,
 		})
 
 		// Check whether episode exists on disk
-		
+
 		episodePath := filepath.Join(targetDir, u.episodeName(feedConfig, episode))
 		stat, err := os.Stat(episodePath)
 		if err == nil {
 			logger.Infof("episode %q already exists on disk (%s)", episode.ID, episodePath)
 
 			// File already exists, update file status and disk size
-			if err := u.db.UpdateFile(feedID, episode.ID, func(file *model.File) error {
-				file.Size = stat.Size()
-				file.Status = model.EpisodeDownloaded
+			if err := u.db.UpdateEpisode(feedID, episode.ID, func(episode *model.Episode) error {
+				episode.Size = stat.Size()
+				episode.Status = model.EpisodeDownloaded
 				return nil
 			}); err != nil {
 				logger.WithError(err).Error("failed to update file info")
@@ -179,8 +175,8 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed,
 				break
 			}
 
-			if err := u.db.UpdateFile(feedID, episode.ID, func(file *model.File) error {
-				file.Status = model.EpisodeError
+			if err := u.db.UpdateEpisode(feedID, episode.ID, func(episode *model.Episode) error {
+				episode.Status = model.EpisodeError
 				return nil
 			}); err != nil {
 				return err
@@ -193,17 +189,17 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed,
 
 		logger.Infof("successfully downloaded file %q", episode.ID)
 
-		if err := u.db.UpdateFile(feedID, episode.ID, func(file *model.File) error {
+		if err := u.db.UpdateEpisode(feedID, episode.ID, func(episode *model.Episode) error {
 			// Record file size of newly downloaded file
 			size, err := u.fileSize(episodePath)
 			if err != nil {
 				logger.WithError(err).Error("failed to get episode file size")
 			} else {
-				logger.Debugf("file size: %d bytes", file.Size)
-				file.Size = size
+				logger.Debugf("file size: %d bytes", episode.Size)
+				episode.Size = size
 			}
 
-			file.Status = model.EpisodeDownloaded
+			episode.Status = model.EpisodeDownloaded
 			return nil
 		}); err != nil {
 			return err
