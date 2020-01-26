@@ -115,15 +115,7 @@ func (b *Badger) GetFeed(_ context.Context, feedID string) (*model.Feed, error) 
 		}
 
 		// Query episodes
-		opts := badger.DefaultIteratorOptions
-		opts.Prefix = b.getKey(episodePrefix, feedID)
-		opts.PrefetchValues = true
-		if err := b.iterator(txn, opts, func(item *badger.Item) error {
-			episode := &model.Episode{}
-			if err := b.getObj(txn, item.Key(), &episode); err != nil {
-				return err
-			}
-
+		if err := b.walkEpisodes(txn, feedID, func(episode *model.Episode) error {
 			feed.Episodes = append(feed.Episodes, episode)
 			return nil
 		}); err != nil {
@@ -215,17 +207,21 @@ func (b *Badger) UpdateEpisode(feedID string, episodeID string, cb func(episode 
 
 func (b *Badger) WalkEpisodes(ctx context.Context, feedID string, cb func(episode *model.Episode) error) error {
 	return b.db.View(func(txn *badger.Txn) error {
-		opts := badger.DefaultIteratorOptions
-		opts.Prefix = b.getKey(episodePrefix, feedID)
-		opts.PrefetchValues = true
-		return b.iterator(txn, opts, func(item *badger.Item) error {
-			feed := &model.Episode{}
-			if err := b.unmarshalObj(item, feed); err != nil {
-				return err
-			}
+		return b.walkEpisodes(txn, feedID, cb)
+	})
+}
 
-			return cb(feed)
-		})
+func (b *Badger) walkEpisodes(txn *badger.Txn, feedID string, cb func(episode *model.Episode) error) error {
+	opts := badger.DefaultIteratorOptions
+	opts.Prefix = b.getKey(episodePrefix, feedID)
+	opts.PrefetchValues = true
+	return b.iterator(txn, opts, func(item *badger.Item) error {
+		feed := &model.Episode{}
+		if err := b.unmarshalObj(item, feed); err != nil {
+			return err
+		}
+
+		return cb(feed)
 	})
 }
 
