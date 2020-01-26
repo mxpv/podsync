@@ -153,7 +153,7 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed,
 				return err
 			}
 
-			return nil
+			continue
 		} else if os.IsNotExist(err) {
 			// Will download, do nothing here
 		} else {
