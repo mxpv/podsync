@@ -263,6 +263,11 @@ func (u *Updater) buildPodcast(feed *model.Feed, cfg *config.Feed) (*itunes.Podc
 	}
 
 	for i, episode := range feed.Episodes {
+		if episode.Status != model.EpisodeDownloaded {
+			// Skip episodes that are not yet downloaded
+			continue
+		}
+
 		item := itunes.Item{
 			GUID:        episode.ID,
 			Link:        episode.VideoURL,
