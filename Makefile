@@ -52,3 +52,10 @@ lint: $(GOLANGCI)
 .PHONY: test
 test:
 	go test -v ./...
+
+#
+# Clean
+#
+.PHONY: clean
+clean:
+	- rm -rf $(BINPATH)
