@@ -30,7 +30,7 @@ brew install youtube-dl ffmpeg
 
 In order to query YouTube or Vimeo API you have to obtain an API token first.
 
-- [How to get YouTube API key](https://elfsight.com/help/how-to-get-youtube-api-key/)
+- [How to get YouTube API key](https://elfsight.com/blog/2016/12/how-to-get-youtube-api-key-tutorial/)
 - [Generate an access token for Vimeo](https://developer.vimeo.com/api/guides/start#generate-access-token)
 
 ## Configuration example
