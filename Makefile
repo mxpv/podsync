@@ -23,9 +23,14 @@ docker:
 #
 # Run goreleaser to build and upload release binaries
 #
+V =
 .PHONY: release
 release:
+	test -n "$(V)" # Version is required
+	- git tag --delete v$(V)
+	git tag v$(V)
 	goreleaser --rm-dist
+	git push origin --tags
 
 #
 # Pull GolangCI-Lint dependency

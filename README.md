@@ -101,12 +101,7 @@ $ docker-compose up
 
 ## How to make a release
 
-- Add and push version tag
+Just run:
   ```
-  $ git tag -a v0.1.0 -m "First release"
-  $ git push origin --tags
-  ```
-- Run GoReleaser at the root of your repository:
-  ```
-  $ make release
+  $ make release V=2.0.7
   ```
