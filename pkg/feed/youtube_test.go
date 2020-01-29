@@ -45,7 +45,7 @@ func TestYT_BuildFeed(t *testing.T) {
 	urls := []string{
 		"https://youtube.com/user/fxigr1",
 		"https://www.youtube.com/channel/UCupvZG-5ko_eiXAupbDfxWw",
-		"https://www.youtube.com/playlist?list=PLfVk3KMh3VX1yJShGRsJmsqAjvMIviJYQ",
+		"https://www.youtube.com/playlist?list=PLF7tUDhGkiCk_Ne30zu7SJ9gZF9R9ZruE",
 		"https://www.youtube.com/channel/UCK9lZ2lHRBgx2LOcqPifukA",
 		"https://youtube.com/user/WylsaLive",
 		"https://www.youtube.com/playlist?list=PLUVl5pafUrBydT_gsCjRGeCy0hFHloec8",
@@ -86,7 +86,7 @@ func TestYT_GetVideoCount(t *testing.T) {
 	feeds := []*link.Info{
 		{Provider: link.ProviderYoutube, LinkType: link.TypeUser, ItemID: "fxigr1"},
 		{Provider: link.ProviderYoutube, LinkType: link.TypeChannel, ItemID: "UCupvZG-5ko_eiXAupbDfxWw"},
-		{Provider: link.ProviderYoutube, LinkType: link.TypePlaylist, ItemID: "PLfVk3KMh3VX1yJShGRsJmsqAjvMIviJYQ"},
+		{Provider: link.ProviderYoutube, LinkType: link.TypePlaylist, ItemID: "PLF7tUDhGkiCk_Ne30zu7SJ9gZF9R9ZruE"},
 		{Provider: link.ProviderYoutube, LinkType: link.TypeChannel, ItemID: "UCK9lZ2lHRBgx2LOcqPifukA"},
 		{Provider: link.ProviderYoutube, LinkType: link.TypeUser, ItemID: "WylsaLive"},
 		{Provider: link.ProviderYoutube, LinkType: link.TypePlaylist, ItemID: "PLUVl5pafUrBydT_gsCjRGeCy0hFHloec8"},

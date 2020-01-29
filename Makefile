@@ -23,15 +23,20 @@ docker:
 #
 # Run goreleaser to build and upload release binaries
 #
+V =
 .PHONY: release
 release:
+	test -n "$(V)" # Version is required
+	- git tag --delete v$(V)
+	git tag v$(V)
 	goreleaser --rm-dist
+	git push origin --tags
 
 #
 # Pull GolangCI-Lint dependency
 #
 $(GOLANGCI):
-	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(BINPATH) v1.17.1
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(BINPATH) v1.23.1
 	$(GOLANGCI) --version
 
 #
@@ -47,3 +52,10 @@ lint: $(GOLANGCI)
 .PHONY: test
 test:
 	go test -v ./...
+
+#
+# Clean
+#
+.PHONY: clean
+clean:
+	- rm -rf $(BINPATH)
