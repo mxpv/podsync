@@ -26,6 +26,8 @@ type Feed struct {
 	UpdatePeriod Duration `toml:"update_period"`
 	// Quality to use for this feed
 	Quality model.Quality `toml:"quality"`
+	// Maximum height of video
+	MaxHeight int `toml:"max_height"`
 	// Format to use for this feed
 	Format model.Format `toml:"format"`
 	// Custom image to use
