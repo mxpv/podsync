@@ -55,6 +55,7 @@ vimeo = "{VIMEO_API_TOKEN}"
   quality = "high" # or "low"
   format = "video" # or "audio"
   cover_art = "{IMAGE_URL}" # Optional URL address of an image file
+  max_height = "720" # Optional maximal height of video, example: 720, 1080, 1440, 2160, ...
 ```
 
 Episodes files will be kept at: `/path/to/data/directory/ID1`, feed will be accessible from: `http://localhost/ID1.xml`

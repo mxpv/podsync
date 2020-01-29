@@ -2,9 +2,7 @@ package ytdl
 
 import (
 	"context"
-	"fmt"
 	"os/exec"
-	"path/filepath"
 	"time"
 
 	"github.com/pkg/errors"
@@ -41,62 +39,12 @@ func New(ctx context.Context) (*YoutubeDl, error) {
 }
 
 func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episode *model.Episode, feedPath string) (string, error) {
-	var (
-		outputTemplate = makeOutputTemplate(feedPath, episode)
-		url            = episode.VideoURL
-	)
+	options := &OptionsDl{}
 
-	if feedConfig.Format == model.FormatAudio {
-		// Audio
-		if feedConfig.Quality == model.QualityHigh {
-			// High quality audio (encoded to mp3)
-			return dl.exec(ctx,
-				"--extract-audio",
-				"--audio-format",
-				"mp3",
-				"--format",
-				"bestaudio",
-				"--output",
-				outputTemplate,
-				url,
-			)
-		} else { //nolint
-			// Low quality audio (encoded to mp3)
-			return dl.exec(ctx,
-				"--extract-audio",
-				"--audio-format",
-				"mp3",
-				"--format",
-				"worstaudio",
-				"--output",
-				outputTemplate,
-				url,
-			)
-		}
-	} else {
-		/*
-			Video
-		*/
-		if feedConfig.Quality == model.QualityHigh {
-			// High quality
-			return dl.exec(ctx,
-				"--format",
-				"bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
-				"--output",
-				outputTemplate,
-				url,
-			)
-		} else { //nolint
-			// Low quality
-			return dl.exec(ctx,
-				"--format",
-				"worstvideo[ext=mp4]+worstaudio[ext=m4a]/worst[ext=mp4]/worst",
-				"--output",
-				outputTemplate,
-				url,
-			)
-		}
-	}
+	params := options.New(feedConfig, episode, feedPath)
+
+	return dl.exec(ctx, params...)
+
 }
 
 func (YoutubeDl) exec(ctx context.Context, args ...string) (string, error) {
@@ -111,9 +59,4 @@ func (YoutubeDl) exec(ctx context.Context, args ...string) (string, error) {
 	}
 
 	return string(output), nil
-}
-
-func makeOutputTemplate(feedPath string, episode *model.Episode) string {
-	filename := fmt.Sprintf("%s.%s", episode.ID, "%(ext)s")
-	return filepath.Join(feedPath, filename)
 }

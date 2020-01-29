@@ -17,6 +17,8 @@ const (
 // Format to convert episode when downloading episodes
 type Format string
 
+type MaxHeight int
+
 const (
 	FormatAudio = Format("audio")
 	FormatVideo = Format("video")
