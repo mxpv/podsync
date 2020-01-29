@@ -18,20 +18,6 @@ func TestNewOptionsVideo(t *testing.T) {
 		want *OptionsVideo
 	}{
 		{
-			"Get OptionsVideo in unknown quality",
-			args{
-				feedConfig: &config.Feed{Quality: model.Quality("unknown")},
-			},
-			&OptionsVideo{quality: model.QualityHigh},
-		},
-		{
-			"Get OptionsVideo in unknown quality with maxheight",
-			args{
-				feedConfig: &config.Feed{Quality: model.Quality("unknown"), MaxHeight: 720},
-			},
-			&OptionsVideo{quality: model.QualityHigh, maxHeight: 720},
-		},
-		{
 			"Get OptionsVideo in low quality",
 			args{
 				feedConfig: &config.Feed{Quality: model.QualityLow},

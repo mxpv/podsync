@@ -18,13 +18,6 @@ func TestNewOptionsAudio(t *testing.T) {
 		want *OptionsAudio
 	}{
 		{
-			"Get OptionsAudio in unknown quality",
-			args{
-				feedConfig: &config.Feed{Quality: model.Quality("unknown")},
-			},
-			&OptionsAudio{quality: model.QualityHigh},
-		},
-		{
 			"Get OptionsAudio in low quality",
 			args{
 				feedConfig: &config.Feed{Quality: model.QualityLow},

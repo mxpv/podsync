@@ -11,11 +11,8 @@ type OptionsAudio struct {
 
 func NewOptionsAudio(feedConfig *config.Feed) *OptionsAudio {
 	options := &OptionsAudio{}
-	options.quality = model.QualityHigh
+	options.quality = feedConfig.Quality
 
-	if feedConfig.Quality == model.QualityLow {
-		options.quality = model.QualityLow
-	}
 	return options
 }
 

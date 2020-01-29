@@ -15,15 +15,8 @@ type OptionsVideo struct {
 func NewOptionsVideo(feedConfig *config.Feed) *OptionsVideo {
 	options := &OptionsVideo{}
 
-	options.quality = model.QualityHigh
-
-	if feedConfig.Quality == model.QualityLow {
-		options.quality = model.QualityLow
-	}
-
-	if feedConfig.MaxHeight > 0 {
-		options.maxHeight = feedConfig.MaxHeight
-	}
+	options.quality = feedConfig.Quality
+	options.maxHeight = feedConfig.MaxHeight
 
 	return options
 }
