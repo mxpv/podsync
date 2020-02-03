@@ -15,10 +15,10 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/mxpv/podsync/pkg/config"
+	"github.com/mxpv/podsync/pkg/db"
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/mxpv/podsync/pkg/link"
 	"github.com/mxpv/podsync/pkg/model"
-	"github.com/mxpv/podsync/pkg/storage"
 )
 
 type Downloader interface {
@@ -28,10 +28,10 @@ type Downloader interface {
 type Updater struct {
 	config     *config.Config
 	downloader Downloader
-	db         storage.Storage
+	db         db.Storage
 }
 
-func NewUpdater(config *config.Config, downloader Downloader, db storage.Storage) (*Updater, error) {
+func NewUpdater(config *config.Config, downloader Downloader, db db.Storage) (*Updater, error) {
 	return &Updater{
 		config:     config,
 		downloader: downloader,
