@@ -25,6 +25,9 @@ type Feed struct {
 	// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 	// NOTE: too often update check might drain your API token.
 	UpdatePeriod Duration `toml:"update_period"`
+	// Cron expression format is how often to check update
+	// NOTE: too often update check might drain your API token.
+	CronSchedule string `toml:"cron_schedule"`
 	// Quality to use for this feed
 	Quality model.Quality `toml:"quality"`
 	// Maximum height of video

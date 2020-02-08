@@ -41,7 +41,7 @@ Here is an example how configuration might look like:
 ```toml
 [server]
 port = 8080
-data_dir = "/path/to/data/directory"
+data_dir = "/app/data" # Don't change if you run podsync via docker
 
 [tokens]
 youtube = "{YOUTUBE_API_TOKEN}" # Tokens from `Access tokens` section
@@ -54,8 +54,9 @@ vimeo = "{VIMEO_API_TOKEN}"
   update_period = "12h" # How often query for updates, examples: "60m", "4h", "2h45m"
   quality = "high" # or "low"
   format = "video" # or "audio"
-  cover_art = "{IMAGE_URL}" # Optional URL address of an image file
-  max_height = "720" # Optional maximal height of video, example: 720, 1080, 1440, 2160, ...
+  # cover_art = "{IMAGE_URL}" # Optional URL address of an image file
+  # max_height = "720" # Optional maximal height of video, example: 720, 1080, 1440, 2160, ...
+  # cron_schedule = "@every 12h" # Optional cron expression format. If set then overwrite 'update_period'. See details below
 ```
 
 Episodes files will be kept at: `/path/to/data/directory/ID1`, feed will be accessible from: `http://localhost/ID1.xml`
@@ -72,6 +73,44 @@ hostname = "https://my.test.host:4443"
   ...
 ```
 
+## Schedule via cron expression
+
+A cron expression represents a set of times, using 5 space-separated fields.
+
+	Field name   | Mandatory? | Allowed values  | Allowed special characters
+	----------   | ---------- | --------------  | --------------------------
+	Minutes      | Yes        | 0-59            | * / , -
+	Hours        | Yes        | 0-23            | * / , -
+	Day of month | Yes        | 1-31            | * / , - ?
+	Month        | Yes        | 1-12 or JAN-DEC | * / , -
+	Day of week  | Yes        | 0-6 or SUN-SAT  | * / , - ?
+
+Month and Day-of-week field values are case insensitive.  "SUN", "Sun", and "sun" are equally accepted.
+The specific interpretation of the format is based on the Cron Wikipedia page: https://en.wikipedia.org/wiki/Cron
+
+### Predefined schedules
+
+You may use one of several pre-defined schedules in place of a cron expression.
+
+	Entry                  | Description                                | Equivalent To
+	-----                  | -----------                                | -------------
+	@yearly (or @annually) | Run once a year, midnight, Jan. 1st        | 0 0 1 1 *
+	@monthly               | Run once a month, midnight, first of month | 0 0 1 * *
+	@weekly                | Run once a week, midnight between Sat/Sun  | 0 0 * * 0
+	@daily (or @midnight)  | Run once a day, midnight                   | 0 0 * * *
+	@hourly                | Run once an hour, beginning of hour        | 0 * * * *
+
+### Intervals
+
+You may also schedule a job to execute at fixed intervals, starting at the time it's added
+or cron is run. This is supported by formatting the cron spec like this:
+
+    @every <duration>
+
+where "duration" is a string accepted by [time.ParseDuration](http://golang.org/pkg/time/#ParseDuration).
+
+For example, "@every 1h30m10s" would indicate a schedule that activates after 1 hour, 30 minutes, 10 seconds, and then every interval after that.
+
 Server will be accessible from `http://localhost:8080`, but episode links will point to `https://my.test.host:4443/ID1/...`
 
 ## One click deployment
@@ -80,12 +119,12 @@ Server will be accessible from `http://localhost:8080`, but episode links will p
 
 ## How to run
 
-Run as binary:
+### Run as binary:
 ```
 $ ./podsync --config config.toml
 ```
 
-Run via Docker:
+### Run via Docker:
 ```
 $ docker pull mxpv/podsync:latest
 $ docker run \
@@ -95,7 +134,7 @@ $ docker run \
     mxpv/podsync:latest
 ```
 
-Run via Docker Compose:
+### Run via Docker Compose:
 ```
 $ docker-compose up
 ```

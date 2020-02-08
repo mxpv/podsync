@@ -9,6 +9,7 @@ require (
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/mxpv/podcast v0.0.0-20170823220358-fe328ad87d18
 	github.com/pkg/errors v0.8.1
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/silentsokolov/go-vimeo v0.0.0-20190116124215-06829264260c
 	github.com/sirupsen/logrus v1.2.0
 	github.com/stretchr/testify v1.3.0
