@@ -145,6 +145,7 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, feed *model.Feed) er
 				PubDate:     video.CreatedTime,
 				Thumbnail:   image,
 				VideoURL:    videoURL,
+				Status:      model.EpisodeNew,
 			})
 
 			added++

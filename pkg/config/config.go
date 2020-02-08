@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -57,9 +58,16 @@ type Server struct {
 	DataDir string `toml:"data_dir"`
 }
 
+type Database struct {
+	// Dir is a directory to keep database files
+	Dir string `toml:"dir"`
+}
+
 type Config struct {
 	// Server is the web server configuration
 	Server Server `toml:"server"`
+	// Database configuration
+	Database Database `toml:"database"`
 	// Feeds is a list of feeds to host by this app.
 	// ID will be used as feed ID in http://podsync.net/{FEED_ID}.xml
 	Feeds map[string]*Feed
@@ -79,7 +87,7 @@ func LoadConfig(path string) (*Config, error) {
 		feed.ID = id
 	}
 
-	config.applyDefaults()
+	config.applyDefaults(path)
 
 	if err := config.validate(); err != nil {
 		return nil, err
@@ -108,13 +116,17 @@ func (c *Config) validate() error {
 	return result.ErrorOrNil()
 }
 
-func (c *Config) applyDefaults() {
+func (c *Config) applyDefaults(configPath string) {
 	if c.Server.Hostname == "" {
 		if c.Server.Port != 0 && c.Server.Port != 80 {
 			c.Server.Hostname = fmt.Sprintf("http://localhost:%d", c.Server.Port)
 		} else {
 			c.Server.Hostname = "http://localhost"
 		}
+	}
+
+	if c.Database.Dir == "" {
+		c.Database.Dir = filepath.Join(filepath.Dir(configPath), "db")
 	}
 
 	for _, feed := range c.Feeds {

@@ -15,6 +15,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/mxpv/podsync/pkg/config"
+	"github.com/mxpv/podsync/pkg/db"
 	"github.com/mxpv/podsync/pkg/ytdl"
 )
 
@@ -88,9 +89,14 @@ func main() {
 		log.WithError(err).Fatal("failed to load configuration file")
 	}
 
+	database, err := db.NewBadger(&cfg.Database)
+	if err != nil {
+		log.WithError(err).Fatal("failed to open database")
+	}
+
 	// Run updater thread
 	log.Debug("creating updater")
-	updater, err := NewUpdater(cfg, downloader)
+	updater, err := NewUpdater(cfg, downloader, database)
 	if err != nil {
 		log.WithError(err).Fatal("failed to create updater")
 	}
@@ -166,6 +172,10 @@ func main() {
 
 	if err := group.Wait(); err != nil && (err != context.Canceled && err != http.ErrServerClosed) {
 		log.WithError(err).Error("wait error")
+	}
+
+	if err := database.Close(); err != nil {
+		log.WithError(err).Error("failed to close database")
 	}
 
 	log.Info("gracefully stopped")

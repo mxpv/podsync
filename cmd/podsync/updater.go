@@ -15,6 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/mxpv/podsync/pkg/config"
+	"github.com/mxpv/podsync/pkg/db"
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/mxpv/podsync/pkg/link"
 	"github.com/mxpv/podsync/pkg/model"
@@ -27,10 +28,15 @@ type Downloader interface {
 type Updater struct {
 	config     *config.Config
 	downloader Downloader
+	db         db.Storage
 }
 
-func NewUpdater(config *config.Config, downloader Downloader) (*Updater, error) {
-	return &Updater{config: config, downloader: downloader}, nil
+func NewUpdater(config *config.Config, downloader Downloader, db db.Storage) (*Updater, error) {
+	return &Updater{
+		config:     config,
+		downloader: downloader,
+		db:         db,
+	}, nil
 }
 
 func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
@@ -48,6 +54,26 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 		return errors.Wrapf(err, "failed to create directory for feed %q", feedConfig.ID)
 	}
 
+	if err := u.updateFeed(ctx, feedConfig); err != nil {
+		return err
+	}
+
+	if err := u.downloadEpisodes(ctx, feedConfig, feedPath); err != nil {
+		return err
+	}
+
+	if err := u.buildXML(ctx, feedConfig); err != nil {
+		return err
+	}
+
+	elapsed := time.Since(started)
+	nextUpdate := time.Now().Add(feedConfig.UpdatePeriod.Duration)
+	log.Infof("successfully updated feed in %s, next update at %s", elapsed, nextUpdate.Format(time.Kitchen))
+	return nil
+}
+
+// updateFeed pulls API for new episodes and saves them to database
+func (u *Updater) updateFeed(ctx context.Context, feedConfig *config.Feed) error {
 	// Create an updater for this feed type
 	provider, err := u.makeBuilder(ctx, feedConfig)
 	if err != nil {
@@ -63,60 +89,138 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 
 	log.Debugf("received %d episode(s) for %q", len(result.Episodes), result.Title)
 
-	// Since there is no way to detect the size of an episode after download and encoding via API,
-	// we'll patch XML feed with values from this map
-	sizes := map[string]int64{}
+	if err := u.db.AddFeed(ctx, feedConfig.ID, result); err != nil {
+		return err
+	}
 
-	// The number of episodes downloaded during this update
-	downloaded := 0
+	log.Debug("successfully saved updates to storage")
+	return nil
+}
 
-	// Download and encode episodes
-	for idx, episode := range result.Episodes {
+func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed, targetDir string) error {
+	var (
+		feedID       = feedConfig.ID
+		downloadList []*model.Episode
+	)
+
+	// Build the list of files to download
+	if err := u.db.WalkEpisodes(ctx, feedID, func(episode *model.Episode) error {
+		if episode.Status != model.EpisodeNew && episode.Status != model.EpisodeError {
+			// File already downloaded
+			return nil
+		}
+
+		downloadList = append(downloadList, episode)
+		return nil
+	}); err != nil {
+		return errors.Wrapf(err, "failed to build update list")
+	}
+
+	var (
+		downloadCount = len(downloadList)
+		downloaded    = 0
+	)
+
+	if downloadCount > 0 {
+		log.Infof("download count: %d", downloadCount)
+	} else {
+		log.Info("no episodes to download")
+		return nil
+	}
+
+	// Download pending episodes
+
+	for idx, episode := range downloadList {
 		logger := log.WithFields(log.Fields{
 			"index":      idx,
 			"episode_id": episode.ID,
 		})
 
-		episodePath := filepath.Join(feedPath, u.episodeName(feedConfig, episode))
-		_, err := os.Stat(episodePath)
-		if err != nil && !os.IsNotExist(err) {
-			return errors.Wrap(err, "failed to check whether episode exists")
-		}
+		// Check whether episode exists on disk
 
-		if os.IsNotExist(err) {
-			// There is no file on disk, download episode
-			logger.Infof("! downloading episode %s", episode.VideoURL)
-			if output, err := u.downloader.Download(ctx, feedConfig, episode, feedPath); err == nil {
-				downloaded++
-			} else {
-				// YouTube might block host with HTTP Error 429: Too Many Requests
-				// We still need to generate XML, so just stop sending download requests and
-				// retry next time
-				if strings.Contains(output, "HTTP Error 429") {
-					logger.WithError(err).Warnf("got too many requests error, will retry download next time")
-					break
-				}
+		episodePath := filepath.Join(targetDir, u.episodeName(feedConfig, episode))
+		stat, err := os.Stat(episodePath)
+		if err == nil {
+			logger.Infof("episode %q already exists on disk (%s)", episode.ID, episodePath)
 
-				logger.WithError(err).Errorf("youtube-dl error: %s", output)
+			// File already exists, update file status and disk size
+			if err := u.db.UpdateEpisode(feedID, episode.ID, func(episode *model.Episode) error {
+				episode.Size = stat.Size()
+				episode.Status = model.EpisodeDownloaded
+				return nil
+			}); err != nil {
+				logger.WithError(err).Error("failed to update file info")
+				return err
 			}
+
+			continue
+		} else if os.IsNotExist(err) {
+			// Will download, do nothing here
 		} else {
-			// Episode already downloaded
-			logger.Debug("skipping download of episode")
+			logger.WithError(err).Error("failed to stat file")
+			return err
 		}
 
-		// Record file size
-		if size, err := u.fileSize(episodePath); err != nil {
-			// Don't return on error, use estimated file size provided by builders
-			logger.WithError(err).Error("failed to get episode file size")
-		} else { //nolint
-			logger.Debugf("file size %d", size)
-			sizes[episode.ID] = size
+		// Download episode to disk
+
+		logger.Infof("! downloading episode %s", episode.VideoURL)
+		output, err := u.downloader.Download(ctx, feedConfig, episode, episodePath)
+		if err != nil {
+			logger.WithError(err).Errorf("youtube-dl error: %s", output)
+
+			// YouTube might block host with HTTP Error 429: Too Many Requests
+			// We still need to generate XML, so just stop sending download requests and
+			// retry next time
+			if strings.Contains(output, "HTTP Error 429") {
+				break
+			}
+
+			if err := u.db.UpdateEpisode(feedID, episode.ID, func(episode *model.Episode) error {
+				episode.Status = model.EpisodeError
+				return nil
+			}); err != nil {
+				return err
+			}
+
+			continue
 		}
+
+		// Update file status in database
+
+		logger.Infof("successfully downloaded file %q", episode.ID)
+
+		if err := u.db.UpdateEpisode(feedID, episode.ID, func(episode *model.Episode) error {
+			// Record file size of newly downloaded file
+			size, err := u.fileSize(episodePath)
+			if err != nil {
+				logger.WithError(err).Error("failed to get episode file size")
+			} else {
+				logger.Debugf("file size: %d bytes", episode.Size)
+				episode.Size = size
+			}
+
+			episode.Status = model.EpisodeDownloaded
+			return nil
+		}); err != nil {
+			return err
+		}
+
+		downloaded++
+	}
+
+	log.Infof("downloaded %d episode(s)", downloaded)
+	return nil
+}
+
+func (u *Updater) buildXML(ctx context.Context, feedConfig *config.Feed) error {
+	feed, err := u.db.GetFeed(ctx, feedConfig.ID)
+	if err != nil {
+		return err
 	}
 
 	// Build iTunes XML feed with data received from builder
 	log.Debug("building iTunes podcast feed")
-	podcast, err := u.buildPodcast(result, feedConfig, sizes)
+	podcast, err := u.buildPodcast(feed, feedConfig)
 	if err != nil {
 		return err
 	}
@@ -129,18 +233,10 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 		return errors.Wrapf(err, "failed to write XML feed to disk")
 	}
 
-	elapsed := time.Since(started)
-	nextUpdate := time.Now().Add(feedConfig.UpdatePeriod.Duration)
-	log.Infof(
-		"successfully updated feed in %s, downloaded: %d episode(s), next update at %s",
-		elapsed,
-		downloaded,
-		nextUpdate.Format(time.Kitchen),
-	)
 	return nil
 }
 
-func (u *Updater) buildPodcast(feed *model.Feed, cfg *config.Feed, sizes map[string]int64) (*itunes.Podcast, error) {
+func (u *Updater) buildPodcast(feed *model.Feed, cfg *config.Feed) (*itunes.Podcast, error) {
 	const (
 		podsyncGenerator = "Podsync generator (support us at https://github.com/mxpv/podsync)"
 		defaultCategory  = "TV & Film"
@@ -167,9 +263,9 @@ func (u *Updater) buildPodcast(feed *model.Feed, cfg *config.Feed, sizes map[str
 	}
 
 	for i, episode := range feed.Episodes {
-		// Fixup episode size after downloading and encoding
-		if size, ok := sizes[episode.ID]; ok {
-			episode.Size = size
+		if episode.Status != model.EpisodeDownloaded {
+			// Skip episodes that are not yet downloaded
+			continue
 		}
 
 		item := itunes.Item{
