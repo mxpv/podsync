@@ -134,10 +134,8 @@ func main() {
 		c.Start()
 
 		for {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			}
+			<-ctx.Done()
+			return ctx.Err()
 		}
 	})
 
