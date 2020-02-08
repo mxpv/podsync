@@ -113,10 +113,8 @@ func main() {
 			_, err = c.AddFunc(feed.Schedule, func() {
 				log.Debugf("adding %q to update queue", feed.URL)
 
-				if false {
-					if err := updater.Update(ctx, feed); err != nil {
-						log.WithError(err).Errorf("failed to update feed: %s", feed.URL)
-					}
+				if err := updater.Update(ctx, feed); err != nil {
+					log.WithError(err).Errorf("failed to update feed: %s", feed.URL)
 				}
 			})
 
