@@ -98,7 +98,6 @@ func main() {
 	c := cron.New(cron.WithChain(cron.SkipIfStillRunning(nil)))
 
 	group.Go(func() error {
-		// Shutdown web server
 		defer func() {
 			log.Info("shutting down cron")
 			c.Stop()
