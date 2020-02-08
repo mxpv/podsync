@@ -51,11 +51,12 @@ vimeo = "{VIMEO_API_TOKEN}"
   [feeds.ID1]
   url = "{FEED_URL}" # URL address of a channel, group, user, or playlist. 
   page_size = 50 # The number of episodes to query each update (keep in mind, that this might drain API token)
-  cron_schedule = "@every 6h" # Cron expression format. See details below
+  update_period = "12h" # How often query for updates, examples: "60m", "4h", "2h45m"
   quality = "high" # or "low"
   format = "video" # or "audio"
-  cover_art = "{IMAGE_URL}" # Optional URL address of an image file
-  max_height = "720" # Optional maximal height of video, example: 720, 1080, 1440, 2160, ...
+  # cover_art = "{IMAGE_URL}" # Optional URL address of an image file
+  # max_height = "720" # Optional maximal height of video, example: 720, 1080, 1440, 2160, ...
+  # cron_schedule = "@every 12h" # Optional cron expression format. If set then overwrite 'update_period'. See details below
 ```
 
 Episodes files will be kept at: `/path/to/data/directory/ID1`, feed will be accessible from: `http://localhost/ID1.xml`

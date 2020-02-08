@@ -24,7 +24,6 @@ type Feed struct {
 	// Format is "300ms", "1.5h" or "2h45m".
 	// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 	// NOTE: too often update check might drain your API token.
-	// todo deprecated, remove that someday
 	UpdatePeriod Duration `toml:"update_period"`
 	// Cron expression format is how often to check update
 	// NOTE: too often update check might drain your API token.

@@ -110,12 +110,10 @@ func main() {
 		}()
 
 		for _, feed := range cfg.Feeds {
-			// backward capability
-			// todo: remove that someday
 			if feed.CronSchedule == "" {
 				feed.CronSchedule = fmt.Sprintf("@every %s", feed.UpdatePeriod.String())
-				log.WithFields(log.Fields{"feedId": feed.ID}).Warn("you must update config file and set field 'cron_schedule' instead of 'update_period'")
 			}
+
 			_, err = c.AddFunc(feed.CronSchedule, func() {
 				log.Debugf("adding %q to update queue", feed.URL)
 
@@ -128,10 +126,12 @@ func main() {
 				log.WithError(err).Fatalf("can't create cron task for feed: %s", feed.ID)
 			}
 
-			log.Debugf("-> %s (update every %s)", feed.URL, feed.UpdatePeriod)
+			log.Debugf("-> %s (update '%s')", feed.URL, feed.CronSchedule)
 
 			// Perform initial update after CLI restart
-			_ = updater.Update(ctx, feed)
+			if err := updater.Update(ctx, feed); err != nil {
+				log.WithError(err).Errorf("failed to update feed: %s", feed.URL)
+			}
 		}
 
 		c.Start()
