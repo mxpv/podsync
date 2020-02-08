@@ -106,11 +106,11 @@ func main() {
 		for _, feed := range cfg.Feeds {
 			// backward capability
 			// todo: remove that someday
-			if feed.Schedule == "" {
-				feed.Schedule = fmt.Sprintf("@every %s", feed.UpdatePeriod.String())
-				log.WithFields(log.Fields{"feedId": feed.ID}).Warn("you must update config file and set field Schedule instead of UpdatePeriod")
+			if feed.CronSchedule == "" {
+				feed.CronSchedule = fmt.Sprintf("@every %s", feed.UpdatePeriod.String())
+				log.WithFields(log.Fields{"feedId": feed.ID}).Warn("you must update config file and set field 'cron_schedule' instead of 'update_period'")
 			}
-			_, err = c.AddFunc(feed.Schedule, func() {
+			_, err = c.AddFunc(feed.CronSchedule, func() {
 				log.Debugf("adding %q to update queue", feed.URL)
 
 				if err := updater.Update(ctx, feed); err != nil {
