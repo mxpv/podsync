@@ -110,6 +110,13 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed,
 			return nil
 		}
 
+		if feedConfig.OnlyMatching.Regex != nil {
+			if !feedConfig.OnlyMatching.Regex.Match([]byte(episode.Title)) {
+				log.Infof("Skipping '%s' due to lack of match with '%s'", episode.Title, feedConfig.OnlyMatching.Pattern)
+				return nil
+			}
+		}
+
 		downloadList = append(downloadList, episode)
 		return nil
 	}); err != nil {

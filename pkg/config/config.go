@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -36,6 +37,8 @@ type Feed struct {
 	Format model.Format `toml:"format"`
 	// Custom image to use
 	CoverArt string `toml:"cover_art"`
+	// Only download episodes that match this regexp (defaults to matching anything)
+	OnlyMatching Pattern `toml:"only_matching"`
 }
 
 type Tokens struct {
@@ -155,4 +158,21 @@ func (d *Duration) UnmarshalText(text []byte) error {
 	var err error
 	d.Duration, err = time.ParseDuration(string(text))
 	return err
+}
+
+type Pattern struct {
+	Regex   *regexp.Regexp
+	Pattern string
+}
+
+func (p *Pattern) UnmarshalText(text []byte) error {
+	if text != nil {
+		var err error
+		p.Pattern = string(text)
+		p.Regex, err = regexp.Compile(p.Pattern)
+		return err
+	} else {
+		p.Pattern = ""
+		return nil
+	}
 }
