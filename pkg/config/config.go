@@ -171,8 +171,7 @@ func (p *Pattern) UnmarshalText(text []byte) error {
 		p.Pattern = string(text)
 		p.Regex, err = regexp.Compile(p.Pattern)
 		return err
-	} else {
-		p.Pattern = ""
-		return nil
 	}
+	p.Pattern = ""
+	return nil
 }
