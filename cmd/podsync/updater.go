@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -108,6 +109,18 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed,
 		if episode.Status != model.EpisodeNew && episode.Status != model.EpisodeError {
 			// File already downloaded
 			return nil
+		}
+
+		if feedConfig.Filters.Title != "" {
+			matched, err := regexp.MatchString(feedConfig.Filters.Title, episode.Title)
+			if err != nil {
+				log.Warnf("Pattern '%s' is not a valid filter for %s Title", feedConfig.Filters.Title, feedConfig.ID)
+			} else {
+				if !matched {
+					log.Infof("Skipping '%s' due to lack of match with '%s'", episode.Title, feedConfig.Filters.Title)
+					return nil
+				}
+			}
 		}
 
 		downloadList = append(downloadList, episode)

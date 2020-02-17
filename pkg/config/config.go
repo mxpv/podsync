@@ -36,6 +36,8 @@ type Feed struct {
 	Format model.Format `toml:"format"`
 	// Custom image to use
 	CoverArt string `toml:"cover_art"`
+	// Only download episodes that match this regexp (defaults to matching anything)
+	Filters Filters `toml:"filters"`
 }
 
 type Tokens struct {
@@ -155,4 +157,9 @@ func (d *Duration) UnmarshalText(text []byte) error {
 	var err error
 	d.Duration, err = time.ParseDuration(string(text))
 	return err
+}
+
+type Filters struct {
+	Title string `toml:"title"`
+	// More filters to be added here
 }
