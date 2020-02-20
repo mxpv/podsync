@@ -163,12 +163,14 @@ Resources:
           systemctl start docker
           usermod -a -G docker ec2-user
 
+          export publichost=$(ec2-metadata --public-hostname | cut -d ' ' -f2)
           # Create configuration file
           mkdir -p /home/ec2-user/podsync/data
           tee /home/ec2-user/podsync/config.toml <<EOF
           [server]
           port = ${PodsyncPort}
           data_dir = "/home/ec2-user/podsync/data"
+          hostname = "http://$publichost:${PodsyncPort}"
 
           [tokens]
           youtube = "${YouTubeApiKey}"
