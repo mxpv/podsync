@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -20,10 +21,11 @@ import (
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/mxpv/podsync/pkg/link"
 	"github.com/mxpv/podsync/pkg/model"
+	"github.com/mxpv/podsync/pkg/ytdl"
 )
 
 type Downloader interface {
-	Download(ctx context.Context, feedConfig *config.Feed, episode *model.Episode, feedPath string) (string, error)
+	Download(ctx context.Context, feedConfig *config.Feed, episode *model.Episode) (io.ReadCloser, error)
 }
 
 type Updater struct {
@@ -175,16 +177,16 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed,
 		}
 
 		// Download episode to disk
+		// We download the episode to a temp directory first to avoid downloading this file by clients
+		// while still being processed by youtube-dl (e.g. a file is being downloaded from YT or encoding in progress)
 
 		logger.Infof("! downloading episode %s", episode.VideoURL)
-		output, err := u.downloader.Download(ctx, feedConfig, episode, episodePath)
+		tempFile, err := u.downloader.Download(ctx, feedConfig, episode)
 		if err != nil {
-			logger.WithError(err).Errorf("youtube-dl error: %s", output)
-
 			// YouTube might block host with HTTP Error 429: Too Many Requests
 			// We still need to generate XML, so just stop sending download requests and
 			// retry next time
-			if strings.Contains(output, "HTTP Error 429") {
+			if err == ytdl.ErrTooManyRequests {
 				break
 			}
 
@@ -198,20 +200,22 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed,
 			continue
 		}
 
+		logger.Debugf("copying file to: %s", episodePath)
+		fileSize, err := copyFile(tempFile, episodePath)
+
+		tempFile.Close()
+
+		if err != nil {
+			logger.WithError(err).Error("failed to copy file")
+			return err
+		}
+		logger.Debugf("copied %d bytes", episode.Size)
+
 		// Update file status in database
 
 		logger.Infof("successfully downloaded file %q", episode.ID)
-
 		if err := u.db.UpdateEpisode(feedID, episode.ID, func(episode *model.Episode) error {
-			// Record file size of newly downloaded file
-			size, err := u.fileSize(episodePath)
-			if err != nil {
-				logger.WithError(err).Error("failed to get episode file size")
-			} else {
-				logger.Debugf("file size: %d bytes", episode.Size)
-				episode.Size = size
-			}
-
+			episode.Size = fileSize
 			episode.Status = model.EpisodeDownloaded
 			return nil
 		}); err != nil {
@@ -223,6 +227,22 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed,
 
 	log.Infof("downloaded %d episode(s)", downloaded)
 	return nil
+}
+
+func copyFile(source io.Reader, destinationPath string) (int64, error) {
+	dest, err := os.Create(destinationPath)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to create destination file")
+	}
+
+	defer dest.Close()
+
+	written, err := io.Copy(dest, source)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to copy data")
+	}
+
+	return written, nil
 }
 
 func (u *Updater) buildXML(ctx context.Context, feedConfig *config.Feed) error {
@@ -361,15 +381,6 @@ func (u *Updater) episodeName(feedConfig *config.Feed, episode *model.Episode) s
 	}
 
 	return fmt.Sprintf("%s.%s", episode.ID, ext)
-}
-
-func (u *Updater) fileSize(path string) (int64, error) {
-	info, err := os.Stat(path)
-	if err != nil {
-		return 0, err
-	}
-
-	return info.Size(), nil
 }
 
 func (u *Updater) makeBuilder(ctx context.Context, cfg *config.Feed) (feed.Builder, error) {
