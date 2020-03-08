@@ -23,7 +23,7 @@ any device in podcast client.
 - mp3 encoding
 - Update scheduler supports cron expressions
 - Episodes filtering (match by title).
-- Feeds customizations (custom artwork).
+- Feeds customizations (custom artwork, category, language, etc).
 - Supports episodes cleanup (keep last X episodes).
 - One-click deployment for AWS.
 - Runs on Windows, Mac OS, Linux, and Docker.

@@ -23,24 +23,36 @@ func Build(ctx context.Context, feed *model.Feed, cfg *config.Feed, provider url
 		defaultCategory  = "TV & Film"
 	)
 
-	now := time.Now().UTC()
+	var (
+		now = time.Now().UTC()
+	)
 
 	p := itunes.New(feed.Title, feed.ItemURL, feed.Description, &feed.PubDate, &now)
 	p.Generator = podsyncGenerator
 	p.AddSubTitle(feed.Title)
-	p.AddCategory(defaultCategory, nil)
-	p.AddImage(feed.CoverArt)
 	p.IAuthor = feed.Title
 	p.AddSummary(feed.Description)
 
-	if feed.Explicit {
+	if cfg.Custom.CoverArt != "" {
+		p.AddImage(cfg.Custom.CoverArt)
+	} else {
+		p.AddImage(feed.CoverArt)
+	}
+
+	if cfg.Custom.Category != "" {
+		p.AddCategory(cfg.Custom.Category, nil)
+	} else {
+		p.AddCategory(defaultCategory, nil)
+	}
+
+	if cfg.Custom.Explicit {
 		p.IExplicit = "yes"
 	} else {
 		p.IExplicit = "no"
 	}
 
-	if feed.Language != "" {
-		p.Language = feed.Language
+	if cfg.Custom.Language != "" {
+		p.Language = cfg.Custom.Language
 	}
 
 	for i, episode := range feed.Episodes {
@@ -87,7 +99,7 @@ func Build(ctx context.Context, feed *model.Feed, cfg *config.Feed, provider url
 			item.Description = " "
 		}
 
-		if feed.Explicit {
+		if cfg.Custom.Explicit {
 			item.IExplicit = "yes"
 		} else {
 			item.IExplicit = "no"

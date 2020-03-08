@@ -196,7 +196,6 @@ func getFeed() *model.Feed {
 		Format:         "video",
 		Quality:        "high",
 		PageSize:       50,
-		Language:       "en",
 		Title:          "Test",
 		Description:    "Test",
 		PubDate:        time.Now().UTC(),

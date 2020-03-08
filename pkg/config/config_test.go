@@ -34,6 +34,7 @@ dir = "/home/user/db/"
   quality = "low"
   filters = { title = "regex for title here" }
   clean = { keep_last = 10 }
+  custom = { cover_art = "http://img", category = "TV", explicit = true, lang = "en" }
 `
 
 	f, err := ioutil.TempFile("", "")
@@ -66,6 +67,11 @@ dir = "/home/user/db/"
 	assert.EqualValues(t, "low", feed.Quality)
 	assert.EqualValues(t, "regex for title here", feed.Filters.Title)
 	assert.EqualValues(t, 10, feed.Clean.KeepLast)
+
+	assert.EqualValues(t, "http://img", feed.Custom.CoverArt)
+	assert.EqualValues(t, "TV", feed.Custom.Category)
+	assert.True(t, feed.Custom.Explicit)
+	assert.EqualValues(t, "en", feed.Custom.Language)
 }
 
 func TestApplyDefaults(t *testing.T) {

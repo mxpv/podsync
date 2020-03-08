@@ -48,8 +48,6 @@ type Feed struct {
 	Quality        Quality       `json:"quality"`
 	PageSize       int           `json:"page_size"`
 	CoverArt       string        `json:"cover_art"`
-	Explicit       bool          `json:"explicit"`
-	Language       string        `json:"language"` // ISO 639
 	Title          string        `json:"title"`
 	Description    string        `json:"description"`
 	PubDate        time.Time     `json:"pub_date"`

@@ -40,6 +40,15 @@ type Feed struct {
 	Filters Filters `toml:"filters"`
 	// Clean is a cleanup policy to use for this feed
 	Clean Cleanup `toml:"clean"`
+	// Custom is a list of feed customizations
+	Custom Custom `toml:"custom"`
+}
+
+type Custom struct {
+	CoverArt string `toml:"cover_art"`
+	Category string `toml:"category"`
+	Explicit bool   `toml:"explicit"`
+	Language string `toml:"lang"`
 }
 
 type Tokens struct {
