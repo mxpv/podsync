@@ -16,6 +16,19 @@ remembering last played position, sync between devices and offline listening. Th
 on YouTube and Vimeo. So the aim of Podsync is to make your life easier and enable you to view/listen to content on
 any device in podcast client.
 
+## Features
+
+- Works with YouTube and Vimeo.
+- Supports feeds configuration: video/audio, high/low quality, max video height, etc.
+- mp3 encoding
+- Update scheduler supports cron expressions
+- Episodes filtering (match by title).
+- Feeds customizations (custom artwork).
+- Supports episodes cleanup (keep last X episodes).
+- One-click deployment for AWS.
+- Runs on Windows, Mac OS, Linux, and Docker.
+- Supports ARM.
+
 ## Dependencies
 
 If you're running the CLI as binary (e.g. not via Docker), you need to make sure that dependencies are available on
