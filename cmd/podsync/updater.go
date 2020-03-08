@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	itunes "github.com/mxpv/podcast"
+	itunes "github.com/eduncan911/podcast"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 

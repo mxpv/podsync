@@ -4,10 +4,9 @@ require (
 	github.com/BrianHicks/finch v0.0.0-20140409222414-419bd73c29ec
 	github.com/BurntSushi/toml v0.3.1
 	github.com/dgraph-io/badger v1.6.0
-	github.com/eduncan911/podcast v1.3.0 // indirect
+	github.com/eduncan911/podcast v1.3.0
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/jessevdk/go-flags v1.4.0
-	github.com/mxpv/podcast v0.0.0-20170823220358-fe328ad87d18
 	github.com/pkg/errors v0.8.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/silentsokolov/go-vimeo v0.0.0-20190116124215-06829264260c
