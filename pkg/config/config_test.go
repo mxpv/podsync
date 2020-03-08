@@ -32,6 +32,8 @@ dir = "/home/user/db/"
   update_period = "5h"
   format = "audio"
   quality = "low"
+  filters = { title = "regex for title here" }
+  clean = { keep_last = 10 }
 `
 
 	f, err := ioutil.TempFile("", "")
@@ -62,6 +64,8 @@ dir = "/home/user/db/"
 	assert.EqualValues(t, Duration{5 * time.Hour}, feed.UpdatePeriod)
 	assert.EqualValues(t, "audio", feed.Format)
 	assert.EqualValues(t, "low", feed.Quality)
+	assert.EqualValues(t, "regex for title here", feed.Filters.Title)
+	assert.EqualValues(t, 10, feed.Clean.KeepLast)
 }
 
 func TestApplyDefaults(t *testing.T) {

@@ -7,8 +7,10 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"sort"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -59,6 +61,10 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 
 	if err := u.buildXML(ctx, feedConfig); err != nil {
 		return err
+	}
+
+	if err := u.cleanup(ctx, feedConfig); err != nil {
+		log.WithError(err).Error("cleanup failed")
 	}
 
 	elapsed := time.Since(started)
@@ -240,4 +246,59 @@ func (u *Updater) buildXML(ctx context.Context, feedConfig *config.Feed) error {
 	}
 
 	return nil
+}
+
+func (u *Updater) cleanup(ctx context.Context, feedConfig *config.Feed) error {
+	var (
+		feedID = feedConfig.ID
+		logger = log.WithField("feed_id", feedID)
+		count  = feedConfig.Clean.KeepLast
+		list   []*model.Episode
+		result *multierror.Error
+	)
+
+	if count < 1 {
+		logger.Info("nothing to clean")
+		return nil
+	}
+
+	logger.WithField("count", count).Info("running cleaner")
+	if err := u.db.WalkEpisodes(ctx, feedConfig.ID, func(episode *model.Episode) error {
+		switch episode.Status {
+		case model.EpisodeError, model.EpisodeCleaned:
+			// Skip
+		default:
+			list = append(list, episode)
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if count > len(list) {
+		return nil
+	}
+
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].PubDate.After(list[j].PubDate)
+	})
+
+	for _, episode := range list[count:] {
+		logger.WithField("episode_id", episode.ID).Infof("deleting %q", episode.Title)
+
+		if err := u.fs.Delete(ctx, feedConfig.ID, feed.EpisodeName(feedConfig, episode)); err != nil {
+			result = multierror.Append(result, errors.Wrapf(err, "failed to delete episode: %s", episode.ID))
+			continue
+		}
+
+		if err := u.db.UpdateEpisode(feedID, episode.ID, func(episode *model.Episode) error {
+			episode.Status = model.EpisodeCleaned
+			return nil
+		}); err != nil {
+			result = multierror.Append(result, errors.Wrapf(err, "failed to set state for cleaned episode: %s", episode.ID))
+			continue
+		}
+	}
+
+	return result.ErrorOrNil()
 }

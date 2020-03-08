@@ -38,6 +38,8 @@ type Feed struct {
 	CoverArt string `toml:"cover_art"`
 	// Only download episodes that match this regexp (defaults to matching anything)
 	Filters Filters `toml:"filters"`
+	// Clean is a cleanup policy to use for this feed
+	Clean Cleanup `toml:"clean"`
 }
 
 type Tokens struct {
@@ -62,6 +64,11 @@ type Server struct {
 type Database struct {
 	// Dir is a directory to keep database files
 	Dir string `toml:"dir"`
+}
+
+type Cleanup struct {
+	// KeepLast defines how many episodes to keep
+	KeepLast int `toml:"keep_last"`
 }
 
 type Config struct {
