@@ -7,10 +7,8 @@ import (
 	"io"
 	"os"
 	"regexp"
-	"strconv"
 	"time"
 
-	itunes "github.com/eduncan911/podcast"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -18,7 +16,6 @@ import (
 	"github.com/mxpv/podsync/pkg/db"
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/mxpv/podsync/pkg/fs"
-	"github.com/mxpv/podsync/pkg/link"
 	"github.com/mxpv/podsync/pkg/model"
 	"github.com/mxpv/podsync/pkg/ytdl"
 )
@@ -49,6 +46,7 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 		"format":  feedConfig.Format,
 		"quality": feedConfig.Quality,
 	}).Infof("-> updating %s", feedConfig.URL)
+
 	started := time.Now()
 
 	if err := u.updateFeed(ctx, feedConfig); err != nil {
@@ -72,7 +70,7 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 // updateFeed pulls API for new episodes and saves them to database
 func (u *Updater) updateFeed(ctx context.Context, feedConfig *config.Feed) error {
 	// Create an updater for this feed type
-	provider, err := u.makeBuilder(ctx, feedConfig)
+	provider, err := feed.New(ctx, feedConfig, u.config.Tokens)
 	if err != nil {
 		return err
 	}
@@ -142,7 +140,7 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed)
 	for idx, episode := range downloadList {
 		var (
 			logger      = log.WithFields(log.Fields{"index": idx, "episode_id": episode.ID})
-			episodeName = u.episodeName(feedConfig, episode)
+			episodeName = feed.EpisodeName(feedConfig, episode)
 		)
 
 		// Check whether episode already exists
@@ -220,14 +218,14 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed)
 }
 
 func (u *Updater) buildXML(ctx context.Context, feedConfig *config.Feed) error {
-	feed, err := u.db.GetFeed(ctx, feedConfig.ID)
+	f, err := u.db.GetFeed(ctx, feedConfig.ID)
 	if err != nil {
 		return err
 	}
 
 	// Build iTunes XML feed with data received from builder
 	log.Debug("building iTunes podcast feed")
-	podcast, err := u.buildPodcast(ctx, feed, feedConfig)
+	podcast, err := feed.Build(ctx, f, feedConfig, u.fs)
 	if err != nil {
 		return err
 	}
@@ -242,120 +240,4 @@ func (u *Updater) buildXML(ctx context.Context, feedConfig *config.Feed) error {
 	}
 
 	return nil
-}
-
-func (u *Updater) buildPodcast(ctx context.Context, feed *model.Feed, cfg *config.Feed) (*itunes.Podcast, error) {
-	const (
-		podsyncGenerator = "Podsync generator (support us at https://github.com/mxpv/podsync)"
-		defaultCategory  = "TV & Film"
-	)
-
-	now := time.Now().UTC()
-
-	p := itunes.New(feed.Title, feed.ItemURL, feed.Description, &feed.PubDate, &now)
-	p.Generator = podsyncGenerator
-	p.AddSubTitle(feed.Title)
-	p.AddCategory(defaultCategory, nil)
-	p.AddImage(feed.CoverArt)
-	p.IAuthor = feed.Title
-	p.AddSummary(feed.Description)
-
-	if feed.Explicit {
-		p.IExplicit = "yes"
-	} else {
-		p.IExplicit = "no"
-	}
-
-	if feed.Language != "" {
-		p.Language = feed.Language
-	}
-
-	for i, episode := range feed.Episodes {
-		if episode.Status != model.EpisodeDownloaded {
-			// Skip episodes that are not yet downloaded
-			continue
-		}
-
-		item := itunes.Item{
-			GUID:        episode.ID,
-			Link:        episode.VideoURL,
-			Title:       episode.Title,
-			Description: episode.Description,
-			ISubtitle:   episode.Title,
-			IOrder:      strconv.Itoa(i),
-		}
-
-		pubDate := episode.PubDate
-		if pubDate.IsZero() {
-			pubDate = now
-		}
-
-		item.AddPubDate(&pubDate)
-
-		item.AddSummary(episode.Description)
-		item.AddImage(episode.Thumbnail)
-		item.AddDuration(episode.Duration)
-
-		enclosureType := itunes.MP4
-		if feed.Format == model.FormatAudio {
-			enclosureType = itunes.MP4
-		}
-
-		episodeName := u.episodeName(cfg, episode)
-		downloadURL, err := u.fs.URL(ctx, cfg.ID, episodeName)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to obtain download URL for: %s", episodeName)
-		}
-
-		item.AddEnclosure(downloadURL, enclosureType, episode.Size)
-
-		// p.AddItem requires description to be not empty, use workaround
-		if item.Description == "" {
-			item.Description = " "
-		}
-
-		if feed.Explicit {
-			item.IExplicit = "yes"
-		} else {
-			item.IExplicit = "no"
-		}
-
-		if _, err := p.AddItem(item); err != nil {
-			return nil, errors.Wrapf(err, "failed to add item to podcast (id %q)", episode.ID)
-		}
-	}
-
-	return &p, nil
-}
-
-func (u *Updater) episodeName(feedConfig *config.Feed, episode *model.Episode) string {
-	ext := "mp4"
-	if feedConfig.Format == model.FormatAudio {
-		ext = "mp3"
-	}
-
-	return fmt.Sprintf("%s.%s", episode.ID, ext)
-}
-
-func (u *Updater) makeBuilder(ctx context.Context, cfg *config.Feed) (feed.Builder, error) {
-	var (
-		provider feed.Builder
-		err      error
-	)
-
-	info, err := link.Parse(cfg.URL)
-	if err != nil {
-		return nil, err
-	}
-
-	switch info.Provider {
-	case link.ProviderYoutube:
-		provider, err = feed.NewYouTubeBuilder(u.config.Tokens.YouTube)
-	case link.ProviderVimeo:
-		provider, err = feed.NewVimeoBuilder(ctx, u.config.Tokens.Vimeo)
-	default:
-		return nil, errors.Errorf("unsupported provider %q", info.Provider)
-	}
-
-	return provider, err
 }

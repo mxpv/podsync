@@ -2,9 +2,11 @@ package feed
 
 import (
 	"context"
-	"errors"
+
+	"github.com/pkg/errors"
 
 	"github.com/mxpv/podsync/pkg/config"
+	"github.com/mxpv/podsync/pkg/link"
 	"github.com/mxpv/podsync/pkg/model"
 )
 
@@ -15,4 +17,27 @@ var (
 
 type Builder interface {
 	Build(ctx context.Context, cfg *config.Feed) (*model.Feed, error)
+}
+
+func New(ctx context.Context, cfg *config.Feed, tokens config.Tokens) (Builder, error) {
+	var (
+		provider Builder
+		err      error
+	)
+
+	info, err := link.Parse(cfg.URL)
+	if err != nil {
+		return nil, err
+	}
+
+	switch info.Provider {
+	case link.ProviderYoutube:
+		provider, err = NewYouTubeBuilder(tokens.YouTube)
+	case link.ProviderVimeo:
+		provider, err = NewVimeoBuilder(ctx, tokens.Vimeo)
+	default:
+		return nil, errors.Errorf("unsupported provider %q", info.Provider)
+	}
+
+	return provider, err
 }
