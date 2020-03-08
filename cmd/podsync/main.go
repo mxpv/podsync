@@ -16,6 +16,7 @@ import (
 
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/db"
+	"github.com/mxpv/podsync/pkg/fs"
 	"github.com/mxpv/podsync/pkg/ytdl"
 )
 
@@ -94,9 +95,14 @@ func main() {
 		log.WithError(err).Fatal("failed to open database")
 	}
 
+	storage, err := fs.NewLocal(cfg.Server.DataDir, cfg.Server.Hostname)
+	if err != nil {
+		log.WithError(err).Fatal("failed to open storage")
+	}
+
 	// Run updater thread
 	log.Debug("creating updater")
-	updater, err := NewUpdater(cfg, downloader, database)
+	updater, err := NewUpdater(cfg, downloader, database, storage)
 	if err != nil {
 		log.WithError(err).Fatal("failed to create updater")
 	}

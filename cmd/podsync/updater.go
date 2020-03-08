@@ -1,15 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	itunes "github.com/mxpv/podcast"
@@ -19,6 +17,7 @@ import (
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/db"
 	"github.com/mxpv/podsync/pkg/feed"
+	"github.com/mxpv/podsync/pkg/fs"
 	"github.com/mxpv/podsync/pkg/link"
 	"github.com/mxpv/podsync/pkg/model"
 	"github.com/mxpv/podsync/pkg/ytdl"
@@ -32,13 +31,15 @@ type Updater struct {
 	config     *config.Config
 	downloader Downloader
 	db         db.Storage
+	fs         fs.Storage
 }
 
-func NewUpdater(config *config.Config, downloader Downloader, db db.Storage) (*Updater, error) {
+func NewUpdater(config *config.Config, downloader Downloader, db db.Storage, fs fs.Storage) (*Updater, error) {
 	return &Updater{
 		config:     config,
 		downloader: downloader,
 		db:         db,
+		fs:         fs,
 	}, nil
 }
 
@@ -50,18 +51,11 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 	}).Infof("-> updating %s", feedConfig.URL)
 	started := time.Now()
 
-	// Make sure feed directory exists
-	feedPath := filepath.Join(u.config.Server.DataDir, feedConfig.ID)
-	log.Debugf("creating directory for feed %q", feedPath)
-	if err := os.MkdirAll(feedPath, 0755); err != nil {
-		return errors.Wrapf(err, "failed to create directory for feed %q", feedConfig.ID)
-	}
-
 	if err := u.updateFeed(ctx, feedConfig); err != nil {
 		return err
 	}
 
-	if err := u.downloadEpisodes(ctx, feedConfig, feedPath); err != nil {
+	if err := u.downloadEpisodes(ctx, feedConfig); err != nil {
 		return err
 	}
 
@@ -100,7 +94,7 @@ func (u *Updater) updateFeed(ctx context.Context, feedConfig *config.Feed) error
 	return nil
 }
 
-func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed, targetDir string) error {
+func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed) error {
 	var (
 		feedID       = feedConfig.ID
 		downloadList []*model.Episode
@@ -146,21 +140,19 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed,
 	// Download pending episodes
 
 	for idx, episode := range downloadList {
-		logger := log.WithFields(log.Fields{
-			"index":      idx,
-			"episode_id": episode.ID,
-		})
+		var (
+			logger      = log.WithFields(log.Fields{"index": idx, "episode_id": episode.ID})
+			episodeName = u.episodeName(feedConfig, episode)
+		)
 
-		// Check whether episode exists on disk
-
-		episodePath := filepath.Join(targetDir, u.episodeName(feedConfig, episode))
-		stat, err := os.Stat(episodePath)
+		// Check whether episode already exists
+		size, err := u.fs.Size(ctx, feedID, episodeName)
 		if err == nil {
-			logger.Infof("episode %q already exists on disk (%s)", episode.ID, episodePath)
+			logger.Infof("episode %q already exists on disk", episode.ID)
 
 			// File already exists, update file status and disk size
 			if err := u.db.UpdateEpisode(feedID, episode.ID, func(episode *model.Episode) error {
-				episode.Size = stat.Size()
+				episode.Size = size
 				episode.Status = model.EpisodeDownloaded
 				return nil
 			}); err != nil {
@@ -200,16 +192,14 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed,
 			continue
 		}
 
-		logger.Debugf("copying file to: %s", episodePath)
-		fileSize, err := copyFile(tempFile, episodePath)
-
+		logger.Debug("copying file")
+		fileSize, err := u.fs.Create(ctx, feedID, episodeName, tempFile)
 		tempFile.Close()
-
 		if err != nil {
 			logger.WithError(err).Error("failed to copy file")
 			return err
 		}
-		logger.Debugf("copied %d bytes", episode.Size)
+		logger.Debugf("copied %d bytes", fileSize)
 
 		// Update file status in database
 
@@ -229,22 +219,6 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed,
 	return nil
 }
 
-func copyFile(source io.Reader, destinationPath string) (int64, error) {
-	dest, err := os.Create(destinationPath)
-	if err != nil {
-		return 0, errors.Wrap(err, "failed to create destination file")
-	}
-
-	defer dest.Close()
-
-	written, err := io.Copy(dest, source)
-	if err != nil {
-		return 0, errors.Wrap(err, "failed to copy data")
-	}
-
-	return written, nil
-}
-
 func (u *Updater) buildXML(ctx context.Context, feedConfig *config.Feed) error {
 	feed, err := u.db.GetFeed(ctx, feedConfig.ID)
 	if err != nil {
@@ -253,23 +227,24 @@ func (u *Updater) buildXML(ctx context.Context, feedConfig *config.Feed) error {
 
 	// Build iTunes XML feed with data received from builder
 	log.Debug("building iTunes podcast feed")
-	podcast, err := u.buildPodcast(feed, feedConfig)
+	podcast, err := u.buildPodcast(ctx, feed, feedConfig)
 	if err != nil {
 		return err
 	}
 
-	// Save XML to disk
-	xmlName := fmt.Sprintf("%s.xml", feedConfig.ID)
-	xmlPath := filepath.Join(u.config.Server.DataDir, xmlName)
-	log.Debugf("saving feed XML file to %s", xmlPath)
-	if err := ioutil.WriteFile(xmlPath, []byte(podcast.String()), 0600); err != nil {
-		return errors.Wrapf(err, "failed to write XML feed to disk")
+	var (
+		reader  = bytes.NewReader([]byte(podcast.String()))
+		xmlName = fmt.Sprintf("%s.xml", feedConfig.ID)
+	)
+
+	if _, err := u.fs.Create(ctx, "", xmlName, reader); err != nil {
+		return errors.Wrap(err, "failed to upload new XML feed")
 	}
 
 	return nil
 }
 
-func (u *Updater) buildPodcast(feed *model.Feed, cfg *config.Feed) (*itunes.Podcast, error) {
+func (u *Updater) buildPodcast(ctx context.Context, feed *model.Feed, cfg *config.Feed) (*itunes.Podcast, error) {
 	const (
 		podsyncGenerator = "Podsync generator (support us at https://github.com/mxpv/podsync)"
 		defaultCategory  = "TV & Film"
@@ -320,7 +295,19 @@ func (u *Updater) buildPodcast(feed *model.Feed, cfg *config.Feed) (*itunes.Podc
 		item.AddSummary(episode.Description)
 		item.AddImage(episode.Thumbnail)
 		item.AddDuration(episode.Duration)
-		item.AddEnclosure(u.makeEnclosure(feed, episode, cfg))
+
+		enclosureType := itunes.MP4
+		if feed.Format == model.FormatAudio {
+			enclosureType = itunes.MP4
+		}
+
+		episodeName := u.episodeName(cfg, episode)
+		downloadURL, err := u.fs.URL(ctx, cfg.ID, episodeName)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to obtain download URL for: %s", episodeName)
+		}
+
+		item.AddEnclosure(downloadURL, enclosureType, episode.Size)
 
 		// p.AddItem requires description to be not empty, use workaround
 		if item.Description == "" {
@@ -333,45 +320,12 @@ func (u *Updater) buildPodcast(feed *model.Feed, cfg *config.Feed) (*itunes.Podc
 			item.IExplicit = "no"
 		}
 
-		_, err := p.AddItem(item)
-		if err != nil {
+		if _, err := p.AddItem(item); err != nil {
 			return nil, errors.Wrapf(err, "failed to add item to podcast (id %q)", episode.ID)
 		}
 	}
 
 	return &p, nil
-}
-
-func (u *Updater) makeEnclosure(
-	feed *model.Feed,
-	episode *model.Episode,
-	cfg *config.Feed,
-) (string, itunes.EnclosureType, int64) {
-	ext := "mp4"
-	contentType := itunes.MP4
-	if feed.Format == model.FormatAudio {
-		ext = "mp3"
-		contentType = itunes.MP3
-	}
-
-	url := fmt.Sprintf(
-		"%s/%s/%s.%s",
-		u.hostname(),
-		cfg.ID,
-		episode.ID,
-		ext,
-	)
-
-	return url, contentType, episode.Size
-}
-
-func (u *Updater) hostname() string {
-	hostname := strings.TrimSuffix(u.config.Server.Hostname, "/")
-	if !strings.HasPrefix(hostname, "http") {
-		hostname = fmt.Sprintf("http://%s", hostname)
-	}
-
-	return hostname
 }
 
 func (u *Updater) episodeName(feedConfig *config.Feed, episode *model.Episode) string {
