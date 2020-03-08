@@ -236,9 +236,7 @@ func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info 
 		feed.Description = fmt.Sprintf("%s (%s)", feed.Title, feed.PubDate)
 	}
 
-	if feed.CoverArt == "" {
-		feed.CoverArt = yt.selectThumbnail(thumbnails, feed.Quality, "")
-	}
+	feed.CoverArt = yt.selectThumbnail(thumbnails, feed.Quality, "")
 
 	return nil
 }
@@ -383,7 +381,6 @@ func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *config.Feed) (*model.F
 		Format:    cfg.Format,
 		Quality:   cfg.Quality,
 		PageSize:  cfg.PageSize,
-		CoverArt:  cfg.CoverArt,
 		UpdatedAt: time.Now().UTC(),
 	}
 
