@@ -55,11 +55,8 @@ func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episo
 		return nil, errors.Wrap(err, "failed to get temp dir for download")
 	}
 
-	ext := "mp4"
-	if feedConfig.Format == model.FormatAudio {
-		ext = "mp3"
-	}
-	filePath := filepath.Join(tmpDir, fmt.Sprintf("%s.%s", episode.ID, ext))
+	// filePath with YoutubeDl template format
+	filePath := filepath.Join(tmpDir, fmt.Sprintf("%s.%s", episode.ID, "%(ext)s"))
 
 	args := buildArgs(feedConfig, episode, filePath)
 	output, err := dl.exec(ctx, args...)
@@ -74,6 +71,12 @@ func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episo
 		return nil, errors.New(output)
 	}
 
+	ext := "mp4"
+	if feedConfig.Format == model.FormatAudio {
+		ext = "mp3"
+	}
+	// filePath now with the final extension
+	filePath = filepath.Join(tmpDir, fmt.Sprintf("%s.%s", episode.ID, ext))
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to open downloaded file")
