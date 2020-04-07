@@ -83,7 +83,7 @@ func Build(ctx context.Context, feed *model.Feed, cfg *config.Feed, provider url
 
 		enclosureType := itunes.MP4
 		if feed.Format == model.FormatAudio {
-			enclosureType = itunes.MP4
+			enclosureType = itunes.MP3
 		}
 
 		episodeName := EpisodeName(cfg, episode)
