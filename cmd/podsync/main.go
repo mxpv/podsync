@@ -130,21 +130,22 @@ func main() {
 		c := cron.New(cron.WithChain(cron.SkipIfStillRunning(nil)))
 
 		for _, feed := range cfg.Feeds {
+			_feed := feed
 			if feed.CronSchedule == "" {
 				feed.CronSchedule = fmt.Sprintf("@every %s", feed.UpdatePeriod.String())
 			}
 
-			if _, err = c.AddFunc(feed.CronSchedule, func() {
-				log.Debugf("adding %q to update queue", feed.URL)
-				updates <- feed
+			if _, err = c.AddFunc(_feed.CronSchedule, func() {
+				log.Debugf("adding %q to update queue", _feed.URL)
+				updates <- _feed
 			}); err != nil {
-				log.WithError(err).Fatalf("can't create cron task for feed: %s", feed.ID)
+				log.WithError(err).Fatalf("can't create cron task for feed: %s", _feed.ID)
 			}
 
-			log.Debugf("-> %s (update '%s')", feed.URL, feed.CronSchedule)
+			log.Debugf("-> %s (update '%s')", _feed.URL, feed.CronSchedule)
 
 			// Perform initial update after CLI restart
-			updates <- feed
+			updates <- _feed
 		}
 
 		c.Start()
