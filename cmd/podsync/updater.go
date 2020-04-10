@@ -68,8 +68,7 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 	}
 
 	elapsed := time.Since(started)
-	nextUpdate := time.Now().Add(feedConfig.UpdatePeriod.Duration)
-	log.Infof("successfully updated feed in %s, next update at %s", elapsed, nextUpdate.Format(time.Kitchen))
+	log.Infof("successfully updated feed in %s", elapsed)
 	return nil
 }
 
