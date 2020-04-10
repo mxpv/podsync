@@ -111,6 +111,10 @@ func main() {
 	updates := make(chan *config.Feed, 16)
 	defer close(updates)
 
+	//Create Cron
+	c := cron.New(cron.WithChain(cron.SkipIfStillRunning(nil)))
+	m := make(map[string]cron.EntryID)
+
 	// Run updates listener
 	group.Go(func() error {
 		for {
@@ -118,6 +122,8 @@ func main() {
 			case feed := <-updates:
 				if err := updater.Update(ctx, feed); err != nil {
 					log.WithError(err).Errorf("failed to update feed: %s", feed.URL)
+				} else {
+					log.Infof("Next update of %s: %s", feed.ID, c.Entry(m[feed.ID]).Next)
 				}
 			case <-ctx.Done():
 				return ctx.Err()
@@ -127,24 +133,25 @@ func main() {
 
 	// Run cron scheduler
 	group.Go(func() error {
-		c := cron.New(cron.WithChain(cron.SkipIfStillRunning(nil)))
+		var cronid cron.EntryID
 
 		for _, feed := range cfg.Feeds {
 			if feed.CronSchedule == "" {
 				feed.CronSchedule = fmt.Sprintf("@every %s", feed.UpdatePeriod.String())
 			}
+			_feed := feed
+			if cronid, err = c.AddFunc(_feed.CronSchedule, func() {
+				log.Debugf("adding %q to update queue", _feed.ID)
+				updates <- _feed
 
-			if _, err = c.AddFunc(feed.CronSchedule, func() {
-				log.Debugf("adding %q to update queue", feed.URL)
-				updates <- feed
 			}); err != nil {
-				log.WithError(err).Fatalf("can't create cron task for feed: %s", feed.ID)
+				log.WithError(err).Fatalf("can't create cron task for feed: %s", _feed.ID)
 			}
 
-			log.Debugf("-> %s (update '%s')", feed.URL, feed.CronSchedule)
-
+			m[_feed.ID] = cronid
+			log.Debugf("-> %s (update '%s')", _feed.ID, _feed.CronSchedule)
 			// Perform initial update after CLI restart
-			updates <- feed
+			updates <- _feed
 		}
 
 		c.Start()
