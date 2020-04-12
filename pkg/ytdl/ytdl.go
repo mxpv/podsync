@@ -25,10 +25,21 @@ var (
 	ErrTooManyRequests = errors.New(http.StatusText(http.StatusTooManyRequests))
 )
 
-type YoutubeDl struct{}
+type YoutubeDl struct {
+	path string
+}
 
 func New(ctx context.Context) (*YoutubeDl, error) {
-	ytdl := &YoutubeDl{}
+	path, err := exec.LookPath("youtube-dl")
+	if err != nil {
+		return nil, errors.Wrap(err, "youtube-dl binary not found")
+	}
+
+	log.Debugf("found youtube-dl binary at %q", path)
+
+	ytdl := &YoutubeDl{
+		path: path,
+	}
 
 	// Make sure youtube-dl exists
 	version, err := ytdl.exec(ctx, "--version")
@@ -85,12 +96,11 @@ func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episo
 	return f, nil
 }
 
-func (YoutubeDl) exec(ctx context.Context, args ...string) (string, error) {
+func (dl YoutubeDl) exec(ctx context.Context, args ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, DownloadTimeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "youtube-dl", args...)
-
+	cmd := exec.CommandContext(ctx, dl.path, args...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return string(output), errors.Wrap(err, "failed to execute youtube-dl")
