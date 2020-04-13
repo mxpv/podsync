@@ -71,6 +71,7 @@ vimeo = "{VIMEO_API_TOKEN}"
   # max_height = "720" # Optional maximal height of video, example: 720, 1080, 1440, 2160, ...
   # cron_schedule = "@every 12h" # Optional cron expression format. If set then overwrite 'update_period'. See details below
   # filters = { title = "regex for title here" } # Optional Golang regexp format. If set, then only download episodes with matching titles.
+  # opml = true|false # Optional inclusion of the feed in the OPML file (default value: false)
   # clean = { keep_last = 10 } # Keep last 10 episodes (order desc by PubDate)
 ```
 

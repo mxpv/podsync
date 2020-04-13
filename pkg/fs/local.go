@@ -80,6 +80,10 @@ func (l *Local) URL(ctx context.Context, ns string, fileName string) (string, er
 		return "", errors.Wrap(err, "failed to check whether file exists")
 	}
 
+	if ns == "" {
+		return fmt.Sprintf("%s/%s", l.hostname, fileName), nil
+	}
+
 	return fmt.Sprintf("%s/%s/%s", l.hostname, ns, fileName), nil
 }
 

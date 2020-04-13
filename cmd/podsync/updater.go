@@ -63,6 +63,10 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 		return err
 	}
 
+	if err := u.buildOPML(ctx, feedConfig); err != nil {
+		return err
+	}
+
 	if err := u.cleanup(ctx, feedConfig); err != nil {
 		log.WithError(err).Error("cleanup failed")
 	}
@@ -242,6 +246,27 @@ func (u *Updater) buildXML(ctx context.Context, feedConfig *config.Feed) error {
 
 	if _, err := u.fs.Create(ctx, "", xmlName, reader); err != nil {
 		return errors.Wrap(err, "failed to upload new XML feed")
+	}
+
+	return nil
+}
+
+func (u *Updater) buildOPML(ctx context.Context, feedConfig *config.Feed) error {
+
+	// Build OPML with data received from builder
+	log.Debug("building podcast OPML")
+	opml, err := feed.BuildOPML(ctx, u.config, u.db, u.fs)
+	if err != nil {
+		return err
+	}
+
+	var (
+		reader  = bytes.NewReader([]byte(opml))
+		xmlName = fmt.Sprintf("%s.opml", "podsync")
+	)
+
+	if _, err := u.fs.Create(ctx, "", xmlName, reader); err != nil {
+		return errors.Wrap(err, "failed to upload OPML")
 	}
 
 	return nil
