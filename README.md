@@ -157,7 +157,5 @@ $ docker-compose up
 
 ## How to make a release
 
-Just run:
-```
-$ make release V=2.0.7
-```
+Just push a git tag. CI will do the rest.
+
