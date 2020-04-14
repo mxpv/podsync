@@ -40,8 +40,9 @@ func NewBadger(config *config.Database) (*Badger, error) {
 		return nil, errors.Wrap(err, "could not mkdir database dir")
 	}
 
-	opts := badger.DefaultOptions(dir)
-	opts.Logger = log.New()
+	opts := badger.DefaultOptions(dir).
+		WithLogger(log.New()).
+		WithTruncate(true)
 
 	db, err := badger.Open(opts)
 	if err != nil {
