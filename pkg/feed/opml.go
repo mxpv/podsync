@@ -4,22 +4,42 @@ import (
 	"context"
 	"fmt"
 
+	"encoding/xml"
+
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/db"
 	"github.com/mxpv/podsync/pkg/fs"
 	"github.com/pkg/errors"
 )
 
+type opml struct {
+	XMLName xml.Name `xml:"opml"`
+	Version string   `xml:"version,attr"`
+	Head    head
+	Body    body
+}
+
+type head struct {
+	XMLName xml.Name `xml:"head"`
+	Title   string   `xml:"title"`
+}
+
+type body struct {
+	XMLName  xml.Name  `xml:"body"`
+	Outlines []outline `xml:"outline"`
+}
+
+type outline struct {
+	Text   string `xml:"text,attr"`
+	Title  string `xml:"title,attr"`
+	Type   string `xml:"type,attr"`
+	XMLURL string `xml:"xmlUrl,attr"`
+}
+
 func BuildOPML(ctx context.Context, config *config.Config, db db.Storage, fs fs.Storage) (string, error) {
 
-	xmlString := `<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<opml version="1.0">
-<head>
-<title>Podsync Feeds</title>
-</head>
-<body>
-<outline text="feeds">
-`
+	ou := make([]outline, 0)
+
 	for _, feed := range config.Feeds {
 
 		f, err := db.GetFeed(ctx, feed.ID)
@@ -32,13 +52,16 @@ func BuildOPML(ctx context.Context, config *config.Config, db db.Storage, fs fs.
 			if err != nil {
 				return "", errors.Wrapf(err, "failed to: obtain download URL for feed")
 			}
-			xmlString += fmt.Sprintf("<outline text=\"%s\" type=\"rss\" xmlUrl=\"%s\" />\n", f.Title, downloadURL)
+			ou = append(ou, outline{Title: f.Title, Text: f.Title, Type: "rss", XMLURL: downloadURL})
 		}
 	}
 
-	xmlString += `</outline>
-</body>
-</opml>
-`
-	return xmlString, nil
+	op := opml{Version: "1.0"}
+	op.Head = head{Title: "PodSync feeds"}
+	op.Body = body{Outlines: ou}
+
+	out, _ := xml.MarshalIndent(op, " ", "  ")
+
+	return xml.Header + string(out), nil
+
 }
