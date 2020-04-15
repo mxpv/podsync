@@ -4,64 +4,44 @@ import (
 	"context"
 	"fmt"
 
-	"encoding/xml"
+	"github.com/gilliek/go-opml/opml"
+	"github.com/pkg/errors"
 
 	"github.com/mxpv/podsync/pkg/config"
-	"github.com/mxpv/podsync/pkg/db"
-	"github.com/mxpv/podsync/pkg/fs"
-	"github.com/pkg/errors"
 )
 
-type opml struct {
-	XMLName xml.Name `xml:"opml"`
-	Version string   `xml:"version,attr"`
-	Head    head
-	Body    body
-}
-
-type head struct {
-	XMLName xml.Name `xml:"head"`
-	Title   string   `xml:"title"`
-}
-
-type body struct {
-	XMLName  xml.Name  `xml:"body"`
-	Outlines []outline `xml:"outline"`
-}
-
-type outline struct {
-	Text   string `xml:"text,attr"`
-	Title  string `xml:"title,attr"`
-	Type   string `xml:"type,attr"`
-	XMLURL string `xml:"xmlUrl,attr"`
-}
-
-func BuildOPML(ctx context.Context, config *config.Config, db db.Storage, fs fs.Storage) (string, error) {
-
-	ou := make([]outline, 0)
+func BuildOPML(ctx context.Context, config *config.Config, db feedProvider, provider urlProvider) (string, error) {
+	doc := opml.OPML{Version: "1.0"}
+	doc.Head = opml.Head{Title: "Podsync feeds"}
+	doc.Body = opml.Body{}
 
 	for _, feed := range config.Feeds {
-
 		f, err := db.GetFeed(ctx, feed.ID)
 		if err != nil {
 			return "", err
 		}
 
 		if feed.OPML {
-			downloadURL, err := fs.URL(ctx, "", fmt.Sprintf("%s.xml", feed.ID))
+			downloadURL, err := provider.URL(ctx, "", fmt.Sprintf("%s.xml", feed.ID))
 			if err != nil {
-				return "", errors.Wrapf(err, "failed to: obtain download URL for feed")
+				return "", errors.Wrapf(err, "failed to get feed URL for %q", feed.ID)
 			}
-			ou = append(ou, outline{Title: f.Title, Text: f.Title, Type: "rss", XMLURL: downloadURL})
+
+			outline := opml.Outline{
+				Title:  f.Title,
+				Text:   f.Description,
+				Type:   "rss",
+				XMLURL: downloadURL,
+			}
+
+			doc.Body.Outlines = append(doc.Body.Outlines, outline)
 		}
 	}
 
-	op := opml{Version: "1.0"}
-	op.Head = head{Title: "PodSync feeds"}
-	op.Body = body{Outlines: ou}
+	out, err := doc.XML()
+	if err != nil {
+		return "", errors.Wrap(err, "failed to marshal OPML")
+	}
 
-	out, _ := xml.MarshalIndent(op, " ", "  ")
-
-	return xml.Header + string(out), nil
-
+	return out, nil
 }

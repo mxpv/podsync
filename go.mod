@@ -5,6 +5,8 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/dgraph-io/badger v1.6.0
 	github.com/eduncan911/podcast v1.3.0
+	github.com/gilliek/go-opml v1.0.0
+	github.com/golang/mock v1.4.3
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/pkg/errors v0.8.1
@@ -14,7 +16,7 @@ require (
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	golang.org/x/oauth2 v0.0.0-20180620175406-ef147856a6dd
-	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	google.golang.org/api v0.0.0-20180718221112-efcb5f25ac56
 	google.golang.org/appengine v1.1.0 // indirect
 )

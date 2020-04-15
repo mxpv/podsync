@@ -41,3 +41,11 @@ func New(ctx context.Context, cfg *config.Feed, tokens config.Tokens) (Builder, 
 
 	return provider, err
 }
+
+type feedProvider interface {
+	GetFeed(ctx context.Context, feedID string) (*model.Feed, error)
+}
+
+type urlProvider interface {
+	URL(ctx context.Context, ns string, fileName string) (string, error)
+}

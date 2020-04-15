@@ -13,10 +13,6 @@ import (
 	"github.com/mxpv/podsync/pkg/model"
 )
 
-type urlProvider interface {
-	URL(ctx context.Context, ns string, fileName string) (string, error)
-}
-
 func Build(ctx context.Context, feed *model.Feed, cfg *config.Feed, provider urlProvider) (*itunes.Podcast, error) {
 	const (
 		podsyncGenerator = "Podsync generator (support us at https://github.com/mxpv/podsync)"

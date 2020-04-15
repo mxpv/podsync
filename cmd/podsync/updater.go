@@ -63,7 +63,7 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 		return err
 	}
 
-	if err := u.buildOPML(ctx, feedConfig); err != nil {
+	if err := u.buildOPML(ctx); err != nil {
 		return err
 	}
 
@@ -251,7 +251,7 @@ func (u *Updater) buildXML(ctx context.Context, feedConfig *config.Feed) error {
 	return nil
 }
 
-func (u *Updater) buildOPML(ctx context.Context, feedConfig *config.Feed) error {
+func (u *Updater) buildOPML(ctx context.Context) error {
 
 	// Build OPML with data received from builder
 	log.Debug("building podcast OPML")
