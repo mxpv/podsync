@@ -73,6 +73,9 @@ vimeo = "{VIMEO_API_TOKEN}"
   # filters = { title = "regex for title here" } # Optional Golang regexp format. If set, then only download episodes with matching titles.
   # opml = true|false # Optional inclusion of the feed in the OPML file (default value: false)
   # clean = { keep_last = 10 } # Keep last 10 episodes (order desc by PubDate)
+
+[database]
+  badger = { truncate = true, file_io = true } # See https://github.com/dgraph-io/badger#memory-usage
 ```
 
 Episodes files will be kept at: `/path/to/data/directory/ID1`, feed will be accessible from: `http://localhost/ID1.xml`

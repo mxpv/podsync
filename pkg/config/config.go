@@ -74,7 +74,15 @@ type Server struct {
 
 type Database struct {
 	// Dir is a directory to keep database files
-	Dir string `toml:"dir"`
+	Dir    string  `toml:"dir"`
+	Badger *Badger `toml:"badger"`
+}
+
+// Badger represents BadgerDB configuration parameters
+// See https://github.com/dgraph-io/badger#memory-usage
+type Badger struct {
+	Truncate bool `toml:"truncate"`
+	FileIO   bool `toml:"file_io"`
 }
 
 type Cleanup struct {

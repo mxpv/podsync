@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/dgraph-io/badger"
+	"github.com/dgraph-io/badger/options"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -43,6 +44,13 @@ func NewBadger(config *config.Database) (*Badger, error) {
 	opts := badger.DefaultOptions(dir).
 		WithLogger(log.New()).
 		WithTruncate(true)
+
+	if config.Badger != nil {
+		opts.Truncate = config.Badger.Truncate
+		if config.Badger.FileIO {
+			opts.ValueLogLoadingMode = options.FileIO
+		}
+	}
 
 	db, err := badger.Open(opts)
 	if err != nil {

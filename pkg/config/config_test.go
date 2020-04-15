@@ -36,16 +36,10 @@ dir = "/home/user/db/"
   clean = { keep_last = 10 }
   custom = { cover_art = "http://img", category = "TV", explicit = true, lang = "en" }
 `
+	path := setup(t, file)
+	defer os.Remove(path)
 
-	f, err := ioutil.TempFile("", "")
-	require.NoError(t, err)
-
-	defer os.Remove(f.Name())
-
-	_, err = f.WriteString(file)
-	require.NoError(t, err)
-
-	config, err := LoadConfig(f.Name())
+	config, err := LoadConfig(path)
 	assert.NoError(t, err)
 	assert.NotNil(t, config)
 
@@ -72,6 +66,8 @@ dir = "/home/user/db/"
 	assert.EqualValues(t, "TV", feed.Custom.Category)
 	assert.True(t, feed.Custom.Explicit)
 	assert.EqualValues(t, "en", feed.Custom.Language)
+
+	assert.Nil(t, config.Database.Badger)
 }
 
 func TestApplyDefaults(t *testing.T) {
@@ -83,15 +79,10 @@ data_dir = "/data"
   [feeds.A]
   url = "https://youtube.com/watch?v=ygIUF678y40"
 `
-	f, err := ioutil.TempFile("", "")
-	require.NoError(t, err)
+	path := setup(t, file)
+	defer os.Remove(path)
 
-	defer os.Remove(f.Name())
-
-	_, err = f.WriteString(file)
-	require.NoError(t, err)
-
-	config, err := LoadConfig(f.Name())
+	config, err := LoadConfig(path)
 	assert.NoError(t, err)
 	assert.NotNil(t, config)
 
@@ -134,4 +125,42 @@ func TestDefaultDatabasePath(t *testing.T) {
 	cfg := Config{}
 	cfg.applyDefaults("/home/user/podsync/config.toml")
 	assert.Equal(t, "/home/user/podsync/db", cfg.Database.Dir)
+}
+
+func TestLoadBadgerConfig(t *testing.T) {
+	const file = `
+[server]
+data_dir = "/data"
+
+[feeds]
+  [feeds.A]
+  url = "https://youtube.com/watch?v=ygIUF678y40"
+
+[database]
+  badger = { truncate = true, file_io = true }
+`
+	path := setup(t, file)
+	defer os.Remove(path)
+
+	config, err := LoadConfig(path)
+	assert.NoError(t, err)
+	require.NotNil(t, config)
+	require.NotNil(t, config.Database.Badger)
+
+	assert.True(t, config.Database.Badger.Truncate)
+	assert.True(t, config.Database.Badger.FileIO)
+}
+
+func setup(t *testing.T, file string) string {
+	t.Helper()
+
+	f, err := ioutil.TempFile("", "")
+	require.NoError(t, err)
+
+	defer f.Close()
+
+	_, err = f.WriteString(file)
+	require.NoError(t, err)
+
+	return f.Name()
 }
