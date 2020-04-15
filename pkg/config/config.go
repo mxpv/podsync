@@ -42,6 +42,8 @@ type Feed struct {
 	Clean Cleanup `toml:"clean"`
 	// Custom is a list of feed customizations
 	Custom Custom `toml:"custom"`
+	// Included in OPML file
+	OPML bool `toml:"opml"`
 }
 
 type Custom struct {
