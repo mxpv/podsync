@@ -143,7 +143,6 @@ func main() {
 			if cronid, err = c.AddFunc(_feed.CronSchedule, func() {
 				log.Debugf("adding %q to update queue", _feed.ID)
 				updates <- _feed
-
 			}); err != nil {
 				log.WithError(err).Fatalf("can't create cron task for feed: %s", _feed.ID)
 			}

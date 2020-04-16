@@ -11,6 +11,14 @@ linters:
     - vet
     - unused
     - misspell
+    - bodyclose
+    - interfacer
+    - unconvert
+    - maligned
+    - depguard
+    - nakedret
+    - prealloc
+    - whitespace
   disable:
     - errcheck
 
