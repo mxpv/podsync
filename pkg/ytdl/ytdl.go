@@ -79,6 +79,8 @@ func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episo
 			return nil, ErrTooManyRequests
 		}
 
+		log.Error(output)
+
 		return nil, errors.New(output)
 	}
 

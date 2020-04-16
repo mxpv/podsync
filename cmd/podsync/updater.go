@@ -186,6 +186,7 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed)
 			// We still need to generate XML, so just stop sending download requests and
 			// retry next time
 			if err == ytdl.ErrTooManyRequests {
+				logger.Warn("server responded with a 'Too Many Requests' error")
 				break
 			}
 
