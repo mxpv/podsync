@@ -35,6 +35,7 @@ dir = "/home/user/db/"
   filters = { title = "regex for title here" }
   clean = { keep_last = 10 }
   custom = { cover_art = "http://img", category = "TV", explicit = true, lang = "en" }
+  downloader_opts = [ "--verbose", "-4" ]
 `
 	path := setup(t, file)
 	defer os.Remove(path)
@@ -66,6 +67,7 @@ dir = "/home/user/db/"
 	assert.EqualValues(t, "TV", feed.Custom.Category)
 	assert.True(t, feed.Custom.Explicit)
 	assert.EqualValues(t, "en", feed.Custom.Language)
+	assert.EqualValues(t, []string{"--verbose", "-4"}, feed.DownloaderOpts)
 
 	assert.Nil(t, config.Database.Badger)
 }

@@ -44,6 +44,8 @@ type Feed struct {
 	Custom Custom `toml:"custom"`
 	// Included in OPML file
 	OPML bool `toml:"opml"`
+	// Additional downloader command line options
+	DownloaderOpts []string `toml:"downloader_opts"`
 }
 
 type Custom struct {

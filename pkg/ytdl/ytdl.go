@@ -110,7 +110,7 @@ func (dl YoutubeDl) exec(ctx context.Context, args ...string) (string, error) {
 }
 
 func buildArgs(feedConfig *config.Feed, episode *model.Episode, outputFilePath string) []string {
-	var args []string
+	args := append([]string{}, feedConfig.DownloaderOpts...)
 
 	if feedConfig.Format == model.FormatVideo {
 		// Video, mp4, high by default
