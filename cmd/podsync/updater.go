@@ -105,7 +105,10 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed)
 	var (
 		feedID       = feedConfig.ID
 		downloadList []*model.Episode
+		pageSize     = feedConfig.PageSize
 	)
+
+	log.WithField("page_size", pageSize).Info("downloading episodes")
 
 	// Build the list of files to download
 	if err := u.db.WalkEpisodes(ctx, feedID, func(episode *model.Episode) error {
@@ -126,6 +129,13 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed)
 			}
 		}
 
+		// Limit the number of episodes downloaded at once
+		pageSize--
+		if pageSize <= 0 {
+			return nil
+		}
+
+		log.Debugf("adding %s (%q) to the list", episode.ID, episode.Title)
 		downloadList = append(downloadList, episode)
 		return nil
 	}); err != nil {
