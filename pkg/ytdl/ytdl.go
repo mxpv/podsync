@@ -49,15 +49,43 @@ func New(ctx context.Context) (*YoutubeDl, error) {
 
 	log.Infof("using youtube-dl %s", version)
 
-	// Make sure ffmpeg exists
-	output, err := exec.CommandContext(ctx, "ffmpeg", "-version").CombinedOutput()
-	if err != nil {
-		return nil, errors.Wrap(err, "could not find ffmpeg")
+	if err := ytdl.ensureDependencies(ctx); err != nil {
+		return nil, err
 	}
 
-	log.Infof("using ffmpeg %s", output)
-
 	return ytdl, nil
+}
+
+func (dl YoutubeDl) ensureDependencies(ctx context.Context) error {
+	found := false
+
+	if path, err := exec.LookPath("ffmpeg"); err == nil {
+		found = true
+
+		output, err := exec.CommandContext(ctx, path, "-version").CombinedOutput()
+		if err != nil {
+			return errors.Wrap(err, "could not get ffmpeg version")
+		}
+
+		log.Infof("found ffmpeg: %s", output)
+	}
+
+	if path, err := exec.LookPath("avconv"); err == nil {
+		found = true
+
+		output, err := exec.CommandContext(ctx, path, "-version").CombinedOutput()
+		if err != nil {
+			return errors.Wrap(err, "could not get avconv version")
+		}
+
+		log.Infof("found avconv: %s", output)
+	}
+
+	if !found {
+		return errors.New("either ffmpeg or avconv required to run Podsync")
+	}
+
+	return nil
 }
 
 func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episode *model.Episode) (io.ReadCloser, error) {
