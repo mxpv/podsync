@@ -49,14 +49,6 @@ func New(ctx context.Context) (*YoutubeDl, error) {
 
 	log.Infof("using youtube-dl %s", version)
 
-	// Make sure ffmpeg exists
-	output, err := exec.CommandContext(ctx, "ffmpeg", "-version").CombinedOutput()
-	if err != nil {
-		return nil, errors.Wrap(err, "could not find ffmpeg")
-	}
-
-	log.Infof("using ffmpeg %s", output)
-
 	return ytdl, nil
 }
 
