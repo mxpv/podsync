@@ -57,7 +57,7 @@ func (yt *YouTubeBuilder) listChannels(ctx context.Context, linkType link.Type, 
 	}
 
 	if len(resp.Items) == 0 {
-		return nil, ErrNotFound
+		return nil, model.ErrNotFound
 	}
 
 	item := resp.Items[0]
@@ -81,7 +81,7 @@ func (yt *YouTubeBuilder) listPlaylists(ctx context.Context, id, channelID strin
 	}
 
 	if len(resp.Items) == 0 {
-		return nil, ErrNotFound
+		return nil, model.ErrNotFound
 	}
 
 	item := resp.Items[0]

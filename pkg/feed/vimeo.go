@@ -41,7 +41,7 @@ func (v *VimeoBuilder) queryChannel(feed *model.Feed) error {
 	ch, resp, err := v.client.Channels.Get(channelID)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return ErrNotFound
+			return model.ErrNotFound
 		}
 
 		return errors.Wrapf(err, "failed to query channel with id %q", channelID)
@@ -64,7 +64,7 @@ func (v *VimeoBuilder) queryGroup(feed *model.Feed) error {
 	gr, resp, err := v.client.Groups.Get(groupID)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return ErrNotFound
+			return model.ErrNotFound
 		}
 
 		return errors.Wrapf(err, "failed to query group with id %q", groupID)
@@ -87,7 +87,7 @@ func (v *VimeoBuilder) queryUser(feed *model.Feed) error {
 	user, resp, err := v.client.Users.Get(userID)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return ErrNotFound
+			return model.ErrNotFound
 		}
 
 		return errors.Wrapf(err, "failed to query user with id %q", userID)

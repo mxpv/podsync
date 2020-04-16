@@ -60,7 +60,7 @@ func NewBadger(config *config.Database) (*Badger, error) {
 	storage := &Badger{db: db}
 
 	if err := db.Update(func(txn *badger.Txn) error {
-		if err := storage.setObj(txn, []byte(versionPath), CurrentVersion, false); err != nil && err != ErrAlreadyExists {
+		if err := storage.setObj(txn, []byte(versionPath), CurrentVersion, false); err != nil && err != model.ErrAlreadyExists {
 			return err
 		}
 		return nil
@@ -100,7 +100,7 @@ func (b *Badger) AddFeed(_ context.Context, feedID string, feed *model.Feed) err
 		for _, episode := range feed.Episodes {
 			episodeKey := b.getKey(episodePath, feedID, episode.ID)
 			err := b.setObj(txn, episodeKey, episode, false)
-			if err == nil || err == ErrAlreadyExists {
+			if err == nil || err == model.ErrAlreadyExists {
 				// Do nothing
 			} else {
 				return errors.Wrapf(err, "failed to save episode %q", feedID)
@@ -261,7 +261,7 @@ func (b *Badger) setObj(txn *badger.Txn, key []byte, obj interface{}, overwrite 
 		// Overwrites are not allowed, make sure there is no object with the given key
 		_, err := txn.Get(key)
 		if err == nil {
-			return ErrAlreadyExists
+			return model.ErrAlreadyExists
 		} else if err == badger.ErrKeyNotFound {
 			// Key not found, do nothing
 		} else {
@@ -280,6 +280,10 @@ func (b *Badger) setObj(txn *badger.Txn, key []byte, obj interface{}, overwrite 
 func (b *Badger) getObj(txn *badger.Txn, key []byte, out interface{}) error {
 	item, err := txn.Get(key)
 	if err != nil {
+		if err == badger.ErrKeyNotFound {
+			return model.ErrNotFound
+		}
+
 		return err
 	}
 

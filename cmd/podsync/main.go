@@ -123,7 +123,7 @@ func main() {
 				if err := updater.Update(ctx, feed); err != nil {
 					log.WithError(err).Errorf("failed to update feed: %s", feed.URL)
 				} else {
-					log.Infof("Next update of %s: %s", feed.ID, c.Entry(m[feed.ID]).Next)
+					log.Infof("next update of %s: %s", feed.ID, c.Entry(m[feed.ID]).Next)
 				}
 			case <-ctx.Done():
 				return ctx.Err()

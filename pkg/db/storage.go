@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"errors"
 
 	"github.com/mxpv/podsync/pkg/model"
 )
@@ -11,10 +10,6 @@ type Version int
 
 const (
 	CurrentVersion = 1
-)
-
-var (
-	ErrAlreadyExists = errors.New("object already exists")
 )
 
 type Storage interface {

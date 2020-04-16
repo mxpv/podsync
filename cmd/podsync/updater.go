@@ -52,19 +52,19 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 	started := time.Now()
 
 	if err := u.updateFeed(ctx, feedConfig); err != nil {
-		return err
+		return errors.Wrap(err, "update failed")
 	}
 
 	if err := u.downloadEpisodes(ctx, feedConfig); err != nil {
-		return err
+		return errors.Wrap(err, "download failed")
 	}
 
 	if err := u.buildXML(ctx, feedConfig); err != nil {
-		return err
+		return errors.Wrap(err, "xml build failed")
 	}
 
 	if err := u.buildOPML(ctx); err != nil {
-		return err
+		return errors.Wrap(err, "opml build failed")
 	}
 
 	if err := u.cleanup(ctx, feedConfig); err != nil {
@@ -263,7 +263,6 @@ func (u *Updater) buildXML(ctx context.Context, feedConfig *config.Feed) error {
 }
 
 func (u *Updater) buildOPML(ctx context.Context) error {
-
 	// Build OPML with data received from builder
 	log.Debug("building podcast OPML")
 	opml, err := feed.BuildOPML(ctx, u.config, u.db, u.fs)
