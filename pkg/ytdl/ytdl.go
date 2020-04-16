@@ -29,6 +29,11 @@ type YoutubeDl struct {
 	path string
 }
 
+type tempFile struct {
+	*os.File
+	dir string
+}
+
 func New(ctx context.Context) (*YoutubeDl, error) {
 	path, err := exec.LookPath("youtube-dl")
 	if err != nil {
@@ -88,11 +93,20 @@ func (dl YoutubeDl) ensureDependencies(ctx context.Context) error {
 	return nil
 }
 
-func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episode *model.Episode) (io.ReadCloser, error) {
+func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episode *model.Episode) (r io.ReadCloser, err error) {
 	tmpDir, err := ioutil.TempDir("", "podsync-")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get temp dir for download")
 	}
+
+	defer func() {
+		if err != nil {
+			err1 := os.RemoveAll(tmpDir)
+			if err1 != nil {
+				log.Errorf("could not remove temp dir: %v", err1)
+			}
+		}
+	}()
 
 	// filePath with YoutubeDl template format
 	filePath := filepath.Join(tmpDir, fmt.Sprintf("%s.%s", episode.ID, "%(ext)s"))
@@ -123,7 +137,7 @@ func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episo
 		return nil, errors.Wrap(err, "failed to open downloaded file")
 	}
 
-	return f, nil
+	return &tempFile{File: f, dir: tmpDir}, nil
 }
 
 func (dl YoutubeDl) exec(ctx context.Context, args ...string) (string, error) {
@@ -166,4 +180,13 @@ func buildArgs(feedConfig *config.Feed, episode *model.Episode, outputFilePath s
 
 	args = append(args, "--output", outputFilePath, episode.VideoURL)
 	return args
+}
+
+func (f *tempFile) Close() error {
+	err := f.File.Close()
+	err1 := os.RemoveAll(f.dir)
+	if err1 != nil {
+		log.Errorf("could not remove temp dir: %v", err1)
+	}
+	return err
 }
