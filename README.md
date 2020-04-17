@@ -77,6 +77,15 @@ vimeo = "{VIMEO_API_TOKEN}"
 
 [database]
   badger = { truncate = true, file_io = true } # See https://github.com/dgraph-io/badger#memory-usage
+
+# Optional log config. If not specified logs to the stdout
+[log]
+filename = "podsync.log"
+max_size = 50 # MB
+max_age = 30 # days
+max_backups = 7
+compress = true
+
 ```
 
 Episodes files will be kept at: `/path/to/data/directory/ID1`, feed will be accessible from: `http://localhost/ID1.xml`

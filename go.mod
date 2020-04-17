@@ -19,6 +19,7 @@ require (
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	google.golang.org/api v0.0.0-20180718221112-efcb5f25ac56
 	google.golang.org/appengine v1.1.0 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
 
 go 1.13

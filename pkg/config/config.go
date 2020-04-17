@@ -90,9 +90,24 @@ type Cleanup struct {
 	KeepLast int `toml:"keep_last"`
 }
 
+type Log struct {
+	// Filename to write the log to (instead of stdout)
+	Filename string `toml:"filename"`
+	// MaxSize is the maximum size of the log file in MB
+	MaxSize int `toml:"max_size"`
+	// MaxBackups is the maximum number of log file backups to keep after rotation
+	MaxBackups int `toml:"max_backups"`
+	// MaxAge is the maximum number of days to keep the logs for
+	MaxAge int `toml:"max_age"`
+	// Compress old backups
+	Compress bool `toml:"compress"`
+}
+
 type Config struct {
 	// Server is the web server configuration
 	Server Server `toml:"server"`
+	// Log is the optional logging configuration
+	Log Log `toml:"log"`
 	// Database configuration
 	Database Database `toml:"database"`
 	// Feeds is a list of feeds to host by this app.
@@ -149,6 +164,18 @@ func (c *Config) applyDefaults(configPath string) {
 			c.Server.Hostname = fmt.Sprintf("http://localhost:%d", c.Server.Port)
 		} else {
 			c.Server.Hostname = "http://localhost"
+		}
+	}
+
+	if c.Log.Filename != "" {
+		if c.Log.MaxSize == 0 {
+			c.Log.MaxSize = model.DefaultLogMaxSize
+		}
+		if c.Log.MaxAge == 0 {
+			c.Log.MaxAge = model.DefaultLogMaxAge
+		}
+		if c.Log.MaxBackups == 0 {
+			c.Log.MaxBackups = model.DefaultLogMaxBackups
 		}
 	}
 
