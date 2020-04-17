@@ -42,7 +42,7 @@ func NewBadger(config *config.Database) (*Badger, error) {
 	}
 
 	opts := badger.DefaultOptions(dir).
-		WithLogger(log.New()).
+		WithLogger(log.StandardLogger()).
 		WithTruncate(true)
 
 	if config.Badger != nil {
