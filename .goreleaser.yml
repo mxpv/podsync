@@ -24,6 +24,9 @@ dockers:
     - 'mxpv/podsync:{{ .Tag }}'
     - 'mxpv/podsync:v{{ .Major }}.{{ .Minor }}'
     - 'mxpv/podsync:latest'
+    - 'docker.pkg.github.com/mxpv/podsync/cli:{{ .Tag }}'
+    - 'docker.pkg.github.com/mxpv/podsync/cli:v{{ .Major }}.{{ .Minor }}'
+    - 'docker.pkg.github.com/mxpv/podsync/cli:latest'
     binaries:
       - podsync
     dockerfile: Dockerfile
