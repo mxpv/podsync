@@ -68,7 +68,7 @@ vimeo = "{VIMEO_API_TOKEN}"
   update_period = "12h" # How often query for updates, examples: "60m", "4h", "2h45m"
   quality = "high" # or "low"
   format = "video" # or "audio"
-  # cover_art = "{IMAGE_URL}" # Optional URL address of an image file
+  # custom = { cover_art = "{IMAGE_URL}}", category = "TV", explicit = true, lang = "en" } # Optional feed customizations
   # max_height = "720" # Optional maximal height of video, example: 720, 1080, 1440, 2160, ...
   # cron_schedule = "@every 12h" # Optional cron expression format. If set then overwrite 'update_period'. See details below
   # filters = { title = "regex for title here" } # Optional Golang regexp format. If set, then only download episodes with matching titles.

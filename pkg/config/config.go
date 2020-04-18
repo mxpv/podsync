@@ -34,8 +34,6 @@ type Feed struct {
 	MaxHeight int `toml:"max_height"`
 	// Format to use for this feed
 	Format model.Format `toml:"format"`
-	// Custom image to use
-	CoverArt string `toml:"cover_art"`
 	// Only download episodes that match this regexp (defaults to matching anything)
 	Filters Filters `toml:"filters"`
 	// Clean is a cleanup policy to use for this feed
