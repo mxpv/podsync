@@ -14,7 +14,6 @@ import (
 	"google.golang.org/api/youtube/v3"
 
 	"github.com/mxpv/podsync/pkg/config"
-	"github.com/mxpv/podsync/pkg/link"
 	"github.com/mxpv/podsync/pkg/model"
 )
 
@@ -39,13 +38,13 @@ type YouTubeBuilder struct {
 
 // Cost: 5 units (call method: 1, snippet: 2, contentDetails: 2)
 // See https://developers.google.com/youtube/v3/docs/channels/list#part
-func (yt *YouTubeBuilder) listChannels(ctx context.Context, linkType link.Type, id string, parts string) (*youtube.Channel, error) {
+func (yt *YouTubeBuilder) listChannels(ctx context.Context, linkType model.Type, id string, parts string) (*youtube.Channel, error) {
 	req := yt.client.Channels.List(parts)
 
 	switch linkType {
-	case link.TypeChannel:
+	case model.TypeChannel:
 		req = req.Id(id)
-	case link.TypeUser:
+	case model.TypeUser:
 		req = req.ForUsername(id)
 	default:
 		return nil, errors.New("unsupported link type")
@@ -148,9 +147,9 @@ func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, qua
 	return snippet.Default.Url
 }
 
-func (yt *YouTubeBuilder) GetVideoCount(ctx context.Context, info *link.Info) (uint64, error) {
+func (yt *YouTubeBuilder) GetVideoCount(ctx context.Context, info *model.Info) (uint64, error) {
 	switch info.LinkType {
-	case link.TypeChannel, link.TypeUser:
+	case model.TypeChannel, model.TypeUser:
 		// Cost: 3 units
 		if channel, err := yt.listChannels(ctx, info.LinkType, info.ItemID, "id,statistics"); err != nil {
 			return 0, err
@@ -158,7 +157,7 @@ func (yt *YouTubeBuilder) GetVideoCount(ctx context.Context, info *link.Info) (u
 			return channel.Statistics.VideoCount, nil
 		}
 
-	case link.TypePlaylist:
+	case model.TypePlaylist:
 		// Cost: 3 units
 		if playlist, err := yt.listPlaylists(ctx, info.ItemID, "", "id,contentDetails"); err != nil {
 			return 0, err
@@ -171,13 +170,13 @@ func (yt *YouTubeBuilder) GetVideoCount(ctx context.Context, info *link.Info) (u
 	}
 }
 
-func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info *link.Info) error {
+func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info *model.Info) error {
 	var (
 		thumbnails *youtube.ThumbnailDetails
 	)
 
 	switch info.LinkType {
-	case link.TypeChannel, link.TypeUser:
+	case model.TypeChannel, model.TypeUser:
 		// Cost: 5 units for channel or user
 		channel, err := yt.listChannels(ctx, info.LinkType, info.ItemID, "id,snippet,contentDetails")
 		if err != nil {
@@ -205,7 +204,7 @@ func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info 
 
 		thumbnails = channel.Snippet.Thumbnails
 
-	case link.TypePlaylist:
+	case model.TypePlaylist:
 		// Cost: 3 units for playlist
 		playlist, err := yt.listPlaylists(ctx, info.ItemID, "", "id,snippet")
 		if err != nil {
@@ -369,7 +368,7 @@ func (yt *YouTubeBuilder) queryItems(ctx context.Context, feed *model.Feed) erro
 }
 
 func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *config.Feed) (*model.Feed, error) {
-	info, err := link.Parse(cfg.URL)
+	info, err := ParseURL(cfg.URL)
 	if err != nil {
 		return nil, err
 	}

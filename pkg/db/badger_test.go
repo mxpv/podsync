@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/mxpv/podsync/pkg/config"
-	"github.com/mxpv/podsync/pkg/link"
 	"github.com/mxpv/podsync/pkg/model"
 )
 
@@ -188,8 +187,8 @@ func getFeed() *model.Feed {
 	return &model.Feed{
 		ID:             "1",
 		ItemID:         "2",
-		LinkType:       link.TypeChannel,
-		Provider:       link.ProviderVimeo,
+		LinkType:       model.TypeChannel,
+		Provider:       model.ProviderVimeo,
 		CreatedAt:      time.Now().UTC(),
 		LastAccess:     time.Now().UTC(),
 		ExpirationTime: time.Now().UTC().Add(1 * time.Hour),

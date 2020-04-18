@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/mxpv/podsync/pkg/config"
-	"github.com/mxpv/podsync/pkg/link"
+	"github.com/mxpv/podsync/pkg/model"
 )
 
 var (
@@ -25,11 +25,11 @@ func TestYT_QueryChannel(t *testing.T) {
 	builder, err := NewYouTubeBuilder(ytKey)
 	require.NoError(t, err)
 
-	channel, err := builder.listChannels(testCtx, link.TypeChannel, "UC2yTVSttx7lxAOAzx1opjoA", "id")
+	channel, err := builder.listChannels(testCtx, model.TypeChannel, "UC2yTVSttx7lxAOAzx1opjoA", "id")
 	require.NoError(t, err)
 	require.Equal(t, "UC2yTVSttx7lxAOAzx1opjoA", channel.Id)
 
-	channel, err = builder.listChannels(testCtx, link.TypeUser, "fxigr1", "id")
+	channel, err = builder.listChannels(testCtx, model.TypeUser, "fxigr1", "id")
 	require.NoError(t, err)
 	require.Equal(t, "UCr_fwF-n-2_olTYd-m3n32g", channel.Id)
 }
@@ -83,13 +83,13 @@ func TestYT_GetVideoCount(t *testing.T) {
 	builder, err := NewYouTubeBuilder(ytKey)
 	require.NoError(t, err)
 
-	feeds := []*link.Info{
-		{Provider: link.ProviderYoutube, LinkType: link.TypeUser, ItemID: "fxigr1"},
-		{Provider: link.ProviderYoutube, LinkType: link.TypeChannel, ItemID: "UCupvZG-5ko_eiXAupbDfxWw"},
-		{Provider: link.ProviderYoutube, LinkType: link.TypePlaylist, ItemID: "PLF7tUDhGkiCk_Ne30zu7SJ9gZF9R9ZruE"},
-		{Provider: link.ProviderYoutube, LinkType: link.TypeChannel, ItemID: "UCK9lZ2lHRBgx2LOcqPifukA"},
-		{Provider: link.ProviderYoutube, LinkType: link.TypeUser, ItemID: "WylsaLive"},
-		{Provider: link.ProviderYoutube, LinkType: link.TypePlaylist, ItemID: "PLUVl5pafUrBydT_gsCjRGeCy0hFHloec8"},
+	feeds := []*model.Info{
+		{Provider: model.ProviderYoutube, LinkType: model.TypeUser, ItemID: "fxigr1"},
+		{Provider: model.ProviderYoutube, LinkType: model.TypeChannel, ItemID: "UCupvZG-5ko_eiXAupbDfxWw"},
+		{Provider: model.ProviderYoutube, LinkType: model.TypePlaylist, ItemID: "PLF7tUDhGkiCk_Ne30zu7SJ9gZF9R9ZruE"},
+		{Provider: model.ProviderYoutube, LinkType: model.TypeChannel, ItemID: "UCK9lZ2lHRBgx2LOcqPifukA"},
+		{Provider: model.ProviderYoutube, LinkType: model.TypeUser, ItemID: "WylsaLive"},
+		{Provider: model.ProviderYoutube, LinkType: model.TypePlaylist, ItemID: "PLUVl5pafUrBydT_gsCjRGeCy0hFHloec8"},
 	}
 
 	for _, f := range feeds {

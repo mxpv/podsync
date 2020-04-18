@@ -1,4 +1,4 @@
-package link
+package model
 
 type Type string
 

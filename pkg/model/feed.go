@@ -2,8 +2,6 @@ package model
 
 import (
 	"time"
-
-	"github.com/mxpv/podsync/pkg/link"
 )
 
 // Quality to use when downloading episodes
@@ -37,24 +35,24 @@ type Episode struct {
 }
 
 type Feed struct {
-	ID             string        `json:"feed_id"`
-	ItemID         string        `json:"item_id"`
-	LinkType       link.Type     `json:"link_type"` // Either group, channel or user
-	Provider       link.Provider `json:"provider"`  // Youtube or Vimeo
-	CreatedAt      time.Time     `json:"created_at"`
-	LastAccess     time.Time     `json:"last_access"`
-	ExpirationTime time.Time     `json:"expiration_time"`
-	Format         Format        `json:"format"`
-	Quality        Quality       `json:"quality"`
-	PageSize       int           `json:"page_size"`
-	CoverArt       string        `json:"cover_art"`
-	Title          string        `json:"title"`
-	Description    string        `json:"description"`
-	PubDate        time.Time     `json:"pub_date"`
-	Author         string        `json:"author"`
-	ItemURL        string        `json:"item_url"` // Platform specific URL
-	Episodes       []*Episode    `json:"-"`        // Array of episodes
-	UpdatedAt      time.Time     `json:"updated_at"`
+	ID             string     `json:"feed_id"`
+	ItemID         string     `json:"item_id"`
+	LinkType       Type       `json:"link_type"` // Either group, channel or user
+	Provider       Provider   `json:"provider"`  // Youtube or Vimeo
+	CreatedAt      time.Time  `json:"created_at"`
+	LastAccess     time.Time  `json:"last_access"`
+	ExpirationTime time.Time  `json:"expiration_time"`
+	Format         Format     `json:"format"`
+	Quality        Quality    `json:"quality"`
+	PageSize       int        `json:"page_size"`
+	CoverArt       string     `json:"cover_art"`
+	Title          string     `json:"title"`
+	Description    string     `json:"description"`
+	PubDate        time.Time  `json:"pub_date"`
+	Author         string     `json:"author"`
+	ItemURL        string     `json:"item_url"` // Platform specific URL
+	Episodes       []*Episode `json:"-"`        // Array of episodes
+	UpdatedAt      time.Time  `json:"updated_at"`
 }
 
 type EpisodeStatus string

@@ -11,7 +11,6 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/mxpv/podsync/pkg/config"
-	"github.com/mxpv/podsync/pkg/link"
 	"github.com/mxpv/podsync/pkg/model"
 )
 
@@ -160,7 +159,7 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, feed *model.Feed) er
 }
 
 func (v *VimeoBuilder) Build(ctx context.Context, cfg *config.Feed) (*model.Feed, error) {
-	info, err := link.Parse(cfg.URL)
+	info, err := ParseURL(cfg.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +174,7 @@ func (v *VimeoBuilder) Build(ctx context.Context, cfg *config.Feed) (*model.Feed
 		UpdatedAt: time.Now().UTC(),
 	}
 
-	if info.LinkType == link.TypeChannel {
+	if info.LinkType == model.TypeChannel {
 		if err := v.queryChannel(feed); err != nil {
 			return nil, err
 		}
@@ -187,7 +186,7 @@ func (v *VimeoBuilder) Build(ctx context.Context, cfg *config.Feed) (*model.Feed
 		return feed, nil
 	}
 
-	if info.LinkType == link.TypeGroup {
+	if info.LinkType == model.TypeGroup {
 		if err := v.queryGroup(feed); err != nil {
 			return nil, err
 		}
@@ -199,7 +198,7 @@ func (v *VimeoBuilder) Build(ctx context.Context, cfg *config.Feed) (*model.Feed
 		return feed, nil
 	}
 
-	if info.LinkType == link.TypeUser {
+	if info.LinkType == model.TypeUser {
 		if err := v.queryUser(feed); err != nil {
 			return nil, err
 		}

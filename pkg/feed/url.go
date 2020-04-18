@@ -1,27 +1,29 @@
-package link
+package feed
 
 import (
 	"net/url"
 	"strings"
 
 	"github.com/pkg/errors"
+
+	"github.com/mxpv/podsync/pkg/model"
 )
 
-func Parse(link string) (Info, error) {
+func ParseURL(link string) (model.Info, error) {
 	parsed, err := parseURL(link)
 	if err != nil {
-		return Info{}, err
+		return model.Info{}, err
 	}
 
-	info := Info{}
+	info := model.Info{}
 
 	if strings.HasSuffix(parsed.Host, "youtube.com") {
 		kind, id, err := parseYoutubeURL(parsed)
 		if err != nil {
-			return Info{}, err
+			return model.Info{}, err
 		}
 
-		info.Provider = ProviderYoutube
+		info.Provider = model.ProviderYoutube
 		info.LinkType = kind
 		info.ItemID = id
 
@@ -31,17 +33,17 @@ func Parse(link string) (Info, error) {
 	if strings.HasSuffix(parsed.Host, "vimeo.com") {
 		kind, id, err := parseVimeoURL(parsed)
 		if err != nil {
-			return Info{}, err
+			return model.Info{}, err
 		}
 
-		info.Provider = ProviderVimeo
+		info.Provider = model.ProviderVimeo
 		info.LinkType = kind
 		info.ItemID = id
 
 		return info, nil
 	}
 
-	return Info{}, errors.New("unsupported URL host")
+	return model.Info{}, errors.New("unsupported URL host")
 }
 
 func parseURL(link string) (*url.URL, error) {
@@ -57,13 +59,13 @@ func parseURL(link string) (*url.URL, error) {
 	return parsed, nil
 }
 
-func parseYoutubeURL(parsed *url.URL) (Type, string, error) {
+func parseYoutubeURL(parsed *url.URL) (model.Type, string, error) {
 	path := parsed.EscapedPath()
 
 	// https://www.youtube.com/playlist?list=PLCB9F975ECF01953C
 	// https://www.youtube.com/watch?v=rbCbho7aLYw&list=PLMpEfaKcGjpWEgNtdnsvLX6LzQL0UC0EM
 	if strings.HasPrefix(path, "/playlist") || strings.HasPrefix(path, "/watch") {
-		kind := TypePlaylist
+		kind := model.TypePlaylist
 
 		id := parsed.Query().Get("list")
 		if id != "" {
@@ -76,7 +78,7 @@ func parseYoutubeURL(parsed *url.URL) (Type, string, error) {
 	// - https://www.youtube.com/channel/UC5XPnUk8Vvv_pWslhwom6Og
 	// - https://www.youtube.com/channel/UCrlakW-ewUT8sOod6Wmzyow/videos
 	if strings.HasPrefix(path, "/channel") {
-		kind := TypeChannel
+		kind := model.TypeChannel
 		parts := strings.Split(parsed.EscapedPath(), "/")
 		if len(parts) <= 2 {
 			return "", "", errors.New("invalid youtube channel link")
@@ -92,7 +94,7 @@ func parseYoutubeURL(parsed *url.URL) (Type, string, error) {
 
 	// - https://www.youtube.com/user/fxigr1
 	if strings.HasPrefix(path, "/user") {
-		kind := TypeUser
+		kind := model.TypeUser
 
 		parts := strings.Split(parsed.EscapedPath(), "/")
 		if len(parts) <= 2 {
@@ -110,23 +112,23 @@ func parseYoutubeURL(parsed *url.URL) (Type, string, error) {
 	return "", "", errors.New("unsupported link format")
 }
 
-func parseVimeoURL(parsed *url.URL) (Type, string, error) {
+func parseVimeoURL(parsed *url.URL) (model.Type, string, error) {
 	parts := strings.Split(parsed.EscapedPath(), "/")
 	if len(parts) <= 1 {
 		return "", "", errors.New("invalid vimeo link path")
 	}
 
-	var kind Type
+	var kind model.Type
 	switch parts[1] {
 	case "groups":
-		kind = TypeGroup
+		kind = model.TypeGroup
 	case "channels":
-		kind = TypeChannel
+		kind = model.TypeChannel
 	default:
-		kind = TypeUser
+		kind = model.TypeUser
 	}
 
-	if kind == TypeGroup || kind == TypeChannel {
+	if kind == model.TypeGroup || kind == model.TypeChannel {
 		if len(parts) <= 2 {
 			return "", "", errors.New("invalid channel link")
 		}
@@ -139,7 +141,7 @@ func parseVimeoURL(parsed *url.URL) (Type, string, error) {
 		return kind, id, nil
 	}
 
-	if kind == TypeUser {
+	if kind == model.TypeUser {
 		id := parts[1]
 		if id == "" {
 			return "", "", errors.New("invalid id")
