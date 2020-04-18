@@ -8,6 +8,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+
     steps:
       - name: Install Go
         uses: actions/setup-go@v1
@@ -36,16 +37,33 @@ jobs:
         run: |
           make test
 
-  lint:
-    name: Lint
+  checks:
+    name: Checks
     runs-on: ubuntu-latest
     steps:
       - name: Install Go
         uses: actions/setup-go@v1
         with:
           go-version: 1.12
+
       - name: Checkout
         uses: actions/checkout@v1
+
+      - name: Go mod
+        env:
+          DIFF_PATH: "go.mod go.sum"
+        run: |
+          go mod tidy
+          DIFF=$(git status --porcelain -- $DIFF_PATH)
+          if [ "$DIFF" ]; then
+            echo
+            echo "These files were modified:"
+            echo
+            echo "$DIFF"
+            echo
+            exit 1
+          fi
+
       - name: Lint
         run: |
           make lint
