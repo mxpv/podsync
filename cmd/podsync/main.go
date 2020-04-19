@@ -102,11 +102,6 @@ func main() {
 		log.WithError(err).Fatal("youtube-dl error")
 	}
 
-	_, err = downloader.SelfUpdate(ctx)
-	if err != nil {
-		log.WithError(err).Error("failed to perform selfupdate for youtube-dl")
-	}
-
 	database, err := db.NewBadger(&cfg.Database)
 	if err != nil {
 		log.WithError(err).Fatal("failed to open database")
