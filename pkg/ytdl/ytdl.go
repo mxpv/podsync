@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -19,22 +20,21 @@ import (
 	"github.com/mxpv/podsync/pkg/model"
 )
 
-const DownloadTimeout = 10 * time.Minute
+const (
+	DownloadTimeout = 10 * time.Minute
+	UpdatePeriod    = 24 * time.Hour
+)
 
 var (
 	ErrTooManyRequests = errors.New(http.StatusText(http.StatusTooManyRequests))
 )
 
 type YoutubeDl struct {
-	path string
+	path       string
+	updateLock sync.Mutex // Don't call youtube-dl while self updating
 }
 
-type tempFile struct {
-	*os.File
-	dir string
-}
-
-func New(ctx context.Context) (*YoutubeDl, error) {
+func New(ctx context.Context, update bool) (*YoutubeDl, error) {
 	path, err := exec.LookPath("youtube-dl")
 	if err != nil {
 		return nil, errors.Wrap(err, "youtube-dl binary not found")
@@ -58,10 +58,25 @@ func New(ctx context.Context) (*YoutubeDl, error) {
 		return nil, err
 	}
 
+	if update {
+		// Do initial update at launch
+		if err := ytdl.Update(ctx); err != nil {
+			log.WithError(err).Error("failed to update youtube-dl")
+		}
+
+		go func() {
+			for range time.After(UpdatePeriod) {
+				if err := ytdl.Update(context.Background()); err != nil {
+					log.WithError(err).Error("update failed")
+				}
+			}
+		}()
+	}
+
 	return ytdl, nil
 }
 
-func (dl YoutubeDl) ensureDependencies(ctx context.Context) error {
+func (dl *YoutubeDl) ensureDependencies(ctx context.Context) error {
 	found := false
 
 	if path, err := exec.LookPath("ffmpeg"); err == nil {
@@ -93,7 +108,22 @@ func (dl YoutubeDl) ensureDependencies(ctx context.Context) error {
 	return nil
 }
 
-func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episode *model.Episode) (r io.ReadCloser, err error) {
+func (dl *YoutubeDl) Update(ctx context.Context) error {
+	dl.updateLock.Lock()
+	defer dl.updateLock.Unlock()
+
+	log.Info("updating youtube-dl")
+	output, err := dl.exec(ctx, "--update", "--verbose")
+	if err != nil {
+		log.WithError(err).Error(output)
+		return errors.Wrap(err, "failed to self update youtube-dl")
+	}
+
+	log.Info(output)
+	return nil
+}
+
+func (dl *YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episode *model.Episode) (r io.ReadCloser, err error) {
 	tmpDir, err := ioutil.TempDir("", "podsync-")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get temp dir for download")
@@ -112,6 +142,10 @@ func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episo
 	filePath := filepath.Join(tmpDir, fmt.Sprintf("%s.%s", episode.ID, "%(ext)s"))
 
 	args := buildArgs(feedConfig, episode, filePath)
+
+	dl.updateLock.Lock()
+	defer dl.updateLock.Unlock()
+
 	output, err := dl.exec(ctx, args...)
 	if err != nil {
 		log.WithError(err).Errorf("youtube-dl error: %s", filePath)
@@ -140,7 +174,7 @@ func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episo
 	return &tempFile{File: f, dir: tmpDir}, nil
 }
 
-func (dl YoutubeDl) exec(ctx context.Context, args ...string) (string, error) {
+func (dl *YoutubeDl) exec(ctx context.Context, args ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, DownloadTimeout)
 	defer cancel()
 
@@ -180,13 +214,4 @@ func buildArgs(feedConfig *config.Feed, episode *model.Episode, outputFilePath s
 
 	args = append(args, "--output", outputFilePath, episode.VideoURL)
 	return args
-}
-
-func (f *tempFile) Close() error {
-	err := f.File.Close()
-	err1 := os.RemoveAll(f.dir)
-	if err1 != nil {
-		log.Errorf("could not remove temp dir: %v", err1)
-	}
-	return err
 }

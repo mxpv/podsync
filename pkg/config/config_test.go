@@ -25,6 +25,9 @@ data_dir = "test/data/"
 [database]
 dir = "/home/user/db/"
 
+[downloader]
+self_update = true
+
 [feeds]
   [feeds.XYZ]
   url = "https://youtube.com/watch?v=ygIUF678y40"
@@ -68,6 +71,8 @@ dir = "/home/user/db/"
 	assert.EqualValues(t, "en", feed.Custom.Language)
 
 	assert.Nil(t, config.Database.Badger)
+
+	assert.True(t, config.Downloader.SelfUpdate)
 }
 
 func TestApplyDefaults(t *testing.T) {

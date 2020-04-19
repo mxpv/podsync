@@ -29,11 +29,12 @@ any device in podcast client.
 - One-click deployment for AWS.
 - Runs on Windows, Mac OS, Linux, and Docker.
 - Supports ARM.
+- Automatic youtube-dl self update.
 
 ## Dependencies
 
 If you're running the CLI as binary (e.g. not via Docker), you need to make sure that dependencies are available on
-your system. Currently Podsync depends on `youtube-dl` and `ffmpeg`.
+your system. Currently, Podsync depends on `youtube-dl` and `ffmpeg`.
 
 On Mac you can install those with `brew`:
 ```
@@ -77,6 +78,9 @@ vimeo = "{VIMEO_API_TOKEN}"
 
 [database]
   badger = { truncate = true, file_io = true } # See https://github.com/dgraph-io/badger#memory-usage
+
+[downloader]
+self_update = true # Optional, auto update youtube-dl every 24 hours
 
 # Optional log config. If not specified logs to the stdout
 [log]

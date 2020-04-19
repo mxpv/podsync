@@ -97,7 +97,7 @@ func main() {
 		"date":    date,
 	}).Info("running podsync")
 
-	downloader, err := ytdl.New(ctx)
+	downloader, err := ytdl.New(ctx, cfg.Downloader.SelfUpdate)
 	if err != nil {
 		log.WithError(err).Fatal("youtube-dl error")
 	}

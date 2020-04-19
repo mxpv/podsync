@@ -101,6 +101,12 @@ type Log struct {
 	Compress bool `toml:"compress"`
 }
 
+// Downloader is a youtube-dl related configuration
+type Downloader struct {
+	// SelfUpdate toggles self update every 24 hour
+	SelfUpdate bool `toml:"self_update"`
+}
+
 type Config struct {
 	// Server is the web server configuration
 	Server Server `toml:"server"`
@@ -113,6 +119,8 @@ type Config struct {
 	Feeds map[string]*Feed
 	// Tokens is API keys to use to access YouTube/Vimeo APIs.
 	Tokens Tokens `toml:"tokens"`
+	// Downloader (youtube-dl) configuration
+	Downloader Downloader `toml:"downloader"`
 }
 
 // LoadConfig loads TOML configuration from a file path
