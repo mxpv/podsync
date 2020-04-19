@@ -140,6 +140,18 @@ func (dl YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episo
 	return &tempFile{File: f, dir: tmpDir}, nil
 }
 
+// SelfUpdate of youtube-dl
+func (dl YoutubeDl) SelfUpdate(ctx context.Context) (string, error) {
+	output, err := dl.exec(ctx, "--update", "--verbose")
+
+	log.Debugf("youtube-dl --update --verbose\n%s", output)
+
+	if err != nil {
+		return output, errors.Wrap(err, "could not update youtube-dl")
+	}
+	return output, nil
+}
+
 func (dl YoutubeDl) exec(ctx context.Context, args ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, DownloadTimeout)
 	defer cancel()

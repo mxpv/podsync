@@ -102,6 +102,11 @@ func main() {
 		log.WithError(err).Fatal("youtube-dl error")
 	}
 
+	_, err = downloader.SelfUpdate(ctx)
+	if err != nil {
+		log.WithError(err).Error("failed to perform selfupdate for youtube-dl")
+	}
+
 	database, err := db.NewBadger(&cfg.Database)
 	if err != nil {
 		log.WithError(err).Fatal("failed to open database")
@@ -123,7 +128,7 @@ func main() {
 	updates := make(chan *config.Feed, 16)
 	defer close(updates)
 
-	//Create Cron
+	// Create Cron
 	c := cron.New(cron.WithChain(cron.SkipIfStillRunning(nil)))
 	m := make(map[string]cron.EntryID)
 
@@ -145,21 +150,21 @@ func main() {
 
 	// Run cron scheduler
 	group.Go(func() error {
-		var cronid cron.EntryID
+		var cronID cron.EntryID
 
 		for _, feed := range cfg.Feeds {
 			if feed.CronSchedule == "" {
 				feed.CronSchedule = fmt.Sprintf("@every %s", feed.UpdatePeriod.String())
 			}
 			_feed := feed
-			if cronid, err = c.AddFunc(_feed.CronSchedule, func() {
+			if cronID, err = c.AddFunc(_feed.CronSchedule, func() {
 				log.Debugf("adding %q to update queue", _feed.ID)
 				updates <- _feed
 			}); err != nil {
 				log.WithError(err).Fatalf("can't create cron task for feed: %s", _feed.ID)
 			}
 
-			m[_feed.ID] = cronid
+			m[_feed.ID] = cronID
 			log.Debugf("-> %s (update '%s')", _feed.ID, _feed.CronSchedule)
 			// Perform initial update after CLI restart
 			updates <- _feed
