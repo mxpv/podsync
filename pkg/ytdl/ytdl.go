@@ -59,13 +59,15 @@ func New(ctx context.Context, update bool) (*YoutubeDl, error) {
 	}
 
 	if update {
-		// Do initial update at launch
+		// Do initial blocking update at launch
 		if err := ytdl.Update(ctx); err != nil {
 			log.WithError(err).Error("failed to update youtube-dl")
 		}
 
 		go func() {
-			for range time.After(UpdatePeriod) {
+			for {
+				time.Sleep(UpdatePeriod)
+
 				if err := ytdl.Update(context.Background()); err != nil {
 					log.WithError(err).Error("update failed")
 				}
