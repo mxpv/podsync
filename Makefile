@@ -9,7 +9,7 @@ all: build lint test
 #
 .PHONY: build
 build:
-	go build -o podsync ./cmd/podsync
+	go build -o bin/podsync ./cmd/podsync
 
 #
 # Build Docker image
