@@ -30,6 +30,7 @@ any device in podcast client.
 - Runs on Windows, Mac OS, Linux, and Docker.
 - Supports ARM.
 - Automatic youtube-dl self update.
+- Supports API keys rotation.
 
 ## Dependencies
 
@@ -58,9 +59,13 @@ Here is an example how configuration might look like:
 port = 8080
 data_dir = "/app/data" # Don't change if you run podsync via docker
 
+# Tokens from `Access tokens` section
 [tokens]
-youtube = "{YOUTUBE_API_TOKEN}" # Tokens from `Access tokens` section
-vimeo = "{VIMEO_API_TOKEN}"
+youtube = "YOUTUBE_API_TOKEN" # YouTube API Key. See https://developers.google.com/youtube/registering_an_application
+vimeo = [ # Multiple keys will be rotated.
+  "VIMEO_API_KEY_1", # Vimeo developer keys. See https://developer.vimeo.com/api/guides/start#generate-access-token
+  "VIMEO_API_KEY_2"
+]
 
 [feeds]
   [feeds.ID1]
