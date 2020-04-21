@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/mxpv/podsync/pkg/builder"
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/db"
 	"github.com/mxpv/podsync/pkg/feed"
@@ -90,8 +91,18 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 
 // updateFeed pulls API for new episodes and saves them to database
 func (u *Updater) updateFeed(ctx context.Context, feedConfig *config.Feed) error {
+	info, err := builder.ParseURL(feedConfig.URL)
+	if err != nil {
+		return errors.Wrapf(err, "failed to parse URL: %s", feedConfig.URL)
+	}
+
+	keyProvider, ok := u.keys[info.Provider]
+	if !ok {
+		return errors.Errorf("key provider %q not loaded", info.Provider)
+	}
+
 	// Create an updater for this feed type
-	provider, err := feed.New(ctx, feedConfig, u.keys)
+	provider, err := builder.New(ctx, info.Provider, keyProvider.Get())
 	if err != nil {
 		return err
 	}

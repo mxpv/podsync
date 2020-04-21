@@ -1,5 +1,3 @@
-//go:generate mockgen -source=common.go -destination=common_mock_test.go -package=feed
-
 package feed
 
 import (
