@@ -26,9 +26,9 @@ func New(ctx context.Context, cfg *config.Feed, tokens config.Tokens) (Builder, 
 
 	switch info.Provider {
 	case model.ProviderYoutube:
-		provider, err = NewYouTubeBuilder(tokens.YouTube)
+		provider, err = NewYouTubeBuilder(tokens.YouTube[0])
 	case model.ProviderVimeo:
-		provider, err = NewVimeoBuilder(ctx, tokens.Vimeo)
+		provider, err = NewVimeoBuilder(ctx, tokens.Vimeo[0])
 	default:
 		return nil, errors.Errorf("unsupported provider %q", info.Provider)
 	}

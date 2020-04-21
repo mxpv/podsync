@@ -16,7 +16,10 @@ func TestLoadConfig(t *testing.T) {
 	const file = `
 [tokens]
 youtube = "123"
-vimeo = "321"
+vimeo = [
+  "321",
+  "456"
+]
 
 [server]
 port = 80
@@ -51,8 +54,11 @@ self_update = true
 
 	assert.Equal(t, "/home/user/db/", config.Database.Dir)
 
-	assert.Equal(t, "123", config.Tokens.YouTube)
-	assert.Equal(t, "321", config.Tokens.Vimeo)
+	require.Len(t, config.Tokens.YouTube, 1)
+	assert.Equal(t, "123", config.Tokens.YouTube[0])
+	require.Len(t, config.Tokens.Vimeo, 2)
+	assert.Equal(t, "321", config.Tokens.Vimeo[0])
+	assert.Equal(t, "456", config.Tokens.Vimeo[1])
 
 	assert.Len(t, config.Feeds, 1)
 	feed, ok := config.Feeds["XYZ"]
@@ -73,6 +79,28 @@ self_update = true
 	assert.Nil(t, config.Database.Badger)
 
 	assert.True(t, config.Downloader.SelfUpdate)
+}
+
+func TestLoadEmptyKeyList(t *testing.T) {
+	const file = `
+[tokens]
+vimeo = []
+
+[server]
+data_dir = "/data"
+[feeds]
+  [feeds.A]
+  url = "https://youtube.com/watch?v=ygIUF678y40"
+`
+	path := setup(t, file)
+	defer os.Remove(path)
+
+	config, err := LoadConfig(path)
+	assert.NoError(t, err)
+	require.NotNil(t, config)
+
+	require.Len(t, config.Tokens.YouTube, 0)
+	require.Len(t, config.Tokens.Vimeo, 0)
 }
 
 func TestApplyDefaults(t *testing.T) {

@@ -59,10 +59,10 @@ type Custom struct {
 type Tokens struct {
 	// YouTube API key.
 	// See https://developers.google.com/youtube/registering_an_application
-	YouTube string `toml:"youtube"`
+	YouTube StringSlice `toml:"youtube"`
 	// Vimeo developer key.
 	// See https://developer.vimeo.com/api/guides/start#generate-access-token
-	Vimeo string `toml:"vimeo"`
+	Vimeo StringSlice `toml:"vimeo"`
 }
 
 type Server struct {
