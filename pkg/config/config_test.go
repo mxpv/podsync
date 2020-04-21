@@ -44,7 +44,7 @@ self_update = true
 
 	config, err := LoadConfig(path)
 	assert.NoError(t, err)
-	assert.NotNil(t, config)
+	require.NotNil(t, config)
 
 	assert.Equal(t, "test/data/", config.Server.DataDir)
 	assert.EqualValues(t, 80, config.Server.Port)

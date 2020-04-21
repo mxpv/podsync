@@ -2,11 +2,11 @@ package config
 
 import (
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
-	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/hashicorp/go-multierror"
+	"github.com/naoina/toml"
 	"github.com/pkg/errors"
 
 	"github.com/mxpv/podsync/pkg/model"
@@ -42,6 +42,11 @@ type Feed struct {
 	Custom Custom `toml:"custom"`
 	// Included in OPML file
 	OPML bool `toml:"opml"`
+}
+
+type Filters struct {
+	Title string `toml:"title"`
+	// More filters to be added here
 }
 
 type Custom struct {
@@ -125,10 +130,14 @@ type Config struct {
 
 // LoadConfig loads TOML configuration from a file path
 func LoadConfig(path string) (*Config, error) {
-	config := Config{}
-	_, err := toml.DecodeFile(path, &config)
+	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to load config file")
+		return nil, errors.Wrapf(err, "failed to read config file: %s", path)
+	}
+
+	config := Config{}
+	if err := toml.Unmarshal(data, &config); err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal toml")
 	}
 
 	for id, feed := range config.Feeds {
@@ -206,19 +215,4 @@ func (c *Config) applyDefaults(configPath string) {
 			feed.PageSize = model.DefaultPageSize
 		}
 	}
-}
-
-type Duration struct {
-	time.Duration
-}
-
-func (d *Duration) UnmarshalText(text []byte) error {
-	var err error
-	d.Duration, err = time.ParseDuration(string(text))
-	return err
-}
-
-type Filters struct {
-	Title string `toml:"title"`
-	// More filters to be added here
 }
