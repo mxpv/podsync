@@ -31,14 +31,26 @@ type Updater struct {
 	downloader Downloader
 	db         db.Storage
 	fs         fs.Storage
+	keys       map[model.Provider]feed.KeyProvider
 }
 
 func NewUpdater(config *config.Config, downloader Downloader, db db.Storage, fs fs.Storage) (*Updater, error) {
+	keys := map[model.Provider]feed.KeyProvider{}
+
+	for name, list := range config.Tokens {
+		provider, err := feed.NewKeyProvider(list)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to create key provider for %q", name)
+		}
+		keys[name] = provider
+	}
+
 	return &Updater{
 		config:     config,
 		downloader: downloader,
 		db:         db,
 		fs:         fs,
+		keys:       keys,
 	}, nil
 }
 
@@ -79,7 +91,7 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 // updateFeed pulls API for new episodes and saves them to database
 func (u *Updater) updateFeed(ctx context.Context, feedConfig *config.Feed) error {
 	// Create an updater for this feed type
-	provider, err := feed.New(ctx, feedConfig, u.config.Tokens)
+	provider, err := feed.New(ctx, feedConfig, u.keys)
 	if err != nil {
 		return err
 	}

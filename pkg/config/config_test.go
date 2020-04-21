@@ -54,11 +54,11 @@ self_update = true
 
 	assert.Equal(t, "/home/user/db/", config.Database.Dir)
 
-	require.Len(t, config.Tokens.YouTube, 1)
-	assert.Equal(t, "123", config.Tokens.YouTube[0])
-	require.Len(t, config.Tokens.Vimeo, 2)
-	assert.Equal(t, "321", config.Tokens.Vimeo[0])
-	assert.Equal(t, "456", config.Tokens.Vimeo[1])
+	require.Len(t, config.Tokens["youtube"], 1)
+	assert.Equal(t, "123", config.Tokens["youtube"][0])
+	require.Len(t, config.Tokens["vimeo"], 2)
+	assert.Equal(t, "321", config.Tokens["vimeo"][0])
+	assert.Equal(t, "456", config.Tokens["vimeo"][1])
 
 	assert.Len(t, config.Feeds, 1)
 	feed, ok := config.Feeds["XYZ"]
@@ -99,8 +99,8 @@ data_dir = "/data"
 	assert.NoError(t, err)
 	require.NotNil(t, config)
 
-	require.Len(t, config.Tokens.YouTube, 0)
-	require.Len(t, config.Tokens.Vimeo, 0)
+	require.Len(t, config.Tokens, 1)
+	require.Len(t, config.Tokens["vimeo"], 0)
 }
 
 func TestApplyDefaults(t *testing.T) {

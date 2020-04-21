@@ -13,27 +13,25 @@ type Builder interface {
 	Build(ctx context.Context, cfg *config.Feed) (*model.Feed, error)
 }
 
-func New(ctx context.Context, cfg *config.Feed, tokens config.Tokens) (Builder, error) {
-	var (
-		provider Builder
-		err      error
-	)
-
+func New(ctx context.Context, cfg *config.Feed, keys map[model.Provider]KeyProvider) (Builder, error) {
 	info, err := ParseURL(cfg.URL)
 	if err != nil {
 		return nil, err
 	}
 
+	keyProvider, ok := keys[info.Provider]
+	if !ok {
+		return nil, errors.Errorf("unknown key provider: %s", info.Provider)
+	}
+
 	switch info.Provider {
 	case model.ProviderYoutube:
-		provider, err = NewYouTubeBuilder(tokens.YouTube[0])
+		return NewYouTubeBuilder(keyProvider.Get())
 	case model.ProviderVimeo:
-		provider, err = NewVimeoBuilder(ctx, tokens.Vimeo[0])
+		return NewVimeoBuilder(ctx, keyProvider.Get())
 	default:
 		return nil, errors.Errorf("unsupported provider %q", info.Provider)
 	}
-
-	return provider, err
 }
 
 type feedProvider interface {

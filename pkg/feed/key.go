@@ -10,6 +10,17 @@ type KeyProvider interface {
 	Get() string
 }
 
+func NewKeyProvider(keys []string) (KeyProvider, error) {
+	switch len(keys) {
+	case 0:
+		return nil, errors.New("no keys")
+	case 1:
+		return NewFixedKey(keys[0])
+	default:
+		return NewRotatedKeys(keys)
+	}
+}
+
 type FixedKeyProvider struct {
 	key string
 }

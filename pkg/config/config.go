@@ -56,15 +56,6 @@ type Custom struct {
 	Language string `toml:"lang"`
 }
 
-type Tokens struct {
-	// YouTube API key.
-	// See https://developers.google.com/youtube/registering_an_application
-	YouTube StringSlice `toml:"youtube"`
-	// Vimeo developer key.
-	// See https://developer.vimeo.com/api/guides/start#generate-access-token
-	Vimeo StringSlice `toml:"vimeo"`
-}
-
 type Server struct {
 	// Hostname to use for download links
 	Hostname string `toml:"hostname"`
@@ -123,7 +114,7 @@ type Config struct {
 	// ID will be used as feed ID in http://podsync.net/{FEED_ID}.xml
 	Feeds map[string]*Feed
 	// Tokens is API keys to use to access YouTube/Vimeo APIs.
-	Tokens Tokens `toml:"tokens"`
+	Tokens map[model.Provider]StringSlice `toml:"tokens"`
 	// Downloader (youtube-dl) configuration
 	Downloader Downloader `toml:"downloader"`
 }
