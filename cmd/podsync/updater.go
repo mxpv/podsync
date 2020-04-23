@@ -143,10 +143,10 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed)
 		if feedConfig.Filters.Title != "" {
 			matched, err := regexp.MatchString(feedConfig.Filters.Title, episode.Title)
 			if err != nil {
-				log.Warnf("Pattern '%s' is not a valid filter for %s Title", feedConfig.Filters.Title, feedConfig.ID)
+				log.Warnf("pattern %q is not a valid filter for %q Title", feedConfig.Filters.Title, feedConfig.ID)
 			} else {
 				if !matched {
-					log.Infof("Skipping '%s' due to lack of match with '%s'", episode.Title, feedConfig.Filters.Title)
+					log.Infof("skipping %q due to lack of match with %q", episode.Title, feedConfig.Filters.Title)
 					return nil
 				}
 			}
@@ -158,7 +158,7 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed)
 			return nil
 		}
 
-		log.Debugf("adding %s (%q) to the list", episode.ID, episode.Title)
+		log.Debugf("adding %s (%q) to queue", episode.ID, episode.Title)
 		downloadList = append(downloadList, episode)
 		return nil
 	}); err != nil {
@@ -240,7 +240,6 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed)
 			logger.WithError(err).Error("failed to copy file")
 			return err
 		}
-		logger.Debugf("copied %d bytes", fileSize)
 
 		// Update file status in database
 

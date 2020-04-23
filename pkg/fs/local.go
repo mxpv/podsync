@@ -32,7 +32,7 @@ func NewLocal(rootDir string, hostname string) (*Local, error) {
 
 func (l *Local) Create(ctx context.Context, ns string, fileName string, reader io.Reader) (int64, error) {
 	var (
-		logger  = log.WithField("feed_id", ns).WithField("episode_id", fileName)
+		logger  = log.WithField("episode_id", fileName)
 		feedDir = filepath.Join(l.rootDir, ns)
 	)
 
