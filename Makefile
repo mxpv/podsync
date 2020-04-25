@@ -14,11 +14,12 @@ build:
 #
 # Build Docker image
 #
+TAG ?= localhost/podsync
 .PHONY: docker
 docker:
 	GOOS=linux GOARCH=amd64 go build -o podsync ./cmd/podsync
-	docker build -t mxpv/podsync:unstable .
-	docker push mxpv/podsync:unstable
+	docker build -t $(TAG) .
+	docker push $(TAG)
 
 #
 # Pull GolangCI-Lint dependency
