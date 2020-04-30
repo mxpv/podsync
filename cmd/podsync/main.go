@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -23,9 +24,11 @@ import (
 )
 
 type Opts struct {
-	ConfigPath string `long:"config" short:"c" default:"config.toml" env:"PODSYNC_CONFIG_PATH"`
-	Debug      bool   `long:"debug"`
-	NoBanner   bool   `long:"no-banner"`
+	ConfigPath string  `long:"config" short:"c" default:"config.toml" env:"PODSYNC_CONFIG_PATH"`
+	Debug      bool    `long:"debug"`
+	NoBanner   bool    `long:"no-banner"`
+	PrintOPML  bool    `long:"print-opml"`
+	SaveOPML   *string `long:"save-opml"`
 }
 
 const banner = `
@@ -96,6 +99,21 @@ func main() {
 		"commit":  commit,
 		"date":    date,
 	}).Info("running podsync")
+
+	if opts.PrintOPML || (opts.SaveOPML != nil) {
+		doc, err := getOPML(cfg.Feeds, &cfg.Server)
+		if opts.PrintOPML && err == nil {
+			log.Info("Printing OPML:")
+			fmt.Print(*doc)
+		}
+		if opts.SaveOPML != nil && err == nil {
+			log.Info("Saving OPML")
+			err := ioutil.WriteFile(*opts.SaveOPML, []byte(*doc), 0644)
+			if err != nil {
+				log.Error("Error saving OPML", err)
+			}
+		}
+	}
 
 	downloader, err := ytdl.New(ctx, cfg.Downloader.SelfUpdate)
 	if err != nil {
