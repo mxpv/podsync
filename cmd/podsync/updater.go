@@ -124,6 +124,40 @@ func (u *Updater) updateFeed(ctx context.Context, feedConfig *config.Feed) error
 	return nil
 }
 
+func (u *Updater) matchRegexpFilter(pattern, str string, negative bool, logger log.FieldLogger) bool {
+	if pattern != "" {
+		matched, err := regexp.MatchString(pattern, str)
+		if err != nil {
+			logger.Warnf("pattern %q is not a valid")
+		} else {
+			if matched == negative {
+				logger.Infof("skipping due to mismatch")
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (u *Updater) matchFilters(episode *model.Episode, filters *config.Filters) bool {
+	logger := log.WithFields(log.Fields{"episode_id": episode.ID})
+	if !u.matchRegexpFilter(filters.Title, episode.Title, false, logger.WithField("filter", "title")) {
+		return false
+	}
+	if !u.matchRegexpFilter(filters.NotTitle, episode.Title, true, logger.WithField("filter", "not_title")) {
+		return false
+	}
+
+	if !u.matchRegexpFilter(filters.Description, episode.Description, false, logger.WithField("filter", "description")) {
+		return false
+	}
+	if !u.matchRegexpFilter(filters.NotDescription, episode.Description, true, logger.WithField("filter", "not_description")) {
+		return false
+	}
+
+	return true
+}
+
 func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed) error {
 	var (
 		feedID       = feedConfig.ID
@@ -140,16 +174,8 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed)
 			return nil
 		}
 
-		if feedConfig.Filters.Title != "" {
-			matched, err := regexp.MatchString(feedConfig.Filters.Title, episode.Title)
-			if err != nil {
-				log.Warnf("pattern %q is not a valid filter for %q Title", feedConfig.Filters.Title, feedConfig.ID)
-			} else {
-				if !matched {
-					log.Infof("skipping %q due to lack of match with %q", episode.Title, feedConfig.Filters.Title)
-					return nil
-				}
-			}
+		if !u.matchFilters(episode, &feedConfig.Filters) {
+			return nil
 		}
 
 		// Limit the number of episodes downloaded at once

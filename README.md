@@ -77,7 +77,7 @@ vimeo = [ # Multiple keys will be rotated.
   # custom = { cover_art = "{IMAGE_URL}}", category = "TV", explicit = true, lang = "en" } # Optional feed customizations
   # max_height = "720" # Optional maximal height of video, example: 720, 1080, 1440, 2160, ...
   # cron_schedule = "@every 12h" # Optional cron expression format. If set then overwrite 'update_period'. See details below
-  # filters = { title = "regex for title here" } # Optional Golang regexp format. If set, then only download episodes with matching titles.
+  # filters = { title = "regex for title here", not_title = "regex for negative title match", description = "...", not_description = "..." } # Optional Golang regexp format. If set, then only download matching episodes.
   # opml = true|false # Optional inclusion of the feed in the OPML file (default value: false)
   # clean = { keep_last = 10 } # Keep last 10 episodes (order desc by PubDate)
 

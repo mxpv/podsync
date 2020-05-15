@@ -45,7 +45,10 @@ type Feed struct {
 }
 
 type Filters struct {
-	Title string `toml:"title"`
+	Title          string `toml:"title"`
+	NotTitle       string `toml:"not_title"`
+	Description    string `toml:"description"`
+	NotDescription string `toml:"not_description"`
 	// More filters to be added here
 }
 
