@@ -346,10 +346,7 @@ func (u *Updater) cleanup(ctx context.Context, feedConfig *config.Feed) error {
 
 	logger.WithField("count", count).Info("running cleaner")
 	if err := u.db.WalkEpisodes(ctx, feedConfig.ID, func(episode *model.Episode) error {
-		switch episode.Status {
-		case model.EpisodeError, model.EpisodeCleaned:
-			// Skip
-		default:
+		if episode.Status == model.EpisodeDownloaded {
 			list = append(list, episode)
 		}
 		return nil
