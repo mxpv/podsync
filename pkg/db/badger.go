@@ -214,6 +214,13 @@ func (b *Badger) UpdateEpisode(feedID string, episodeID string, cb func(episode 
 	})
 }
 
+func (b *Badger) DeleteEpisode(feedID, episodeID string) error {
+	key := b.getKey(episodePath, feedID, episodeID)
+	return b.db.Update(func(txn *badger.Txn) error {
+		return txn.Delete(key)
+	})
+}
+
 func (b *Badger) WalkEpisodes(ctx context.Context, feedID string, cb func(episode *model.Episode) error) error {
 	return b.db.View(func(txn *badger.Txn) error {
 		return b.walkEpisodes(txn, feedID, cb)

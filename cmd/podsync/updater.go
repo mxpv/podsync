@@ -116,8 +116,31 @@ func (u *Updater) updateFeed(ctx context.Context, feedConfig *config.Feed) error
 
 	log.Debugf("received %d episode(s) for %q", len(result.Episodes), result.Title)
 
+	episodeSet := make(map[string]struct{})
+	if err := u.db.WalkEpisodes(ctx, feedConfig.ID, func(episode *model.Episode) error {
+		if episode.Status != model.EpisodeDownloaded && episode.Status != model.EpisodeCleaned {
+			episodeSet[episode.ID] = struct{}{}
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
 	if err := u.db.AddFeed(ctx, feedConfig.ID, result); err != nil {
 		return err
+	}
+
+	for _, episode := range result.Episodes {
+		delete(episodeSet, episode.ID)
+	}
+
+	// removing episodes that are no longer available in the feed and not downloaded or cleaned
+	for id := range episodeSet {
+		log.Infof("removing episode %q", id)
+		err := u.db.DeleteEpisode(feedConfig.ID, id)
+		if err != nil {
+			return err
+		}
 	}
 
 	log.Debug("successfully saved updates to storage")
@@ -372,6 +395,8 @@ func (u *Updater) cleanup(ctx context.Context, feedConfig *config.Feed) error {
 
 		if err := u.db.UpdateEpisode(feedID, episode.ID, func(episode *model.Episode) error {
 			episode.Status = model.EpisodeCleaned
+			episode.Title = ""
+			episode.Description = ""
 			return nil
 		}); err != nil {
 			result = multierror.Append(result, errors.Wrapf(err, "failed to set state for cleaned episode: %s", episode.ID))
