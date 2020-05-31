@@ -21,11 +21,11 @@ func (p timeSlice) Len() int {
 	return len(p)
 }
 
+// In descending order
 func (p timeSlice) Less(i, j int) bool {
 	return p[i].PubDate.After(p[j].PubDate)
 }
 
-// In descending order
 func (p timeSlice) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
