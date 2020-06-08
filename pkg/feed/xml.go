@@ -3,6 +3,7 @@ package feed
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"time"
 
@@ -12,6 +13,22 @@ import (
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/model"
 )
+
+// sort.Interface implementation
+type timeSlice []*model.Episode
+
+func (p timeSlice) Len() int {
+	return len(p)
+}
+
+// In descending order
+func (p timeSlice) Less(i, j int) bool {
+	return p[i].PubDate.After(p[j].PubDate)
+}
+
+func (p timeSlice) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
 
 func Build(ctx context.Context, feed *model.Feed, cfg *config.Feed, provider urlProvider) (*itunes.Podcast, error) {
 	const (
@@ -51,6 +68,15 @@ func Build(ctx context.Context, feed *model.Feed, cfg *config.Feed, provider url
 		p.Language = cfg.Custom.Language
 	}
 
+	for _, episode := range feed.Episodes {
+		if episode.PubDate.IsZero() {
+			episode.PubDate = now
+		}
+	}
+
+	// Sort all episodes in descending order
+	sort.Sort(timeSlice(feed.Episodes))
+
 	for i, episode := range feed.Episodes {
 		if episode.Status != model.EpisodeDownloaded {
 			// Skip episodes that are not yet downloaded
@@ -63,16 +89,11 @@ func Build(ctx context.Context, feed *model.Feed, cfg *config.Feed, provider url
 			Title:       episode.Title,
 			Description: episode.Description,
 			ISubtitle:   episode.Title,
-			IOrder:      strconv.Itoa(i),
+			// Some app prefer 1-based order
+			IOrder: strconv.Itoa(i + 1),
 		}
 
-		pubDate := episode.PubDate
-		if pubDate.IsZero() {
-			pubDate = now
-		}
-
-		item.AddPubDate(&pubDate)
-
+		item.AddPubDate(&episode.PubDate)
 		item.AddSummary(episode.Description)
 		item.AddImage(episode.Thumbnail)
 		item.AddDuration(episode.Duration)
