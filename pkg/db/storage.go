@@ -36,6 +36,9 @@ type Storage interface {
 	// UpdateEpisode updates episode fields
 	UpdateEpisode(feedID string, episodeID string, cb func(episode *model.Episode) error) error
 
+	// DeleteEpisode deletes an episode
+	DeleteEpisode(feedID string, episodeID string) error
+
 	// WalkEpisodes iterates over episodes that belong to the given feed ID
 	WalkEpisodes(ctx context.Context, feedID string, cb func(episode *model.Episode) error) error
 }
