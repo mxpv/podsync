@@ -40,6 +40,8 @@ type Feed struct {
 	Clean Cleanup `toml:"clean"`
 	// Custom is a list of feed customizations
 	Custom Custom `toml:"custom"`
+	// List of additional youtube-dl arguments passed at download time
+	YouTubeDLArgs []string `toml:"youtube_dl_args"`
 	// Included in OPML file
 	OPML bool `toml:"opml"`
 }

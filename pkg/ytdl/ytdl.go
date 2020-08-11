@@ -214,6 +214,9 @@ func buildArgs(feedConfig *config.Feed, episode *model.Episode, outputFilePath s
 		args = append(args, "--extract-audio", "--audio-format", "mp3", "--format", format)
 	}
 
+	// Insert additional per-feed youtube-dl arguments
+	args = append(args, feedConfig.YouTubeDLArgs...)
+
 	args = append(args, "--output", outputFilePath, episode.VideoURL)
 	return args
 }

@@ -80,6 +80,7 @@ vimeo = [ # Multiple keys will be rotated.
   # filters = { title = "regex for title here", not_title = "regex for negative title match", description = "...", not_description = "..." } # Optional Golang regexp format. If set, then only download matching episodes.
   # opml = true|false # Optional inclusion of the feed in the OPML file (default value: false)
   # clean = { keep_last = 10 } # Keep last 10 episodes (order desc by PubDate)
+  # youtube_dl_args = [ "--write-sub", "--embed-subs", "--sub-lang", "en,en-US,en-GB" ] # Optional extra arguments passed to youtube-dl when downloading videos from this feed. This example would embed available English closed captions in the videos. Note that setting '--audio-format' for audio format feeds, or '--format' or '--output' for any format may cause unexpected behaviour. You should only use this if you know what you are doing, and have read up on youtube-dl's options!
 
 [database]
   badger = { truncate = true, file_io = true } # See https://github.com/dgraph-io/badger#memory-usage
