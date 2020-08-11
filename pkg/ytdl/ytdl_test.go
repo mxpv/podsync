@@ -17,6 +17,7 @@ func TestBuildArgs(t *testing.T) {
 		maxHeight int
 		output    string
 		videoURL  string
+		ytdlArgs  []string
 		expect    []string
 	}{
 		{
@@ -91,14 +92,24 @@ func TestBuildArgs(t *testing.T) {
 			videoURL:  "http://url1",
 			expect:    []string{"--format", "bestvideo[height<=1024][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best", "--output", "/tmp/2", "http://url1"},
 		},
+		{
+			name:     "Video high quality with custom youtube-dl arguments",
+			format:   model.FormatVideo,
+			quality:  model.QualityHigh,
+			output:   "/tmp/2",
+			videoURL: "http://url1",
+			ytdlArgs: []string{"--write-sub", "--embed-subs", "--sub-lang", "en,en-US,en-GB"},
+			expect:   []string{"--format", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best", "--write-sub", "--embed-subs", "--sub-lang", "en,en-US,en-GB", "--output", "/tmp/2", "http://url1"},
+		},
 	}
 
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
 			result := buildArgs(&config.Feed{
-				Format:    tst.format,
-				Quality:   tst.quality,
-				MaxHeight: tst.maxHeight,
+				Format:        tst.format,
+				Quality:       tst.quality,
+				MaxHeight:     tst.maxHeight,
+				YouTubeDLArgs: tst.ytdlArgs,
 			}, &model.Episode{
 				VideoURL: tst.videoURL,
 			}, tst.output)
