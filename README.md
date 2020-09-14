@@ -98,6 +98,8 @@ compress = true
 
 ```
 
+Please note: Automatically clean-up will not work without a database configuration.
+
 Episodes files will be kept at: `/path/to/data/directory/ID1`, feed will be accessible from: `http://localhost/ID1.xml`
 
 If you want to hide Podsync behind reverse proxy like nginx, you can use `hostname` field:
