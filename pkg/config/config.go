@@ -17,6 +17,12 @@ type Feed struct {
 	ID string `toml:"-"`
 	// URL is a full URL of the field
 	URL string `toml:"url"`
+	// Optional overwrite for title
+	Author string `toml:"author"`
+	// Optional overwrite for title
+	Title string `toml:"title"`
+	// Optional overwrite for descriptiom
+	Description string `toml:"description"`
 	// PageSize is the number of pages to query from YouTube API.
 	// NOTE: larger page sizes/often requests might drain your API token.
 	PageSize int `toml:"page_size"`
