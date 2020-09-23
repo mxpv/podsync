@@ -37,9 +37,9 @@ func Build(ctx context.Context, feed *model.Feed, cfg *config.Feed, provider url
 	)
 
 	var (
-		now = time.Now().UTC()
-		author = feed.Title
-		title = feed.Title
+		now         = time.Now().UTC()
+		author      = feed.Title
+		title       = feed.Title
 		description = feed.Description
 	)
 
