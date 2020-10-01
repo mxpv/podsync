@@ -43,16 +43,16 @@ func Build(ctx context.Context, feed *model.Feed, cfg *config.Feed, provider url
 		description = feed.Description
 	)
 
-	if cfg.Author != "" {
-		author = cfg.Author
+	if cfg.Custom.Author != "" {
+		author = cfg.Custom.Author
 	}
 
-	if cfg.Title != "" {
-		title = cfg.Title
+	if cfg.Custom.Title != "" {
+		title = cfg.Custom.Title
 	}
 
-	if cfg.Description != "" {
-		description = cfg.Description
+	if cfg.Custom.Description != "" {
+		description = cfg.Custom.Description
 	}
 
 	p := itunes.New(title, feed.ItemURL, description, &feed.PubDate, &now)

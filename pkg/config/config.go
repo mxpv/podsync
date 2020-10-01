@@ -17,12 +17,6 @@ type Feed struct {
 	ID string `toml:"-"`
 	// URL is a full URL of the field
 	URL string `toml:"url"`
-	// Optional overwrite for title
-	Author string `toml:"author"`
-	// Optional overwrite for title
-	Title string `toml:"title"`
-	// Optional overwrite for descriptiom
-	Description string `toml:"description"`
 	// PageSize is the number of pages to query from YouTube API.
 	// NOTE: larger page sizes/often requests might drain your API token.
 	PageSize int `toml:"page_size"`
@@ -61,10 +55,13 @@ type Filters struct {
 }
 
 type Custom struct {
-	CoverArt string `toml:"cover_art"`
-	Category string `toml:"category"`
-	Explicit bool   `toml:"explicit"`
-	Language string `toml:"lang"`
+	CoverArt string    `toml:"cover_art"`
+	Category string    `toml:"category"`
+	Explicit bool      `toml:"explicit"`
+	Language string    `toml:"lang"`
+	Author string 	    `toml:"author"`
+	Title string       `toml:"title"`
+	Description string `toml:"description"`
 }
 
 type Server struct {
