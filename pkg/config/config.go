@@ -55,10 +55,13 @@ type Filters struct {
 }
 
 type Custom struct {
-	CoverArt string `toml:"cover_art"`
-	Category string `toml:"category"`
-	Explicit bool   `toml:"explicit"`
-	Language string `toml:"lang"`
+	CoverArt    string `toml:"cover_art"`
+	Category    string `toml:"category"`
+	Explicit    bool   `toml:"explicit"`
+	Language    string `toml:"lang"`
+	Author      string `toml:"author"`
+	Title       string `toml:"title"`
+	Description string `toml:"description"`
 }
 
 type Server struct {

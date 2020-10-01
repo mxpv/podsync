@@ -37,14 +37,29 @@ func Build(ctx context.Context, feed *model.Feed, cfg *config.Feed, provider url
 	)
 
 	var (
-		now = time.Now().UTC()
+		now         = time.Now().UTC()
+		author      = feed.Title
+		title       = feed.Title
+		description = feed.Description
 	)
 
-	p := itunes.New(feed.Title, feed.ItemURL, feed.Description, &feed.PubDate, &now)
+	if cfg.Custom.Author != "" {
+		author = cfg.Custom.Author
+	}
+
+	if cfg.Custom.Title != "" {
+		title = cfg.Custom.Title
+	}
+
+	if cfg.Custom.Description != "" {
+		description = cfg.Custom.Description
+	}
+
+	p := itunes.New(title, feed.ItemURL, description, &feed.PubDate, &now)
 	p.Generator = podsyncGenerator
-	p.AddSubTitle(feed.Title)
-	p.IAuthor = feed.Title
-	p.AddSummary(feed.Description)
+	p.AddSubTitle(title)
+	p.IAuthor = author
+	p.AddSummary(description)
 
 	if cfg.Custom.CoverArt != "" {
 		p.AddImage(cfg.Custom.CoverArt)
