@@ -11,26 +11,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
       # Required for the changelog to work correctly
-      - name: Unshallow
-        run: git fetch --prune --unshallow
+      - run: git fetch --prune --unshallow
 
-      - name: Set up Go
-        uses: actions/setup-go@v1
+      - uses: actions/setup-go@v1
         with:
-          go-version: 1.13.x
+          go-version: 1.15
 
-      - name: Docker login
-        env:
+      - env:
           DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: docker login --username "$DOCKER_LOGIN" --password "$DOCKER_PASSWORD"
 
-      - name: Release
-        uses: goreleaser/goreleaser-action@v1
+      - uses: goreleaser/goreleaser-action@v1
         with:
           version: latest
           args: release --rm-dist
