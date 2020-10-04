@@ -40,7 +40,7 @@ self_update = true
   quality = "low"
   filters = { title = "regex for title here" }
   clean = { keep_last = 10 }
-  custom = { cover_art = "http://img", category = "TV", subcategories = ["1", "2"],  explicit = true, lang = "en" }
+  custom = { cover_art = "http://img", cover_art_quality = "high", category = "TV", subcategories = ["1", "2"],  explicit = true, lang = "en" }
 `
 	path := setup(t, file)
 	defer os.Remove(path)
@@ -72,6 +72,7 @@ self_update = true
 	assert.EqualValues(t, 10, feed.Clean.KeepLast)
 
 	assert.EqualValues(t, "http://img", feed.Custom.CoverArt)
+	assert.EqualValues(t, "high", feed.Custom.CoverArtQuality)
 	assert.EqualValues(t, "TV", feed.Custom.Category)
 	assert.True(t, feed.Custom.Explicit)
 	assert.EqualValues(t, "en", feed.Custom.Language)
@@ -128,6 +129,7 @@ data_dir = "/data"
 	assert.EqualValues(t, feed.UpdatePeriod, Duration{model.DefaultUpdatePeriod})
 	assert.EqualValues(t, feed.PageSize, 50)
 	assert.EqualValues(t, feed.Quality, "high")
+	assert.EqualValues(t, feed.Custom.CoverArtQuality, "high")
 	assert.EqualValues(t, feed.Format, "video")
 }
 
