@@ -16,19 +16,12 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v1
+      - uses: actions/setup-go@v1
         with:
-          go-version: 1.12
-
-      - name: Checkout
-        uses: actions/checkout@v1
-
-      - name: Build
-        run: make build
-
-      - name: Upload
-        uses: actions/upload-artifact@v1
+          go-version: 1.15
+      - uses: actions/checkout@v1
+      - run: make build
+      - uses: actions/upload-artifact@v1
         with:
           name: podsync-${{ matrix.os }}
           path: bin/
@@ -37,30 +30,23 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v1
+      - uses: actions/setup-go@v1
         with:
-          go-version: 1.12
-      - name: Checkout
-        uses: actions/checkout@v1
-      - name: Test
-        env:
+          go-version: 1.15
+      - uses: actions/checkout@v1
+      - env:
           VIMEO_TEST_API_KEY: ${{ secrets.VIMEO_ACCESS_TOKEN }}
           YOUTUBE_TEST_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-        run: |
-          make test
+        run: make test
 
   checks:
     name: Checks
     runs-on: ubuntu-latest
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v1
+      - uses: actions/setup-go@v1
         with:
-          go-version: 1.12
-
-      - name: Checkout
-        uses: actions/checkout@v1
+          go-version: 1.15
+      - uses: actions/checkout@v1
 
       - name: Go mod
         env:
@@ -77,6 +63,4 @@ jobs:
             exit 1
           fi
 
-      - name: Lint
-        run: |
-          make lint
+      - run: make lint
