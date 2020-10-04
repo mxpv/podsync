@@ -68,9 +68,9 @@ func Build(ctx context.Context, feed *model.Feed, cfg *config.Feed, provider url
 	}
 
 	if cfg.Custom.Category != "" {
-		p.AddCategory(cfg.Custom.Category, nil)
+		p.AddCategory(cfg.Custom.Category, cfg.Custom.Subcategories)
 	} else {
-		p.AddCategory(defaultCategory, nil)
+		p.AddCategory(defaultCategory, cfg.Custom.Subcategories)
 	}
 
 	if cfg.Custom.Explicit {

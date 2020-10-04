@@ -40,7 +40,7 @@ self_update = true
   quality = "low"
   filters = { title = "regex for title here" }
   clean = { keep_last = 10 }
-  custom = { cover_art = "http://img", category = "TV", explicit = true, lang = "en" }
+  custom = { cover_art = "http://img", category = "TV", subcategories = ["1", "2"],  explicit = true, lang = "en" }
 `
 	path := setup(t, file)
 	defer os.Remove(path)
@@ -75,6 +75,8 @@ self_update = true
 	assert.EqualValues(t, "TV", feed.Custom.Category)
 	assert.True(t, feed.Custom.Explicit)
 	assert.EqualValues(t, "en", feed.Custom.Language)
+
+	assert.EqualValues(t, feed.Custom.Subcategories, []string{"1", "2"})
 
 	assert.Nil(t, config.Database.Badger)
 
