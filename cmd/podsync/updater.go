@@ -24,7 +24,7 @@ import (
 )
 
 type Downloader interface {
-	Download(ctx context.Context, feedConfig *config.Feed, episode *model.Episode) (io.ReadCloser, error)
+	Download(ctx context.Context, feedConfig *config.Feed, episode *model.Episode, DownloadTimeoutMin int) (io.ReadCloser, error)
 }
 
 type Updater struct {
@@ -55,7 +55,7 @@ func NewUpdater(config *config.Config, downloader Downloader, db db.Storage, fs 
 	}, nil
 }
 
-func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
+func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed, DownloadTimeoutMin int) error {
 	log.WithFields(log.Fields{
 		"feed_id": feedConfig.ID,
 		"format":  feedConfig.Format,
@@ -68,7 +68,7 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 		return errors.Wrap(err, "update failed")
 	}
 
-	if err := u.downloadEpisodes(ctx, feedConfig); err != nil {
+	if err := u.downloadEpisodes(ctx, feedConfig, DownloadTimeoutMin); err != nil {
 		return errors.Wrap(err, "download failed")
 	}
 
@@ -181,7 +181,7 @@ func (u *Updater) matchFilters(episode *model.Episode, filters *config.Filters) 
 	return true
 }
 
-func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed) error {
+func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed, DownloadTimeoutMin int) error {
 	var (
 		feedID       = feedConfig.ID
 		downloadList []*model.Episode
@@ -262,7 +262,7 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed)
 		// while still being processed by youtube-dl (e.g. a file is being downloaded from YT or encoding in progress)
 
 		logger.Infof("! downloading episode %s", episode.VideoURL)
-		tempFile, err := u.downloader.Download(ctx, feedConfig, episode)
+		tempFile, err := u.downloader.Download(ctx, feedConfig, episode, DownloadTimeoutMin)
 		if err != nil {
 			// YouTube might block host with HTTP Error 429: Too Many Requests
 			// We still need to generate XML, so just stop sending download requests and

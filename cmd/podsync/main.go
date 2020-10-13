@@ -97,7 +97,7 @@ func main() {
 		"date":    date,
 	}).Info("running podsync")
 
-	downloader, err := ytdl.New(ctx, cfg.Downloader.SelfUpdate, cfg.Feed)
+	downloader, err := ytdl.New(ctx, cfg.Downloader.SelfUpdate, cfg.Downloader.DownloadTimeoutMin)
 	if err != nil {
 		log.WithError(err).Fatal("youtube-dl error")
 	}
@@ -132,7 +132,7 @@ func main() {
 		for {
 			select {
 			case feed := <-updates:
-				if err := updater.Update(ctx, feed); err != nil {
+				if err := updater.Update(ctx, feed, cfg.Downloader.DownloadTimeoutMin); err != nil {
 					log.WithError(err).Errorf("failed to update feed: %s", feed.URL)
 				} else {
 					log.Infof("next update of %s: %s", feed.ID, c.Entry(m[feed.ID]).Next)

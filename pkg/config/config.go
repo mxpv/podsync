@@ -32,8 +32,6 @@ type Feed struct {
 	Quality model.Quality `toml:"quality"`
 	// Maximum height of video
 	MaxHeight int `toml:"max_height"`
-	// Timeout for downloading a video (in minutes) after which youtube-dl will be killed
-	DownloadTimeoutMin int `toml:"download_timeout"`
 	// Format to use for this feed
 	Format model.Format `toml:"format"`
 	// Only download episodes that match this regexp (defaults to matching anything)
@@ -113,6 +111,8 @@ type Log struct {
 type Downloader struct {
 	// SelfUpdate toggles self update every 24 hour
 	SelfUpdate bool `toml:"self_update"`
+	// Timeout for downloading a video (in minutes) after which youtube-dl will be killed
+	DownloadTimeoutMin int `toml:"download_timeout"`
 }
 
 type Config struct {

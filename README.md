@@ -77,7 +77,6 @@ vimeo = [ # Multiple keys will be rotated.
   # custom.cover_art_quality use "high" or "low" to special cover image quality from channel cover default is equal with "quality" and disable when custom.cover_art was set.
   # custom = { cover_art = "{IMAGE_URL}}", cover_art_quality = "high", category = "TV", subcategories = ["Documentary", "Tech News"], explicit = true, lang = "en" } # Optional feed customizations
   # max_height = 720 # Optional maximal height of video, example: 720, 1080, 1440, 2160, ...
-  # download_timeout = 30 #Timeout for downloading a video (in minutes) after which youtube-dl will be killed
   # cron_schedule = "@every 12h" # Optional cron expression format. If set then overwrite 'update_period'. See details below
   # filters = { title = "regex for title here", not_title = "regex for negative title match", description = "...", not_description = "..." } # Optional Golang regexp format. If set, then only download matching episodes.
   # opml = true|false # Optional inclusion of the feed in the OPML file (default value: false)
@@ -89,6 +88,7 @@ vimeo = [ # Multiple keys will be rotated.
 
 [downloader]
 self_update = true # Optional, auto update youtube-dl every 24 hours
+# download_timeout = 30 #Timeout for downloading a video (in minutes) after which youtube-dl will be killed
 
 # Optional log config. If not specified logs to the stdout
 [log]
