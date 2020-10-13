@@ -21,7 +21,6 @@ import (
 )
 
 const (
-	DownloadTimeout = 10 * time.Minute
 	UpdatePeriod    = 24 * time.Hour
 )
 
@@ -34,7 +33,7 @@ type YoutubeDl struct {
 	updateLock sync.Mutex // Don't call youtube-dl while self updating
 }
 
-func New(ctx context.Context, update bool) (*YoutubeDl, error) {
+func New(ctx context.Context, update bool, feedConfig *config.Feed) (*YoutubeDl, error) {
 	path, err := exec.LookPath("youtube-dl")
 	if err != nil {
 		return nil, errors.Wrap(err, "youtube-dl binary not found")
@@ -47,7 +46,7 @@ func New(ctx context.Context, update bool) (*YoutubeDl, error) {
 	}
 
 	// Make sure youtube-dl exists
-	version, err := ytdl.exec(ctx, "--version")
+	version, err := ytdl.exec(ctx, feedConfig, "--version")
 	if err != nil {
 		return nil, errors.Wrap(err, "could not find youtube-dl")
 	}
@@ -60,7 +59,7 @@ func New(ctx context.Context, update bool) (*YoutubeDl, error) {
 
 	if update {
 		// Do initial blocking update at launch
-		if err := ytdl.Update(ctx); err != nil {
+		if err := ytdl.Update(ctx, feedConfig); err != nil {
 			log.WithError(err).Error("failed to update youtube-dl")
 		}
 
@@ -68,7 +67,7 @@ func New(ctx context.Context, update bool) (*YoutubeDl, error) {
 			for {
 				time.Sleep(UpdatePeriod)
 
-				if err := ytdl.Update(context.Background()); err != nil {
+				if err := ytdl.Update(context.Background(), feedConfig); err != nil {
 					log.WithError(err).Error("update failed")
 				}
 			}
@@ -110,12 +109,12 @@ func (dl *YoutubeDl) ensureDependencies(ctx context.Context) error {
 	return nil
 }
 
-func (dl *YoutubeDl) Update(ctx context.Context) error {
+func (dl *YoutubeDl) Update(ctx context.Context, feedConfig *config.Feed) error {
 	dl.updateLock.Lock()
 	defer dl.updateLock.Unlock()
 
 	log.Info("updating youtube-dl")
-	output, err := dl.exec(ctx, "--update", "--verbose")
+	output, err := dl.exec(ctx, feedConfig, "--update", "--verbose")
 	if err != nil {
 		log.WithError(err).Error(output)
 		return errors.Wrap(err, "failed to self update youtube-dl")
@@ -148,7 +147,7 @@ func (dl *YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, epis
 	dl.updateLock.Lock()
 	defer dl.updateLock.Unlock()
 
-	output, err := dl.exec(ctx, args...)
+	output, err := dl.exec(ctx, feedConfig, args...)
 	if err != nil {
 		log.WithError(err).Errorf("youtube-dl error: %s", filePath)
 
@@ -176,8 +175,14 @@ func (dl *YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, epis
 	return &tempFile{File: f, dir: tmpDir}, nil
 }
 
-func (dl *YoutubeDl) exec(ctx context.Context, args ...string) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, DownloadTimeout)
+func (dl *YoutubeDl) exec(ctx context.Context, feedConfig *config.Feed, args ...string) (string, error) {
+	var downTimeout int
+	if feedConfig.DownloadTimeoutMin {
+		downTimeout = feedConfig.DownloadTimeoutMin
+	} else {
+		downTimeout = 30
+	}
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(downTimeout) * time.Minute)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, dl.path, args...)
