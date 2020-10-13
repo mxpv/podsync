@@ -177,7 +177,7 @@ func (dl *YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, epis
 
 func (dl *YoutubeDl) exec(ctx context.Context, feedConfig *config.Feed, args ...string) (string, error) {
 	var downTimeout int
-	if feedConfig.DownloadTimeoutMin {
+	if feedConfig.DownloadTimeoutMin > 0 {
 		downTimeout = feedConfig.DownloadTimeoutMin
 	} else {
 		downTimeout = 30
