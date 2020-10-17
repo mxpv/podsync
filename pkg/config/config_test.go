@@ -30,6 +30,7 @@ dir = "/home/user/db/"
 
 [downloader]
 self_update = true
+timeout = 15
 
 [feeds]
   [feeds.XYZ]
@@ -82,6 +83,7 @@ self_update = true
 	assert.Nil(t, config.Database.Badger)
 
 	assert.True(t, config.Downloader.SelfUpdate)
+	assert.EqualValues(t, 15, config.Downloader.Timeout)
 }
 
 func TestLoadEmptyKeyList(t *testing.T) {

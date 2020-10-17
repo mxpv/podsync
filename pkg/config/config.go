@@ -111,6 +111,8 @@ type Log struct {
 type Downloader struct {
 	// SelfUpdate toggles self update every 24 hour
 	SelfUpdate bool `toml:"self_update"`
+	// Timeout in minutes for youtube-dl process to finish download
+	Timeout int `toml:"timeout"`
 }
 
 type Config struct {

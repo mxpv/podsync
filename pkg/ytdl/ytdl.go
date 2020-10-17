@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	DownloadTimeout = 10 * time.Minute
-	UpdatePeriod    = 24 * time.Hour
+	DefaultDownloadTimeout = 10 * time.Minute
+	UpdatePeriod           = 24 * time.Hour
 )
 
 var (
@@ -31,10 +31,11 @@ var (
 
 type YoutubeDl struct {
 	path       string
+	timeout    time.Duration
 	updateLock sync.Mutex // Don't call youtube-dl while self updating
 }
 
-func New(ctx context.Context, update bool) (*YoutubeDl, error) {
+func New(ctx context.Context, cfg config.Downloader) (*YoutubeDl, error) {
 	path, err := exec.LookPath("youtube-dl")
 	if err != nil {
 		return nil, errors.Wrap(err, "youtube-dl binary not found")
@@ -42,8 +43,16 @@ func New(ctx context.Context, update bool) (*YoutubeDl, error) {
 
 	log.Debugf("found youtube-dl binary at %q", path)
 
+	timeout := DefaultDownloadTimeout
+	if cfg.Timeout > 0 {
+		timeout = time.Duration(cfg.Timeout) * time.Minute
+	}
+
+	log.Debugf("download timeout: %d min(s)", int(timeout.Minutes()))
+
 	ytdl := &YoutubeDl{
-		path: path,
+		path:    path,
+		timeout: timeout,
 	}
 
 	// Make sure youtube-dl exists
@@ -58,7 +67,7 @@ func New(ctx context.Context, update bool) (*YoutubeDl, error) {
 		return nil, err
 	}
 
-	if update {
+	if cfg.SelfUpdate {
 		// Do initial blocking update at launch
 		if err := ytdl.Update(ctx); err != nil {
 			log.WithError(err).Error("failed to update youtube-dl")
@@ -177,7 +186,7 @@ func (dl *YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, epis
 }
 
 func (dl *YoutubeDl) exec(ctx context.Context, args ...string) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, DownloadTimeout)
+	ctx, cancel := context.WithTimeout(ctx, dl.timeout)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, dl.path, args...)

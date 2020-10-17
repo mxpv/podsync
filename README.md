@@ -88,6 +88,7 @@ vimeo = [ # Multiple keys will be rotated.
 
 [downloader]
 self_update = true # Optional, auto update youtube-dl every 24 hours
+timeout = 15 # Timeout in minutes
 
 # Optional log config. If not specified logs to the stdout
 [log]
