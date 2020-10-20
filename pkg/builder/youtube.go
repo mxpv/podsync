@@ -235,7 +235,7 @@ func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info 
 		feed.Description = fmt.Sprintf("%s (%s)", feed.Title, feed.PubDate)
 	}
 
-	feed.CoverArt = yt.selectThumbnail(thumbnails, feed.Quality, "")
+	feed.CoverArt = yt.selectThumbnail(thumbnails, feed.CoverArtQuality, "")
 
 	return nil
 }
