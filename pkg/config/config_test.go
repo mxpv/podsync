@@ -135,6 +135,31 @@ data_dir = "/data"
 	assert.EqualValues(t, feed.Format, "video")
 }
 
+func TestHttpServerListenAddress(t *testing.T) {
+	const file = `
+[server]
+bind_address = "172.20.10.2"
+port = 8080
+path = "test"
+data_dir = "/data"
+
+[feeds]
+  [feeds.A]
+  url = "https://youtube.com/watch?v=ygIUF678y40"
+
+[database]
+  badger = { truncate = true, file_io = true }
+`
+	path := setup(t, file)
+	defer os.Remove(path)
+
+	config, err := LoadConfig(path)
+	assert.NoError(t, err)
+	require.NotNil(t, config)
+	require.NotNil(t, config.Server.BindAddress)
+	require.NotNil(t, config.Server.Path)
+}
+
 func TestDefaultHostname(t *testing.T) {
 	cfg := Config{
 		Server: Server{},

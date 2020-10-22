@@ -12,4 +12,5 @@ const (
 	DefaultLogMaxSize    = 50 // megabytes
 	DefaultLogMaxAge     = 30 // days
 	DefaultLogMaxBackups = 7
+	PathRegex            = `^[A-Za-z0-9]+$`
 )
