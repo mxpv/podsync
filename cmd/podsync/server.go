@@ -25,7 +25,6 @@ func NewServer(cfg *config.Config) *Server {
 	srv := Server{}
 
 	srv.Addr = fmt.Sprintf("%s:%d", bindAddress, port)
-	//srv.Addr = fmt.Sprintf("{{$bindAddress:$port}}")
 	log.Debugf("using address: %s:%s", bindAddress, srv.Addr)
 
 	fs := http.FileServer(http.Dir(cfg.Server.DataDir))
