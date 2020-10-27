@@ -18,14 +18,19 @@ func NewServer(cfg *config.Config) *Server {
 	if port == 0 {
 		port = 8080
 	}
-
+	bindAddress := cfg.Server.BindAddress
+	if bindAddress == "*" {
+		bindAddress = ""
+	}
 	srv := Server{}
 
-	srv.Addr = fmt.Sprintf(":%d", port)
-	log.Debugf("using address: %s", srv.Addr)
+	srv.Addr = fmt.Sprintf("%s:%d", bindAddress, port)
+	log.Debugf("using address: %s:%s", bindAddress, srv.Addr)
 
 	fs := http.FileServer(http.Dir(cfg.Server.DataDir))
-	http.Handle("/", fs)
+	path := cfg.Server.Path
+	http.Handle(fmt.Sprintf("/%s", path), fs)
+	log.Debugf("handle path: /%s", path)
 
 	return &srv
 }
