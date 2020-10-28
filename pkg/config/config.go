@@ -65,6 +65,8 @@ type Custom struct {
 	Author          string        `toml:"author"`
 	Title           string        `toml:"title"`
 	Description     string        `toml:"description"`
+	OwnerName       string        `toml:"ownerName"`
+	OwnerEmail      string        `toml:"ownerEmail"`
 }
 
 type Server struct {

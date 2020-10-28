@@ -61,6 +61,13 @@ func Build(ctx context.Context, feed *model.Feed, cfg *config.Feed, provider url
 	p.IAuthor = author
 	p.AddSummary(description)
 
+	if cfg.Custom.OwnerName != "" && cfg.Custom.OwnerEmail != "" {
+		p.IOwner = &itunes.Author{
+			Name:  cfg.Custom.OwnerName,
+			Email: cfg.Custom.OwnerEmail,
+		}
+	}
+
 	if cfg.Custom.CoverArt != "" {
 		p.AddImage(cfg.Custom.CoverArt)
 	} else {
