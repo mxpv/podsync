@@ -41,7 +41,17 @@ timeout = 15
   quality = "low"
   filters = { title = "regex for title here" }
   clean = { keep_last = 10 }
-  custom = { cover_art = "http://img", cover_art_quality = "high", category = "TV", subcategories = ["1", "2"],  explicit = true, lang = "en" }
+  custom = { 
+	  cover_art = "http://img", 
+	  cover_art_quality = "high", 
+	  category = "TV", 
+	  subcategories = ["1", "2"], 
+	  explicit = true, 
+	  lang = "en",
+	  author = "Mrs. Smith (mrs@smith.org)",
+	  ownerName = "Mrs. Smith",
+	  ownerEmail = "mrs@smith.org"
+	}
 `
 	path := setup(t, file)
 	defer os.Remove(path)
@@ -77,6 +87,9 @@ timeout = 15
 	assert.EqualValues(t, "TV", feed.Custom.Category)
 	assert.True(t, feed.Custom.Explicit)
 	assert.EqualValues(t, "en", feed.Custom.Language)
+	assert.EqualValues(t, "Mrs. Smith (mrs@smith.org)", feed.Custom.Author)
+	assert.EqualValues(t, "Mrs. Smith", feed.Custom.OwnerName)
+	assert.EqualValues(t, "mrs@smith.org", feed.Custom.OwnerEmail)
 
 	assert.EqualValues(t, feed.Custom.Subcategories, []string{"1", "2"})
 
