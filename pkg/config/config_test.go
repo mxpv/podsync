@@ -41,17 +41,16 @@ timeout = 15
   quality = "low"
   filters = { title = "regex for title here" }
   clean = { keep_last = 10 }
-  custom = { 
-	  cover_art = "http://img", 
-	  cover_art_quality = "high", 
-	  category = "TV", 
-	  subcategories = ["1", "2"], 
-	  explicit = true, 
-	  lang = "en",
-	  author = "Mrs. Smith (mrs@smith.org)",
-	  ownerName = "Mrs. Smith",
-	  ownerEmail = "mrs@smith.org"
-	}
+  	[feeds.XYZ.custom]
+	cover_art = "http://img"
+	cover_art_quality = "high"
+	category = "TV"
+	subcategories = ["1", "2"]
+	explicit = true
+	lang = "en"
+	author = "Mrs. Smith (mrs@smith.org)"
+	ownerName = "Mrs. Smith"
+	ownerEmail = "mrs@smith.org"
 `
 	path := setup(t, file)
 	defer os.Remove(path)
