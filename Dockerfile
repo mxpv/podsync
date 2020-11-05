@@ -1,8 +1,10 @@
 FROM alpine:3.10
 
 WORKDIR /app/
-RUN wget -O /usr/bin/youtube-dl https://github.com/ytdl-org/youtube-dl/releases/latest/download/youtube-dl && \
-    chmod +x /usr/bin/youtube-dl && \
-    apk --no-cache add ca-certificates python ffmpeg tzdata
+
+RUN apk --no-cache add ca-certificates python ffmpeg tzdata
+# see #191 for youtube-dl related questions
+RUN apk --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main add youtube-dl 
+
 COPY podsync /app/podsync
 CMD ["/app/podsync"]
