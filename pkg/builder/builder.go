@@ -19,6 +19,8 @@ func New(ctx context.Context, provider model.Provider, key string) (Builder, err
 		return NewYouTubeBuilder(key)
 	case model.ProviderVimeo:
 		return NewVimeoBuilder(ctx, key)
+	case model.ProviderSoundcloud:
+		return NewSoundcloudBuilder()
 	default:
 		return nil, errors.Errorf("unsupported provider %q", provider)
 	}

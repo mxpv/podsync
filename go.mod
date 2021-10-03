@@ -16,6 +16,7 @@ require (
 	github.com/silentsokolov/go-vimeo v0.0.0-20190116124215-06829264260c
 	github.com/sirupsen/logrus v1.2.0
 	github.com/stretchr/testify v1.4.0
+	github.com/zackradisic/soundcloud-api v0.1.5
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	golang.org/x/oauth2 v0.0.0-20180620175406-ef147856a6dd
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
