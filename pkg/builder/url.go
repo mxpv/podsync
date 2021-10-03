@@ -43,6 +43,19 @@ func ParseURL(link string) (model.Info, error) {
 		return info, nil
 	}
 
+	if strings.HasSuffix(parsed.Host, "soundcloud.com") {
+		kind, id, err := parseSoundcloudURL(parsed)
+		if err != nil {
+			return model.Info{}, err
+		}
+
+		info.Provider = model.ProviderSoundcloud
+		info.LinkType = kind
+		info.ItemID = id
+
+		return info, nil
+	}
+
 	return model.Info{}, errors.New("unsupported URL host")
 }
 
@@ -151,4 +164,25 @@ func parseVimeoURL(parsed *url.URL) (model.Type, string, error) {
 	}
 
 	return "", "", errors.New("unsupported link format")
+}
+
+func parseSoundcloudURL(parsed *url.URL) (model.Type, string, error) {
+	parts := strings.Split(parsed.EscapedPath(), "/")
+	if len(parts) <= 3 {
+		return "", "", errors.New("invald soundcloud link path")
+	}
+
+	var kind model.Type
+
+	// - https://soundcloud.com/user/sets/example-set
+	switch parts[2] {
+	case "sets":
+		kind = model.TypePlaylist
+	default:
+		return "", "", errors.New("invalid soundcloud url, missing sets")
+	}
+
+	id := parts[3]
+
+	return kind, id, nil
 }

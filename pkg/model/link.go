@@ -12,13 +12,14 @@ const (
 type Provider string
 
 const (
-	ProviderYoutube = Provider("youtube")
-	ProviderVimeo   = Provider("vimeo")
+	ProviderYoutube    = Provider("youtube")
+	ProviderVimeo      = Provider("vimeo")
+	ProviderSoundcloud = Provider("soundcloud")
 )
 
 // Info represents data extracted from URL
 type Info struct {
 	LinkType Type     // Either group, channel or user
-	Provider Provider // Youtube or Vimeo
+	Provider Provider // Youtube, Vimeo, or SoundCloud
 	ItemID   string
 }
