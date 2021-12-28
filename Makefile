@@ -17,7 +17,6 @@ build:
 TAG ?= localhost/podsync
 .PHONY: docker
 docker:
-	GOOS=linux GOARCH=amd64 go build -o podsync ./cmd/podsync
 	docker build -t $(TAG) .
 	docker push $(TAG)
 
