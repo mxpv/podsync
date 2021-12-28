@@ -330,11 +330,14 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 	return nil
 }
 
-// Cost: (3 units + 5 units) * X pages = 8 units per page
+// Cost:
+// ASC mode = (3 units + 5 units) * X pages = 8 units per page
+// DESC mode = 3 units * (number of pages in the entire playlist) + 5 units
 func (yt *YouTubeBuilder) queryItems(ctx context.Context, feed *model.Feed) error {
 	var (
-		token string
-		count int
+		token       string
+		count       int
+		allSnippets []*youtube.PlaylistItemSnippet
 	)
 
 	for {
@@ -346,25 +349,39 @@ func (yt *YouTubeBuilder) queryItems(ctx context.Context, feed *model.Feed) erro
 		token = pageToken
 
 		if len(items) == 0 {
-			return nil
+			break
 		}
 
 		// Extract playlist snippets
-		snippets := map[string]*youtube.PlaylistItemSnippet{}
 		for _, item := range items {
-			snippets[item.Snippet.ResourceId.VideoId] = item.Snippet
+			allSnippets = append(allSnippets, item.Snippet)
 			count++
 		}
 
-		// Query video descriptions from the list of ids
-		if err := yt.queryVideoDescriptions(ctx, snippets, feed); err != nil {
-			return err
-		}
-
-		if count >= feed.PageSize || token == "" {
-			return nil
+		if (feed.PlaylistSort != model.SortingDesc && count >= feed.PageSize) || token == "" {
+			break
 		}
 	}
+
+	if len(allSnippets) > feed.PageSize {
+		if feed.PlaylistSort != model.SortingDesc {
+			allSnippets = allSnippets[:feed.PageSize]
+		} else {
+			allSnippets = allSnippets[len(allSnippets)-feed.PageSize:]
+		}
+	}
+
+	snippets := map[string]*youtube.PlaylistItemSnippet{}
+	for _, snippet := range allSnippets {
+		snippets[snippet.ResourceId.VideoId] = snippet
+	}
+
+	// Query video descriptions from the list of ids
+	if err := yt.queryVideoDescriptions(ctx, snippets, feed); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *config.Feed) (*model.Feed, error) {
@@ -374,13 +391,14 @@ func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *config.Feed) (*model.F
 	}
 
 	feed := &model.Feed{
-		ItemID:    info.ItemID,
-		Provider:  info.Provider,
-		LinkType:  info.LinkType,
-		Format:    cfg.Format,
-		Quality:   cfg.Quality,
-		PageSize:  cfg.PageSize,
-		UpdatedAt: time.Now().UTC(),
+		ItemID:       info.ItemID,
+		Provider:     info.Provider,
+		LinkType:     info.LinkType,
+		Format:       cfg.Format,
+		Quality:      cfg.Quality,
+		PageSize:     cfg.PageSize,
+		PlaylistSort: cfg.PlaylistSort,
+		UpdatedAt:    time.Now().UTC(),
 	}
 
 	if feed.PageSize == 0 {

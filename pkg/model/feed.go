@@ -20,6 +20,14 @@ const (
 	FormatVideo = Format("video")
 )
 
+// Playlist sorting style
+type Sorting string
+
+const (
+	SortingDesc = Sorting("desc")
+	SortingAsc  = Sorting("asc")
+)
+
 type Episode struct {
 	// ID of episode
 	ID          string        `json:"id"`
@@ -54,6 +62,7 @@ type Feed struct {
 	ItemURL         string     `json:"item_url"` // Platform specific URL
 	Episodes        []*Episode `json:"-"`        // Array of episodes
 	UpdatedAt       time.Time  `json:"updated_at"`
+	PlaylistSort    Sorting    `json:"playlist_sort"`
 }
 
 type EpisodeStatus string

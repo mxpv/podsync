@@ -78,6 +78,7 @@ vimeo = [ # Multiple keys will be rotated.
   update_period = "12h" # How often query for updates, examples: "60m", "4h", "2h45m"
   quality = "high" # or "low"
   format = "video" # or "audio"
+  playlist_sort = "asc" # or "desc", which will fetch playlist items from the end
   # custom.cover_art_quality use "high" or "low" to special cover image quality from channel cover default is equal with "quality" and disable when custom.cover_art was set.
   # custom = { title = "Level1News", description = "News sections of Level1Techs, in a podcast feed!", author = "Level1Tech", cover_art = "{IMAGE_URL}", cover_art_quality = "high", category = "TV", subcategories = ["Documentary", "Tech News"], explicit = true, lang = "en" } # Optional feed customizations
   # max_height = 720 # Optional maximal height of video, example: 720, 1080, 1440, 2160, ...
