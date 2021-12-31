@@ -6,7 +6,7 @@ require (
 	github.com/eduncan911/podcast v1.4.2
 	github.com/gilliek/go-opml v1.0.0
 	github.com/golang/mock v1.4.3
-	github.com/hashicorp/go-multierror v1.0.0
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/naoina/go-stringutil v0.1.0 // indirect
@@ -15,7 +15,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/silentsokolov/go-vimeo v0.0.0-20190116124215-06829264260c
 	github.com/sirupsen/logrus v1.2.0
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.7.0
 	github.com/zackradisic/soundcloud-api v0.1.5
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	golang.org/x/oauth2 v0.0.0-20180620175406-ef147856a6dd
