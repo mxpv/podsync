@@ -17,7 +17,7 @@ jobs:
       # Required for the changelog to work correctly
       - run: git fetch --prune --unshallow
 
-      - uses: actions/setup-go@v1
+      - uses: actions/setup-go@v2.1.5
         with:
           go-version: 1.15
 
