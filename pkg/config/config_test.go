@@ -40,6 +40,7 @@ timeout = 15
   format = "audio"
   quality = "low"
   filters = { title = "regex for title here" }
+  playlist_sort = "desc"
   clean = { keep_last = 10 }
   	[feeds.XYZ.custom]
 	cover_art = "http://img"
@@ -80,6 +81,7 @@ timeout = 15
 	assert.EqualValues(t, "low", feed.Quality)
 	assert.EqualValues(t, "regex for title here", feed.Filters.Title)
 	assert.EqualValues(t, 10, feed.Clean.KeepLast)
+	assert.EqualValues(t, model.SortingDesc, feed.PlaylistSort)
 
 	assert.EqualValues(t, "http://img", feed.Custom.CoverArt)
 	assert.EqualValues(t, "high", feed.Custom.CoverArtQuality)

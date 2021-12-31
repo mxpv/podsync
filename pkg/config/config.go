@@ -45,6 +45,8 @@ type Feed struct {
 	YouTubeDLArgs []string `toml:"youtube_dl_args"`
 	// Included in OPML file
 	OPML bool `toml:"opml"`
+	// Playlist sort
+	PlaylistSort model.Sorting `toml:"playlist_sort"`
 }
 
 type Filters struct {
@@ -236,6 +238,10 @@ func (c *Config) applyDefaults(configPath string) {
 
 		if feed.PageSize == 0 {
 			feed.PageSize = model.DefaultPageSize
+		}
+
+		if feed.PlaylistSort == "" {
+			feed.PlaylistSort = model.SortingAsc
 		}
 	}
 }
