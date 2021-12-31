@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.4.0
 
       # Required for the changelog to work correctly
       - run: git fetch --prune --unshallow
