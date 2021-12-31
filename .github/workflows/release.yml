@@ -26,7 +26,7 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: docker login --username "$DOCKER_LOGIN" --password "$DOCKER_PASSWORD"
 
-      - uses: goreleaser/goreleaser-action@v1
+      - uses: goreleaser/goreleaser-action@v2.8.0
         with:
           version: latest
           args: release --rm-dist
