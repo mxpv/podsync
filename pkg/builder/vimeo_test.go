@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/mxpv/podsync/pkg/model"
@@ -26,11 +27,11 @@ func TestQueryVimeoChannel(t *testing.T) {
 	err = builder.queryChannel(podcast)
 	require.NoError(t, err)
 
-	require.Equal(t, "https://vimeo.com/channels/staffpicks", podcast.ItemURL)
-	require.Equal(t, "Vimeo Staff Picks", podcast.Title)
-	require.Equal(t, "Vimeo Curation", podcast.Author)
-	require.NotEmpty(t, podcast.Description)
-	require.NotEmpty(t, podcast.CoverArt)
+	assert.Equal(t, "https://vimeo.com/channels/staffpicks", podcast.ItemURL)
+	assert.Equal(t, "Vimeo Staff Picks", podcast.Title)
+	assert.Equal(t, "Vimeo Curation", podcast.Author)
+	assert.NotEmpty(t, podcast.Description)
+	assert.NotEmpty(t, podcast.CoverArt)
 }
 
 func TestQueryVimeoGroup(t *testing.T) {
@@ -45,11 +46,11 @@ func TestQueryVimeoGroup(t *testing.T) {
 	err = builder.queryGroup(podcast)
 	require.NoError(t, err)
 
-	require.Equal(t, "https://vimeo.com/groups/motion", podcast.ItemURL)
-	require.Equal(t, "Motion Graphic Artists", podcast.Title)
-	require.Equal(t, "Danny Garcia", podcast.Author)
-	require.NotEmpty(t, podcast.Description)
-	require.NotEmpty(t, podcast.CoverArt)
+	assert.Equal(t, "https://vimeo.com/groups/motion", podcast.ItemURL)
+	assert.Equal(t, "Motion Graphic Artists", podcast.Title)
+	assert.Equal(t, "Danny Garcia", podcast.Author)
+	assert.NotEmpty(t, podcast.Description)
+	assert.NotEmpty(t, podcast.CoverArt)
 }
 
 func TestQueryVimeoUser(t *testing.T) {
@@ -65,9 +66,9 @@ func TestQueryVimeoUser(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "https://vimeo.com/motionarray", podcast.ItemURL)
-	require.Equal(t, "Motion Array", podcast.Title)
-	require.Equal(t, "Motion Array", podcast.Author)
-	require.NotEmpty(t, podcast.Description)
+	assert.Equal(t, "Artlist Ltd", podcast.Title)
+	assert.Equal(t, "Artlist Ltd", podcast.Author)
+	assert.NotEmpty(t, podcast.Description)
 }
 
 func TestQueryVimeoVideos(t *testing.T) {
