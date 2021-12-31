@@ -1,13 +1,13 @@
 package builder
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/silentsokolov/go-vimeo/vimeo"
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 
 	"github.com/mxpv/podsync/pkg/config"
