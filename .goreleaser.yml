@@ -24,9 +24,8 @@ dockers:
     - 'mxpv/podsync:{{ .Tag }}'
     - 'mxpv/podsync:v{{ .Major }}.{{ .Minor }}'
     - 'mxpv/podsync:latest'
-    binaries:
-      - podsync
-    dockerfile: Dockerfile
+    - 'ghcr.io/mxpv/podsync:{{ .Tag }}'
+    - 'ghcr.io/mxpv/podsync:latest'
 
 archives:
   - replacements:
@@ -43,7 +42,7 @@ checksum:
   name_template: 'checksums.txt'
 
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  name_template: '{{ .Tag }}-next'
 
 changelog:
   sort: asc
