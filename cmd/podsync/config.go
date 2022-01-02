@@ -28,7 +28,7 @@ type Config struct {
 	// ID will be used as feed ID in http://podsync.net/{FEED_ID}.xml
 	Feeds map[string]*feed.Config
 	// Tokens is API keys to use to access YouTube/Vimeo APIs.
-	Tokens map[model.Provider][]string `toml:"tokens"`
+	Tokens map[model.Provider]StringSlice `toml:"tokens"`
 	// Downloader (youtube-dl) configuration
 	Downloader ytdl.Config `toml:"downloader"`
 }
@@ -148,4 +148,17 @@ func (c *Config) applyDefaults(configPath string) {
 			feed.PlaylistSort = model.SortingAsc
 		}
 	}
+}
+
+// StringSlice is a toml extension that lets you to specify either a string
+// value (a slice with just one element) or a string slice.
+type StringSlice []string
+
+func (s *StringSlice) UnmarshalTOML(v interface{}) error {
+	if str, ok := v.(string); ok {
+		*s = []string{str}
+		return nil
+	}
+
+	return errors.New("failed to decode string slice field")
 }

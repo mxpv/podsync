@@ -16,7 +16,7 @@ import (
 func TestLoadConfig(t *testing.T) {
 	const file = `
 [tokens]
-youtube = ["123"]
+youtube = "123"
 vimeo = ["321", "456"]
 
 [server]
