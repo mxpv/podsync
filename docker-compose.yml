@@ -9,4 +9,4 @@ services:
       - 80:80
     volumes:
       - ./data:/data/
-      - ./config.toml:/config.toml
+      - ./config.toml:/app/config.toml
