@@ -23,7 +23,6 @@ const (
 )
 
 // BadgerConfig represents BadgerDB configuration parameters
-// See https://github.com/dgraph-io/badger#memory-usage
 type BadgerConfig struct {
 	Truncate bool `toml:"truncate"`
 	FileIO   bool `toml:"file_io"`

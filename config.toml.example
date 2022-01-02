@@ -1,0 +1,101 @@
+# This is an example of TOML configuration file for Podsync.
+
+# Web server related configuration.
+[server]
+# HTTP server port.
+port = 8080
+# Optional. If you want to hide Podsync behind reverse proxy like nginx, you can use hostname field.
+# Server will be accessible from http://localhost:8080, but episode links will point to https://my.test.host:4443/ID1/XYZ
+hostname = "https://my.test.host:4443"
+# Bind a specific IP addresses for server ,"*": bind all IP addresses which is default option, localhost or 127.0.0.1  bind a single IPv4 address
+bind_address = "172.20.10.2"
+# Specify path for reverse proxy and only [A-Za-z0-9]
+path = "test"
+data_dir = "/app/data" # Don't change if you run podsync via docker
+
+# API keys to be used to access Youtube and Vimeo.
+# These can be either specified as string parameter or array of string (so those will be rotated).
+[tokens]
+youtube = "YOUTUBE_API_TOKEN" # YouTube API Key. See https://developers.google.com/youtube/registering_an_application
+vimeo = [ # Multiple keys will be rotated.
+  "VIMEO_API_KEY_1", # Vimeo developer keys. See https://developer.vimeo.com/api/guides/start#generate-access-token
+  "VIMEO_API_KEY_2"
+]
+
+# The list of data sources to be hosted by Podsync.
+# These are channels, users, playlists, etc.
+[feeds]
+  # Each channel must have a unique identifier (in this example "ID1").
+  [feeds.ID1]
+  # URL address of a channel, group, user, or playlist.
+  url = "https://www.youtube.com/channel/CHANNEL_NAME_TO_HOST"
+
+  # The number of episodes to query each update (keep in mind, that this might drain API token)
+  page_size = 50
+
+  # How often query for updates, examples: "60m", "4h", "2h45m"
+  update_period = "12h"
+
+  quality = "high" # or "low"
+  format = "video" # or "audio"
+  playlist_sort = "asc" # or "desc", which will fetch playlist items from the end
+
+  # Optional maximal height of video, example: 720, 1080, 1440, 2160, ...
+  max_height = 720
+
+  # Optinally include this feed in OPML file (default value: false)
+  opml = true
+
+  # Optional cron expression format for more precise update schedule.
+  # If set then overwrite 'update_period'.
+  cron_schedule = "@every 12h"
+
+  # Whether to cleanup old episodes.
+  # Keep last 10 episodes (order desc by PubDate)
+  clean = { keep_last = 10 }
+
+  # Optional Golang regexp format.
+  # If set, then only download matching episodes.
+  filters = { title = "regex for title here", not_title = "regex for negative title match", description = "...", not_description = "..." }
+
+  # Optional extra arguments passed to youtube-dl when downloading videos from this feed.
+  # This example would embed available English closed captions in the videos.
+  # Note that setting '--audio-format' for audio format feeds, or '--format' or '--output' for any format may cause
+  # unexpected behaviour. You should only use this if you know what you are doing, and have read up on youtube-dl's options!
+  youtube_dl_args = ["--write-sub", "--embed-subs", "--sub-lang", "en,en-US,en-GB"]
+
+  # Optional feed customizations
+  [feeds.ID1.custom]
+  title = "Level1News"
+  description = "News sections of Level1Techs, in a podcast feed!"
+  author = "Level1Tech"
+  cover_art = "{IMAGE_URL}"
+  cover_art_quality = "high"
+  category = "TV"
+  subcategories = ["Documentary", "Tech News"]
+  explicit = true
+  lang = "en"
+  author = "Mrs. Smith (mrs@smith.org)"
+  ownerName = "Mrs. Smith"
+  ownerEmail = "mrs@smith.org"
+
+# Podsync uses local database to store feeds and episodes metadata.
+# This section is optional and usually not needed to configure unless some very specific corner cases.
+# Refer to https://dgraph.io/docs/badger/get-started/#memory-usage for documentation.
+[database]
+  badger = { truncate = true, file_io = true }
+
+# Youtube-dl specific configuration.
+[downloader]
+# Optional, auto update youtube-dl every 24 hours
+self_update = true
+# Download timeout in minutes.
+timeout = 15
+
+# Optional log config. If not specified logs to the stdout
+[log]
+filename = "podsync.log"
+max_size = 50 # MB
+max_age = 30 # days
+max_backups = 7
+compress = true

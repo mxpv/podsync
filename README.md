@@ -50,65 +50,25 @@ In order to query YouTube or Vimeo API you have to obtain an API token first.
 - [How to get YouTube API key](https://elfsight.com/blog/2016/12/how-to-get-youtube-api-key-tutorial/)
 - [Generate an access token for Vimeo](https://developer.vimeo.com/api/guides/start#generate-access-token)
 
-## Configuration example
+## Configuration
 
 You need to create a configuration file (for instance `config.toml`) and specify the list of feeds that you're going to host.
-Here is an example how configuration might look like:
+See [config.toml.example](./config.toml.example) for all possible configuration keys available in Podsync.
+
+Minimal configuration would look like this:
 
 ```toml
 [server]
 port = 8080
-# Bind a specific IP addresses for server ,"*": bind all IP addresses which is default option, localhost or 127.0.0.1  bind a single IPv4 address
-bind_address = "172.20.10.2" 
-# Specify path for reverse proxy and only [A-Za-z0-9]
-path = "test"
-data_dir = "/app/data" # Don't change if you run podsync via docker
+data_dir = "/data/podsync/"
 
-# Tokens from `Access tokens` section
 [tokens]
-youtube = ["YOUTUBE_API_TOKEN"] # YouTube API Key. See https://developers.google.com/youtube/registering_an_application
-vimeo = [ # Multiple keys will be rotated.
-  "VIMEO_API_KEY_1", # Vimeo developer keys. See https://developer.vimeo.com/api/guides/start#generate-access-token
-  "VIMEO_API_KEY_2"
-]
+youtube = "PASTE YOUR API KEY HERE"
 
 [feeds]
-  [feeds.ID1]
-  url = "{FEED_URL}" # URL address of a channel, group, user, or playlist. 
-  page_size = 50 # The number of episodes to query each update (keep in mind, that this might drain API token)
-  update_period = "12h" # How often query for updates, examples: "60m", "4h", "2h45m"
-  quality = "high" # or "low"
-  format = "video" # or "audio"
-  playlist_sort = "asc" # or "desc", which will fetch playlist items from the end
-  # custom.cover_art_quality use "high" or "low" to special cover image quality from channel cover default is equal with "quality" and disable when custom.cover_art was set.
-  # custom = { title = "Level1News", description = "News sections of Level1Techs, in a podcast feed!", author = "Level1Tech", cover_art = "{IMAGE_URL}", cover_art_quality = "high", category = "TV", subcategories = ["Documentary", "Tech News"], explicit = true, lang = "en" } # Optional feed customizations
-  # max_height = 720 # Optional maximal height of video, example: 720, 1080, 1440, 2160, ...
-  # cron_schedule = "@every 12h" # Optional cron expression format. If set then overwrite 'update_period'. See details below
-  # filters = { title = "regex for title here", not_title = "regex for negative title match", description = "...", not_description = "..." } # Optional Golang regexp format. If set, then only download matching episodes.
-  # opml = true|false # Optional inclusion of the feed in the OPML file (default value: false)
-  # clean = { keep_last = 10 } # Keep last 10 episodes (order desc by PubDate)
-  # youtube_dl_args = [ "--write-sub", "--embed-subs", "--sub-lang", "en,en-US,en-GB" ] # Optional extra arguments passed to youtube-dl when downloading videos from this feed. This example would embed available English closed captions in the videos. Note that setting '--audio-format' for audio format feeds, or '--format' or '--output' for any format may cause unexpected behaviour. You should only use this if you know what you are doing, and have read up on youtube-dl's options!
-
-[database]
-  badger = { truncate = true, file_io = true } # See https://github.com/dgraph-io/badger#memory-usage
-
-[downloader]
-self_update = true # Optional, auto update youtube-dl every 24 hours
-timeout = 15 # Timeout in minutes
-
-# Optional log config. If not specified logs to the stdout
-[log]
-filename = "podsync.log"
-max_size = 50 # MB
-max_age = 30 # days
-max_backups = 7
-compress = true
-
+    [feeds.ID1]
+    url = "https://www.youtube.com/channel/UCxC5Ls6DwqV0e-CYcAKkExQ"
 ```
-
-Please note: Automatically clean-up will not work without a database configuration.
-
-Episodes files will be kept at: `/path/to/data/directory/ID1`, feed will be accessible from: `http://localhost/ID1.xml`
 
 If you want to hide Podsync behind reverse proxy like nginx, you can use `hostname` field:
 
