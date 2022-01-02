@@ -11,6 +11,7 @@ import (
 
 	"github.com/jessevdk/go-flags"
 	"github.com/mxpv/podsync/pkg/feed"
+	"github.com/mxpv/podsync/pkg/server"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -179,7 +180,7 @@ func main() {
 	})
 
 	// Run web server
-	srv := NewServer(cfg, storage)
+	srv := server.New(cfg.Server, storage)
 
 	group.Go(func() error {
 		log.Infof("running listener at %s", srv.Addr)

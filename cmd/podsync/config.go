@@ -13,23 +13,24 @@ import (
 	"github.com/mxpv/podsync/pkg/db"
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/mxpv/podsync/pkg/model"
+	"github.com/mxpv/podsync/pkg/server"
 	"github.com/mxpv/podsync/pkg/ytdl"
 )
 
-type ServerConfig struct {
-	// Hostname to use for download links
-	Hostname string `toml:"hostname"`
-	// Port is a server port to listen to
-	Port int `toml:"port"`
-	// Bind a specific IP addresses for server
-	// "*": bind all IP addresses which is default option
-	// localhost or 127.0.0.1  bind a single IPv4 address
-	BindAddress string `toml:"bind_address"`
-	// Specify path for reverse proxy and only [A-Za-z0-9]
-	Path string `toml:"path"`
-	// DataDir is a path to a directory to keep XML feeds and downloaded episodes,
-	// that will be available to user via web server for download.
-	DataDir string `toml:"data_dir"`
+type Config struct {
+	// Server is the web server configuration
+	Server server.Config `toml:"server"`
+	// Log is the optional logging configuration
+	Log Log `toml:"log"`
+	// Database configuration
+	Database db.Config `toml:"database"`
+	// Feeds is a list of feeds to host by this app.
+	// ID will be used as feed ID in http://podsync.net/{FEED_ID}.xml
+	Feeds map[string]*feed.Config
+	// Tokens is API keys to use to access YouTube/Vimeo APIs.
+	Tokens map[model.Provider][]string `toml:"tokens"`
+	// Downloader (youtube-dl) configuration
+	Downloader ytdl.Config `toml:"downloader"`
 }
 
 type Log struct {
@@ -43,22 +44,6 @@ type Log struct {
 	MaxAge int `toml:"max_age"`
 	// Compress old backups
 	Compress bool `toml:"compress"`
-}
-
-type Config struct {
-	// Server is the web server configuration
-	Server ServerConfig `toml:"server"`
-	// Log is the optional logging configuration
-	Log Log `toml:"log"`
-	// Database configuration
-	Database db.Config `toml:"database"`
-	// Feeds is a list of feeds to host by this app.
-	// ID will be used as feed ID in http://podsync.net/{FEED_ID}.xml
-	Feeds map[string]*feed.Config
-	// Tokens is API keys to use to access YouTube/Vimeo APIs.
-	Tokens map[model.Provider][]string `toml:"tokens"`
-	// Downloader (youtube-dl) configuration
-	Downloader ytdl.Config `toml:"downloader"`
 }
 
 // LoadConfig loads TOML configuration from a file path

@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/mxpv/podsync/pkg/model"
+	"github.com/mxpv/podsync/pkg/server"
 )
 
 func TestLoadConfig(t *testing.T) {
@@ -173,7 +174,7 @@ data_dir = "/data"
 
 func TestDefaultHostname(t *testing.T) {
 	cfg := Config{
-		Server: ServerConfig{},
+		Server: server.Config{},
 	}
 
 	t.Run("empty hostname", func(t *testing.T) {
