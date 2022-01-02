@@ -13,24 +13,26 @@ type Server struct {
 	http.Server
 }
 
-func NewServer(cfg *config.Config) *Server {
+func NewServer(cfg *config.Config, storage http.FileSystem) *Server {
 	port := cfg.Server.Port
 	if port == 0 {
 		port = 8080
 	}
+
 	bindAddress := cfg.Server.BindAddress
 	if bindAddress == "*" {
 		bindAddress = ""
 	}
+
 	srv := Server{}
 
 	srv.Addr = fmt.Sprintf("%s:%d", bindAddress, port)
 	log.Debugf("using address: %s:%s", bindAddress, srv.Addr)
 
-	fs := http.FileServer(http.Dir(cfg.Server.DataDir))
-	path := cfg.Server.Path
-	http.Handle(fmt.Sprintf("/%s", path), fs)
-	log.Debugf("handle path: /%s", path)
+	fileServer := http.FileServer(storage)
+
+	log.Debugf("handle path: /%s", cfg.Server.Path)
+	http.Handle(fmt.Sprintf("/%s", cfg.Server.Path), fileServer)
 
 	return &srv
 }

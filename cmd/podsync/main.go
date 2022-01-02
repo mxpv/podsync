@@ -13,13 +13,12 @@ import (
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/db"
 	"github.com/mxpv/podsync/pkg/fs"
 	"github.com/mxpv/podsync/pkg/ytdl"
-
-	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 type Opts struct {
@@ -107,7 +106,7 @@ func main() {
 		log.WithError(err).Fatal("failed to open database")
 	}
 
-	storage, err := fs.NewLocal(cfg.Server.DataDir, cfg.Server.Hostname)
+	storage, err := fs.NewLocal(cfg.Server.DataDir)
 	if err != nil {
 		log.WithError(err).Fatal("failed to open storage")
 	}
@@ -178,7 +177,7 @@ func main() {
 	})
 
 	// Run web server
-	srv := NewServer(cfg)
+	srv := NewServer(cfg, storage)
 
 	group.Go(func() error {
 		log.Infof("running listener at %s", srv.Addr)
