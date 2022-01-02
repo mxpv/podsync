@@ -8,5 +8,5 @@ services:
     ports:
       - 80:80
     volumes:
-      - ./data:/app/data/
-      - ./config.toml:/app/config.toml
+      - ./data:/data/
+      - ./config.toml:/config.toml
