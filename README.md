@@ -66,7 +66,7 @@ data_dir = "/app/data" # Don't change if you run podsync via docker
 
 # Tokens from `Access tokens` section
 [tokens]
-youtube = "YOUTUBE_API_TOKEN" # YouTube API Key. See https://developers.google.com/youtube/registering_an_application
+youtube = ["YOUTUBE_API_TOKEN"] # YouTube API Key. See https://developers.google.com/youtube/registering_an_application
 vimeo = [ # Multiple keys will be rotated.
   "VIMEO_API_KEY_1", # Vimeo developer keys. See https://developer.vimeo.com/api/guides/start#generate-access-token
   "VIMEO_API_KEY_2"

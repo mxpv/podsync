@@ -5,9 +5,10 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"regexp"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/naoina/toml"
+	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 
 	"github.com/mxpv/podsync/pkg/model"
@@ -25,7 +26,7 @@ type Feed struct {
 	// Format is "300ms", "1.5h" or "2h45m".
 	// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 	// NOTE: too often update check might drain your API token.
-	UpdatePeriod Duration `toml:"update_period"`
+	UpdatePeriod time.Duration `toml:"update_period"`
 	// Cron expression format is how often to check update
 	// NOTE: too often update check might drain your API token.
 	CronSchedule string `toml:"cron_schedule"`
@@ -137,7 +138,7 @@ type Config struct {
 	// ID will be used as feed ID in http://podsync.net/{FEED_ID}.xml
 	Feeds map[string]*Feed
 	// Tokens is API keys to use to access YouTube/Vimeo APIs.
-	Tokens map[model.Provider]StringSlice `toml:"tokens"`
+	Tokens map[model.Provider][]string `toml:"tokens"`
 	// Downloader (youtube-dl) configuration
 	Downloader Downloader `toml:"downloader"`
 }
@@ -220,8 +221,8 @@ func (c *Config) applyDefaults(configPath string) {
 	}
 
 	for _, feed := range c.Feeds {
-		if feed.UpdatePeriod.Duration == 0 {
-			feed.UpdatePeriod.Duration = model.DefaultUpdatePeriod
+		if feed.UpdatePeriod == 0 {
+			feed.UpdatePeriod = model.DefaultUpdatePeriod
 		}
 
 		if feed.Quality == "" {

@@ -15,11 +15,8 @@ import (
 func TestLoadConfig(t *testing.T) {
 	const file = `
 [tokens]
-youtube = "123"
-vimeo = [
-  "321",
-  "456"
-]
+youtube = ["123"]
+vimeo = ["321", "456"]
 
 [server]
 port = 80
@@ -76,7 +73,7 @@ timeout = 15
 	assert.True(t, ok)
 	assert.Equal(t, "https://youtube.com/watch?v=ygIUF678y40", feed.URL)
 	assert.EqualValues(t, 48, feed.PageSize)
-	assert.EqualValues(t, Duration{5 * time.Hour}, feed.UpdatePeriod)
+	assert.EqualValues(t, 5*time.Hour, feed.UpdatePeriod)
 	assert.EqualValues(t, "audio", feed.Format)
 	assert.EqualValues(t, "low", feed.Quality)
 	assert.EqualValues(t, "regex for title here", feed.Filters.Title)
@@ -142,7 +139,7 @@ data_dir = "/data"
 	feed, ok := config.Feeds["A"]
 	require.True(t, ok)
 
-	assert.EqualValues(t, feed.UpdatePeriod, Duration{model.DefaultUpdatePeriod})
+	assert.EqualValues(t, feed.UpdatePeriod, model.DefaultUpdatePeriod)
 	assert.EqualValues(t, feed.PageSize, 50)
 	assert.EqualValues(t, feed.Quality, "high")
 	assert.EqualValues(t, feed.Custom.CoverArtQuality, "high")
