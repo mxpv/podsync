@@ -25,9 +25,6 @@ func TestBuildOPML(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	urlMock := NewMockurlProvider(ctrl)
-	urlMock.EXPECT().URL(gomock.Any(), "", "1.xml").Return("https://url/1.xml", nil)
-
 	dbMock := NewMockfeedProvider(ctrl)
 	dbMock.EXPECT().GetFeed(gomock.Any(), "1").Return(&model.Feed{Title: "1", Description: "desc"}, nil)
 
@@ -37,7 +34,7 @@ func TestBuildOPML(t *testing.T) {
 		},
 	}
 
-	out, err := BuildOPML(context.Background(), &cfg, dbMock, urlMock)
+	out, err := BuildOPML(context.Background(), &cfg, dbMock, "https://url/")
 	assert.NoError(t, err)
 	assert.Equal(t, expected, out)
 }

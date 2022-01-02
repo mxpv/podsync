@@ -4,27 +4,31 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
+	itunes "github.com/eduncan911/podcast"
 	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/model"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBuildXML(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	urlMock := NewMockurlProvider(ctrl)
-
-	feed := model.Feed{}
+	feed := model.Feed{
+		Episodes: []*model.Episode{
+			{
+				ID:          "1",
+				Status:      model.EpisodeDownloaded,
+				Title:       "title",
+				Description: "description",
+			},
+		},
+	}
 
 	cfg := config.Feed{
+		ID:     "test",
 		Custom: config.Custom{Description: "description", Category: "Technology", Subcategories: []string{"Gadgets", "Podcasting"}},
 	}
 
-	out, err := Build(context.Background(), &feed, &cfg, urlMock)
+	out, err := Build(context.Background(), &feed, &cfg, "http://localhost/")
 	assert.NoError(t, err)
 
 	assert.EqualValues(t, "description", out.Description)
@@ -33,7 +37,13 @@ func TestBuildXML(t *testing.T) {
 	require.Len(t, out.ICategories, 1)
 	category := out.ICategories[0]
 	assert.EqualValues(t, "Technology", category.Text)
+
 	require.Len(t, category.ICategories, 2)
 	assert.EqualValues(t, "Gadgets", category.ICategories[0].Text)
 	assert.EqualValues(t, "Podcasting", category.ICategories[1].Text)
+
+	require.Len(t, out.Items, 1)
+	require.NotNil(t, out.Items[0].Enclosure)
+	assert.EqualValues(t, out.Items[0].Enclosure.URL, "http://localhost/test/1.mp4")
+	assert.EqualValues(t, out.Items[0].Enclosure.Type, itunes.MP4)
 }

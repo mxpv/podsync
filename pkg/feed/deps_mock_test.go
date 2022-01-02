@@ -6,35 +6,36 @@ package feed
 
 import (
 	context "context"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	model "github.com/mxpv/podsync/pkg/model"
-	reflect "reflect"
 )
 
-// MockfeedProvider is a mock of feedProvider interface
+// MockfeedProvider is a mock of feedProvider interface.
 type MockfeedProvider struct {
 	ctrl     *gomock.Controller
 	recorder *MockfeedProviderMockRecorder
 }
 
-// MockfeedProviderMockRecorder is the mock recorder for MockfeedProvider
+// MockfeedProviderMockRecorder is the mock recorder for MockfeedProvider.
 type MockfeedProviderMockRecorder struct {
 	mock *MockfeedProvider
 }
 
-// NewMockfeedProvider creates a new mock instance
+// NewMockfeedProvider creates a new mock instance.
 func NewMockfeedProvider(ctrl *gomock.Controller) *MockfeedProvider {
 	mock := &MockfeedProvider{ctrl: ctrl}
 	mock.recorder = &MockfeedProviderMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockfeedProvider) EXPECT() *MockfeedProviderMockRecorder {
 	return m.recorder
 }
 
-// GetFeed mocks base method
+// GetFeed mocks base method.
 func (m *MockfeedProvider) GetFeed(ctx context.Context, feedID string) (*model.Feed, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetFeed", ctx, feedID)
@@ -43,46 +44,8 @@ func (m *MockfeedProvider) GetFeed(ctx context.Context, feedID string) (*model.F
 	return ret0, ret1
 }
 
-// GetFeed indicates an expected call of GetFeed
+// GetFeed indicates an expected call of GetFeed.
 func (mr *MockfeedProviderMockRecorder) GetFeed(ctx, feedID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeed", reflect.TypeOf((*MockfeedProvider)(nil).GetFeed), ctx, feedID)
-}
-
-// MockurlProvider is a mock of urlProvider interface
-type MockurlProvider struct {
-	ctrl     *gomock.Controller
-	recorder *MockurlProviderMockRecorder
-}
-
-// MockurlProviderMockRecorder is the mock recorder for MockurlProvider
-type MockurlProviderMockRecorder struct {
-	mock *MockurlProvider
-}
-
-// NewMockurlProvider creates a new mock instance
-func NewMockurlProvider(ctrl *gomock.Controller) *MockurlProvider {
-	mock := &MockurlProvider{ctrl: ctrl}
-	mock.recorder = &MockurlProviderMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockurlProvider) EXPECT() *MockurlProviderMockRecorder {
-	return m.recorder
-}
-
-// URL mocks base method
-func (m *MockurlProvider) URL(ctx context.Context, ns, fileName string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "URL", ctx, ns, fileName)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// URL indicates an expected call of URL
-func (mr *MockurlProviderMockRecorder) URL(ctx, ns, fileName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "URL", reflect.TypeOf((*MockurlProvider)(nil).URL), ctx, ns, fileName)
 }
