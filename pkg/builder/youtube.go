@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/BrianHicks/finch/duration"
+	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/pkg/errors"
 	"google.golang.org/api/youtube/v3"
 
-	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/model"
 )
 
@@ -384,7 +384,7 @@ func (yt *YouTubeBuilder) queryItems(ctx context.Context, feed *model.Feed) erro
 	return nil
 }
 
-func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *config.Feed) (*model.Feed, error) {
+func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *feed.Config) (*model.Feed, error) {
 	info, err := ParseURL(cfg.URL)
 	if err != nil {
 		return nil, err

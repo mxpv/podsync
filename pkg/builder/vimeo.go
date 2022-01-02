@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/pkg/errors"
 	"github.com/silentsokolov/go-vimeo/vimeo"
 	"golang.org/x/oauth2"
 
-	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/model"
 )
 
@@ -158,7 +158,7 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, feed *model.Feed) er
 	}
 }
 
-func (v *VimeoBuilder) Build(ctx context.Context, cfg *config.Feed) (*model.Feed, error) {
+func (v *VimeoBuilder) Build(ctx context.Context, cfg *feed.Config) (*model.Feed, error) {
 	info, err := ParseURL(cfg.URL)
 	if err != nil {
 		return nil, err

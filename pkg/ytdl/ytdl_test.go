@@ -3,7 +3,7 @@ package ytdl
 import (
 	"testing"
 
-	"github.com/mxpv/podsync/pkg/config"
+	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/mxpv/podsync/pkg/model"
 
 	"github.com/stretchr/testify/assert"
@@ -105,7 +105,7 @@ func TestBuildArgs(t *testing.T) {
 
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			result := buildArgs(&config.Feed{
+			result := buildArgs(&feed.Config{
 				Format:        tst.format,
 				Quality:       tst.quality,
 				MaxHeight:     tst.maxHeight,

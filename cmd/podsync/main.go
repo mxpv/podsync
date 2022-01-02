@@ -10,12 +10,12 @@ import (
 	"time"
 
 	"github.com/jessevdk/go-flags"
+	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/db"
 	"github.com/mxpv/podsync/pkg/fs"
 	"github.com/mxpv/podsync/pkg/ytdl"
@@ -75,7 +75,7 @@ func main() {
 
 	// Load TOML file
 	log.Debugf("loading configuration %q", opts.ConfigPath)
-	cfg, err := config.LoadConfig(opts.ConfigPath)
+	cfg, err := LoadConfig(opts.ConfigPath)
 	if err != nil {
 		log.WithError(err).Fatal("failed to load configuration file")
 	}
@@ -121,7 +121,7 @@ func main() {
 	}
 
 	// Queue of feeds to update
-	updates := make(chan *config.Feed, 16)
+	updates := make(chan *feed.Config, 16)
 	defer close(updates)
 
 	// Create Cron

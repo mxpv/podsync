@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/model"
 )
 
@@ -23,13 +22,20 @@ const (
 	episodePath   = "episode/%s/%s" // FeedID + EpisodeID
 )
 
+// BadgerConfig represents BadgerDB configuration parameters
+// See https://github.com/dgraph-io/badger#memory-usage
+type BadgerConfig struct {
+	Truncate bool `toml:"truncate"`
+	FileIO   bool `toml:"file_io"`
+}
+
 type Badger struct {
 	db *badger.DB
 }
 
 var _ Storage = (*Badger)(nil)
 
-func NewBadger(config *config.Database) (*Badger, error) {
+func NewBadger(config *Config) (*Badger, error) {
 	var (
 		dir = config.Dir
 	)

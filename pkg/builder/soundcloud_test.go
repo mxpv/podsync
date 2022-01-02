@@ -3,10 +3,9 @@ package builder
 import (
 	"testing"
 
+	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/mxpv/podsync/pkg/config"
 )
 
 func TestSC_BUILDFEED(t *testing.T) {
@@ -20,7 +19,7 @@ func TestSC_BUILDFEED(t *testing.T) {
 
 	for _, addr := range urls {
 		t.Run(addr, func(t *testing.T) {
-			feed, err := builder.Build(testCtx, &config.Feed{URL: addr})
+			feed, err := builder.Build(testCtx, &feed.Config{URL: addr})
 			require.NoError(t, err)
 
 			assert.NotEmpty(t, feed.Title)

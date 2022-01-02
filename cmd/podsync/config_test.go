@@ -1,4 +1,4 @@
-package config
+package main
 
 import (
 	"io/ioutil"
@@ -173,7 +173,7 @@ data_dir = "/data"
 
 func TestDefaultHostname(t *testing.T) {
 	cfg := Config{
-		Server: Server{},
+		Server: ServerConfig{},
 	}
 
 	t.Run("empty hostname", func(t *testing.T) {

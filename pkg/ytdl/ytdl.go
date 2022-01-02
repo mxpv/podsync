@@ -13,10 +13,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/model"
 )
 
@@ -29,13 +29,21 @@ var (
 	ErrTooManyRequests = errors.New(http.StatusText(http.StatusTooManyRequests))
 )
 
+// Config is a youtube-dl related configuration
+type Config struct {
+	// SelfUpdate toggles self update every 24 hour
+	SelfUpdate bool `toml:"self_update"`
+	// Timeout in minutes for youtube-dl process to finish download
+	Timeout int `toml:"timeout"`
+}
+
 type YoutubeDl struct {
 	path       string
 	timeout    time.Duration
 	updateLock sync.Mutex // Don't call youtube-dl while self updating
 }
 
-func New(ctx context.Context, cfg config.Downloader) (*YoutubeDl, error) {
+func New(ctx context.Context, cfg Config) (*YoutubeDl, error) {
 	path, err := exec.LookPath("youtube-dl")
 	if err != nil {
 		return nil, errors.Wrap(err, "youtube-dl binary not found")
@@ -134,7 +142,7 @@ func (dl *YoutubeDl) Update(ctx context.Context) error {
 	return nil
 }
 
-func (dl *YoutubeDl) Download(ctx context.Context, feedConfig *config.Feed, episode *model.Episode) (r io.ReadCloser, err error) {
+func (dl *YoutubeDl) Download(ctx context.Context, feedConfig *feed.Config, episode *model.Episode) (r io.ReadCloser, err error) {
 	tmpDir, err := ioutil.TempDir("", "podsync-")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get temp dir for download")
@@ -198,7 +206,7 @@ func (dl *YoutubeDl) exec(ctx context.Context, args ...string) (string, error) {
 	return string(output), nil
 }
 
-func buildArgs(feedConfig *config.Feed, episode *model.Episode, outputFilePath string) []string {
+func buildArgs(feedConfig *feed.Config, episode *model.Episode, outputFilePath string) []string {
 	var args []string
 
 	if feedConfig.Format == model.FormatVideo {

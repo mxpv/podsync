@@ -5,15 +5,13 @@ import (
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
-
-	"github.com/mxpv/podsync/pkg/config"
 )
 
 type Server struct {
 	http.Server
 }
 
-func NewServer(cfg *config.Config, storage http.FileSystem) *Server {
+func NewServer(cfg *Config, storage http.FileSystem) *Server {
 	port := cfg.Server.Port
 	if port == 0 {
 		port = 8080

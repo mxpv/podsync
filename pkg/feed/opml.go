@@ -9,16 +9,15 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/model"
 )
 
-func BuildOPML(ctx context.Context, config *config.Config, db feedProvider, hostname string) (string, error) {
+func BuildOPML(ctx context.Context, feeds map[string]*Config, db feedProvider, hostname string) (string, error) {
 	doc := opml.OPML{Version: "1.0"}
 	doc.Head = opml.Head{Title: "Podsync feeds"}
 	doc.Body = opml.Body{}
 
-	for _, feed := range config.Feeds {
+	for _, feed := range feeds {
 		f, err := db.GetFeed(ctx, feed.ID)
 		if err == model.ErrNotFound {
 			// As we update OPML on per-feed basis, some feeds may not yet be populated in database.

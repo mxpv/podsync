@@ -15,7 +15,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/mxpv/podsync/pkg/builder"
-	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/db"
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/mxpv/podsync/pkg/fs"
@@ -24,18 +23,18 @@ import (
 )
 
 type Downloader interface {
-	Download(ctx context.Context, feedConfig *config.Feed, episode *model.Episode) (io.ReadCloser, error)
+	Download(ctx context.Context, feedConfig *feed.Config, episode *model.Episode) (io.ReadCloser, error)
 }
 
 type Updater struct {
-	config     *config.Config
+	config     *Config
 	downloader Downloader
 	db         db.Storage
 	fs         fs.Storage
 	keys       map[model.Provider]feed.KeyProvider
 }
 
-func NewUpdater(config *config.Config, downloader Downloader, db db.Storage, fs fs.Storage) (*Updater, error) {
+func NewUpdater(config *Config, downloader Downloader, db db.Storage, fs fs.Storage) (*Updater, error) {
 	keys := map[model.Provider]feed.KeyProvider{}
 
 	for name, list := range config.Tokens {
@@ -55,7 +54,7 @@ func NewUpdater(config *config.Config, downloader Downloader, db db.Storage, fs 
 	}, nil
 }
 
-func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
+func (u *Updater) Update(ctx context.Context, feedConfig *feed.Config) error {
 	log.WithFields(log.Fields{
 		"feed_id": feedConfig.ID,
 		"format":  feedConfig.Format,
@@ -90,7 +89,7 @@ func (u *Updater) Update(ctx context.Context, feedConfig *config.Feed) error {
 }
 
 // updateFeed pulls API for new episodes and saves them to database
-func (u *Updater) updateFeed(ctx context.Context, feedConfig *config.Feed) error {
+func (u *Updater) updateFeed(ctx context.Context, feedConfig *feed.Config) error {
 	info, err := builder.ParseURL(feedConfig.URL)
 	if err != nil {
 		return errors.Wrapf(err, "failed to parse URL: %s", feedConfig.URL)
@@ -162,7 +161,7 @@ func (u *Updater) matchRegexpFilter(pattern, str string, negative bool, logger l
 	return true
 }
 
-func (u *Updater) matchFilters(episode *model.Episode, filters *config.Filters) bool {
+func (u *Updater) matchFilters(episode *model.Episode, filters *feed.Filters) bool {
 	logger := log.WithFields(log.Fields{"episode_id": episode.ID})
 	if !u.matchRegexpFilter(filters.Title, episode.Title, false, logger.WithField("filter", "title")) {
 		return false
@@ -181,7 +180,7 @@ func (u *Updater) matchFilters(episode *model.Episode, filters *config.Filters) 
 	return true
 }
 
-func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed) error {
+func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *feed.Config) error {
 	var (
 		feedID       = feedConfig.ID
 		downloadList []*model.Episode
@@ -308,7 +307,7 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *config.Feed)
 	return nil
 }
 
-func (u *Updater) buildXML(ctx context.Context, feedConfig *config.Feed) error {
+func (u *Updater) buildXML(ctx context.Context, feedConfig *feed.Config) error {
 	f, err := u.db.GetFeed(ctx, feedConfig.ID)
 	if err != nil {
 		return err
@@ -336,7 +335,7 @@ func (u *Updater) buildXML(ctx context.Context, feedConfig *config.Feed) error {
 func (u *Updater) buildOPML(ctx context.Context) error {
 	// Build OPML with data received from builder
 	log.Debug("building podcast OPML")
-	opml, err := feed.BuildOPML(ctx, u.config, u.db, u.config.Server.Hostname)
+	opml, err := feed.BuildOPML(ctx, u.config.Feeds, u.db, u.config.Server.Hostname)
 	if err != nil {
 		return err
 	}
@@ -353,7 +352,7 @@ func (u *Updater) buildOPML(ctx context.Context) error {
 	return nil
 }
 
-func (u *Updater) cleanup(ctx context.Context, feedConfig *config.Feed) error {
+func (u *Updater) cleanup(ctx context.Context, feedConfig *feed.Config) error {
 	var (
 		feedID = feedConfig.ID
 		logger = log.WithField("feed_id", feedID)

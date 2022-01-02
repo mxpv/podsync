@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	itunes "github.com/eduncan911/podcast"
-	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,9 +22,9 @@ func TestBuildXML(t *testing.T) {
 		},
 	}
 
-	cfg := config.Feed{
+	cfg := Config{
 		ID:     "test",
-		Custom: config.Custom{Description: "description", Category: "Technology", Subcategories: []string{"Gadgets", "Podcasting"}},
+		Custom: Custom{Description: "description", Category: "Technology", Subcategories: []string{"Gadgets", "Podcasting"}},
 	}
 
 	out, err := Build(context.Background(), &feed, &cfg, "http://localhost/")

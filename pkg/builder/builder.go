@@ -3,14 +3,14 @@ package builder
 import (
 	"context"
 
+	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/pkg/errors"
 
-	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/model"
 )
 
 type Builder interface {
-	Build(ctx context.Context, cfg *config.Feed) (*model.Feed, error)
+	Build(ctx context.Context, cfg *feed.Config) (*model.Feed, error)
 }
 
 func New(ctx context.Context, provider model.Provider, key string) (Builder, error) {

@@ -11,7 +11,6 @@ import (
 	itunes "github.com/eduncan911/podcast"
 	"github.com/pkg/errors"
 
-	"github.com/mxpv/podsync/pkg/config"
 	"github.com/mxpv/podsync/pkg/model"
 )
 
@@ -31,7 +30,7 @@ func (p timeSlice) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
 
-func Build(_ctx context.Context, feed *model.Feed, cfg *config.Feed, hostname string) (*itunes.Podcast, error) {
+func Build(_ctx context.Context, feed *model.Feed, cfg *Config, hostname string) (*itunes.Podcast, error) {
 	const (
 		podsyncGenerator = "Podsync generator (support us at https://github.com/mxpv/podsync)"
 		defaultCategory  = "TV & Film"
@@ -152,7 +151,7 @@ func Build(_ctx context.Context, feed *model.Feed, cfg *config.Feed, hostname st
 	return &p, nil
 }
 
-func EpisodeName(feedConfig *config.Feed, episode *model.Episode) string {
+func EpisodeName(feedConfig *Config, episode *model.Episode) string {
 	ext := "mp4"
 	if feedConfig.Format == model.FormatAudio {
 		ext = "mp3"
