@@ -43,7 +43,14 @@ On Mac you can install those with `brew`:
 brew install youtube-dl ffmpeg
 ```
 
-## Access tokens
+## Documentation
+
+- [How to get Vimeo API token](./docs/how_to_get_vimeo_token.md)
+- [How to get YouTube API Key](./docs/how_to_get_youtube_api_key.md)
+- [Podsync on QNAP NAS Guide](./docs/how_to_setup_podsync_on_qnap_nas.md)
+- [Schedule updates with cron](./docs/cron.md)
+
+### Access tokens
 
 In order to query YouTube or Vimeo API you have to obtain an API token first.
 
@@ -83,45 +90,6 @@ hostname = "https://my.test.host:4443"
 ```
 
 Server will be accessible from `http://localhost:8080`, but episode links will point to `https://my.test.host:4443/ID1/...`
-
-
-### Schedule via cron expression
-
-You can use `cron_schedule` field to build more precise update checks schedule.
-A cron expression represents a set of times, using 5 space-separated fields.
-
-| Field name   | Mandatory? | Allowed values  | Allowed special characters |
-| ------------ | ---------- | --------------- | -------------------------- |
-| Minutes      | Yes        | 0-59            | * / , -                    |
-| Hours        | Yes        | 0-23            | * / , -                    |
-| Day of month | Yes        | 1-31            | * / , - ?                  |
-| Month        | Yes        | 1-12 or JAN-DEC | * / , -                    |
-| Day of week  | Yes        | 0-6 or SUN-SAT  | * / , - ?                  |
-
-Month and Day-of-week field values are case insensitive. `SUN`, `Sun`, and `sun` are equally accepted.
-The specific interpretation of the format is based on the Cron Wikipedia page: https://en.wikipedia.org/wiki/Cron
-
-#### Predefined schedules
-
-You may use one of several pre-defined schedules in place of a cron expression.
-
-| Entry                   | Description                                | Equivalent to |
-| ----------------------- | -------------------------------------------| ------------- |
-| `@monthly`              | Run once a month, midnight, first of month | `0 0 1 * *`   |
-| `@weekly`               | Run once a week, midnight between Sat/Sun  | `0 0 * * 0`   |
-| `@daily (or @midnight)` | Run once a day, midnight                   | `0 0 * * *`   |
-| `@hourly`               | Run once an hour, beginning of hour        | `0 * * * *`   |
-
-#### Intervals
-
-You may also schedule a job to execute at fixed intervals, starting at the time it's added
-or cron is run. This is supported by formatting the cron spec like this:
-
-    @every <duration>
-
-where "duration" is a string accepted by [time.ParseDuration](http://golang.org/pkg/time/#ParseDuration).
-
-For example, `@every 1h30m10s` would indicate a schedule that activates after 1 hour, 30 minutes, 10 seconds, and then every interval after that.
 
 ## One click deployment
 
