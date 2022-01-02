@@ -81,6 +81,8 @@ func main() {
 	}
 
 	if cfg.Log.Filename != "" {
+		log.Infof("Using log file: %s", cfg.Log.Filename)
+
 		log.SetOutput(&lumberjack.Logger{
 			Filename:   cfg.Log.Filename,
 			MaxSize:    cfg.Log.MaxSize,
