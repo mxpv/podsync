@@ -35,6 +35,8 @@ type Config struct {
 	SelfUpdate bool `toml:"self_update"`
 	// Timeout in minutes for youtube-dl process to finish download
 	Timeout int `toml:"timeout"`
+	// CustomBinary is a custom path to youtube-dl, this allows using various youtube-dl forks.
+	CustomBinary string `toml:"custom_binary"`
 }
 
 type YoutubeDl struct {
@@ -44,12 +46,25 @@ type YoutubeDl struct {
 }
 
 func New(ctx context.Context, cfg Config) (*YoutubeDl, error) {
-	path, err := exec.LookPath("youtube-dl")
-	if err != nil {
-		return nil, errors.Wrap(err, "youtube-dl binary not found")
-	}
+	var (
+		path string
+		err  error
+	)
 
-	log.Debugf("found youtube-dl binary at %q", path)
+	if cfg.CustomBinary != "" {
+		path = cfg.CustomBinary
+
+		// Don't update custom youtube-dl binaries.
+		log.Warnf("using custom youtube-dl binary, turning self updates off")
+		cfg.SelfUpdate = false
+	} else {
+		path, err = exec.LookPath("youtube-dl")
+		if err != nil {
+			return nil, errors.Wrap(err, "youtube-dl binary not found")
+		}
+
+		log.Debugf("found youtube-dl binary at %q", path)
+	}
 
 	timeout := DefaultDownloadTimeout
 	if cfg.Timeout > 0 {
