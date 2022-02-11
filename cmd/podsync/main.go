@@ -190,8 +190,12 @@ func main() {
 	group.Go(func() error {
 		// Shutdown web server
 		defer func() {
+			ctxShutDown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer func() {
+				cancel()
+			}()
 			log.Info("shutting down web server")
-			if err := srv.Shutdown(ctx); err != nil {
+			if err := srv.Shutdown(ctxShutDown); err != nil {
 				log.WithError(err).Error("server shutdown failed")
 			}
 		}()
