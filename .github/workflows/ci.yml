@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-go@v2.2.0
         with:
           go-version: 1.15
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - run: make build
       - uses: actions/upload-artifact@v2.3.1
         with:
@@ -37,7 +37,7 @@ jobs:
       - uses: actions/setup-go@v2.2.0
         with:
           go-version: 1.15
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - env:
           VIMEO_TEST_API_KEY: ${{ secrets.VIMEO_ACCESS_TOKEN }}
           YOUTUBE_TEST_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
@@ -50,7 +50,7 @@ jobs:
 
     steps:
       - uses: actions/setup-go@v2.2.0
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - uses: golangci/golangci-lint-action@v3
         with:
           version: v1.43.0
