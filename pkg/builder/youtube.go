@@ -391,14 +391,15 @@ func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *feed.Config) (*model.F
 	}
 
 	feed := &model.Feed{
-		ItemID:       info.ItemID,
-		Provider:     info.Provider,
-		LinkType:     info.LinkType,
-		Format:       cfg.Format,
-		Quality:      cfg.Quality,
-		PageSize:     cfg.PageSize,
-		PlaylistSort: cfg.PlaylistSort,
-		UpdatedAt:    time.Now().UTC(),
+		ItemID:          info.ItemID,
+		Provider:        info.Provider,
+		LinkType:        info.LinkType,
+		Format:          cfg.Format,
+		Quality:         cfg.Quality,
+		CoverArtQuality: cfg.Custom.CoverArtQuality,
+		PageSize:        cfg.PageSize,
+		PlaylistSort:    cfg.PlaylistSort,
+		UpdatedAt:       time.Now().UTC(),
 	}
 
 	if feed.PageSize == 0 {
