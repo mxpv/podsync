@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSC_BUILDFEED(t *testing.T) {
+func TestSoundCloud_BuildFeed(t *testing.T) {
 	builder, err := NewSoundcloudBuilder()
 	require.NoError(t, err)
 
