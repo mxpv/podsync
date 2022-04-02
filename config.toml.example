@@ -63,6 +63,9 @@ vimeo = [ # Multiple keys will be rotated.
   # Note that setting '--audio-format' for audio format feeds, or '--format' or '--output' for any format may cause
   # unexpected behaviour. You should only use this if you know what you are doing, and have read up on youtube-dl's options!
   youtube_dl_args = ["--write-sub", "--embed-subs", "--sub-lang", "en,en-US,en-GB"]
+  
+  # When set to true, podcasts indexers such as iTunes or Google Podcasts will not index this podcast
+  private_feed = true
 
   # Optional feed customizations
   [feeds.ID1.custom]

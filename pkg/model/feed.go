@@ -63,6 +63,7 @@ type Feed struct {
 	Episodes        []*Episode `json:"-"`        // Array of episodes
 	UpdatedAt       time.Time  `json:"updated_at"`
 	PlaylistSort    Sorting    `json:"playlist_sort"`
+	PrivateFeed     bool       `json:"private_feed"`
 }
 
 type EpisodeStatus string

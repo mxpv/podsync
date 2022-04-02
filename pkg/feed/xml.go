@@ -61,6 +61,10 @@ func Build(_ctx context.Context, feed *model.Feed, cfg *Config, hostname string)
 	p.IAuthor = author
 	p.AddSummary(description)
 
+	if (feed.PrivateFeed) {
+		p.IBlock = "yes"
+	}
+
 	if cfg.Custom.OwnerName != "" && cfg.Custom.OwnerEmail != "" {
 		p.IOwner = &itunes.Author{
 			Name:  cfg.Custom.OwnerName,

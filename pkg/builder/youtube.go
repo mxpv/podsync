@@ -399,6 +399,7 @@ func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *feed.Config) (*model.F
 		CoverArtQuality: cfg.Custom.CoverArtQuality,
 		PageSize:        cfg.PageSize,
 		PlaylistSort:    cfg.PlaylistSort,
+		PrivateFeed:     cfg.PrivateFeed,
 		UpdatedAt:       time.Now().UTC(),
 	}
 
