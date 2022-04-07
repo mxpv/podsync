@@ -38,10 +38,10 @@ type Config struct {
 	YouTubeDLArgs []string `toml:"youtube_dl_args"`
 	// Included in OPML file
 	OPML bool `toml:"opml"`
-	// Playlist sort
-	PlaylistSort model.Sorting `toml:"playlist_sort"`
 	// Private feed (not indexed by podcast aggregators)
 	PrivateFeed bool `toml:"private_feed"`
+	// Playlist sort
+	PlaylistSort model.Sorting `toml:"playlist_sort"`
 }
 
 type Filters struct {
