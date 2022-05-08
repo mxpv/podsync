@@ -66,8 +66,8 @@ func TestQueryVimeoUser(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "https://vimeo.com/motionarray", podcast.ItemURL)
-	assert.Equal(t, "Artlist Ltd", podcast.Title)
-	assert.Equal(t, "Artlist Ltd", podcast.Author)
+	assert.NotEmpty(t, podcast.Title)
+	assert.NotEmpty(t, podcast.Author)
 	assert.NotEmpty(t, podcast.Description)
 }
 
