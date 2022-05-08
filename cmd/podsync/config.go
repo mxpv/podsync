@@ -13,13 +13,13 @@ import (
 	"github.com/mxpv/podsync/pkg/db"
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/mxpv/podsync/pkg/model"
-	"github.com/mxpv/podsync/pkg/server"
 	"github.com/mxpv/podsync/pkg/ytdl"
+	"github.com/mxpv/podsync/services/web"
 )
 
 type Config struct {
 	// Server is the web server configuration
-	Server server.Config `toml:"server"`
+	Server web.Config `toml:"server"`
 	// Log is the optional logging configuration
 	Log Log `toml:"log"`
 	// Database configuration

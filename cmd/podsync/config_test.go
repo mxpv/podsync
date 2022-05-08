@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mxpv/podsync/services/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/mxpv/podsync/pkg/model"
-	"github.com/mxpv/podsync/pkg/server"
 )
 
 func TestLoadConfig(t *testing.T) {
@@ -174,7 +174,7 @@ data_dir = "/data"
 
 func TestDefaultHostname(t *testing.T) {
 	cfg := Config{
-		Server: server.Config{},
+		Server: web.Config{},
 	}
 
 	t.Run("empty hostname", func(t *testing.T) {
