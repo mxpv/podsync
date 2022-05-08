@@ -11,6 +11,8 @@ import (
 
 	"github.com/jessevdk/go-flags"
 	"github.com/mxpv/podsync/pkg/feed"
+	"github.com/mxpv/podsync/pkg/model"
+	"github.com/mxpv/podsync/services/update"
 	"github.com/mxpv/podsync/services/web"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
@@ -115,8 +117,18 @@ func main() {
 	}
 
 	// Run updater thread
-	log.Debug("creating updater")
-	updater, err := NewUpdater(cfg, downloader, database, storage)
+	log.Debug("creating key providers")
+	keys := map[model.Provider]feed.KeyProvider{}
+	for name, list := range cfg.Tokens {
+		provider, err := feed.NewKeyProvider(list)
+		if err != nil {
+			log.WithError(err).Fatalf("failed to create key provider for %q", name)
+		}
+		keys[name] = provider
+	}
+
+	log.Debug("creating update manager")
+	manager, err := update.NewUpdater(cfg.Feeds, keys, cfg.Server.Hostname, downloader, database, storage)
 	if err != nil {
 		log.WithError(err).Fatal("failed to create updater")
 	}
@@ -134,7 +146,7 @@ func main() {
 		for {
 			select {
 			case feed := <-updates:
-				if err := updater.Update(ctx, feed); err != nil {
+				if err := manager.Update(ctx, feed); err != nil {
 					log.WithError(err).Errorf("failed to update feed: %s", feed.URL)
 				} else {
 					log.Infof("next update of %s: %s", feed.ID, c.Entry(m[feed.ID]).Next)

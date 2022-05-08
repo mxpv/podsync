@@ -1,4 +1,4 @@
-package main
+package update
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"sort"
 	"time"
 
@@ -26,35 +25,36 @@ type Downloader interface {
 	Download(ctx context.Context, feedConfig *feed.Config, episode *model.Episode) (io.ReadCloser, error)
 }
 
-type Updater struct {
-	config     *Config
+type TokenList []string
+
+type Manager struct {
+	hostname   string
 	downloader Downloader
 	db         db.Storage
 	fs         fs.Storage
+	feeds      map[string]*feed.Config
 	keys       map[model.Provider]feed.KeyProvider
 }
 
-func NewUpdater(config *Config, downloader Downloader, db db.Storage, fs fs.Storage) (*Updater, error) {
-	keys := map[model.Provider]feed.KeyProvider{}
-
-	for name, list := range config.Tokens {
-		provider, err := feed.NewKeyProvider(list)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to create key provider for %q", name)
-		}
-		keys[name] = provider
-	}
-
-	return &Updater{
-		config:     config,
+func NewUpdater(
+	feeds map[string]*feed.Config,
+	keys map[model.Provider]feed.KeyProvider,
+	hostname string,
+	downloader Downloader,
+	db db.Storage,
+	fs fs.Storage,
+) (*Manager, error) {
+	return &Manager{
+		hostname:   hostname,
 		downloader: downloader,
 		db:         db,
 		fs:         fs,
+		feeds:      feeds,
 		keys:       keys,
 	}, nil
 }
 
-func (u *Updater) Update(ctx context.Context, feedConfig *feed.Config) error {
+func (u *Manager) Update(ctx context.Context, feedConfig *feed.Config) error {
 	log.WithFields(log.Fields{
 		"feed_id": feedConfig.ID,
 		"format":  feedConfig.Format,
@@ -89,7 +89,7 @@ func (u *Updater) Update(ctx context.Context, feedConfig *feed.Config) error {
 }
 
 // updateFeed pulls API for new episodes and saves them to database
-func (u *Updater) updateFeed(ctx context.Context, feedConfig *feed.Config) error {
+func (u *Manager) updateFeed(ctx context.Context, feedConfig *feed.Config) error {
 	info, err := builder.ParseURL(feedConfig.URL)
 	if err != nil {
 		return errors.Wrapf(err, "failed to parse URL: %s", feedConfig.URL)
@@ -146,41 +146,7 @@ func (u *Updater) updateFeed(ctx context.Context, feedConfig *feed.Config) error
 	return nil
 }
 
-func (u *Updater) matchRegexpFilter(pattern, str string, negative bool, logger log.FieldLogger) bool {
-	if pattern != "" {
-		matched, err := regexp.MatchString(pattern, str)
-		if err != nil {
-			logger.Warnf("pattern %q is not a valid")
-		} else {
-			if matched == negative {
-				logger.Infof("skipping due to mismatch")
-				return false
-			}
-		}
-	}
-	return true
-}
-
-func (u *Updater) matchFilters(episode *model.Episode, filters *feed.Filters) bool {
-	logger := log.WithFields(log.Fields{"episode_id": episode.ID})
-	if !u.matchRegexpFilter(filters.Title, episode.Title, false, logger.WithField("filter", "title")) {
-		return false
-	}
-	if !u.matchRegexpFilter(filters.NotTitle, episode.Title, true, logger.WithField("filter", "not_title")) {
-		return false
-	}
-
-	if !u.matchRegexpFilter(filters.Description, episode.Description, false, logger.WithField("filter", "description")) {
-		return false
-	}
-	if !u.matchRegexpFilter(filters.NotDescription, episode.Description, true, logger.WithField("filter", "not_description")) {
-		return false
-	}
-
-	return true
-}
-
-func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *feed.Config) error {
+func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config) error {
 	var (
 		feedID       = feedConfig.ID
 		downloadList []*model.Episode
@@ -196,7 +162,7 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *feed.Config)
 			return nil
 		}
 
-		if !u.matchFilters(episode, &feedConfig.Filters) {
+		if !matchFilters(episode, &feedConfig.Filters) {
 			return nil
 		}
 
@@ -307,7 +273,7 @@ func (u *Updater) downloadEpisodes(ctx context.Context, feedConfig *feed.Config)
 	return nil
 }
 
-func (u *Updater) buildXML(ctx context.Context, feedConfig *feed.Config) error {
+func (u *Manager) buildXML(ctx context.Context, feedConfig *feed.Config) error {
 	f, err := u.db.GetFeed(ctx, feedConfig.ID)
 	if err != nil {
 		return err
@@ -315,7 +281,7 @@ func (u *Updater) buildXML(ctx context.Context, feedConfig *feed.Config) error {
 
 	// Build iTunes XML feed with data received from builder
 	log.Debug("building iTunes podcast feed")
-	podcast, err := feed.Build(ctx, f, feedConfig, u.config.Server.Hostname)
+	podcast, err := feed.Build(ctx, f, feedConfig, u.hostname)
 	if err != nil {
 		return err
 	}
@@ -332,10 +298,10 @@ func (u *Updater) buildXML(ctx context.Context, feedConfig *feed.Config) error {
 	return nil
 }
 
-func (u *Updater) buildOPML(ctx context.Context) error {
+func (u *Manager) buildOPML(ctx context.Context) error {
 	// Build OPML with data received from builder
 	log.Debug("building podcast OPML")
-	opml, err := feed.BuildOPML(ctx, u.config.Feeds, u.db, u.config.Server.Hostname)
+	opml, err := feed.BuildOPML(ctx, u.feeds, u.db, u.hostname)
 	if err != nil {
 		return err
 	}
@@ -352,7 +318,7 @@ func (u *Updater) buildOPML(ctx context.Context) error {
 	return nil
 }
 
-func (u *Updater) cleanup(ctx context.Context, feedConfig *feed.Config) error {
+func (u *Manager) cleanup(ctx context.Context, feedConfig *feed.Config) error {
 	var (
 		feedID = feedConfig.ID
 		logger = log.WithField("feed_id", feedID)
