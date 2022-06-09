@@ -200,7 +200,7 @@ func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config)
 		)
 
 		// Check whether episode already exists
-		size, err := fs.Size(u.fs, fmt.Sprintf("%s/%s", feedID, episodeName))
+		size, err := u.fs.Size(ctx, fmt.Sprintf("%s/%s", feedID, episodeName))
 		if err == nil {
 			logger.Infof("episode %q already exists on disk", episode.ID)
 

@@ -16,20 +16,7 @@ type Storage interface {
 
 	// Delete deletes the file
 	Delete(ctx context.Context, name string) error
-}
 
-// Size returns storage object's size in bytes.
-func Size(storage http.FileSystem, name string) (int64, error) {
-	file, err := storage.Open(name)
-	if err != nil {
-		return 0, err
-	}
-	defer file.Close()
-
-	stat, err := file.Stat()
-	if err != nil {
-		return 0, err
-	}
-
-	return stat.Size(), nil
+	// Size returns a storage object's size in bytes
+	Size(ctx context.Context, name string) (int64, error)
 }

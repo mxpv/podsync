@@ -115,7 +115,12 @@ func main() {
 		}
 	}()
 
-	storage, err := fs.NewLocal(cfg.Server.DataDir)
+	var storage fs.Storage
+	if cfg.S3.Bucket != "" {
+		storage, err = fs.NewS3(cfg.S3.EndpointURL, cfg.S3.Region, cfg.S3.Bucket)
+	} else {
+		storage, err = fs.NewLocal(cfg.Server.DataDir)
+	}
 	if err != nil {
 		log.WithError(err).Fatal("failed to open storage")
 	}
@@ -212,6 +217,10 @@ func main() {
 			return ctx.Err()
 		}
 	})
+
+	if cfg.S3.Bucket != "" {
+		return // S3 content is hosted externally
+	}
 
 	// Run web server
 	srv := web.New(cfg.Server, storage)

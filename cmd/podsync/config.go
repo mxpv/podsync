@@ -20,6 +20,8 @@ import (
 type Config struct {
 	// Server is the web server configuration
 	Server web.Config `toml:"server"`
+	// S3 is the optional configuration for S3-compatible storage provider
+	S3 S3 `toml:"s3"`
 	// Log is the optional logging configuration
 	Log Log `toml:"log"`
 	// Database configuration
@@ -31,6 +33,15 @@ type Config struct {
 	Tokens map[model.Provider]StringSlice `toml:"tokens"`
 	// Downloader (youtube-dl) configuration
 	Downloader ytdl.Config `toml:"downloader"`
+}
+
+type S3 struct {
+	// S3 Bucket to store files
+	Bucket string `toml:"bucket"`
+	// Region of the S3 service
+	Region string `toml:"region"`
+	// EndpointURL is an HTTP endpoint of the S3 API
+	EndpointURL string `toml:"endpoint_url"`
 }
 
 type Log struct {
@@ -74,8 +85,8 @@ func LoadConfig(path string) (*Config, error) {
 func (c *Config) validate() error {
 	var result *multierror.Error
 
-	if c.Server.DataDir == "" {
-		result = multierror.Append(result, errors.New("data directory is required"))
+	if c.Server.DataDir == "" && c.S3.Bucket == "" {
+		result = multierror.Append(result, errors.New("data directory or S3 bucket is required"))
 	}
 
 	if c.Server.Path != "" {

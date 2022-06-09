@@ -65,3 +65,18 @@ func (l *Local) copyFile(source io.Reader, destinationPath string) (int64, error
 
 	return written, nil
 }
+
+func (l *Local) Size(_ctx context.Context, name string) (int64, error) {
+	file, err := l.Open(name)
+	if err != nil {
+		return 0, err
+	}
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil {
+		return 0, err
+	}
+
+	return stat.Size(), nil
+}
