@@ -26,6 +26,7 @@ import (
 
 type Opts struct {
 	ConfigPath string `long:"config" short:"c" default:"config.toml" env:"PODSYNC_CONFIG_PATH"`
+	UpdateOnce bool   `long:"update-once"`
 	Debug      bool   `long:"debug"`
 	NoBanner   bool   `long:"no-banner"`
 }
@@ -58,8 +59,6 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	group, ctx := errgroup.WithContext(ctx)
 
 	// Parse args
 	opts := Opts{}
@@ -110,6 +109,11 @@ func main() {
 	if err != nil {
 		log.WithError(err).Fatal("failed to open database")
 	}
+	defer func() {
+		if err := database.Close(); err != nil {
+			log.WithError(err).Error("failed to close database")
+		}
+	}()
 
 	storage, err := fs.NewLocal(cfg.Server.DataDir)
 	if err != nil {
@@ -132,6 +136,24 @@ func main() {
 	if err != nil {
 		log.WithError(err).Fatal("failed to create updater")
 	}
+
+	// In UpdateOnce mode, Update feeds once and quit
+	if opts.UpdateOnce {
+		for _, feed := range cfg.Feeds {
+			if err := manager.Update(ctx, feed); err != nil {
+				log.WithError(err).Errorf("failed to update feed: %s", feed.URL)
+			}
+		}
+		return
+	}
+
+	group, ctx := errgroup.WithContext(ctx)
+	defer func() {
+		if err := group.Wait(); err != nil && (err != context.Canceled && err != http.ErrServerClosed) {
+			log.WithError(err).Error("wait error")
+		}
+		log.Info("gracefully stopped")
+	}()
 
 	// Queue of feeds to update
 	updates := make(chan *feed.Config, 16)
@@ -222,14 +244,4 @@ func main() {
 			}
 		}
 	})
-
-	if err := group.Wait(); err != nil && (err != context.Canceled && err != http.ErrServerClosed) {
-		log.WithError(err).Error("wait error")
-	}
-
-	if err := database.Close(); err != nil {
-		log.WithError(err).Error("failed to close database")
-	}
-
-	log.Info("gracefully stopped")
 }
