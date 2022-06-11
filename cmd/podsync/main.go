@@ -26,7 +26,7 @@ import (
 
 type Opts struct {
 	ConfigPath string `long:"config" short:"c" default:"config.toml" env:"PODSYNC_CONFIG_PATH"`
-	UpdateOnce bool   `long:"update-once"`
+	Headless   bool   `long:"headless"`
 	Debug      bool   `long:"debug"`
 	NoBanner   bool   `long:"no-banner"`
 }
@@ -142,8 +142,8 @@ func main() {
 		log.WithError(err).Fatal("failed to create updater")
 	}
 
-	// In UpdateOnce mode, Update feeds once and quit
-	if opts.UpdateOnce {
+	// In Headless mode, do one round of feed updates and quit
+	if opts.Headless {
 		for _, feed := range cfg.Feeds {
 			if err := manager.Update(ctx, feed); err != nil {
 				log.WithError(err).Errorf("failed to update feed: %s", feed.URL)
