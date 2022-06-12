@@ -16,6 +16,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// S3Config is the configuration for a S3-compatible storage provider
+type S3Config struct {
+	// S3 Bucket to store files
+	Bucket string `toml:"bucket"`
+	// Region of the S3 service
+	Region string `toml:"region"`
+	// EndpointURL is an HTTP endpoint of the S3 API
+	EndpointURL string `toml:"endpoint_url"`
+}
+
 // S3 implements file storage for S3-compatible providers.
 type S3 struct {
 	api      s3iface.S3API
@@ -23,10 +33,10 @@ type S3 struct {
 	bucket   string
 }
 
-func NewS3(endpointURL, region, bucket string) (*S3, error) {
+func NewS3(c S3Config) (*S3, error) {
 	cfg := aws.NewConfig().
-		WithEndpoint(endpointURL).
-		WithRegion(region).
+		WithEndpoint(c.EndpointURL).
+		WithRegion(c.Region).
 		WithLogger(s3logger{}).
 		WithLogLevel(aws.LogDebug)
 	sess, err := session.NewSessionWithOptions(session.Options{Config: *cfg})
@@ -36,7 +46,7 @@ func NewS3(endpointURL, region, bucket string) (*S3, error) {
 	return &S3{
 		api:      s3.New(sess),
 		uploader: s3manager.NewUploader(sess),
-		bucket:   bucket,
+		bucket:   c.Bucket,
 	}, nil
 }
 

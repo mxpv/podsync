@@ -9,9 +9,11 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/mxpv/podsync/pkg/db"
 	"github.com/mxpv/podsync/pkg/feed"
+	"github.com/mxpv/podsync/pkg/fs"
 	"github.com/mxpv/podsync/pkg/model"
 	"github.com/mxpv/podsync/pkg/ytdl"
 	"github.com/mxpv/podsync/services/web"
@@ -21,7 +23,7 @@ type Config struct {
 	// Server is the web server configuration
 	Server web.Config `toml:"server"`
 	// S3 is the optional configuration for S3-compatible storage provider
-	S3 S3 `toml:"s3"`
+	Storage fs.Config `toml:"storage"`
 	// Log is the optional logging configuration
 	Log Log `toml:"log"`
 	// Database configuration
@@ -33,15 +35,6 @@ type Config struct {
 	Tokens map[model.Provider]StringSlice `toml:"tokens"`
 	// Downloader (youtube-dl) configuration
 	Downloader ytdl.Config `toml:"downloader"`
-}
-
-type S3 struct {
-	// S3 Bucket to store files
-	Bucket string `toml:"bucket"`
-	// Region of the S3 service
-	Region string `toml:"region"`
-	// EndpointURL is an HTTP endpoint of the S3 API
-	EndpointURL string `toml:"endpoint_url"`
 }
 
 type Log struct {
@@ -85,8 +78,17 @@ func LoadConfig(path string) (*Config, error) {
 func (c *Config) validate() error {
 	var result *multierror.Error
 
-	if c.Server.DataDir == "" && c.S3.Bucket == "" {
-		result = multierror.Append(result, errors.New("data directory or S3 bucket is required"))
+	if c.Server.DataDir != "" {
+		log.Warnf(`server.data_dir is deprecated, and will be removed in a future release. Use the following config instead:
+
+[storage]
+  [storage.local]
+  data_dir = "%s"
+
+`, c.Server.DataDir)
+		if c.Storage.Local.DataDir == "" {
+			c.Storage.Local.DataDir = c.Server.DataDir
+		}
 	}
 
 	if c.Server.Path != "" {
@@ -94,6 +96,19 @@ func (c *Config) validate() error {
 		if !pathReg.MatchString(c.Server.Path) {
 			result = multierror.Append(result, errors.Errorf("Server handle path must be match %s or empty", model.PathRegex))
 		}
+	}
+
+	switch c.Storage.Type {
+	case "local":
+		if c.Storage.Local.DataDir == "" {
+			result = multierror.Append(result, errors.New("data directory is required for local storage"))
+		}
+	case "s3":
+		if c.Storage.S3.EndpointURL == "" || c.Storage.S3.Region == "" || c.Storage.S3.Bucket == "" {
+			result = multierror.Append(result, errors.New("S3 storage requires endpoint_url, region and bucket to be set"))
+		}
+	default:
+		result = multierror.Append(result, errors.Errorf("unknown storage type: %s", c.Storage.Type))
 	}
 
 	if len(c.Feeds) == 0 {
@@ -116,6 +131,10 @@ func (c *Config) applyDefaults(configPath string) {
 		} else {
 			c.Server.Hostname = "http://localhost"
 		}
+	}
+
+	if c.Storage.Type == "" {
+		c.Storage.Type = "local"
 	}
 
 	if c.Log.Filename != "" {

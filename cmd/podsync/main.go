@@ -116,10 +116,13 @@ func main() {
 	}()
 
 	var storage fs.Storage
-	if cfg.S3.Bucket != "" {
-		storage, err = fs.NewS3(cfg.S3.EndpointURL, cfg.S3.Region, cfg.S3.Bucket)
-	} else {
-		storage, err = fs.NewLocal(cfg.Server.DataDir)
+	switch cfg.Storage.Type {
+	case "local":
+		storage, err = fs.NewLocal(cfg.Storage.Local.DataDir)
+	case "s3":
+		storage, err = fs.NewS3(cfg.Storage.S3)
+	default:
+		log.Fatalf("unknown storage type: %s", cfg.Storage.Type)
 	}
 	if err != nil {
 		log.WithError(err).Fatal("failed to open storage")
@@ -218,7 +221,7 @@ func main() {
 		}
 	})
 
-	if cfg.S3.Bucket != "" {
+	if cfg.Storage.Type == "s3" {
 		return // S3 content is hosted externally
 	}
 

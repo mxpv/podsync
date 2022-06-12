@@ -11,6 +11,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// LocalConfig is the storage configuration for local file system
+type LocalConfig struct {
+	DataDir string `yaml:"data_dir"`
+}
+
 // Local implements local file storage
 type Local struct {
 	rootDir string
