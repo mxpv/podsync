@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/BrianHicks/finch/duration"
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/pkg/errors"
@@ -264,67 +265,115 @@ func (yt *YouTubeBuilder) getSize(duration int64, feed *model.Feed) int64 {
 // See https://developers.google.com/youtube/v3/docs/videos/list#part
 func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist map[string]*youtube.PlaylistItemSnippet, feed *model.Feed) error {
 	// Make the list of video ids
+	// and count how many API calls will be required
 	ids := make([]string, 0, len(playlist))
+	count := 0
+	count_expected_api_calls := 1
 	for _, s := range playlist {
+		count++
 		ids = append(ids, s.ResourceId.VideoId)
+		// Increment the counter of expected API calls
+		if count == maxYoutubeResults {
+			count_expected_api_calls++
+			count = 0
+		}
 	}
 
-	req, err := yt.client.Videos.List("id,snippet,contentDetails").Id(strings.Join(ids, ",")).Context(ctx).Do(yt.key)
-	if err != nil {
-		return errors.Wrap(err, "failed to query video descriptions")
-	}
+	log.Debugf("Expected to make %d API calls to get the descriptions for %d episode(s).", count_expected_api_calls, len(ids))
 
-	for _, video := range req.Items {
-		var (
-			snippet  = video.Snippet
-			videoID  = video.Id
-			videoURL = fmt.Sprintf("https://youtube.com/watch?v=%s", video.Id)
-			image    = yt.selectThumbnail(snippet.Thumbnails, feed.Quality, videoID)
-		)
+	// Init a list that will contains the aggregated strings of videos IDs (capped at 50 IDs per API Calls)
+	ids_list := make([]string, 0, count_expected_api_calls )
 
-		// Parse date added to playlist / publication date
-		dateStr := ""
-		playlistItem, ok := playlist[video.Id]
-		if ok {
-			dateStr = playlistItem.PublishedAt
-		} else {
-			dateStr = snippet.PublishedAt
+	// Init some vars for the logic of breaking the IDs down into groups of 50
+	total_count_id := 0
+	count_id := 0
+	temp_ids_list := make([]string, 0)
+
+	for _, id := range ids {
+		total_count_id++
+		count_id++
+
+		// If we have not yet reached the limit of the YouTube API,
+		// append this video ID to the temporary list
+		if count_id <= maxYoutubeResults {
+			temp_ids_list = append(temp_ids_list, id)
 		}
 
-		pubDate, err := yt.parseDate(dateStr)
+		// If we have reached the limit of YouTube API,
+		// convert the temporary ID list into a string and
+		// save it into the final ID list
+		if count_id == maxYoutubeResults {
+			count_id = 0
+			ids_list = append(ids_list, strings.Join(temp_ids_list, ","))
+			// Reset the value of the temporary ID list
+			temp_ids_list = nil
+		} else if total_count_id == len(playlist) {
+			// Convert the temporary ID list into a string and append it to the final ID list
+			ids_list = append(ids_list, strings.Join(temp_ids_list, ","))
+			// Reset the value of the temporary ID list
+			temp_ids_list = nil
+		}
+	}
+
+	// Loop in each list of 50 (or less) IDs and query the description
+	for list_number := 0; list_number < len(ids_list); list_number++ {
+		req, err := yt.client.Videos.List("id,snippet,contentDetails").Id(ids_list[list_number]).Context(ctx).Do(yt.key)
 		if err != nil {
-			return errors.Wrapf(err, "failed to parse video publish date: %s", dateStr)
+			return errors.Wrap(err, "failed to query video descriptions")
 		}
 
-		// Sometimes YouTube retrun empty content defailt, use arbitrary one
-		var seconds int64 = 1
-		if video.ContentDetails != nil {
-			// Parse duration
-			d, err := duration.FromString(video.ContentDetails.Duration)
-			if err != nil {
-				return errors.Wrapf(err, "failed to parse duration %s", video.ContentDetails.Duration)
+		for _, video := range req.Items {
+			var (
+				snippet  = video.Snippet
+				videoID  = video.Id
+				videoURL = fmt.Sprintf("https://youtube.com/watch?v=%s", video.Id)
+				image    = yt.selectThumbnail(snippet.Thumbnails, feed.Quality, videoID)
+			)
+
+			// Parse date added to playlist / publication date
+			dateStr := ""
+			playlistItem, ok := playlist[video.Id]
+			if ok {
+				dateStr = playlistItem.PublishedAt
+			} else {
+				dateStr = snippet.PublishedAt
 			}
 
-			seconds = int64(d.ToDuration().Seconds())
+			pubDate, err := yt.parseDate(dateStr)
+			if err != nil {
+				return errors.Wrapf(err, "failed to parse video publish date: %s", dateStr)
+			}
+
+			// Sometimes YouTube retrun empty content defailt, use arbitrary one
+			var seconds int64 = 1
+			if video.ContentDetails != nil {
+				// Parse duration
+				d, err := duration.FromString(video.ContentDetails.Duration)
+				if err != nil {
+					return errors.Wrapf(err, "failed to parse duration %s", video.ContentDetails.Duration)
+				}
+
+				seconds = int64(d.ToDuration().Seconds())
+			}
+
+			var (
+				order = strconv.FormatInt(playlistItem.Position, 10)
+				size  = yt.getSize(seconds, feed)
+			)
+
+			feed.Episodes = append(feed.Episodes, &model.Episode{
+				ID:          video.Id,
+				Title:       snippet.Title,
+				Description: snippet.Description,
+				Thumbnail:   image,
+				Duration:    seconds,
+				Size:        size,
+				VideoURL:    videoURL,
+				PubDate:     pubDate,
+				Order:       order,
+				Status:      model.EpisodeNew,
+			})
 		}
-
-		var (
-			order = strconv.FormatInt(playlistItem.Position, 10)
-			size  = yt.getSize(seconds, feed)
-		)
-
-		feed.Episodes = append(feed.Episodes, &model.Episode{
-			ID:          video.Id,
-			Title:       snippet.Title,
-			Description: snippet.Description,
-			Thumbnail:   image,
-			Duration:    seconds,
-			Size:        size,
-			VideoURL:    videoURL,
-			PubDate:     pubDate,
-			Order:       order,
-			Status:      model.EpisodeNew,
-		})
 	}
 
 	return nil
