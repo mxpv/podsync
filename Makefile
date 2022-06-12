@@ -19,6 +19,10 @@ docker:
 	docker build -t $(TAG) .
 	docker push $(TAG)
 
+# Also build the Docker image with yt-dlp
+	docker build -t $(TAG)-ytdlp -f Dockerfile-ytdlp .
+	docker push $(TAG)-ytdlp
+
 #
 # Run unit tests
 #
