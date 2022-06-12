@@ -138,7 +138,7 @@ func main() {
 	defer close(updates)
 
 	// Create Cron
-	c := cron.New(cron.WithChain(cron.SkipIfStillRunning(nil)))
+	c := cron.New(cron.WithChain(cron.SkipIfStillRunning(cron.DiscardLogger)))
 	m := make(map[string]cron.EntryID)
 
 	// Run updates listener
