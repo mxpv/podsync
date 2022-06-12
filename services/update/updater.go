@@ -162,7 +162,7 @@ func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config)
 		)
 		if episode.Status != model.EpisodeNew && episode.Status != model.EpisodeError {
 			// File already downloaded
-			logger.Infof("skipping due to file already on disk")
+			logger.Infof("skipping due to already downloaded")
 			return nil
 		}
 
