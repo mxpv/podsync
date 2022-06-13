@@ -11,7 +11,21 @@ hostname = "https://my.test.host:4443"
 bind_address = "172.20.10.2"
 # Specify path for reverse proxy and only [A-Za-z0-9]
 path = "test"
-data_dir = "/app/data" # Don't change if you run podsync via docker
+
+# Configure where to store the episode data
+[storage]
+  # Could be "local" (default) for the local file system, or "s3" for a S3-compatible storage provider (e.g. AWS S3)
+  type = "local"
+
+  [storage.local]
+  data_dir = "/app/data" # Don't change if you run podsync via docker
+
+  # To configure for a S3 provider, set key and secret in environment variables `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, respectively;
+  # then fillout the API endpoint, region, and bucket below.
+  [storage.s3]
+  endpoint = "https://s3.us-west-2.amazonaws.com"
+  region = "us-west-2"
+  bucket = "example-bucket-name"
 
 # API keys to be used to access Youtube and Vimeo.
 # These can be either specified as string parameter or array of string (so those will be rotated).

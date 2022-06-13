@@ -26,6 +26,7 @@ import (
 
 type Opts struct {
 	ConfigPath string `long:"config" short:"c" default:"config.toml" env:"PODSYNC_CONFIG_PATH"`
+	Headless   bool   `long:"headless"`
 	Debug      bool   `long:"debug"`
 	NoBanner   bool   `long:"no-banner"`
 }
@@ -58,8 +59,6 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	group, ctx := errgroup.WithContext(ctx)
 
 	// Parse args
 	opts := Opts{}
@@ -110,8 +109,21 @@ func main() {
 	if err != nil {
 		log.WithError(err).Fatal("failed to open database")
 	}
+	defer func() {
+		if err := database.Close(); err != nil {
+			log.WithError(err).Error("failed to close database")
+		}
+	}()
 
-	storage, err := fs.NewLocal(cfg.Server.DataDir)
+	var storage fs.Storage
+	switch cfg.Storage.Type {
+	case "local":
+		storage, err = fs.NewLocal(cfg.Storage.Local.DataDir)
+	case "s3":
+		storage, err = fs.NewS3(cfg.Storage.S3)
+	default:
+		log.Fatalf("unknown storage type: %s", cfg.Storage.Type)
+	}
 	if err != nil {
 		log.WithError(err).Fatal("failed to open storage")
 	}
@@ -132,6 +144,24 @@ func main() {
 	if err != nil {
 		log.WithError(err).Fatal("failed to create updater")
 	}
+
+	// In Headless mode, do one round of feed updates and quit
+	if opts.Headless {
+		for _, feed := range cfg.Feeds {
+			if err := manager.Update(ctx, feed); err != nil {
+				log.WithError(err).Errorf("failed to update feed: %s", feed.URL)
+			}
+		}
+		return
+	}
+
+	group, ctx := errgroup.WithContext(ctx)
+	defer func() {
+		if err := group.Wait(); err != nil && (err != context.Canceled && err != http.ErrServerClosed) {
+			log.WithError(err).Error("wait error")
+		}
+		log.Info("gracefully stopped")
+	}()
 
 	// Queue of feeds to update
 	updates := make(chan *feed.Config, 16)
@@ -191,6 +221,10 @@ func main() {
 		}
 	})
 
+	if cfg.Storage.Type == "s3" {
+		return // S3 content is hosted externally
+	}
+
 	// Run web server
 	srv := web.New(cfg.Server, storage)
 
@@ -222,14 +256,4 @@ func main() {
 			}
 		}
 	})
-
-	if err := group.Wait(); err != nil && (err != context.Canceled && err != http.ErrServerClosed) {
-		log.WithError(err).Error("wait error")
-	}
-
-	if err := database.Close(); err != nil {
-		log.WithError(err).Error("failed to close database")
-	}
-
-	log.Info("gracefully stopped")
 }
