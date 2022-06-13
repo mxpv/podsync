@@ -169,8 +169,11 @@ Resources:
           tee /home/ec2-user/podsync/config.toml <<EOF
           [server]
           port = ${PodsyncPort}
-          data_dir = "/home/ec2-user/podsync/data"
           hostname = "http://$publichost:${PodsyncPort}"
+          
+          [storage]
+            [storage.local]
+            data_dir = "/home/ec2-user/podsync/data"
 
           [tokens]
           youtube = "${YouTubeApiKey}"
