@@ -279,38 +279,17 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 	// Init a list that will contains the aggregated strings of videos IDs (capped at 50 IDs per API Calls)
 	ids_list := make([]string, 0, count_expected_api_calls )
 
-	// Init some vars for the logic of breaking the IDs down into groups of 50
-	total_count_id := 0
-	count_id := 0
-	temp_ids_list := make([]string, 0)
-
-	for _, id := range ids {
-		total_count_id++
-		count_id++
-
-		// If we have not yet reached the limit of the YouTube API,
-		// append this video ID to the temporary list
-		if count_id <= maxYoutubeResults {
-			temp_ids_list = append(temp_ids_list, id)
+	// Chunk the list of IDs by slices limited to maxYoutubeResults
+	for i := 0; i < len(ids); i += maxYoutubeResults {
+		end := i + maxYoutubeResults
+		if end > len(ids) {
+			end = len(ids)
 		}
-
-		// If we have reached the limit of YouTube API,
-		// convert the temporary ID list into a string and
-		// save it into the final ID list
-		if count_id == maxYoutubeResults {
-			count_id = 0
-			ids_list = append(ids_list, strings.Join(temp_ids_list, ","))
-			// Reset the value of the temporary ID list
-			temp_ids_list = nil
-		} else if total_count_id == len(playlist) {
-			// Convert the temporary ID list into a string and append it to the final ID list
-			ids_list = append(ids_list, strings.Join(temp_ids_list, ","))
-			// Reset the value of the temporary ID list
-			temp_ids_list = nil
-		}
+		// Save each slice as comma-delimited string
+		ids_list = append(ids_list, strings.Join(ids[i:end], ","))
 	}
 
-	// Loop in each list of 50 (or less) IDs and query the description
+	// Loop in each slices of 50 (or less) IDs and query their description
 	for _, idsI := range ids_list {
 		req, err := yt.client.Videos.List("id,snippet,contentDetails").Id(idsI).Context(ctx).Do(yt.key)
 		if err != nil {
