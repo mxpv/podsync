@@ -3,6 +3,7 @@ package builder
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"sort"
 	"strconv"
@@ -265,19 +266,13 @@ func (yt *YouTubeBuilder) getSize(duration int64, feed *model.Feed) int64 {
 // See https://developers.google.com/youtube/v3/docs/videos/list#part
 func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist map[string]*youtube.PlaylistItemSnippet, feed *model.Feed) error {
 	// Make the list of video ids
-	// and count how many API calls will be required
 	ids := make([]string, 0, len(playlist))
-	count := 0
-	count_expected_api_calls := 1
 	for _, s := range playlist {
-		count++
 		ids = append(ids, s.ResourceId.VideoId)
-		// Increment the counter of expected API calls
-		if count == maxYoutubeResults {
-			count_expected_api_calls++
-			count = 0
-		}
 	}
+
+	// Count how many API calls will be required
+	count_expected_api_calls := int(math.Ceil(float64(len(playlist)) / maxYoutubeResults))
 
 	log.Debugf("Expected to make %d API calls to get the descriptions for %d episode(s).", count_expected_api_calls, len(ids))
 
@@ -316,8 +311,8 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 	}
 
 	// Loop in each list of 50 (or less) IDs and query the description
-	for list_number := 0; list_number < len(ids_list); list_number++ {
-		req, err := yt.client.Videos.List("id,snippet,contentDetails").Id(ids_list[list_number]).Context(ctx).Do(yt.key)
+	for _, idsI := range ids_list {
+		req, err := yt.client.Videos.List("id,snippet,contentDetails").Id(idsI).Context(ctx).Do(yt.key)
 		if err != nil {
 			return errors.Wrap(err, "failed to query video descriptions")
 		}
