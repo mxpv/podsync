@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/BrianHicks/finch/duration"
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/api/youtube/v3"
 
 	"github.com/mxpv/podsync/pkg/model"
@@ -272,12 +272,12 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 	}
 
 	// Count how many API calls will be required
-	count_expected_api_calls := int(math.Ceil(float64(len(playlist)) / maxYoutubeResults))
+	countExpectedAPICalls := int(math.Ceil(float64(len(playlist)) / maxYoutubeResults))
 
-	log.Debugf("Expected to make %d API calls to get the descriptions for %d episode(s).", count_expected_api_calls, len(ids))
+	log.Debugf("Expected to make %d API calls to get the descriptions for %d episode(s).", countExpectedAPICalls, len(ids))
 
 	// Init a list that will contains the aggregated strings of videos IDs (capped at 50 IDs per API Calls)
-	ids_list := make([]string, 0, count_expected_api_calls )
+	ids_list := make([]string, 0, 1)
 
 	// Chunk the list of IDs by slices limited to maxYoutubeResults
 	for i := 0; i < len(ids); i += maxYoutubeResults {
