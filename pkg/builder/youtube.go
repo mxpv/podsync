@@ -12,6 +12,7 @@ import (
 	"github.com/BrianHicks/finch/duration"
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/api/youtube/v3"
 
 	"github.com/mxpv/podsync/pkg/model"
@@ -269,62 +270,81 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 		ids = append(ids, s.ResourceId.VideoId)
 	}
 
-	req, err := yt.client.Videos.List("id,snippet,contentDetails").Id(strings.Join(ids, ",")).Context(ctx).Do(yt.key)
-	if err != nil {
-		return errors.Wrap(err, "failed to query video descriptions")
+	// Init a list that will contains the aggregated strings of videos IDs (capped at 50 IDs per API Calls)
+	idsList := make([]string, 0, 1)
+
+	// Chunk the list of IDs by slices limited to maxYoutubeResults
+	for i := 0; i < len(ids); i += maxYoutubeResults {
+		end := i + maxYoutubeResults
+		if end > len(ids) {
+			end = len(ids)
+		}
+		// Save each slice as comma-delimited string
+		idsList = append(idsList, strings.Join(ids[i:end], ","))
 	}
 
-	for _, video := range req.Items {
-		var (
-			snippet  = video.Snippet
-			videoID  = video.Id
-			videoURL = fmt.Sprintf("https://youtube.com/watch?v=%s", video.Id)
-			image    = yt.selectThumbnail(snippet.Thumbnails, feed.Quality, videoID)
-		)
+	// Show how many API calls will be required
+	log.Debugf("Expected to make %d API calls to get the descriptions for %d episode(s).", len(idsList), len(ids))
 
-		// Parse date added to playlist / publication date
-		dateStr := ""
-		playlistItem, ok := playlist[video.Id]
-		if ok {
-			dateStr = playlistItem.PublishedAt
-		} else {
-			dateStr = snippet.PublishedAt
-		}
-
-		pubDate, err := yt.parseDate(dateStr)
+	// Loop in each slices of 50 (or less) IDs and query their description
+	for _, idsI := range idsList {
+		req, err := yt.client.Videos.List("id,snippet,contentDetails").Id(idsI).Context(ctx).Do(yt.key)
 		if err != nil {
-			return errors.Wrapf(err, "failed to parse video publish date: %s", dateStr)
+			return errors.Wrap(err, "failed to query video descriptions")
 		}
 
-		// Sometimes YouTube retrun empty content defailt, use arbitrary one
-		var seconds int64 = 1
-		if video.ContentDetails != nil {
-			// Parse duration
-			d, err := duration.FromString(video.ContentDetails.Duration)
-			if err != nil {
-				return errors.Wrapf(err, "failed to parse duration %s", video.ContentDetails.Duration)
+		for _, video := range req.Items {
+			var (
+				snippet  = video.Snippet
+				videoID  = video.Id
+				videoURL = fmt.Sprintf("https://youtube.com/watch?v=%s", video.Id)
+				image    = yt.selectThumbnail(snippet.Thumbnails, feed.Quality, videoID)
+			)
+
+			// Parse date added to playlist / publication date
+			dateStr := ""
+			playlistItem, ok := playlist[video.Id]
+			if ok {
+				dateStr = playlistItem.PublishedAt
+			} else {
+				dateStr = snippet.PublishedAt
 			}
 
-			seconds = int64(d.ToDuration().Seconds())
+			pubDate, err := yt.parseDate(dateStr)
+			if err != nil {
+				return errors.Wrapf(err, "failed to parse video publish date: %s", dateStr)
+			}
+
+			// Sometimes YouTube retrun empty content defailt, use arbitrary one
+			var seconds int64 = 1
+			if video.ContentDetails != nil {
+				// Parse duration
+				d, err := duration.FromString(video.ContentDetails.Duration)
+				if err != nil {
+					return errors.Wrapf(err, "failed to parse duration %s", video.ContentDetails.Duration)
+				}
+
+				seconds = int64(d.ToDuration().Seconds())
+			}
+
+			var (
+				order = strconv.FormatInt(playlistItem.Position, 10)
+				size  = yt.getSize(seconds, feed)
+			)
+
+			feed.Episodes = append(feed.Episodes, &model.Episode{
+				ID:          video.Id,
+				Title:       snippet.Title,
+				Description: snippet.Description,
+				Thumbnail:   image,
+				Duration:    seconds,
+				Size:        size,
+				VideoURL:    videoURL,
+				PubDate:     pubDate,
+				Order:       order,
+				Status:      model.EpisodeNew,
+			})
 		}
-
-		var (
-			order = strconv.FormatInt(playlistItem.Position, 10)
-			size  = yt.getSize(seconds, feed)
-		)
-
-		feed.Episodes = append(feed.Episodes, &model.Episode{
-			ID:          video.Id,
-			Title:       snippet.Title,
-			Description: snippet.Description,
-			Thumbnail:   image,
-			Duration:    seconds,
-			Size:        size,
-			VideoURL:    videoURL,
-			PubDate:     pubDate,
-			Order:       order,
-			Status:      model.EpisodeNew,
-		})
 	}
 
 	return nil

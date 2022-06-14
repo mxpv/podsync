@@ -157,8 +157,12 @@ func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config)
 
 	// Build the list of files to download
 	if err := u.db.WalkEpisodes(ctx, feedID, func(episode *model.Episode) error {
+		var (
+			logger = log.WithFields(log.Fields{"episode_id": episode.ID})
+		)
 		if episode.Status != model.EpisodeNew && episode.Status != model.EpisodeError {
 			// File already downloaded
+			logger.Infof("skipping due to already downloaded")
 			return nil
 		}
 
