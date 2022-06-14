@@ -157,8 +157,12 @@ func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config)
 
 	// Build the list of files to download
 	if err := u.db.WalkEpisodes(ctx, feedID, func(episode *model.Episode) error {
+		var (
+			logger = log.WithFields(log.Fields{"episode_id": episode.ID})
+		)
 		if episode.Status != model.EpisodeNew && episode.Status != model.EpisodeError {
 			// File already downloaded
+			logger.Infof("skipping due to already downloaded")
 			return nil
 		}
 
@@ -200,7 +204,7 @@ func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config)
 		)
 
 		// Check whether episode already exists
-		size, err := fs.Size(u.fs, fmt.Sprintf("%s/%s", feedID, episodeName))
+		size, err := u.fs.Size(ctx, fmt.Sprintf("%s/%s", feedID, episodeName))
 		if err == nil {
 			logger.Infof("episode %q already exists on disk", episode.ID)
 

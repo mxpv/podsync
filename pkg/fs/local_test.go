@@ -52,7 +52,7 @@ func TestLocal_Size(t *testing.T) {
 	_, err = stor.Create(testCtx, "1/test", bytes.NewBuffer([]byte{1, 5, 7, 8, 3}))
 	assert.NoError(t, err)
 
-	sz, err := Size(stor, "1/test")
+	sz, err := stor.Size(testCtx, "1/test")
 	assert.NoError(t, err)
 	assert.EqualValues(t, 5, sz)
 }
@@ -61,7 +61,7 @@ func TestLocal_NoSize(t *testing.T) {
 	stor, err := NewLocal("")
 	assert.NoError(t, err)
 
-	_, err = Size(stor, "1/test")
+	_, err = stor.Size(testCtx, "1/test")
 	assert.True(t, os.IsNotExist(err))
 }
 
@@ -80,7 +80,7 @@ func TestLocal_Delete(t *testing.T) {
 	err = stor.Delete(testCtx, "1/test")
 	assert.NoError(t, err)
 
-	_, err = Size(stor, "1/test")
+	_, err = stor.Size(testCtx, "1/test")
 	assert.True(t, os.IsNotExist(err))
 
 	_, err = os.Stat(filepath.Join(tmpDir, "1", "test"))

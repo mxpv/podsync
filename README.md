@@ -67,7 +67,10 @@ Minimal configuration would look like this:
 ```toml
 [server]
 port = 8080
-data_dir = "/data/podsync/"
+
+[storage]
+  [storage.local]
+  data_dir = "/data/podsync/"
 
 [tokens]
 youtube = "PASTE YOUR API KEY HERE"
