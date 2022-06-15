@@ -13,7 +13,7 @@ import (
 
 // LocalConfig is the storage configuration for local file system
 type LocalConfig struct {
-	DataDir string `yaml:"data_dir"`
+	DataDir string `toml:"data_dir"`
 }
 
 // Local implements local file storage
