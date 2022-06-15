@@ -155,6 +155,10 @@ func main() {
 		return
 	}
 
+	// Queue of feeds to update
+	updates := make(chan *feed.Config, 16)
+	defer close(updates)
+
 	group, ctx := errgroup.WithContext(ctx)
 	defer func() {
 		if err := group.Wait(); err != nil && (err != context.Canceled && err != http.ErrServerClosed) {
@@ -162,10 +166,6 @@ func main() {
 		}
 		log.Info("gracefully stopped")
 	}()
-
-	// Queue of feeds to update
-	updates := make(chan *feed.Config, 16)
-	defer close(updates)
 
 	// Create Cron
 	c := cron.New(cron.WithChain(cron.SkipIfStillRunning(cron.DiscardLogger)))
