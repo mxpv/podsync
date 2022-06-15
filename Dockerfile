@@ -4,9 +4,10 @@
 FROM alpine:3.10
 WORKDIR /app
 
-RUN wget -O /usr/bin/youtube-dl https://github.com/ytdl-org/youtube-dl/releases/latest/download/youtube-dl && \
-    chmod +x /usr/bin/youtube-dl && \
-    apk --no-cache add ca-certificates python ffmpeg tzdata
+RUN wget -O /usr/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp && \
+    chmod +x /usr/bin/yt-dlp && \
+    ln -s /usr/bin/yt-dlp /usr/bin/youtube-dl && \
+    apk --no-cache add ca-certificates python3 py3-pip ffmpeg tzdata
 COPY podsync /app/podsync
 
 
