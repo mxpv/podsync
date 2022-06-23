@@ -41,6 +41,7 @@ func Build(_ctx context.Context, feed *model.Feed, cfg *Config, hostname string)
 		author      = feed.Title
 		title       = feed.Title
 		description = feed.Description
+		feedLink    = feed.ItemURL
 	)
 
 	if cfg.Custom.Author != "" {
@@ -55,7 +56,11 @@ func Build(_ctx context.Context, feed *model.Feed, cfg *Config, hostname string)
 		description = cfg.Custom.Description
 	}
 
-	p := itunes.New(title, feed.ItemURL, description, &feed.PubDate, &now)
+	if cfg.Custom.Link != "" {
+		feedLink = cfg.Custom.Link
+	}
+
+	p := itunes.New(title, feedLink, description, &feed.PubDate, &now)
 	p.Generator = podsyncGenerator
 	p.AddSubTitle(title)
 	p.IAuthor = author

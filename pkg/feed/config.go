@@ -64,6 +64,7 @@ type Custom struct {
 	Description     string        `toml:"description"`
 	OwnerName       string        `toml:"ownerName"`
 	OwnerEmail      string        `toml:"ownerEmail"`
+	Link            string        `toml:"link"`
 }
 
 type Cleanup struct {
