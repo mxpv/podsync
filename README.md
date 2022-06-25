@@ -100,10 +100,22 @@ Server will be accessible from `http://localhost:8080`, but episode links will p
 
 ## How to run
 
-### Run as binary:
+
+### Build and run as binary:
+
+Make sure you have created the file `config.toml`. Also note the location of the `data_dir`. Depending on the operating system, you may have to choose a different location since `/app/data` might be not writable. 
+
 ```
-$ ./podsync --config config.toml
+$ git clone https://github.com/mxpv/podsync
+$ cd podsync
+$ make
+$ ./bin/podsync --config config.toml
 ```
+
+### How to debug
+
+Use the editor [Visual Studio Code](https://code.visualstudio.com/) and install the official [Go](https://marketplace.visualstudio.com/items?itemName=golang.go) extension. Afterwards you can execute "Run & Debug" ▶︎ "Debug Podsync" to debug the application. The required configuration is already prepared (see `.vscode/launch.json`).
+
 
 ### Run via Docker:
 ```

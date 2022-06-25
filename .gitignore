@@ -31,3 +31,6 @@ venv/
 
 .DS_Store
 /podsync
+
+db
+config.toml
