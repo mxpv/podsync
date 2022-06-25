@@ -95,6 +95,8 @@ vimeo = [ # Multiple keys will be rotated.
   author = "Mrs. Smith (mrs@smith.org)"
   ownerName = "Mrs. Smith"
   ownerEmail = "mrs@smith.org"
+  # optional: this will override the default link (usually the URL address) in the generated RSS feed with another link
+  link = "https://example.org"
 
 # Podsync uses local database to store feeds and episodes metadata.
 # This section is optional and usually not needed to configure unless some very specific corner cases.
