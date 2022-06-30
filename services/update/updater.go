@@ -261,8 +261,12 @@ func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config)
 
 		// Update file status in database
 
+		duration := episode.Duration
 		logger.Infof("successfully downloaded file %q", episode.ID)
 		if err := u.db.UpdateEpisode(feedID, episode.ID, func(episode *model.Episode) error {
+			if episode.Duration != duration {
+				episode.Duration = duration
+			}
 			episode.Size = fileSize
 			episode.Status = model.EpisodeDownloaded
 			return nil

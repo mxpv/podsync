@@ -1,6 +1,8 @@
 package builder
 
 import (
+	"crypto/sha1"
+	"encoding/base32"
 	"net/url"
 	"strings"
 
@@ -56,7 +58,15 @@ func ParseURL(link string) (model.Info, error) {
 		return info, nil
 	}
 
-	return model.Info{}, errors.New("unsupported URL host")
+	kind, id, err := parseOtherUrl(parsed)
+	if err != nil {
+		return model.Info{}, err
+	}
+
+	info.Provider = model.ProviderRss
+	info.LinkType = kind
+	info.ItemID = id
+	return info, nil
 }
 
 func parseURL(link string) (*url.URL, error) {
@@ -185,4 +195,11 @@ func parseSoundcloudURL(parsed *url.URL) (model.Type, string, error) {
 	id := parts[3]
 
 	return kind, id, nil
+}
+
+func parseOtherUrl(parsed *url.URL) (model.Type, string, error) {
+	hasher := sha1.New()
+	hasher.Write([]byte(parsed.String()))
+	sha := base32.StdEncoding.EncodeToString(hasher.Sum(nil))
+	return model.TypePlaylist, sha, nil
 }

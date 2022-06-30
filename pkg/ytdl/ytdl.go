@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/vansante/go-ffprobe.v2"
 
 	"github.com/mxpv/podsync/pkg/model"
 )
@@ -205,6 +207,14 @@ func (dl *YoutubeDl) Download(ctx context.Context, feedConfig *feed.Config, epis
 		return nil, errors.Wrap(err, "failed to open downloaded file")
 	}
 
+	if episode.Duration == 0 {
+		duration, err := dl.getDuration(ctx, filePath)
+		if err == nil && duration > 0 {
+			episode.Duration = duration
+			log.Debugf("detect duration for %s", episode.Title)
+		}
+	}
+
 	return &tempFile{File: f, dir: tmpDir}, nil
 }
 
@@ -251,4 +261,29 @@ func buildArgs(feedConfig *feed.Config, episode *model.Episode, outputFilePath s
 
 	args = append(args, "--output", outputFilePath, episode.VideoURL)
 	return args
+}
+
+func (dl *YoutubeDl) getDuration(ctx context.Context, filePath string) (duration int64, err error) {
+	c, cancel := context.WithTimeout(context.Background(), dl.timeout)
+	defer cancel()
+	data, err := ffprobe.ProbeURL(c, filePath)
+	if err != nil {
+		return
+	}
+	if data.Format != nil && data.Format.DurationSeconds > 0 {
+		duration = int64(data.Format.DurationSeconds)
+		return
+	}
+	if len(data.Streams) == 0 {
+		return 0, errors.New(fmt.Sprintf("ffprobe: no streams found for %s", filePath))
+	}
+	for _, stream := range data.Streams {
+		if stream.DurationTs > uint64(duration) {
+			d, e := strconv.ParseFloat(stream.Duration, 64)
+			if e == nil {
+				duration = int64(d)
+			}
+		}
+	}
+	return
 }
