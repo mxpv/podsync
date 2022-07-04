@@ -42,6 +42,9 @@ type Config struct {
 	PrivateFeed bool `toml:"private_feed"`
 	// Playlist sort
 	PlaylistSort model.Sorting `toml:"playlist_sort"`
+
+	NeedCookies     bool `toml:"need_cookies"`
+	CookiesNoPlayer bool `toml:"cookies_no_player"`
 }
 
 type Filters struct {

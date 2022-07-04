@@ -9,13 +9,16 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/mxpv/podsync/pkg/browser"
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/vansante/go-ffprobe.v2"
 
 	"github.com/mxpv/podsync/pkg/model"
 )
@@ -37,12 +40,14 @@ type Config struct {
 	Timeout int `toml:"timeout"`
 	// CustomBinary is a custom path to youtube-dl, this allows using various youtube-dl forks.
 	CustomBinary string `toml:"custom_binary"`
+	Rod          string `rod:"rod"`
 }
 
 type YoutubeDl struct {
 	path       string
 	timeout    time.Duration
 	updateLock sync.Mutex // Don't call youtube-dl while self updating
+	browser    *browser.Browser
 }
 
 func New(ctx context.Context, cfg Config) (*YoutubeDl, error) {
@@ -105,6 +110,15 @@ func New(ctx context.Context, cfg Config) (*YoutubeDl, error) {
 				}
 			}
 		}()
+	}
+
+	if cfg.Rod != "" {
+		b, err := browser.NewBrowser(cfg.Rod, timeout)
+		if err != nil {
+			log.Errorf("connect to rod error %v", cfg.Rod)
+			return nil, err
+		}
+		ytdl.browser = b
 	}
 
 	return ytdl, nil
@@ -180,6 +194,18 @@ func (dl *YoutubeDl) Download(ctx context.Context, feedConfig *feed.Config, epis
 	dl.updateLock.Lock()
 	defer dl.updateLock.Unlock()
 
+	if feedConfig.NeedCookies {
+		if dl.browser == nil {
+			log.Error("Rod is not configured, cannot get cookies")
+			return nil, errors.New("Rod is not configured, cannot get cookies")
+		}
+		cookiesPath, err := dl.browser.SaveCookies(episode.VideoURL, feedConfig.CookiesNoPlayer)
+		if err != nil {
+			return nil, err
+		}
+		args = append(args[:len(args)-1], "--cookies", cookiesPath, args[len(args)-1])
+	}
+
 	output, err := dl.exec(ctx, args...)
 	if err != nil {
 		log.WithError(err).Errorf("youtube-dl error: %s", filePath)
@@ -203,6 +229,14 @@ func (dl *YoutubeDl) Download(ctx context.Context, feedConfig *feed.Config, epis
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to open downloaded file")
+	}
+
+	if episode.Duration == 0 {
+		duration, err := dl.getDuration(ctx, filePath)
+		if err == nil && duration > 0 {
+			episode.Duration = duration
+			log.Debugf("detect duration for %s", episode.Title)
+		}
 	}
 
 	return &tempFile{File: f, dir: tmpDir}, nil
@@ -251,4 +285,35 @@ func buildArgs(feedConfig *feed.Config, episode *model.Episode, outputFilePath s
 
 	args = append(args, "--output", outputFilePath, episode.VideoURL)
 	return args
+}
+
+func (dl *YoutubeDl) getDuration(ctx context.Context, filePath string) (duration int64, err error) {
+	c, cancel := context.WithTimeout(context.Background(), dl.timeout)
+	defer cancel()
+	data, err := ffprobe.ProbeURL(c, filePath)
+	if err != nil {
+		return
+	}
+	if data.Format != nil && data.Format.DurationSeconds > 0 {
+		duration = int64(data.Format.DurationSeconds)
+		return
+	}
+	if len(data.Streams) == 0 {
+		return 0, errors.New(fmt.Sprintf("ffprobe: no streams found for %s", filePath))
+	}
+	for _, stream := range data.Streams {
+		if stream.DurationTs > uint64(duration) {
+			d, e := strconv.ParseFloat(stream.Duration, 64)
+			if e == nil {
+				duration = int64(d)
+			}
+		}
+	}
+	return
+}
+
+func (dl *YoutubeDl) Close() {
+	if dl.browser != nil {
+		dl.browser.Close()
+	}
 }

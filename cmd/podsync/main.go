@@ -104,6 +104,7 @@ func main() {
 	if err != nil {
 		log.WithError(err).Fatal("youtube-dl error")
 	}
+	defer downloader.Close()
 
 	database, err := db.NewBadger(&cfg.Database)
 	if err != nil {
