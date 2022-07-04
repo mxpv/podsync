@@ -7,6 +7,8 @@ require (
 	github.com/dgraph-io/badger v1.6.2
 	github.com/eduncan911/podcast v1.4.2
 	github.com/gilliek/go-opml v1.0.0
+	github.com/go-rod/rod v0.107.3
+	github.com/go-rod/stealth v0.4.6
 	github.com/golang/mock v1.6.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jessevdk/go-flags v1.5.0
@@ -17,6 +19,7 @@ require (
 	github.com/silentsokolov/go-vimeo v0.0.0-20190116124215-06829264260c
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.5
+	github.com/vanym/golang-netscape-cookiejar v1.0.0
 	github.com/zackradisic/soundcloud-api v0.1.5
 	golang.org/x/oauth2 v0.0.0-20180620175406-ef147856a6dd
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c

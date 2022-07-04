@@ -81,6 +81,9 @@ vimeo = [ # Multiple keys will be rotated.
   # When set to true, podcasts indexers such as iTunes or Google Podcasts will not index this podcast
   private_feed = true
 
+  # When set to true, a headless chrome will be fired up to get the cookies for the links
+  need_cookies = true
+
   # Optional feed customizations
   [feeds.ID1.custom]
   title = "Level1News"
@@ -110,6 +113,8 @@ vimeo = [ # Multiple keys will be rotated.
 self_update = true
 # Download timeout in minutes.
 timeout = 15
+# Use remote Rod to get cookies, docker image: ghcr.io/go-rod/rod
+rod = "ws://127.0.0.1:7317"
 
 # Optional log config. If not specified logs to the stdout
 [log]

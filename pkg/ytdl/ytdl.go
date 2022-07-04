@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mxpv/podsync/pkg/browser"
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -39,12 +40,14 @@ type Config struct {
 	Timeout int `toml:"timeout"`
 	// CustomBinary is a custom path to youtube-dl, this allows using various youtube-dl forks.
 	CustomBinary string `toml:"custom_binary"`
+	Rod          string `rod:"rod"`
 }
 
 type YoutubeDl struct {
 	path       string
 	timeout    time.Duration
 	updateLock sync.Mutex // Don't call youtube-dl while self updating
+	browser    *browser.Browser
 }
 
 func New(ctx context.Context, cfg Config) (*YoutubeDl, error) {
@@ -107,6 +110,15 @@ func New(ctx context.Context, cfg Config) (*YoutubeDl, error) {
 				}
 			}
 		}()
+	}
+
+	if cfg.Rod != "" {
+		b, err := browser.NewBrowser(cfg.Rod, timeout)
+		if err != nil {
+			log.Errorf("connect to rod error %v", cfg.Rod)
+			return nil, err
+		}
+		ytdl.browser = b
 	}
 
 	return ytdl, nil
@@ -181,6 +193,18 @@ func (dl *YoutubeDl) Download(ctx context.Context, feedConfig *feed.Config, epis
 
 	dl.updateLock.Lock()
 	defer dl.updateLock.Unlock()
+
+	if feedConfig.NeedCookies {
+		if dl.browser == nil {
+			log.Error("Rod is not configured, cannot get cookies")
+			return nil, errors.New("Rod is not configured, cannot get cookies")
+		}
+		cookiesPath, err := dl.browser.SaveCookies(episode.VideoURL, feedConfig.CookiesNoPlayer)
+		if err != nil {
+			return nil, err
+		}
+		args = append(args[:len(args)-1], "--cookies", cookiesPath, args[len(args)-1])
+	}
 
 	output, err := dl.exec(ctx, args...)
 	if err != nil {
@@ -286,4 +310,10 @@ func (dl *YoutubeDl) getDuration(ctx context.Context, filePath string) (duration
 		}
 	}
 	return
+}
+
+func (dl *YoutubeDl) Close() {
+	if dl.browser != nil {
+		dl.browser.Close()
+	}
 }
