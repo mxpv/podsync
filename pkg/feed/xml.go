@@ -110,7 +110,7 @@ func Build(_ctx context.Context, feed *model.Feed, cfg *Config, hostname string)
 
 	for i, episode := range feed.Episodes {
 		if episode.Status != model.EpisodeDownloaded {
-			// Skip episodes that are not yet downloaded
+			// Skip episodes that are not yet downloaded or have been removed
 			continue
 		}
 
