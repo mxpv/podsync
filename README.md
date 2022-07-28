@@ -36,11 +36,11 @@ any device in podcast client.
 ## Dependencies
 
 If you're running the CLI as binary (e.g. not via Docker), you need to make sure that dependencies are available on
-your system. Currently, Podsync depends on `youtube-dl` and `ffmpeg`.
+your system. Currently, Podsync depends on `youtube-dl` ,  `ffmpeg`, and `go`.
 
 On Mac you can install those with `brew`:
 ```
-brew install youtube-dl ffmpeg
+brew install youtube-dl ffmpeg go
 ```
 
 ## Documentation
