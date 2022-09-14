@@ -71,16 +71,16 @@ func (u *Manager) Update(ctx context.Context, feedConfig *feed.Config) error {
 		return errors.Wrap(err, "download failed")
 	}
 
+	if err := u.cleanup(ctx, feedConfig); err != nil {
+		log.WithError(err).Error("cleanup failed")
+	}
+
 	if err := u.buildXML(ctx, feedConfig); err != nil {
 		return errors.Wrap(err, "xml build failed")
 	}
 
 	if err := u.buildOPML(ctx); err != nil {
 		return errors.Wrap(err, "opml build failed")
-	}
-
-	if err := u.cleanup(ctx, feedConfig); err != nil {
-		log.WithError(err).Error("cleanup failed")
 	}
 
 	elapsed := time.Since(started)
