@@ -5,9 +5,9 @@ resource "digitalocean_app" "podsync" {
 
     worker {
       name               = "podsync-service"
-      environment_slug   = "go"
       instance_count     = var.instance_count
       instance_size_slug = var.instance_size_slug
+      dockerfile_path    = "Dockerfile"
 
       env {
         key   = "PODSYNC_CONFIG_GIST_ID"
@@ -32,13 +32,14 @@ resource "digitalocean_app" "podsync" {
 
       git {
         repo_clone_url = var.repo
-        branch         = "main"
+        branch         = "terraform"
       }
     }
   }
 }
 
-resource "digitalocean_spaces_bucket" "podsync-s3" {
-  name   = "podsync"
-  region = var.region
-}
+#resource "digitalocean_spaces_bucket" "podsync-s3" {
+#  name   = "podsync"
+#  region = var.region
+#  acl = "public-read"
+#}

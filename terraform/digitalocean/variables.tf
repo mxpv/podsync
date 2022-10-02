@@ -40,7 +40,7 @@ variable "instance_count" {
 # https://docs.digitalocean.com/reference/api/api-reference/#operation/list_instance_sizes
 variable "instance_size_slug" {
   type    = string
-  default = "professional-xs"
+  default = "basic-xxs"
 }
 
 # https://docs.digitalocean.com/reference/api/api-reference/#operation/list_all_regions

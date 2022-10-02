@@ -90,6 +90,10 @@ func main() {
 		log.WithError(err).Fatal("failed to load configuration file")
 	}
 
+	if cfg == nil {
+		log.WithError(err).Error("configuration is not available")
+	}
+
 	if cfg.Log.Filename != "" {
 		log.Infof("Using log file: %s", cfg.Log.Filename)
 
