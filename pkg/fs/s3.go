@@ -71,6 +71,7 @@ func (s *S3) Create(ctx context.Context, name string, reader io.Reader) (int64, 
 		Bucket: &s.bucket,
 		Key:    &name,
 		Body:   r,
+		ACL:    aws.String("public-read"),
 	})
 	if err != nil {
 		return 0, errors.Wrap(err, "failed to upload file")

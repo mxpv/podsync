@@ -15,4 +15,3 @@ RUN go build -o /app/podsync ./cmd/podsync
 
 WORKDIR /app
 ENTRYPOINT ["/app/podsync", "--no-banner"]
-#CMD ["--no-banner"]
