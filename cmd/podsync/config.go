@@ -1,8 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
+	"os"
 	"path/filepath"
 	"regexp"
 
@@ -37,6 +41,14 @@ type Config struct {
 	Downloader ytdl.Config `toml:"downloader"`
 }
 
+type GistFile struct {
+	Filename string `json:"filename"`
+	URL      string `json:"raw_url"`
+}
+type Gist struct {
+	Files map[string]GistFile
+}
+
 type Log struct {
 	// Filename to write the log to (instead of stdout)
 	Filename string `toml:"filename"`
@@ -48,6 +60,45 @@ type Log struct {
 	MaxAge int `toml:"max_age"`
 	// Compress old backups
 	Compress bool `toml:"compress"`
+}
+
+// FetchConfig loads TOML configuration from a URL
+func FetchGistConfig(gistid string, token string) (*Config, error) {
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", "https://api.github.com/gists/"+gistid, nil)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to fetch config gist: %s", gistid)
+	}
+	defer resp.Body.Close()
+
+	// Check server response
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.Wrapf(err, "bad status: %s", resp.Status)
+	}
+
+	gist := Gist{}
+	json.NewDecoder(resp.Body).Decode(&gist)
+
+	log.Debugf("Gist content: %v", gist)
+	for i := range gist.Files {
+		log.Infof("download Gist file: %s", gist.Files[i].URL)
+		file, err := http.Get(gist.Files[i].URL)
+		if err != nil {
+			continue
+		}
+
+		out, err := os.Create(gist.Files[i].Filename)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to create config file")
+		}
+		defer out.Close()
+		defer file.Body.Close()
+		_, _ = io.Copy(out, file.Body)
+	}
+	return LoadConfig("config.toml")
 }
 
 // LoadConfig loads TOML configuration from a file path

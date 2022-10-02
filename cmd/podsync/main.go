@@ -25,10 +25,13 @@ import (
 )
 
 type Opts struct {
-	ConfigPath string `long:"config" short:"c" default:"config.toml" env:"PODSYNC_CONFIG_PATH"`
-	Headless   bool   `long:"headless"`
-	Debug      bool   `long:"debug"`
-	NoBanner   bool   `long:"no-banner"`
+	ConfigPath            string `long:"config" short:"c" default:"config.toml" env:"PODSYNC_CONFIG_PATH"`
+	ConfigGist            string `long:"gist-id" env:"PODSYNC_CONFIG_GIST_ID"`
+	GithubToken           string `long:"github-token" env:"PODSYNC_GITHUB_TOKEN"`
+	ProviderYoutubeApiKey string `long:"youtube-token" env:"PODSYNC_YOUTUBE_API_KEY"`
+	Headless              bool   `long:"headless"`
+	Debug                 bool   `long:"debug"`
+	NoBanner              bool   `long:"no-banner"`
 }
 
 const banner = `
@@ -78,6 +81,11 @@ func main() {
 	// Load TOML file
 	log.Debugf("loading configuration %q", opts.ConfigPath)
 	cfg, err := LoadConfig(opts.ConfigPath)
+	if cfg == nil {
+		log.Debugf("fetch remote configuration %q", opts.ConfigGist)
+		cfg, err = FetchGistConfig(opts.ConfigGist, opts.GithubToken)
+	}
+
 	if err != nil {
 		log.WithError(err).Fatal("failed to load configuration file")
 	}
