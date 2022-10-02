@@ -1,0 +1,6 @@
+do_token = ""
+access_id = ""
+secret_key = ""
+gist_id = ""
+github_token = ""
+youtube_api_key = ""

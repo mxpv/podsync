@@ -34,3 +34,6 @@ venv/
 
 db
 config.toml
+
+terraform.*
+.terraform*
