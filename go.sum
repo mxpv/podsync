@@ -92,8 +92,8 @@ github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
-github.com/zackradisic/soundcloud-api v0.1.5 h1:OVg8XlbNjrSpSAJhIdBDjUC/Vm1lQYPrDOhnNnImNGg=
-github.com/zackradisic/soundcloud-api v0.1.5/go.mod h1:ycGIZFVZdUVC7B8pcfgze1bRBePPmjYlIGnRptKByQ0=
+github.com/zackradisic/soundcloud-api v0.1.8 h1:Fc4IVbee8ggGZ/vyx26uyTwKeh6Vn3cCrPXdTbQypjI=
+github.com/zackradisic/soundcloud-api v0.1.8/go.mod h1:ycGIZFVZdUVC7B8pcfgze1bRBePPmjYlIGnRptKByQ0=
 golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
