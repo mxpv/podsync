@@ -28,6 +28,8 @@ type Config struct {
 	MaxHeight int `toml:"max_height"`
 	// Format to use for this feed
 	Format model.Format `toml:"format"`
+	// Custom format properties
+	CustomFormat CustomFormat `toml:"custom_format"`
 	// Only download episodes that match this regexp (defaults to matching anything)
 	Filters Filters `toml:"filters"`
 	// Clean is a cleanup policy to use for this feed
@@ -42,6 +44,11 @@ type Config struct {
 	PrivateFeed bool `toml:"private_feed"`
 	// Playlist sort
 	PlaylistSort model.Sorting `toml:"playlist_sort"`
+}
+
+type CustomFormat struct {
+	YouTubeDLFormat string `toml:"youtube_dl_format"`
+	Extension       string `toml:"extension"`
 }
 
 type Filters struct {
