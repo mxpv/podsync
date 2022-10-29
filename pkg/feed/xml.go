@@ -164,7 +164,7 @@ func EpisodeName(feedConfig *Config, episode *model.Episode) string {
 	ext := "mp4"
 	if feedConfig.Format == model.FormatAudio {
 		ext = "mp3"
-	}else if feedConfig.Format == model.FormatCustom {
+	} else if feedConfig.Format == model.FormatCustom {
 		ext = feedConfig.CustomFormat.Extension
 	}
 
