@@ -178,7 +178,7 @@ func EpisodeName(feedConfig *Config, episode *model.Episode) string {
 
 func EnclosureFromExtension(feedConfig *Config) itunes.EnclosureType {
 	ext := feedConfig.CustomFormat.Extension
-	// Use switch on the day variable.
+
 	switch {
 	case ext == "m4a":
 		return itunes.M4A
