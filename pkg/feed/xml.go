@@ -133,6 +133,10 @@ func Build(_ctx context.Context, feed *model.Feed, cfg *Config, hostname string)
 		if feed.Format == model.FormatAudio {
 			enclosureType = itunes.MP3
 		}
+		if feed.Format == model.FormatCustom {
+			enclosureType = EnclosureFromExtension(cfg)
+		}
+
 
 		var (
 			episodeName = EpisodeName(cfg, episode)
@@ -164,9 +168,32 @@ func EpisodeName(feedConfig *Config, episode *model.Episode) string {
 	ext := "mp4"
 	if feedConfig.Format == model.FormatAudio {
 		ext = "mp3"
-	} else if feedConfig.Format == model.FormatCustom {
+	}
+	if feedConfig.Format == model.FormatCustom {
 		ext = feedConfig.CustomFormat.Extension
 	}
 
 	return fmt.Sprintf("%s.%s", episode.ID, ext)
+}
+
+func EnclosureFromExtension(feedConfig *Config) itunes.EnclosureType {
+	ext := feedConfig.CustomFormat.Extension
+	// Use switch on the day variable.
+	switch {
+	case ext == "m4a":
+		return itunes.M4A
+	case ext == "m4v":
+		return itunes.M4V
+	case ext == "mp4":
+		return itunes.MP4
+	case ext == "mp3":
+		return itunes.MP3
+	case ext == "mov":
+		return itunes.MOV
+	case ext == "pdf":
+		return itunes.PDF
+	case ext == "epub":
+		return itunes.EPUB
+	}
+	return -1
 }

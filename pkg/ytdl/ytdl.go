@@ -197,7 +197,8 @@ func (dl *YoutubeDl) Download(ctx context.Context, feedConfig *feed.Config, epis
 	ext := "mp4"
 	if feedConfig.Format == model.FormatAudio {
 		ext = "mp3"
-	} else if feedConfig.Format == model.FormatCustom {
+	}
+	if feedConfig.Format == model.FormatCustom {
 		ext = feedConfig.CustomFormat.Extension
 	}
 

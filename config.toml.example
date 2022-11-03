@@ -50,8 +50,8 @@ vimeo = [ # Multiple keys will be rotated.
   # How often query for updates, examples: "60m", "4h", "2h45m"
   update_period = "12h"
 
-  quality = "high" # or "low"
-  format = "video" # or: "audio", "custom"
+  quality = "high" # "high" or "low"
+  format = "video" # "audio", "video" or "custom"
   # When format = "custom"
   # YouTubeDL format parameter and result file extension
   custom_format = { youtube_dl_format = "bestaudio[ext=m4a]", extension = "m4a" }
