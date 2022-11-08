@@ -2,7 +2,7 @@ module github.com/mxpv/podsync
 
 require (
 	github.com/BrianHicks/finch v0.0.0-20140409222414-419bd73c29ec
-	github.com/aws/aws-sdk-go v1.44.128
+	github.com/aws/aws-sdk-go v1.44.132
 	github.com/dgraph-io/badger v1.6.2
 	github.com/eduncan911/podcast v1.4.2
 	github.com/gilliek/go-opml v1.0.0
@@ -17,7 +17,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/zackradisic/soundcloud-api v0.1.8
 	golang.org/x/oauth2 v0.0.0-20180620175406-ef147856a6dd
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 	google.golang.org/api v0.0.0-20180718221112-efcb5f25ac56
 	google.golang.org/appengine v1.1.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
