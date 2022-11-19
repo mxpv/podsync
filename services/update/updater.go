@@ -158,7 +158,7 @@ func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config)
 	// Build the list of files to download
 	if err := u.db.WalkEpisodes(ctx, feedID, func(episode *model.Episode) error {
 		var (
-			logger = log.WithFields(log.Fields{"episode_id": episode.ID})
+			logger      = log.WithFields(log.Fields{"episode_id": episode.ID})
 			episodeName = feed.EpisodeName(feedConfig, episode)
 		)
 		// Check whether episode already exist in the database
