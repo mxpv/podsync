@@ -53,7 +53,7 @@ func matchFilters(episode *model.Episode, filters *feed.Filters) bool {
 	if !matchRegexpFilter(filters.NotDescription, episode.Description, true, logger.WithField("filter", "not_description")) {
 		return false
 	}
-	
+
 	if !matchDurationFilter(filters.MinDuration, episode.Duration, "min", logger.WithField("filter", "min_duration")) {
 		return false
 	}
