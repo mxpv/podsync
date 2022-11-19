@@ -23,7 +23,7 @@ any device in podcast client.
 - Supports feeds configuration: video/audio, high/low quality, max video height, etc.
 - mp3 encoding
 - Update scheduler supports cron expressions
-- Episodes filtering (match by title).
+- Episodes filtering (match by title, duration).
 - Feeds customizations (custom artwork, category, language, etc).
 - OPML export.
 - Supports episodes cleanup (keep last X episodes).

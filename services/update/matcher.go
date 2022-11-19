@@ -8,6 +8,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+func matchDurationFilter(duration_limit int64, episode_duration int64, operator string, logger log.FieldLogger) bool {
+	if duration_limit != 0 {
+		if operator == "min" && episode_duration < duration_limit {
+			logger.Info("skipping due to duration filter")
+			return false
+		} else if operator == "max" && episode_duration > duration_limit {
+			logger.Info("skipping due to duration filter")
+			return false
+		}
+	}
+	return true
+}
+
 func matchRegexpFilter(pattern, str string, negative bool, logger log.FieldLogger) bool {
 	if pattern != "" {
 		matched, err := regexp.MatchString(pattern, str)
@@ -15,7 +28,7 @@ func matchRegexpFilter(pattern, str string, negative bool, logger log.FieldLogge
 			logger.Warnf("pattern %q is not a valid")
 		} else {
 			if matched == negative {
-				logger.Infof("skipping due to mismatch")
+				logger.Infof("skipping due to regexp mismatch")
 				return false
 			}
 		}
@@ -38,6 +51,14 @@ func matchFilters(episode *model.Episode, filters *feed.Filters) bool {
 	}
 
 	if !matchRegexpFilter(filters.NotDescription, episode.Description, true, logger.WithField("filter", "not_description")) {
+		return false
+	}
+	
+	if !matchDurationFilter(filters.MinDuration, episode.Duration, "min", logger.WithField("filter", "min_duration")) {
+		return false
+	}
+
+	if !matchDurationFilter(filters.MaxDuration, episode.Duration, "max", logger.WithField("filter", "max_duration")) {
 		return false
 	}
 

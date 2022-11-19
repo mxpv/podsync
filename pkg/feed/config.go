@@ -28,7 +28,7 @@ type Config struct {
 	MaxHeight int `toml:"max_height"`
 	// Format to use for this feed
 	Format model.Format `toml:"format"`
-	// Only download episodes that match this regexp (defaults to matching anything)
+	// Only download episodes that match the filters (defaults to matching anything)
 	Filters Filters `toml:"filters"`
 	// Clean is a cleanup policy to use for this feed
 	Clean Cleanup `toml:"clean"`
@@ -49,6 +49,8 @@ type Filters struct {
 	NotTitle       string `toml:"not_title"`
 	Description    string `toml:"description"`
 	NotDescription string `toml:"not_description"`
+	MinDuration    int64  `toml:"min_duration"`
+	MaxDuration    int64  `toml:"max_duration"`
 	// More filters to be added here
 }
 
