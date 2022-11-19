@@ -8,12 +8,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func matchDurationFilter(duration_limit int64, episode_duration int64, operator string, logger log.FieldLogger) bool {
-	if duration_limit != 0 {
-		if operator == "min" && episode_duration < duration_limit {
+func matchDurationFilter(durationLimit int64, episodeDuration int64, operator string, logger log.FieldLogger) bool {
+	if durationLimit != 0 {
+		if operator == "min" && episodeDuration < durationLimit {
 			logger.Info("skipping due to duration filter")
 			return false
-		} else if operator == "max" && episode_duration > duration_limit {
+		} else if operator == "max" && episodeDuration > durationLimit {
 			logger.Info("skipping due to duration filter")
 			return false
 		}
