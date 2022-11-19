@@ -159,11 +159,19 @@ func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config)
 	if err := u.db.WalkEpisodes(ctx, feedID, func(episode *model.Episode) error {
 		var (
 			logger = log.WithFields(log.Fields{"episode_id": episode.ID})
+			episodeName = feed.EpisodeName(feedConfig, episode)
 		)
+		// Check whether episode already exist in the database
 		if episode.Status != model.EpisodeNew && episode.Status != model.EpisodeError {
-			// File already downloaded
-			logger.Infof("skipping due to already downloaded")
-			return nil
+			// If found in the database, also check if the file exist on the disk
+			_, err := u.fs.Size(ctx, fmt.Sprintf("%s/%s", feedID, episodeName))
+			if err == nil {
+				// File already downloaded
+				logger.WithField("episode_id", episode.ID).Info("skipping due to already downloaded")
+				return nil
+			} else {
+				logger.WithField("episode_id", episode.ID).Warn("unable to find the file on disk for this episode")
+			}
 		}
 
 		if !matchFilters(episode, &feedConfig.Filters) {
