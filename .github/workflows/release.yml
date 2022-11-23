@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*'
+  schedule:
+    - cron: "0 0 * * *" # Every day at midnight
 
 jobs:
   publish:
@@ -29,10 +31,20 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Publish a new release from git tag.
       - uses: goreleaser/goreleaser-action@v3.2.0
         if: startsWith(github.ref, 'refs/tags/')
         with:
           version: latest
           args: release --rm-dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Publish nightly build.
+      - uses: goreleaser/goreleaser-action@v3.2.0
+        if: github.event_name == 'schedule'
+        with:
+          version: latest
+          args: release --rm-dist --nightly
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

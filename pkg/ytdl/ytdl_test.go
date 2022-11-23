@@ -11,14 +11,15 @@ import (
 
 func TestBuildArgs(t *testing.T) {
 	tests := []struct {
-		name      string
-		format    model.Format
-		quality   model.Quality
-		maxHeight int
-		output    string
-		videoURL  string
-		ytdlArgs  []string
-		expect    []string
+		name         string
+		format       model.Format
+		customFormat feed.CustomFormat
+		quality      model.Quality
+		maxHeight    int
+		output       string
+		videoURL     string
+		ytdlArgs     []string
+		expect       []string
 	}{
 		{
 			name:     "Audio unknown quality",
@@ -101,6 +102,15 @@ func TestBuildArgs(t *testing.T) {
 			ytdlArgs: []string{"--write-sub", "--embed-subs", "--sub-lang", "en,en-US,en-GB"},
 			expect:   []string{"--format", "bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/best[ext=mp4][vcodec^=avc1]/best[ext=mp4]/best", "--write-sub", "--embed-subs", "--sub-lang", "en,en-US,en-GB", "--output", "/tmp/2", "http://url1"},
 		},
+		{
+			name:         "Custom format",
+			format:       model.FormatCustom,
+			customFormat: feed.CustomFormat{YouTubeDLFormat: "bestaudio[ext=m4a]", Extension: "m4a"},
+			quality:      model.QualityHigh,
+			output:       "/tmp/2",
+			videoURL:     "http://url1",
+			expect:       []string{"--audio-format", "m4a", "--format", "bestaudio[ext=m4a]", "--output", "/tmp/2", "http://url1"},
+		},
 	}
 
 	for _, tst := range tests {
@@ -108,6 +118,7 @@ func TestBuildArgs(t *testing.T) {
 			result := buildArgs(&feed.Config{
 				Format:        tst.format,
 				Quality:       tst.quality,
+				CustomFormat:  tst.customFormat,
 				MaxHeight:     tst.maxHeight,
 				YouTubeDLArgs: tst.ytdlArgs,
 			}, &model.Episode{
