@@ -50,14 +50,18 @@ vimeo = [ # Multiple keys will be rotated.
   # How often query for updates, examples: "60m", "4h", "2h45m"
   update_period = "12h"
 
-  quality = "high" # or "low"
-  format = "video" # or "audio"
+  quality = "high" # "high" or "low"
+  format = "video" # "audio", "video" or "custom"
+  # When format = "custom"
+  # YouTubeDL format parameter and result file extension
+  custom_format = { youtube_dl_format = "bestaudio[ext=m4a]", extension = "m4a" }
+
   playlist_sort = "asc" # or "desc", which will fetch playlist items from the end
 
   # Optional maximal height of video, example: 720, 1080, 1440, 2160, ...
   max_height = 720
 
-  # Optinally include this feed in OPML file (default value: false)
+  # Optionally include this feed in OPML file (default value: false)
   opml = true
 
   # Optional cron expression format for more precise update schedule.

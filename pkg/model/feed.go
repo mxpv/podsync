@@ -16,8 +16,9 @@ const (
 type Format string
 
 const (
-	FormatAudio = Format("audio")
-	FormatVideo = Format("video")
+	FormatAudio  = Format("audio")
+	FormatVideo  = Format("video")
+	FormatCustom = Format("custom")
 )
 
 // Playlist sorting style
