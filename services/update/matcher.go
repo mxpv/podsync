@@ -15,7 +15,7 @@ func matchRegexpFilter(pattern, str string, negative bool, logger log.FieldLogge
 			logger.Warnf("pattern %q is not a valid")
 		} else {
 			if matched == negative {
-				logger.Infof("skipping due to mismatch")
+				logger.Infof("skipping due to regexp mismatch")
 				return false
 			}
 		}
@@ -38,6 +38,16 @@ func matchFilters(episode *model.Episode, filters *feed.Filters) bool {
 	}
 
 	if !matchRegexpFilter(filters.NotDescription, episode.Description, true, logger.WithField("filter", "not_description")) {
+		return false
+	}
+
+	if filters.MaxDuration > 0 && episode.Duration > filters.MaxDuration {
+		logger.WithField("filter", "max_duration").Infof("skipping due to duration filter (%ds)", episode.Duration)
+		return false
+	}
+
+	if filters.MinDuration > 0 && episode.Duration < filters.MinDuration {
+		logger.WithField("filter", "min_duration").Infof("skipping due to duration filter (%ds)", episode.Duration)
 		return false
 	}
 
