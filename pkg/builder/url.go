@@ -122,6 +122,19 @@ func parseYoutubeURL(parsed *url.URL) (model.Type, string, error) {
 		return kind, id, nil
 	}
 
+	// - https://www.youtube.com/@fxigr1
+	if strings.HasPrefix(path, "/@") {
+		kind := model.TypeHandle
+		parts := strings.Split(parsed.EscapedPath(), "/")
+		handle := parts[1]
+		id := handle[1:]
+		if id == "" {
+			return "", "", errors.New("invalid handle id")
+		}
+
+		return kind, id, nil
+	}
+
 	return "", "", errors.New("unsupported link format")
 }
 

@@ -47,6 +47,8 @@ func (yt *YouTubeBuilder) listChannels(ctx context.Context, linkType model.Type,
 		req = req.Id(id)
 	case model.TypeUser:
 		req = req.ForUsername(id)
+	case model.TypeHandle:
+		req = req.ForUsername(id)
 	default:
 		return nil, errors.New("unsupported link type")
 	}
@@ -177,8 +179,8 @@ func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info 
 	)
 
 	switch info.LinkType {
-	case model.TypeChannel, model.TypeUser:
-		// Cost: 5 units for channel or user
+	case model.TypeChannel, model.TypeUser, model.TypeHandle:
+		// Cost: 5 units for channel, user or handle
 		channel, err := yt.listChannels(ctx, info.LinkType, info.ItemID, "id,snippet,contentDetails")
 		if err != nil {
 			return err
@@ -190,8 +192,11 @@ func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info 
 		if channel.Kind == "youtube#channel" {
 			feed.ItemURL = fmt.Sprintf("https://youtube.com/channel/%s", channel.Id)
 			feed.Author = "<notfound>"
-		} else {
+		} else if channel.Kind == "youtube#user" {
 			feed.ItemURL = fmt.Sprintf("https://youtube.com/user/%s", channel.Snippet.CustomUrl)
+			feed.Author = channel.Snippet.CustomUrl
+		} else {
+			feed.ItemURL = fmt.Sprintf("https://youtube.com/@%s", channel.Snippet.CustomUrl)
 			feed.Author = channel.Snippet.CustomUrl
 		}
 

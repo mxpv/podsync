@@ -45,12 +45,24 @@ func TestParseYoutubeURL_User(t *testing.T) {
 	require.Equal(t, "fxigr1", id)
 }
 
+func TestParseYoutubeURL_Handle(t *testing.T) {
+	link, _ := url.ParseRequestURI("https://youtube.com/@fxigr1")
+	kind, id, err := parseYoutubeURL(link)
+	require.NoError(t, err)
+	require.Equal(t, model.TypeHandle, kind)
+	require.Equal(t, "fxigr1", id)
+}
+
 func TestParseYoutubeURL_InvalidLink(t *testing.T) {
 	link, _ := url.ParseRequestURI("https://www.youtube.com/user///")
 	_, _, err := parseYoutubeURL(link)
 	require.Error(t, err)
 
 	link, _ = url.ParseRequestURI("https://www.youtube.com/channel//videos")
+	_, _, err = parseYoutubeURL(link)
+	require.Error(t, err)
+
+	link, _ = url.ParseRequestURI("https://www.youtube.com/@/")
 	_, _, err = parseYoutubeURL(link)
 	require.Error(t, err)
 }

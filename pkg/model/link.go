@@ -7,6 +7,7 @@ const (
 	TypePlaylist = Type("playlist")
 	TypeUser     = Type("user")
 	TypeGroup    = Type("group")
+	TypeHandle   = Type("handle")
 )
 
 type Provider string
