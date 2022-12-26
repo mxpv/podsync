@@ -2,6 +2,7 @@ package update
 
 import (
 	"regexp"
+	"strconv"
 
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/mxpv/podsync/pkg/model"
@@ -16,6 +17,21 @@ func matchRegexpFilter(pattern, str string, negative bool, logger log.FieldLogge
 		} else {
 			if matched == negative {
 				logger.Infof("skipping due to regexp mismatch")
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func matchIsLiveFilter(filter_value string, episode_islive bool, logger log.FieldLogger) bool {
+	if filter_value != "" {
+		boolValue, err := strconv.ParseBool(filter_value)
+		if err != nil {
+			logger.Warnf("invalid is_live filter value")
+		} else {
+			if episode_islive != boolValue {
+				logger.Infof("skipping due to is_live filter")
 				return false
 			}
 		}
@@ -48,6 +64,10 @@ func matchFilters(episode *model.Episode, filters *feed.Filters) bool {
 
 	if filters.MinDuration > 0 && episode.Duration < filters.MinDuration {
 		logger.WithField("filter", "min_duration").Infof("skipping due to duration filter (%ds)", episode.Duration)
+		return false
+	}
+
+	if !matchIsLiveFilter(filters.IsLive, episode.IsLive, logger.WithField("filter", "is_live")) {
 		return false
 	}
 
