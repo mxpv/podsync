@@ -92,6 +92,11 @@ func main() {
 			MaxAge:     cfg.Log.MaxAge,
 			Compress:   cfg.Log.Compress,
 		})
+
+		// Optionally enable debug mode from config.toml
+		if cfg.Log.Debug {
+			log.SetLevel(log.DebugLevel)
+		}
 	}
 
 	log.WithFields(log.Fields{

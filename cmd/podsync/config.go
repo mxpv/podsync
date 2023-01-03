@@ -48,6 +48,8 @@ type Log struct {
 	MaxAge int `toml:"max_age"`
 	// Compress old backups
 	Compress bool `toml:"compress"`
+	// Debug mode
+	Debug bool `toml:"debug"`
 }
 
 // LoadConfig loads TOML configuration from a file path
