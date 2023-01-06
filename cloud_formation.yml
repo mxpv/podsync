@@ -6,10 +6,6 @@ Parameters:
     Default: t3.micro
     Description: EC2 machine instance size (see https://aws.amazon.com/ec2/instance-types/)
 
-  KeyName:
-    Type: AWS::EC2::KeyPair::KeyName
-    Description: SSH key to use for logging in (see https://docs.aws.amazon.com/ground-station/latest/ug/create-ec2-ssh-key-pair.html)
-
   AmiId:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
@@ -34,13 +30,13 @@ Parameters:
 
   YouTubeApiKey:
     Type: String
-    Default: ''
+    AllowedPattern: '.+' # Required
     Description: |
       Key to use for YouTube API access (see https://github.com/mxpv/podsync/blob/master/docs/how_to_get_youtube_api_key.md)
 
   VimeoAccessToken:
     Type: String
-    Default: ''
+    AllowedPattern: '.+' # Required
     Description: |
       Key to use for Vimeo API access (see https://github.com/mxpv/podsync/blob/master/docs/how_to_get_vimeo_token.md)
 
@@ -60,7 +56,7 @@ Parameters:
   PageSize:
     Type: Number
     Default: 50
-    MinValue: 10
+    MinValue: 5
     Description: |
       The number of episodes to query each time
 
@@ -109,8 +105,6 @@ Metadata:
     ParameterLabels:
       InstanceType:
         default: 'Instance type'
-      KeyName:
-        default: 'SSH key name'
       AmiId:
         default: 'AMI ID'
       VolumeSize:
@@ -131,6 +125,10 @@ Metadata:
         default: 'Page size'
 
 Resources:
+  NewKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: !Sub "${AWS::StackName}"
   Ec2Instance:
     Type: AWS::EC2::Instance
     CreationPolicy:
@@ -138,7 +136,7 @@ Resources:
         Count: 1
     Properties:
       InstanceType: !Ref InstanceType
-      KeyName: !Ref KeyName
+      KeyName: !Ref NewKeyPair
       ImageId: !Ref AmiId
       SecurityGroups:
         - !Ref AccessSecurityGroup
@@ -243,4 +241,4 @@ Resources:
 Outputs:
   PodsyncUrl:
     Description: 'Feed URL'
-    Value: !Sub "http://${Ec2Instance.PublicDnsName}:${PodsyncPort}/${FeedId}/"
+    Value: !Sub "http://${Ec2Instance.PublicDnsName}:${PodsyncPort}/${FeedId}.xml/"
