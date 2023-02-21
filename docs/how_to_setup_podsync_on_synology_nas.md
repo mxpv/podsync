@@ -2,7 +2,7 @@
 
 *Written by [@lucasjanin](https://github.com/lucasjanin)*
 
-This installation podsync on a Synology NAS with SSL and use a standard port 443
+This installs `podsync` on a Synology NAS with SSL and port 443
 It requiere to have a domaine with ddns and SSL Certificate
 I'm using a ddns from Synolgy with a SSL Certificate. By chance, my provider doesn't block ports 80 and 443.
 
