@@ -11,7 +11,7 @@ I'm using a ddns from Synolgy with a SSL Certificate. By chance, my provider doe
 2. In the "Web Station", select the default server, click edit and active "Enable personal website"
 3. Create a folder "podsync" in web share using "File Station", the path will be like "/volume1/web/podsync" (where the files will be saved)
 4. Create a folder "podsync" in another share using "File Station", the path will be like "/volume1/docker/podsync" (where the config will be saved)
-5. Create a `config.toml` file in Notepad or whatever editor you want to use and copy it into the above folder.
+5. Create a `config.toml` file in Notepad (or any other editor) and copy it into the above folder.
 Here you will configure your specific settings. Here's mine as an example:
 
 ```toml
