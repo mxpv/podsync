@@ -23,7 +23,7 @@ path = "test"
   # To configure for a S3 provider, set key and secret in environment variables `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, respectively;
   # then fillout the API endpoint, region, and bucket below.
   [storage.s3]
-  endpoint = "https://s3.us-west-2.amazonaws.com"
+  endpoint_url = "https://s3.us-west-2.amazonaws.com"
   region = "us-west-2"
   bucket = "example-bucket-name"
 
