@@ -36,7 +36,7 @@ type S3 struct {
 	prefix   string
 }
 
-func build_key(name string, s *S3) string {
+func buildKey(name string, s *S3) string {
 	if len(s.prefix) == 0 {
 		return name
 	}
@@ -67,7 +67,7 @@ func (s *S3) Open(_name string) (http.File, error) {
 }
 
 func (s *S3) Delete(ctx context.Context, name string) error {
-	key := build_key(name, s)
+	key := buildKey(name, s)
 	_, err := s.api.DeleteObjectWithContext(ctx, &s3.DeleteObjectInput{
 		Bucket: &s.bucket,
 		Key:    &key,
@@ -76,7 +76,7 @@ func (s *S3) Delete(ctx context.Context, name string) error {
 }
 
 func (s *S3) Create(ctx context.Context, name string, reader io.Reader) (int64, error) {
-	key := build_key(name, s)
+	key := buildKey(name, s)
 	logger := log.WithField("key", key)
 
 	logger.Infof("uploading file to %s", s.bucket)
@@ -95,7 +95,7 @@ func (s *S3) Create(ctx context.Context, name string, reader io.Reader) (int64, 
 }
 
 func (s *S3) Size(ctx context.Context, name string) (int64, error) {
-	key := build_key(name, s)
+	key := buildKey(name, s)
 	logger := log.WithField("key", key)
 
 	logger.Debugf("getting file size from %s", s.bucket)

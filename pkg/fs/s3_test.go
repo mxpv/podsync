@@ -74,14 +74,13 @@ func TestS3_BuildKey(t *testing.T) {
 	files := make(map[string][]byte)
 
 	stor, _ := newMockS3(files, "")
-	key := build_key("test-fn", stor)
+	key := buildKey("test-fn", stor)
 	assert.EqualValues(t, "test-fn", key)
 
 	stor, _ = newMockS3(files, "mock-prefix")
-	key = build_key("test-fn", stor)
+	key = buildKey("test-fn", stor)
 	assert.EqualValues(t, "mock-prefix/test-fn", key)
 }
-
 
 type mockS3API struct {
 	s3iface.S3API
@@ -94,7 +93,7 @@ func newMockS3(files map[string][]byte, prefix string) (*S3, error) {
 		api:      api,
 		uploader: s3manager.NewUploaderWithClient(api),
 		bucket:   "mock-bucket",
-		prefix:	  prefix,
+		prefix:   prefix,
 	}, nil
 }
 
