@@ -26,6 +26,7 @@ path = "test"
   endpoint = "https://s3.us-west-2.amazonaws.com"
   region = "us-west-2"
   bucket = "example-bucket-name"
+  prefix = "example/prefix"
 
 # API keys to be used to access Youtube and Vimeo.
 # These can be either specified as string parameter or array of string (so those will be rotated).

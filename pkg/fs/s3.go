@@ -24,6 +24,8 @@ type S3Config struct {
 	Region string `toml:"region"`
 	// EndpointURL is an HTTP endpoint of the S3 API
 	EndpointURL string `toml:"endpoint_url"`
+	// Prefix is a prefix (subfolder) to use to build key names
+	Prefix string `toml:"prefix"`
 }
 
 // S3 implements file storage for S3-compatible providers.
@@ -31,6 +33,15 @@ type S3 struct {
 	api      s3iface.S3API
 	uploader *s3manager.Uploader
 	bucket   string
+	prefix   string
+}
+
+func build_key(name string, s *S3) string {
+	if len(s.prefix) == 0 {
+		return name
+	}
+	result := s.prefix + "/" + name
+	return result
 }
 
 func NewS3(c S3Config) (*S3, error) {
@@ -47,6 +58,7 @@ func NewS3(c S3Config) (*S3, error) {
 		api:      s3.New(sess),
 		uploader: s3manager.NewUploader(sess),
 		bucket:   c.Bucket,
+		prefix:   c.Prefix,
 	}, nil
 }
 
@@ -55,21 +67,23 @@ func (s *S3) Open(_name string) (http.File, error) {
 }
 
 func (s *S3) Delete(ctx context.Context, name string) error {
+	key := build_key(name, s)
 	_, err := s.api.DeleteObjectWithContext(ctx, &s3.DeleteObjectInput{
 		Bucket: &s.bucket,
-		Key:    &name,
+		Key:    &key,
 	})
 	return err
 }
 
 func (s *S3) Create(ctx context.Context, name string, reader io.Reader) (int64, error) {
-	logger := log.WithField("name", name)
+	key := build_key(name, s)
+	logger := log.WithField("key", key)
 
 	logger.Infof("uploading file to %s", s.bucket)
 	r := &readerWithN{Reader: reader}
 	_, err := s.uploader.UploadWithContext(ctx, &s3manager.UploadInput{
 		Bucket: &s.bucket,
-		Key:    &name,
+		Key:    &key,
 		Body:   r,
 	})
 	if err != nil {
@@ -81,12 +95,13 @@ func (s *S3) Create(ctx context.Context, name string, reader io.Reader) (int64, 
 }
 
 func (s *S3) Size(ctx context.Context, name string) (int64, error) {
-	logger := log.WithField("name", name)
+	key := build_key(name, s)
+	logger := log.WithField("key", key)
 
 	logger.Debugf("getting file size from %s", s.bucket)
 	resp, err := s.api.HeadObjectWithContext(ctx, &s3.HeadObjectInput{
 		Bucket: &s.bucket,
-		Key:    &name,
+		Key:    &key,
 	})
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
