@@ -16,10 +16,9 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/zackradisic/soundcloud-api v0.1.8
-	golang.org/x/oauth2 v0.0.0-20180620175406-ef147856a6dd
+	golang.org/x/oauth2 v0.5.0
 	golang.org/x/sync v0.1.0
 	google.golang.org/api v0.0.0-20180718221112-efcb5f25ac56
-	google.golang.org/appengine v1.1.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
