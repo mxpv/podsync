@@ -58,6 +58,7 @@ type Filters struct {
 	NotDescription string `toml:"not_description"`
 	MinDuration    int64  `toml:"min_duration"`
 	MaxDuration    int64  `toml:"max_duration"`
+	MaxAge         int    `toml:"max_age"`
 	// More filters to be added here
 }
 
