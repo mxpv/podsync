@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -37,11 +38,7 @@ type S3 struct {
 }
 
 func buildKey(name string, s *S3) string {
-	if len(s.prefix) == 0 {
-		return name
-	}
-	result := s.prefix + "/" + name
-	return result
+	return path.Join(s.prefix, name)
 }
 
 func NewS3(c S3Config) (*S3, error) {
