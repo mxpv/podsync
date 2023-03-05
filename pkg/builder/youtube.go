@@ -332,6 +332,12 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 				size  = yt.getSize(seconds, feed)
 			)
 
+			// See https://developers.google.com/youtube/v3/docs/videos#snippet.liveBroadcastContent
+			var isLive bool = false
+			if snippet.LiveBroadcastContent != "none" {
+				isLive = true
+			}
+
 			feed.Episodes = append(feed.Episodes, &model.Episode{
 				ID:          video.Id,
 				Title:       snippet.Title,
@@ -343,6 +349,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 				PubDate:     pubDate,
 				Order:       order,
 				Status:      model.EpisodeNew,
+				IsLive:      isLive,
 			})
 		}
 	}

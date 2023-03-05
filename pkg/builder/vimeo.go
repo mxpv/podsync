@@ -135,6 +135,9 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, feed *model.Feed) er
 				image    = v.selectImage(video.Pictures, feed.Quality)
 			)
 
+			// For the moment we don't support detecting live videos on Vimeo
+			var isLive bool = false
+
 			feed.Episodes = append(feed.Episodes, &model.Episode{
 				ID:          videoID,
 				Title:       video.Name,
@@ -145,6 +148,7 @@ func (v *VimeoBuilder) queryVideos(getVideos getVideosFunc, feed *model.Feed) er
 				Thumbnail:   image,
 				VideoURL:    videoURL,
 				Status:      model.EpisodeNew,
+				IsLive:      isLive,
 			})
 
 			added++

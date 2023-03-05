@@ -41,6 +41,7 @@ type Episode struct {
 	Size        int64         `json:"size"`
 	Order       string        `json:"order"`
 	Status      EpisodeStatus `json:"status"` // Disk status
+	IsLive      bool          `json:"is_live"`
 }
 
 type Feed struct {

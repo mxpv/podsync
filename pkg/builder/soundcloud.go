@@ -60,6 +60,9 @@ func (s *SoundCloudBuilder) Build(_ctx context.Context, cfg *feed.Config) (*mode
 					trackSize = track.DurationMS * 15 // very rough estimate
 				)
 
+				// For the moment we don't support detecting live videos on SoundCloud
+				var isLive bool = false
+
 				feed.Episodes = append(feed.Episodes, &model.Episode{
 					ID:          videoID,
 					Title:       track.Title,
@@ -70,6 +73,7 @@ func (s *SoundCloudBuilder) Build(_ctx context.Context, cfg *feed.Config) (*mode
 					PubDate:     pubDate,
 					Thumbnail:   track.ArtworkURL,
 					Status:      model.EpisodeNew,
+					IsLive:      isLive,
 				})
 
 				added++
