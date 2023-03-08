@@ -2,6 +2,7 @@ package update
 
 import (
 	"regexp"
+	"time"
 
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/mxpv/podsync/pkg/model"
@@ -49,6 +50,14 @@ func matchFilters(episode *model.Episode, filters *feed.Filters) bool {
 	if filters.MinDuration > 0 && episode.Duration < filters.MinDuration {
 		logger.WithField("filter", "min_duration").Infof("skipping due to duration filter (%ds)", episode.Duration)
 		return false
+	}
+
+	if filters.MaxAge > 0 {
+		dateDiff := int(time.Since(episode.PubDate).Hours()) / 24
+		if dateDiff > filters.MaxAge {
+			logger.WithField("filter", "max_age").Infof("skipping due to max_age filter (%dd > %dd)", dateDiff, filters.MaxAge)
+			return false
+		}
 	}
 
 	return true
