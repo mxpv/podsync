@@ -74,11 +74,11 @@ func TestS3_BuildKey(t *testing.T) {
 	files := make(map[string][]byte)
 
 	stor, _ := newMockS3(files, "")
-	key := buildKey("test-fn", stor)
+	key := stor.buildKey("test-fn")
 	assert.EqualValues(t, "test-fn", key)
 
 	stor, _ = newMockS3(files, "mock-prefix")
-	key = buildKey("test-fn", stor)
+	key = stor.buildKey("test-fn")
 	assert.EqualValues(t, "mock-prefix/test-fn", key)
 }
 

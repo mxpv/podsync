@@ -37,10 +37,6 @@ type S3 struct {
 	prefix   string
 }
 
-func buildKey(name string, s *S3) string {
-	return path.Join(s.prefix, name)
-}
-
 func NewS3(c S3Config) (*S3, error) {
 	cfg := aws.NewConfig().
 		WithEndpoint(c.EndpointURL).
@@ -64,7 +60,7 @@ func (s *S3) Open(_name string) (http.File, error) {
 }
 
 func (s *S3) Delete(ctx context.Context, name string) error {
-	key := buildKey(name, s)
+	key := s.buildKey(name)
 	_, err := s.api.DeleteObjectWithContext(ctx, &s3.DeleteObjectInput{
 		Bucket: &s.bucket,
 		Key:    &key,
@@ -73,7 +69,7 @@ func (s *S3) Delete(ctx context.Context, name string) error {
 }
 
 func (s *S3) Create(ctx context.Context, name string, reader io.Reader) (int64, error) {
-	key := buildKey(name, s)
+	key := s.buildKey(name)
 	logger := log.WithField("key", key)
 
 	logger.Infof("uploading file to %s", s.bucket)
@@ -92,7 +88,7 @@ func (s *S3) Create(ctx context.Context, name string, reader io.Reader) (int64, 
 }
 
 func (s *S3) Size(ctx context.Context, name string) (int64, error) {
-	key := buildKey(name, s)
+	key := s.buildKey(name)
 	logger := log.WithField("key", key)
 
 	logger.Debugf("getting file size from %s", s.bucket)
@@ -110,6 +106,10 @@ func (s *S3) Size(ctx context.Context, name string) (int64, error) {
 	}
 
 	return *resp.ContentLength, nil
+}
+
+func (s *S3) buildKey(name string) string {
+	return path.Join(s.prefix, name)
 }
 
 type readerWithN struct {
