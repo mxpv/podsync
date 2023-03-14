@@ -18,7 +18,7 @@ import (
 
 func TestS3_Create(t *testing.T) {
 	files := make(map[string][]byte)
-	stor, err := newMockS3(files)
+	stor, err := newMockS3(files, "")
 	assert.NoError(t, err)
 
 	written, err := stor.Create(testCtx, "1/test", bytes.NewBuffer([]byte{1, 5, 7, 8, 3}))
@@ -32,7 +32,7 @@ func TestS3_Create(t *testing.T) {
 
 func TestS3_Size(t *testing.T) {
 	files := make(map[string][]byte)
-	stor, err := newMockS3(files)
+	stor, err := newMockS3(files, "")
 	assert.NoError(t, err)
 
 	_, err = stor.Create(testCtx, "1/test", bytes.NewBuffer([]byte{1, 5, 7, 8, 3}))
@@ -45,7 +45,7 @@ func TestS3_Size(t *testing.T) {
 
 func TestS3_NoSize(t *testing.T) {
 	files := make(map[string][]byte)
-	stor, err := newMockS3(files)
+	stor, err := newMockS3(files, "")
 	assert.NoError(t, err)
 
 	_, err = stor.Size(testCtx, "1/test")
@@ -54,7 +54,7 @@ func TestS3_NoSize(t *testing.T) {
 
 func TestS3_Delete(t *testing.T) {
 	files := make(map[string][]byte)
-	stor, err := newMockS3(files)
+	stor, err := newMockS3(files, "")
 	assert.NoError(t, err)
 
 	_, err = stor.Create(testCtx, "1/test", bytes.NewBuffer([]byte{1, 5, 7, 8, 3}))
@@ -70,17 +70,30 @@ func TestS3_Delete(t *testing.T) {
 	assert.False(t, ok)
 }
 
+func TestS3_BuildKey(t *testing.T) {
+	files := make(map[string][]byte)
+
+	stor, _ := newMockS3(files, "")
+	key := stor.buildKey("test-fn")
+	assert.EqualValues(t, "test-fn", key)
+
+	stor, _ = newMockS3(files, "mock-prefix")
+	key = stor.buildKey("test-fn")
+	assert.EqualValues(t, "mock-prefix/test-fn", key)
+}
+
 type mockS3API struct {
 	s3iface.S3API
 	files map[string][]byte
 }
 
-func newMockS3(files map[string][]byte) (*S3, error) {
+func newMockS3(files map[string][]byte, prefix string) (*S3, error) {
 	api := &mockS3API{files: files}
 	return &S3{
 		api:      api,
 		uploader: s3manager.NewUploaderWithClient(api),
 		bucket:   "mock-bucket",
+		prefix:   prefix,
 	}, nil
 }
 
