@@ -1,5 +1,8 @@
 FROM golang:1.20 as builder
 
+ENV TAG="nightly"
+ENV COMMIT=""
+
 WORKDIR /build
 
 COPY . .

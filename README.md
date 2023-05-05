@@ -3,6 +3,7 @@
 ![Podsync](docs/img/logo.png)
 
 [![](https://github.com/mxpv/podsync/workflows/CI/badge.svg)](https://github.com/mxpv/podsync/actions?query=workflow%3ACI)
+[![Nightly](https://github.com/mxpv/podsync/actions/workflows/nightly.yml/badge.svg)](https://github.com/mxpv/podsync/actions/workflows/nightly.yml)
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/mxpv/podsync)](https://github.com/mxpv/podsync/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mxpv/podsync)](https://goreportcard.com/report/github.com/mxpv/podsync)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/mxpv)](https://github.com/sponsors/mxpv)
@@ -49,6 +50,14 @@ brew install youtube-dl ffmpeg go
 - [How to get YouTube API Key](./docs/how_to_get_youtube_api_key.md)
 - [Podsync on QNAP NAS Guide](./docs/how_to_setup_podsync_on_qnap_nas.md)
 - [Schedule updates with cron](./docs/cron.md)
+
+## Nightly builds
+
+Nightly builds uploaded every midnight from the `main` branch and available for testing:
+
+```bash
+$ docker run -it --rm ghcr.io/mxpv/podsync:nightly
+```
 
 ### Access tokens
 

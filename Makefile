@@ -12,11 +12,11 @@ all: build test
 GOARCH ?= $(shell go env GOARCH)
 GOOS ?= $(shell go env GOOS)
 
-TAG := $(shell git tag --points-at HEAD)
-HASH := $(shell git rev-parse --short HEAD)
+TAG ?= $(shell git tag --points-at HEAD)
+COMMIT ?= $(shell git rev-parse --short HEAD)
 DATE := $(shell date)
 
-LDFLAGS := "-X 'main.version=${TAG}' -X 'main.commit=${HASH}' -X 'main.date=${DATE}' -X 'main.arch=${GOARCH}'"
+LDFLAGS := "-X 'main.version=${TAG}' -X 'main.commit=${COMMIT}' -X 'main.date=${DATE}' -X 'main.arch=${GOARCH}'"
 
 .PHONY: build
 build:

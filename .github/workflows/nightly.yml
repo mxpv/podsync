@@ -15,7 +15,7 @@ jobs:
   publish:
     name: Nightly
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     permissions:
       contents: read
@@ -37,6 +37,9 @@ jobs:
 
       - name: 🏗️ Build and push
         uses: docker/build-push-action@v4
+        env:
+          TAG: nightly
+          COMMIT: ${{ github.sha }}
         with:
           cache-from: type=gha
           cache-to: type=gha,mode=max
