@@ -46,6 +46,7 @@ var (
 	version = "dev"
 	commit  = "none"
 	date    = "unknown"
+	arch    = ""
 )
 
 func main() {
@@ -75,6 +76,13 @@ func main() {
 		log.Info(banner)
 	}
 
+	log.WithFields(log.Fields{
+		"version": version,
+		"commit":  commit,
+		"date":    date,
+		"arch":    arch,
+	}).Info("running podsync")
+
 	// Load TOML file
 	log.Debugf("loading configuration %q", opts.ConfigPath)
 	cfg, err := LoadConfig(opts.ConfigPath)
@@ -98,12 +106,6 @@ func main() {
 			log.SetLevel(log.DebugLevel)
 		}
 	}
-
-	log.WithFields(log.Fields{
-		"version": version,
-		"commit":  commit,
-		"date":    date,
-	}).Info("running podsync")
 
 	downloader, err := ytdl.New(ctx, cfg.Downloader)
 	if err != nil {

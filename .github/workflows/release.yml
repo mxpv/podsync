@@ -45,14 +45,3 @@ jobs:
           DOCKERHUB_USER: ${{ secrets.DOCKER_LOGIN }}
           GHCR_USER: ${{ env.GHCR_USER }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Publish nightly build.
-      - uses: goreleaser/goreleaser-action@v4.2.0
-        if: ${{ github.repository_owner == 'mxpv' && github.event_name == 'schedule' }}
-        with:
-          version: latest
-          args: release --rm-dist --nightly
-        env:
-          DOCKERHUB_USER: ${{ secrets.DOCKER_LOGIN }}
-          GHCR_USER: ${{ env.GHCR_USER }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

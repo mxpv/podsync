@@ -5,19 +5,33 @@ all: build test
 
 #
 # Build Podsync CLI binary
+# Example:
+# 	$ GOOS=amd64 make build
 #
+
+GOARCH ?= $(shell go env GOARCH)
+GOOS ?= $(shell go env GOOS)
+
+TAG := $(shell git tag --points-at HEAD)
+HASH := $(shell git rev-parse --short HEAD)
+DATE := $(shell date)
+
+LDFLAGS := "-X 'main.version=${TAG}' -X 'main.commit=${HASH}' -X 'main.date=${DATE}' -X 'main.arch=${GOARCH}'"
+
 .PHONY: build
 build:
-	go build -o bin/podsync ./cmd/podsync
+	go build -ldflags ${LDFLAGS} -o bin/podsync ./cmd/podsync
 
 #
-# Build Docker image
+# Build a local Docker image
+# Example:
+# 	$ make docker
+#	$ docker run -it --rm localhost/podsync:latest
 #
-TAG ?= localhost/podsync
+IMAGE_TAG ?= localhost/podsync
 .PHONY: docker
 docker:
-	docker build -t $(TAG) .
-	docker push $(TAG)
+	docker buildx build -t $(IMAGE_TAG) .
 
 #
 # Run unit tests
