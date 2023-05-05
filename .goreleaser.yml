@@ -19,14 +19,6 @@ builds:
       - arm
       - arm64
 
-dockers:
-  - image_templates:
-    - "{{ .Env.DOCKERHUB_USER }}/podsync:{{ .Tag }}"
-    - "{{ .Env.DOCKERHUB_USER }}/podsync:v{{ .Major }}.{{ .Minor }}"
-    - "{{ .Env.DOCKERHUB_USER }}/podsync:latest"
-    - "ghcr.io/{{ .Env.GHCR_USER }}/podsync:{{ .Tag }}"
-    - "ghcr.io/{{ .Env.GHCR_USER }}/podsync:latest"
-
 archives:
   - replacements:
       darwin: Darwin
