@@ -50,5 +50,7 @@ release:
   # include links to the release notes.
   footer: |
     # Docker images
+    ```
     docker pull ghcr.io/mxpv/podsync:{{ .Tag }}
     docker pull ghcr.io/mxpv/podsync:latest
+    ```
