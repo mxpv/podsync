@@ -7,7 +7,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   publish:
@@ -27,6 +26,12 @@ jobs:
 
       - name: 🧪 Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+
+      # The Docker Image Name need to be lowercase https://github.com/orgs/community/discussions/25768
+      - name: 🧪 Convert the GitHub Repository name to lowercase, and use it as image name
+        run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
       - name: 🔒 Log in to the Container registry
         uses: docker/login-action@v2
