@@ -237,7 +237,11 @@ func main() {
 
 	group.Go(func() error {
 		log.Infof("running listener at %s", srv.Addr)
-		return srv.ListenAndServe()
+		if cfg.Server.TLS {
+			return srv.ListenAndServeTLS(cfg.Server.CertificatePath, cfg.Server.KeyFilePath)
+		} else {
+			return srv.ListenAndServe()
+		}
 	})
 
 	group.Go(func() error {
