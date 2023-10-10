@@ -11,6 +11,10 @@ hostname = "https://my.test.host:4443"
 bind_address = "172.20.10.2"
 # Specify path for reverse proxy and only [A-Za-z0-9]
 path = "test"
+# Optional. If you want to use TLS you must set the TLS flag and path to the certificate file and private key file.
+tls = true
+certificate_path = "/var/www/cert.pem"  
+key_file_path = "/var/www/priv.pem"
 
 # Configure where to store the episode data
 [storage]

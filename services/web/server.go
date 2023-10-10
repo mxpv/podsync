@@ -20,6 +20,12 @@ type Config struct {
 	// "*": bind all IP addresses which is default option
 	// localhost or 127.0.0.1  bind a single IPv4 address
 	BindAddress string `toml:"bind_address"`
+	// Flag indicating if the server will use TLS
+	TLS bool `toml:"tls"`
+	// Path to a certificate file for TLS connections
+	CertificatePath string `toml:"certificate_path"`
+	// Path to a private key file for TLS connections
+	KeyFilePath string `toml:"key_file_path"`
 	// Specify path for reverse proxy and only [A-Za-z0-9]
 	Path string `toml:"path"`
 	// DataDir is a path to a directory to keep XML feeds and downloaded episodes,
