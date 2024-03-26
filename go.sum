@@ -73,8 +73,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/robfig/cron/v3 v3.0.1 h1:WdRxkvbJztn8LMz/QEvLN5sBU+xKpSqwwUO1Pjr4qDs=
 github.com/robfig/cron/v3 v3.0.1/go.mod h1:eQICP3HwyT7UooqI/z+Ov+PtYAWygg1TEWWzGIFLtro=
 github.com/russross/blackfriday v1.5.2/go.mod h1:JO/DiYxRf+HjHt06OyowR9PTA263kcR/rfWxYHBV53g=
-github.com/silentsokolov/go-vimeo v0.0.0-20190116124215-06829264260c h1:KhHx/Ta3c9C1gcSo5UhDeo/D4JnhnxJTrlcOEOFiMfY=
-github.com/silentsokolov/go-vimeo v0.0.0-20190116124215-06829264260c/go.mod h1:10FeaKUMy5t3KLsYfy54dFrq0rpwcfyKkKcF7vRGIRY=
+github.com/silentsokolov/go-vimeo v2.2.2+incompatible h1:WsbTmSadc2GoViCY5ucneDdVqETNYnvR6yg0Gi0Viws=
+github.com/silentsokolov/go-vimeo v2.2.2+incompatible/go.mod h1:10FeaKUMy5t3KLsYfy54dFrq0rpwcfyKkKcF7vRGIRY=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
