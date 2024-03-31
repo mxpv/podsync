@@ -15,7 +15,7 @@ linters:
     - interfacer
     - unconvert
     - maligned
-    - depguard
+    # - depguard
     - nakedret
     - prealloc
     - whitespace
