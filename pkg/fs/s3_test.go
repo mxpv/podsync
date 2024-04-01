@@ -2,7 +2,7 @@ package fs
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 
@@ -98,7 +98,7 @@ func newMockS3(files map[string][]byte, prefix string) (*S3, error) {
 }
 
 func (m *mockS3API) PutObjectRequest(input *s3.PutObjectInput) (*request.Request, *s3.PutObjectOutput) {
-	content, _ := ioutil.ReadAll(input.Body)
+	content, _ := io.ReadAll(input.Body)
 	req := request.New(aws.Config{}, metadata.ClientInfo{}, request.Handlers{}, nil, &request.Operation{}, nil, nil)
 	m.files[*input.Key] = content
 	return req, &s3.PutObjectOutput{}

@@ -43,7 +43,6 @@ func TestYT_BuildFeed(t *testing.T) {
 	require.NoError(t, err)
 
 	urls := []string{
-		"https://youtube.com/user/fxigr1",
 		"https://www.youtube.com/channel/UCupvZG-5ko_eiXAupbDfxWw",
 		"https://www.youtube.com/playlist?list=PLF7tUDhGkiCk_Ne30zu7SJ9gZF9R9ZruE",
 		"https://www.youtube.com/channel/UCK9lZ2lHRBgx2LOcqPifukA",

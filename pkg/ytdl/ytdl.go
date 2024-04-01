@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -158,7 +157,7 @@ func (dl *YoutubeDl) Update(ctx context.Context) error {
 }
 
 func (dl *YoutubeDl) Download(ctx context.Context, feedConfig *feed.Config, episode *model.Episode) (r io.ReadCloser, err error) {
-	tmpDir, err := ioutil.TempDir("", "podsync-")
+	tmpDir, err := os.MkdirTemp("", "podsync-")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get temp dir for download")
 	}
