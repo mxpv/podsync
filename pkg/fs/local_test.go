@@ -3,13 +3,11 @@ package fs
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -23,10 +21,8 @@ func TestNewLocal(t *testing.T) {
 }
 
 func TestLocal_Create(t *testing.T) {
-	tmpDir, err := ioutil.TempDir("", "podsync-local-stor-")
-	require.NoError(t, err)
-
-	defer os.RemoveAll(tmpDir)
+	tmpDir, err := os.MkdirTemp("", "")
+	assert.NoError(t, err)
 
 	stor, err := NewLocal(tmpDir)
 	assert.NoError(t, err)
@@ -41,8 +37,8 @@ func TestLocal_Create(t *testing.T) {
 }
 
 func TestLocal_Size(t *testing.T) {
-	tmpDir, err := ioutil.TempDir("", "podsync-local-stor-")
-	require.NoError(t, err)
+	tmpDir, err := os.MkdirTemp("", "")
+	assert.NoError(t, err)
 
 	defer os.RemoveAll(tmpDir)
 
@@ -66,10 +62,8 @@ func TestLocal_NoSize(t *testing.T) {
 }
 
 func TestLocal_Delete(t *testing.T) {
-	tmpDir, err := ioutil.TempDir("", "podsync-local-stor-")
-	require.NoError(t, err)
-
-	defer os.RemoveAll(tmpDir)
+	tmpDir, err := os.MkdirTemp("", "")
+	assert.NoError(t, err)
 
 	stor, err := NewLocal(tmpDir)
 	assert.NoError(t, err)
@@ -89,11 +83,8 @@ func TestLocal_Delete(t *testing.T) {
 
 func TestLocal_copyFile(t *testing.T) {
 	reader := bytes.NewReader([]byte{1, 2, 4})
-
-	tmpDir, err := ioutil.TempDir("", "podsync-test-")
-	require.NoError(t, err)
-
-	defer os.RemoveAll(tmpDir)
+	tmpDir, err := os.MkdirTemp("", "")
+	assert.NoError(t, err)
 
 	file := filepath.Join(tmpDir, "1")
 

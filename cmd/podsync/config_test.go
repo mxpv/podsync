@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -235,7 +234,7 @@ data_dir = "/data"
 func setup(t *testing.T, file string) string {
 	t.Helper()
 
-	f, err := ioutil.TempFile("", "")
+	f, err := os.CreateTemp("", "")
 	require.NoError(t, err)
 
 	defer f.Close()

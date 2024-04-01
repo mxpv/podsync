@@ -2,8 +2,6 @@ package db
 
 import (
 	"context"
-	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 
@@ -16,23 +14,17 @@ import (
 var testCtx = context.TODO()
 
 func TestNewBadger(t *testing.T) {
-	dir, err := ioutil.TempDir("", "podsync-badger-")
-	require.NoError(t, err)
+	dir := t.TempDir()
 
 	db, err := NewBadger(&Config{Dir: dir})
 	require.NoError(t, err)
 
 	err = db.Close()
 	assert.NoError(t, err)
-
-	err = os.RemoveAll(dir)
-	assert.NoError(t, err)
 }
 
 func TestBadger_Version(t *testing.T) {
-	dir, err := ioutil.TempDir("", "podsync-badger-")
-	assert.NoError(t, err)
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	db, err := NewBadger(&Config{Dir: dir})
 	require.NoError(t, err)
@@ -44,9 +36,7 @@ func TestBadger_Version(t *testing.T) {
 }
 
 func TestBadger_AddFeed(t *testing.T) {
-	dir, err := ioutil.TempDir("", "podsync-badger-")
-	assert.NoError(t, err)
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	db, err := NewBadger(&Config{Dir: dir})
 	require.NoError(t, err)
@@ -58,9 +48,7 @@ func TestBadger_AddFeed(t *testing.T) {
 }
 
 func TestBadger_GetFeed(t *testing.T) {
-	dir, err := ioutil.TempDir("", "podsync-badger-")
-	assert.NoError(t, err)
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	db, err := NewBadger(&Config{Dir: dir})
 	require.NoError(t, err)
@@ -78,9 +66,7 @@ func TestBadger_GetFeed(t *testing.T) {
 }
 
 func TestBadger_WalkFeeds(t *testing.T) {
-	dir, err := ioutil.TempDir("", "podsync-badger-")
-	assert.NoError(t, err)
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	db, err := NewBadger(&Config{Dir: dir})
 	require.NoError(t, err)
@@ -104,9 +90,7 @@ func TestBadger_WalkFeeds(t *testing.T) {
 }
 
 func TestBadger_DeleteFeed(t *testing.T) {
-	dir, err := ioutil.TempDir("", "podsync-badger-")
-	assert.NoError(t, err)
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	db, err := NewBadger(&Config{Dir: dir})
 	require.NoError(t, err)
@@ -129,9 +113,7 @@ func TestBadger_DeleteFeed(t *testing.T) {
 }
 
 func TestBadger_UpdateEpisode(t *testing.T) {
-	dir, err := ioutil.TempDir("", "podsync-badger-")
-	assert.NoError(t, err)
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	db, err := NewBadger(&Config{Dir: dir})
 	require.NoError(t, err)
@@ -159,9 +141,7 @@ func TestBadger_UpdateEpisode(t *testing.T) {
 }
 
 func TestBadger_WalkEpisodes(t *testing.T) {
-	dir, err := ioutil.TempDir("", "podsync-badger-")
-	assert.NoError(t, err)
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	db, err := NewBadger(&Config{Dir: dir})
 	require.NoError(t, err)
