@@ -410,7 +410,7 @@ func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *feed.Config) (*model.F
 		return nil, err
 	}
 
-	feed := &model.Feed{
+	_feed := &model.Feed{
 		ItemID:          info.ItemID,
 		Provider:        info.Provider,
 		LinkType:        info.LinkType,
@@ -423,32 +423,32 @@ func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *feed.Config) (*model.F
 		UpdatedAt:       time.Now().UTC(),
 	}
 
-	if feed.PageSize == 0 {
-		feed.PageSize = maxYoutubeResults
+	if _feed.PageSize == 0 {
+		_feed.PageSize = maxYoutubeResults
 	}
 
 	// Query general information about feed (title, description, lang, etc)
-	if err := yt.queryFeed(ctx, feed, &info); err != nil {
+	if err := yt.queryFeed(ctx, _feed, &info); err != nil {
 		return nil, err
 	}
 
-	if err := yt.queryItems(ctx, feed); err != nil {
+	if err := yt.queryItems(ctx, _feed); err != nil {
 		return nil, err
 	}
 
 	// YT API client gets 50 episodes per query.
 	// Round up to page size.
-	if len(feed.Episodes) > feed.PageSize {
-		feed.Episodes = feed.Episodes[:feed.PageSize]
+	if len(_feed.Episodes) > _feed.PageSize {
+		_feed.Episodes = _feed.Episodes[:_feed.PageSize]
 	}
 
-	sort.Slice(feed.Episodes, func(i, j int) bool {
-		item1, _ := strconv.Atoi(feed.Episodes[i].Order)
-		item2, _ := strconv.Atoi(feed.Episodes[j].Order)
+	sort.Slice(_feed.Episodes, func(i, j int) bool {
+		item1, _ := strconv.Atoi(_feed.Episodes[i].Order)
+		item2, _ := strconv.Atoi(_feed.Episodes[j].Order)
 		return item1 < item2
 	})
 
-	return feed, nil
+	return _feed, nil
 }
 
 func NewYouTubeBuilder(key string) (*YouTubeBuilder, error) {

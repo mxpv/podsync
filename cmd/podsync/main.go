@@ -154,9 +154,9 @@ func main() {
 
 	// In Headless mode, do one round of feed updates and quit
 	if opts.Headless {
-		for _, feed := range cfg.Feeds {
-			if err := manager.Update(ctx, feed); err != nil {
-				log.WithError(err).Errorf("failed to update feed: %s", feed.URL)
+		for _, _feed := range cfg.Feeds {
+			if err := manager.Update(ctx, _feed); err != nil {
+				log.WithError(err).Errorf("failed to update feed: %s", _feed.URL)
 			}
 		}
 		return
@@ -182,11 +182,11 @@ func main() {
 	group.Go(func() error {
 		for {
 			select {
-			case feed := <-updates:
-				if err := manager.Update(ctx, feed); err != nil {
-					log.WithError(err).Errorf("failed to update feed: %s", feed.URL)
+			case _feed := <-updates:
+				if err := manager.Update(ctx, _feed); err != nil {
+					log.WithError(err).Errorf("failed to update feed: %s", _feed.URL)
 				} else {
-					log.Infof("next update of %s: %s", feed.ID, c.Entry(m[feed.ID]).Next)
+					log.Infof("next update of %s: %s", _feed.ID, c.Entry(m[_feed.ID]).Next)
 				}
 			case <-ctx.Done():
 				return ctx.Err()
@@ -198,22 +198,22 @@ func main() {
 	group.Go(func() error {
 		var cronID cron.EntryID
 
-		for _, feed := range cfg.Feeds {
-			if feed.CronSchedule == "" {
-				feed.CronSchedule = fmt.Sprintf("@every %s", feed.UpdatePeriod.String())
+		for _, _feed := range cfg.Feeds {
+			if _feed.CronSchedule == "" {
+				_feed.CronSchedule = fmt.Sprintf("@every %s", _feed.UpdatePeriod.String())
 			}
-			_feed := feed
-			if cronID, err = c.AddFunc(_feed.CronSchedule, func() {
-				log.Debugf("adding %q to update queue", _feed.ID)
-				updates <- _feed
+			cronFeed := _feed
+			if cronID, err = c.AddFunc(cronFeed.CronSchedule, func() {
+				log.Debugf("adding %q to update queue", cronFeed.ID)
+				updates <- cronFeed
 			}); err != nil {
-				log.WithError(err).Fatalf("can't create cron task for feed: %s", _feed.ID)
+				log.WithError(err).Fatalf("can't create cron task for feed: %s", cronFeed.ID)
 			}
 
-			m[_feed.ID] = cronID
-			log.Debugf("-> %s (update '%s')", _feed.ID, _feed.CronSchedule)
+			m[cronFeed.ID] = cronID
+			log.Debugf("-> %s (update '%s')", cronFeed.ID, cronFeed.CronSchedule)
 			// Perform initial update after CLI restart
-			updates <- _feed
+			updates <- cronFeed
 		}
 
 		c.Start()
