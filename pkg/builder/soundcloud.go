@@ -22,7 +22,7 @@ func (s *SoundCloudBuilder) Build(_ctx context.Context, cfg *feed.Config) (*mode
 		return nil, err
 	}
 
-	feed := &model.Feed{
+	_feed := &model.Feed{
 		ItemID:    info.ItemID,
 		Provider:  info.Provider,
 		LinkType:  info.LinkType,
@@ -39,16 +39,16 @@ func (s *SoundCloudBuilder) Build(_ctx context.Context, cfg *feed.Config) (*mode
 				return nil, err
 			}
 
-			feed.Title = scplaylist.Title
-			feed.Description = scplaylist.Description
-			feed.ItemURL = cfg.URL
+			_feed.Title = scplaylist.Title
+			_feed.Description = scplaylist.Description
+			_feed.ItemURL = cfg.URL
 
 			date, err := time.Parse(time.RFC3339, scplaylist.CreatedAt)
 			if err == nil {
-				feed.PubDate = date
+				_feed.PubDate = date
 			}
-			feed.Author = scplaylist.User.Username
-			feed.CoverArt = scplaylist.ArtworkURL
+			_feed.Author = scplaylist.User.Username
+			_feed.CoverArt = scplaylist.ArtworkURL
 
 			var added = 0
 			for _, track := range scplaylist.Tracks {
@@ -60,7 +60,7 @@ func (s *SoundCloudBuilder) Build(_ctx context.Context, cfg *feed.Config) (*mode
 					trackSize = track.DurationMS * 15 // very rough estimate
 				)
 
-				feed.Episodes = append(feed.Episodes, &model.Episode{
+				_feed.Episodes = append(_feed.Episodes, &model.Episode{
 					ID:          videoID,
 					Title:       track.Title,
 					Description: track.Description,
@@ -74,12 +74,12 @@ func (s *SoundCloudBuilder) Build(_ctx context.Context, cfg *feed.Config) (*mode
 
 				added++
 
-				if added >= feed.PageSize {
-					return feed, nil
+				if added >= _feed.PageSize {
+					return _feed, nil
 				}
 			}
 
-			return feed, nil
+			return _feed, nil
 		}
 	}
 

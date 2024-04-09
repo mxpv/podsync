@@ -155,29 +155,29 @@ func (c *Config) applyDefaults(configPath string) {
 		c.Database.Dir = filepath.Join(filepath.Dir(configPath), "db")
 	}
 
-	for _, feed := range c.Feeds {
-		if feed.UpdatePeriod == 0 {
-			feed.UpdatePeriod = model.DefaultUpdatePeriod
+	for _, _feed := range c.Feeds {
+		if _feed.UpdatePeriod == 0 {
+			_feed.UpdatePeriod = model.DefaultUpdatePeriod
 		}
 
-		if feed.Quality == "" {
-			feed.Quality = model.DefaultQuality
+		if _feed.Quality == "" {
+			_feed.Quality = model.DefaultQuality
 		}
 
-		if feed.Custom.CoverArtQuality == "" {
-			feed.Custom.CoverArtQuality = model.DefaultQuality
+		if _feed.Custom.CoverArtQuality == "" {
+			_feed.Custom.CoverArtQuality = model.DefaultQuality
 		}
 
-		if feed.Format == "" {
-			feed.Format = model.DefaultFormat
+		if _feed.Format == "" {
+			_feed.Format = model.DefaultFormat
 		}
 
-		if feed.PageSize == 0 {
-			feed.PageSize = model.DefaultPageSize
+		if _feed.PageSize == 0 {
+			_feed.PageSize = model.DefaultPageSize
 		}
 
-		if feed.PlaylistSort == "" {
-			feed.PlaylistSort = model.SortingAsc
+		if _feed.PlaylistSort == "" {
+			_feed.PlaylistSort = model.SortingAsc
 		}
 	}
 }

@@ -164,7 +164,7 @@ func (v *VimeoBuilder) Build(ctx context.Context, cfg *feed.Config) (*model.Feed
 		return nil, err
 	}
 
-	feed := &model.Feed{
+	_feed := &model.Feed{
 		ItemID:    info.ItemID,
 		Provider:  info.Provider,
 		LinkType:  info.LinkType,
@@ -175,39 +175,39 @@ func (v *VimeoBuilder) Build(ctx context.Context, cfg *feed.Config) (*model.Feed
 	}
 
 	if info.LinkType == model.TypeChannel {
-		if err := v.queryChannel(feed); err != nil {
+		if err := v.queryChannel(_feed); err != nil {
 			return nil, err
 		}
 
-		if err := v.queryVideos(v.client.Channels.ListVideo, feed); err != nil {
+		if err := v.queryVideos(v.client.Channels.ListVideo, _feed); err != nil {
 			return nil, err
 		}
 
-		return feed, nil
+		return _feed, nil
 	}
 
 	if info.LinkType == model.TypeGroup {
-		if err := v.queryGroup(feed); err != nil {
+		if err := v.queryGroup(_feed); err != nil {
 			return nil, err
 		}
 
-		if err := v.queryVideos(v.client.Groups.ListVideo, feed); err != nil {
+		if err := v.queryVideos(v.client.Groups.ListVideo, _feed); err != nil {
 			return nil, err
 		}
 
-		return feed, nil
+		return _feed, nil
 	}
 
 	if info.LinkType == model.TypeUser {
-		if err := v.queryUser(feed); err != nil {
+		if err := v.queryUser(_feed); err != nil {
 			return nil, err
 		}
 
-		if err := v.queryVideos(v.client.Users.ListVideo, feed); err != nil {
+		if err := v.queryVideos(v.client.Users.ListVideo, _feed); err != nil {
 			return nil, err
 		}
 
-		return feed, nil
+		return _feed, nil
 	}
 
 	return nil, errors.New("unsupported feed type")

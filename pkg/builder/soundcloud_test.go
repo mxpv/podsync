@@ -19,17 +19,17 @@ func TestSoundCloud_BuildFeed(t *testing.T) {
 
 	for _, addr := range urls {
 		t.Run(addr, func(t *testing.T) {
-			feed, err := builder.Build(testCtx, &feed.Config{URL: addr})
+			_feed, err := builder.Build(testCtx, &feed.Config{URL: addr})
 			require.NoError(t, err)
 
-			assert.NotEmpty(t, feed.Title)
-			assert.NotEmpty(t, feed.Description)
-			assert.NotEmpty(t, feed.Author)
-			assert.NotEmpty(t, feed.ItemURL)
+			assert.NotEmpty(t, _feed.Title)
+			assert.NotEmpty(t, _feed.Description)
+			assert.NotEmpty(t, _feed.Author)
+			assert.NotEmpty(t, _feed.ItemURL)
 
-			assert.NotZero(t, len(feed.Episodes))
+			assert.NotZero(t, len(_feed.Episodes))
 
-			for _, item := range feed.Episodes {
+			for _, item := range _feed.Episodes {
 				assert.NotEmpty(t, item.Title)
 				assert.NotEmpty(t, item.VideoURL)
 				assert.NotZero(t, item.Duration)
