@@ -321,10 +321,15 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 				// Parse duration
 				d, err := duration.FromString(video.ContentDetails.Duration)
 				if err != nil {
-					return errors.Wrapf(err, "failed to parse duration %s", video.ContentDetails.Duration)
+				    // If parsing fails, log the error and use the default value
+				    log.Printf("Warning: Failed to parse duration %s: %v. Using default value.", video.ContentDetails.Duration, err)
+				    // seconds is already set to 1, so we don't need to set it again
+				} else {
+				    // If parsing succeeds, set seconds to the parsed duration
+				    seconds = int64(d.ToDuration().Seconds())
 				}
 
-				seconds = int64(d.ToDuration().Seconds())
+				// seconds = int64(d.ToDuration().Seconds())
 			}
 
 			var (
