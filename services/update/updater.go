@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"sort"
 	"time"
 
@@ -271,6 +272,21 @@ func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config,
 		if err != nil {
 			logger.WithError(err).Error("failed to copy file")
 			return err
+		}
+
+		if feedConfig.PostDownloadHook != "" {
+			cmd := exec.Command("/bin/sh", "-c", feedConfig.PostDownloadHook)
+			var outputBuffer, stderrBuffer bytes.Buffer
+			cmd.Stdout = &outputBuffer
+			cmd.Stderr = &stderrBuffer
+			cmd.Env = os.Environ()
+			cmd.Env = append(cmd.Env,
+				"EPISODE_FILE="+fmt.Sprintf("%s/%s", feedID, episodeName),
+				"EPISODE_TITLE="+episode.Title)
+			if err := cmd.Run(); err != nil {
+				logger.Warningf("Failed to execute %s: %s", feedConfig.PostDownloadHook, stderrBuffer.String())
+			}
+			logger.Infof("PostDownloadHook %s output: %s", feedConfig.PostDownloadHook, outputBuffer.String())
 		}
 
 		// Update file status in database
