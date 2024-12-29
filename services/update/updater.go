@@ -282,6 +282,7 @@ func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config,
 			cmd.Env = os.Environ()
 			cmd.Env = append(cmd.Env,
 				"EPISODE_FILE="+fmt.Sprintf("%s/%s", feedID, episodeName),
+				"EPISODE_FEED_NAME="+feedID,
 				"EPISODE_TITLE="+episode.Title)
 			if err := cmd.Run(); err != nil {
 				logger.Warningf("Failed to execute %s: %s", feedConfig.PostDownloadHook, stderrBuffer.String())
