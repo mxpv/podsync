@@ -5,7 +5,7 @@ on:
       - bilibili
   pull_request:
     branches:
-      - main
+      - bilibili
 
 jobs:
   build:
