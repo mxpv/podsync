@@ -301,8 +301,8 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 				image    = yt.selectThumbnail(snippet.Thumbnails, feed.Quality, videoID)
 			)
 
-			// Skip unreleased Premiere videos
-			if snippet.LiveBroadcastContent == "upcoming" {
+			// Skip unreleased/airing Premiere videos
+			if snippet.LiveBroadcastContent == "upcoming" || snippet.LiveBroadcastContent == "live" {
 				continue
 			}
 
