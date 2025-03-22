@@ -1,4 +1,4 @@
-FROM golang:1.20 as builder
+FROM golang:1.20 AS builder
 
 ENV TAG="nightly"
 ENV COMMIT=""
@@ -11,7 +11,7 @@ RUN make build
 
 # Download yt-dlp
 RUN wget -O /usr/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp && \
-    chmod +x /usr/bin/yt-dlp
+    chmod a+rwx /usr/bin/yt-dlp
 
 FROM alpine:3.17
 
