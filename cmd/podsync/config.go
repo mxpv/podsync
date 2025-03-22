@@ -33,7 +33,7 @@ type Config struct {
 	Feeds map[string]*feed.Config
 	// Tokens is API keys to use to access YouTube/Vimeo APIs.
 	Tokens map[model.Provider]StringSlice `toml:"tokens"`
-	// Downloader (youtube-dl) configuration
+	// Downloader (yt-dlp) configuration
 	Downloader ytdl.Config `toml:"downloader"`
 }
 

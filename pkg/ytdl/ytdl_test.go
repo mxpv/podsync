@@ -94,7 +94,7 @@ func TestBuildArgs(t *testing.T) {
 			expect:    []string{"--format", "bestvideo[height<=1024][ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/best[height<=1024][ext=mp4][vcodec^=avc1]/best[ext=mp4]/best", "--output", "/tmp/2", "http://url1"},
 		},
 		{
-			name:     "Video high quality with custom youtube-dl arguments",
+			name:     "Video high quality with custom yt-dlp arguments",
 			format:   model.FormatVideo,
 			quality:  model.QualityHigh,
 			output:   "/tmp/2",

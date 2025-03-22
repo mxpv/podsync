@@ -31,17 +31,17 @@ any device in podcast client.
 - One-click deployment for AWS.
 - Runs on Windows, Mac OS, Linux, and Docker.
 - Supports ARM.
-- Automatic youtube-dl self update.
+- Automatic yt-dlp self update.
 - Supports API keys rotation.
 
 ## Dependencies
 
 If you're running the CLI as binary (e.g. not via Docker), you need to make sure that dependencies are available on
-your system. Currently, Podsync depends on `youtube-dl` ,  `ffmpeg`, and `go`.
+your system. Currently, Podsync depends on `yt-dlp` ,  `ffmpeg`, and `go`.
 
 On Mac you can install those with `brew`:
 ```
-brew install youtube-dl ffmpeg go
+brew install yt-dlp ffmpeg go
 ```
 
 ## Documentation
@@ -112,7 +112,7 @@ Server will be accessible from `http://localhost:8080`, but episode links will p
 
 ### Build and run as binary:
 
-Make sure you have created the file `config.toml`. Also note the location of the `data_dir`. Depending on the operating system, you may have to choose a different location since `/app/data` might be not writable. 
+Make sure you have created the file `config.toml`. Also note the location of the `data_dir`. Depending on the operating system, you may have to choose a different location since `/app/data` might be not writable.
 
 ```
 $ git clone https://github.com/mxpv/podsync
@@ -144,4 +144,3 @@ $ docker-compose up
 ## How to make a release
 
 Just push a git tag. CI will do the rest.
-
