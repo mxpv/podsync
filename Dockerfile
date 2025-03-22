@@ -13,7 +13,8 @@ RUN make build
 RUN wget -O /usr/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp && \
     chmod +x /usr/bin/yt-dlp
 
-FROM alpine:3.17
+# Alpine 3.21 will go EOL on 2026-11-01
+FROM alpine:3.21
 
 WORKDIR /app
 
