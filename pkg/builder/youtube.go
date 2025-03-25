@@ -322,7 +322,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 
 			// Sometimes YouTube retrun empty content defailt, use arbitrary one
 			var seconds int64 = 1
-			if video.ContentDetails != nil {
+			if video.ContentDetails.Duration != "" {
 				// Parse duration
 				d, err := duration.FromString(video.ContentDetails.Duration)
 				if err != nil {
@@ -330,6 +330,8 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 				}
 
 				seconds = int64(d.ToDuration().Seconds())
+			} else {
+				continue
 			}
 
 			var (
