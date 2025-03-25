@@ -105,7 +105,7 @@ func (b *Badger) AddFeed(_ context.Context, feedID string, feed *model.Feed) err
 		for _, episode := range feed.Episodes {
 			episodeKey := b.getKey(episodePath, feedID, episode.ID)
 			err := b.setObj(txn, episodeKey, episode, false)
-			if !(err == nil || err == model.ErrAlreadyExists) {
+			if err != nil && err != model.ErrAlreadyExists {
 				return errors.Wrapf(err, "failed to save episode %q", feedID)
 			}
 		}

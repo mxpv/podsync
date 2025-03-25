@@ -1,24 +1,40 @@
+version: "2"
 linters:
   enable:
-    - staticcheck
-    - unconvert
-    - gofmt
-    - goimports
-    - revive
-    - ineffassign
     - govet
+    - ineffassign
     - unused
-    - misspell
     - bodyclose
-    - unconvert
+    - misspell
     - nakedret
     - prealloc
+    - revive
+    - unconvert
     - whitespace
-  disable:
     - errcheck
-
-run:
-  deadline: 3m
-  issues.exclude-dirs:
-    - bin
-    - docs
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: (.+)\.go$
+        text: bin
+      - path: (.+)\.go$
+        text: docs
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

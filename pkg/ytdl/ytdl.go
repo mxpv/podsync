@@ -227,9 +227,9 @@ func (dl *YoutubeDl) exec(ctx context.Context, args ...string) (string, error) {
 func buildArgs(feedConfig *feed.Config, episode *model.Episode, outputFilePath string) []string {
 	var args []string
 
-	if feedConfig.Format == model.FormatVideo {
-		// Video, mp4, high by default
-
+	switch feedConfig.Format {
+	// Video, mp4, high by default
+	case model.FormatVideo:
 		format := "bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/best[ext=mp4][vcodec^=avc1]/best[ext=mp4]/best"
 
 		if feedConfig.Quality == model.QualityLow {
@@ -239,7 +239,7 @@ func buildArgs(feedConfig *feed.Config, episode *model.Episode, outputFilePath s
 		}
 
 		args = append(args, "--format", format)
-	} else if feedConfig.Format == model.FormatAudio {
+	case model.FormatAudio:
 		// Audio, mp3, high by default
 		format := "bestaudio"
 		if feedConfig.Quality == model.QualityLow {
@@ -247,7 +247,7 @@ func buildArgs(feedConfig *feed.Config, episode *model.Episode, outputFilePath s
 		}
 
 		args = append(args, "--extract-audio", "--audio-format", "mp3", "--format", format)
-	} else {
+	default:
 		args = append(args, "--audio-format", feedConfig.CustomFormat.Extension, "--format", feedConfig.CustomFormat.YouTubeDLFormat)
 	}
 
