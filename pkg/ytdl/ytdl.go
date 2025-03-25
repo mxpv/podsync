@@ -28,20 +28,20 @@ var (
 	ErrTooManyRequests = errors.New(http.StatusText(http.StatusTooManyRequests))
 )
 
-// Config is a youtube-dl related configuration
+// Config is a yt-dlp related configuration
 type Config struct {
 	// SelfUpdate toggles self update every 24 hour
 	SelfUpdate bool `toml:"self_update"`
-	// Timeout in minutes for youtube-dl process to finish download
+	// Timeout in minutes for yt-dlp process to finish download
 	Timeout int `toml:"timeout"`
-	// CustomBinary is a custom path to youtube-dl, this allows using various youtube-dl forks.
+	// CustomBinary is a custom path to yt-dlp, this allows using various yt-dlp forks.
 	CustomBinary string `toml:"custom_binary"`
 }
 
 type YoutubeDl struct {
 	path       string
 	timeout    time.Duration
-	updateLock sync.Mutex // Don't call youtube-dl while self updating
+	updateLock sync.Mutex // Don't call yt-dlp while self updating
 }
 
 func New(ctx context.Context, cfg Config) (*YoutubeDl, error) {
@@ -53,16 +53,16 @@ func New(ctx context.Context, cfg Config) (*YoutubeDl, error) {
 	if cfg.CustomBinary != "" {
 		path = cfg.CustomBinary
 
-		// Don't update custom youtube-dl binaries.
-		log.Warnf("using custom youtube-dl binary, turning self updates off")
+		// Don't update custom yt-dlp binaries.
+		log.Warnf("using custom yt-dlp binary, turning self updates off")
 		cfg.SelfUpdate = false
 	} else {
-		path, err = exec.LookPath("youtube-dl")
+		path, err = exec.LookPath("yt-dlp")
 		if err != nil {
-			return nil, errors.Wrap(err, "youtube-dl binary not found")
+			return nil, errors.Wrap(err, "yt-dlp binary not found")
 		}
 
-		log.Debugf("found youtube-dl binary at %q", path)
+		log.Debugf("found yt-dlp binary at %q", path)
 	}
 
 	timeout := DefaultDownloadTimeout
@@ -77,13 +77,13 @@ func New(ctx context.Context, cfg Config) (*YoutubeDl, error) {
 		timeout: timeout,
 	}
 
-	// Make sure youtube-dl exists
+	// Make sure yt-dlp exists
 	version, err := ytdl.exec(ctx, "--version")
 	if err != nil {
-		return nil, errors.Wrap(err, "could not find youtube-dl")
+		return nil, errors.Wrap(err, "could not find yt-dlp")
 	}
 
-	log.Infof("using youtube-dl %s", version)
+	log.Infof("using yt-dlp %s", version)
 
 	if err := ytdl.ensureDependencies(ctx); err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func New(ctx context.Context, cfg Config) (*YoutubeDl, error) {
 	if cfg.SelfUpdate {
 		// Do initial blocking update at launch
 		if err := ytdl.Update(ctx); err != nil {
-			log.WithError(err).Error("failed to update youtube-dl")
+			log.WithError(err).Error("failed to update yt-dlp")
 		}
 
 		go func() {
@@ -145,11 +145,11 @@ func (dl *YoutubeDl) Update(ctx context.Context) error {
 	dl.updateLock.Lock()
 	defer dl.updateLock.Unlock()
 
-	log.Info("updating youtube-dl")
+	log.Info("updating yt-dlp")
 	output, err := dl.exec(ctx, "--update", "--verbose")
 	if err != nil {
 		log.WithError(err).Error(output)
-		return errors.Wrap(err, "failed to self update youtube-dl")
+		return errors.Wrap(err, "failed to self update yt-dlp")
 	}
 
 	log.Info(output)
@@ -181,7 +181,7 @@ func (dl *YoutubeDl) Download(ctx context.Context, feedConfig *feed.Config, epis
 
 	output, err := dl.exec(ctx, args...)
 	if err != nil {
-		log.WithError(err).Errorf("youtube-dl error: %s", filePath)
+		log.WithError(err).Errorf("yt-dlp error: %s", filePath)
 
 		// YouTube might block host with HTTP Error 429: Too Many Requests
 		if strings.Contains(output, "HTTP Error 429") {
@@ -218,7 +218,7 @@ func (dl *YoutubeDl) exec(ctx context.Context, args ...string) (string, error) {
 	cmd := exec.CommandContext(ctx, dl.path, args...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return string(output), errors.Wrap(err, "failed to execute youtube-dl")
+		return string(output), errors.Wrap(err, "failed to execute yt-dlp")
 	}
 
 	return string(output), nil
@@ -251,7 +251,7 @@ func buildArgs(feedConfig *feed.Config, episode *model.Episode, outputFilePath s
 		args = append(args, "--audio-format", feedConfig.CustomFormat.Extension, "--format", feedConfig.CustomFormat.YouTubeDLFormat)
 	}
 
-	// Insert additional per-feed youtube-dl arguments
+	// Insert additional per-feed yt-dlp arguments
 	args = append(args, feedConfig.YouTubeDLArgs...)
 
 	args = append(args, "--output", outputFilePath, episode.VideoURL)

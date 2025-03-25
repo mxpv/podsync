@@ -228,7 +228,7 @@ func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config)
 
 		// Download episode to disk
 		// We download the episode to a temp directory first to avoid downloading this file by clients
-		// while still being processed by youtube-dl (e.g. a file is being downloaded from YT or encoding in progress)
+		// while still being processed by yt-dlp (e.g. a file is being downloaded from YT or encoding in progress)
 
 		logger.Infof("! downloading episode %s", episode.VideoURL)
 		tempFile, err := u.downloader.Download(ctx, feedConfig, episode)

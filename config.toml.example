@@ -13,7 +13,7 @@ bind_address = "172.20.10.2"
 path = "test"
 # Optional. If you want to use TLS you must set the TLS flag and path to the certificate file and private key file.
 tls = true
-certificate_path = "/var/www/cert.pem"  
+certificate_path = "/var/www/cert.pem"
 key_file_path = "/var/www/priv.pem"
 
 # Configure where to store the episode data
@@ -60,7 +60,7 @@ vimeo = [ # Multiple keys will be rotated.
   quality = "high" # "high" or "low"
   format = "video" # "audio", "video" or "custom"
   # When format = "custom"
-  # YouTubeDL format parameter and result file extension
+  # YT-DLP format parameter and result file extension
   custom_format = { youtube_dl_format = "bestaudio[ext=m4a]", extension = "m4a" }
 
   playlist_sort = "asc" # or "desc", which will fetch playlist items from the end
@@ -85,10 +85,10 @@ vimeo = [ # Multiple keys will be rotated.
   # max_age filter is in days.
   filters = { title = "regex for title here", not_title = "regex for negative title match", description = "...", not_description = "...", min_duration = 0, max_duration = 86400, max_age = 365 }
 
-  # Optional extra arguments passed to youtube-dl when downloading videos from this feed.
+  # Optional extra arguments passed to yt-dlp when downloading videos from this feed.
   # This example would embed available English closed captions in the videos.
   # Note that setting '--audio-format' for audio format feeds, or '--format' or '--output' for any format may cause
-  # unexpected behaviour. You should only use this if you know what you are doing, and have read up on youtube-dl's options!
+  # unexpected behaviour. You should only use this if you know what you are doing, and have read up on yt-dlp's options!
   youtube_dl_args = ["--write-sub", "--embed-subs", "--sub-lang", "en,en-US,en-GB"]
 
   # When set to true, podcasts indexers such as iTunes or Google Podcasts will not index this podcast
@@ -117,9 +117,9 @@ vimeo = [ # Multiple keys will be rotated.
 [database]
   badger = { truncate = true, file_io = true }
 
-# Youtube-dl specific configuration.
+# yt-dlp specific configuration.
 [downloader]
-# Optional, auto update youtube-dl every 24 hours
+# Optional, auto update yt-dlp every 24 hours
 self_update = true
 # Download timeout in minutes.
 timeout = 15
