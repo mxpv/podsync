@@ -59,6 +59,7 @@ type Filters struct {
 	MinDuration    int64  `toml:"min_duration"`
 	MaxDuration    int64  `toml:"max_duration"`
 	MaxAge         int    `toml:"max_age"`
+	MinAge         int    `toml:"min_age"`
 	// More filters to be added here
 }
 

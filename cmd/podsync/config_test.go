@@ -38,7 +38,8 @@ timeout = 15
   quality = "low"
 	# duration filters are in seconds
 	# max_age is in days
-  filters = { title = "regex for title here", min_duration = 0, max_duration = 86400, max_age = 365}
+	# min_age is in days
+  filters = { title = "regex for title here", min_duration = 0, max_duration = 86400, max_age = 365, min_age = 1}
   playlist_sort = "desc"
   clean = { keep_last = 10 }
   [feeds.XYZ.custom]
@@ -82,6 +83,7 @@ timeout = 15
 	assert.EqualValues(t, 0, feed.Filters.MinDuration)
 	assert.EqualValues(t, 86400, feed.Filters.MaxDuration)
 	assert.EqualValues(t, 365, feed.Filters.MaxAge)
+	assert.EqualValues(t, 365, feed.Filters.MinAge)
 	assert.EqualValues(t, 10, feed.Clean.KeepLast)
 	assert.EqualValues(t, model.SortingDesc, feed.PlaylistSort)
 
