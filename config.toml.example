@@ -83,7 +83,8 @@ vimeo = [ # Multiple keys will be rotated.
   # If set, then only download matching episodes.
   # Duration filters are in seconds.
   # max_age filter is in days.
-  filters = { title = "regex for title here", not_title = "regex for negative title match", description = "...", not_description = "...", min_duration = 0, max_duration = 86400, max_age = 365 }
+  # min_age filter is in days.
+  filters = { title = "regex for title here", not_title = "regex for negative title match", description = "...", not_description = "...", min_duration = 0, max_duration = 86400, max_age = 365, min_age = 1 }
 
   # Optional extra arguments passed to youtube-dl when downloading videos from this feed.
   # This example would embed available English closed captions in the videos.
