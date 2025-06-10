@@ -1,4 +1,4 @@
-FROM golang:1.20 as builder
+FROM golang:1.20 AS builder
 
 ENV TAG="nightly"
 ENV COMMIT=""
@@ -9,9 +9,9 @@ COPY . .
 
 RUN make build
 
-# Download youtube-dl
+# Download yt-dlp
 RUN wget -O /usr/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp && \
-    chmod +x /usr/bin/yt-dlp
+    chmod a+rwx /usr/bin/yt-dlp
 
 # Alpine 3.21 will go EOL on 2026-11-01
 FROM alpine:3.21
@@ -22,7 +22,7 @@ RUN apk --no-cache add ca-certificates python3 py3-pip ffmpeg tzdata \
     # https://github.com/golang/go/issues/59305
     libc6-compat && ln -s /lib/libc.so.6 /usr/lib/libresolv.so.2
 
-COPY --from=builder /usr/bin/yt-dlp /usr/bin/youtube-dl
+COPY --from=builder /usr/bin/yt-dlp /usr/local/bin/youtube-dl
 COPY --from=builder /build/bin/podsync /app/podsync
 
 ENTRYPOINT ["/app/podsync"]
