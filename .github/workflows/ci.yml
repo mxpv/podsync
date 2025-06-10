@@ -51,9 +51,7 @@ jobs:
     steps:
       - uses: actions/setup-go@v5
       - uses: actions/checkout@v4
-      - uses: golangci/golangci-lint-action@v6
-        with:
-          version: v1.57.2
+      - uses: golangci/golangci-lint-action@v8
 
       - name: Go mod
         env:

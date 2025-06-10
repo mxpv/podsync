@@ -1,31 +1,38 @@
+version: "2"
 linters:
   enable:
-    - structcheck
-    - varcheck
-    - staticcheck
-    - unconvert
-    - gofmt
-    - goimports
-    - golint
-    - ineffassign
-    - vet
-    - unused
-    - misspell
     - bodyclose
-    - interfacer
-    - unconvert
-    - maligned
-    # - depguard
+    - misspell
     - nakedret
     - prealloc
+    - unconvert
     - whitespace
+    - staticcheck
+    - ineffassign
+    - unused
   disable:
     - errcheck
-
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - bin
+      - docs
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - bin
+      - docs
+      - third_party$
+      - builtin$
+      - examples$
 run:
   timeout: 3m
-
-issues:
-  exclude-dirs:
-    - bin
-    - docs

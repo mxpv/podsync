@@ -272,11 +272,12 @@ func (b *Badger) setObj(txn *badger.Txn, key []byte, obj interface{}, overwrite 
 	if !overwrite {
 		// Overwrites are not allowed, make sure there is no object with the given key
 		_, err := txn.Get(key)
-		if err == nil {
+		switch err {
+		case nil:
 			return model.ErrAlreadyExists
-		} else if err == badger.ErrKeyNotFound {
+		case badger.ErrKeyNotFound:
 			// Key not found, do nothing
-		} else {
+		default:
 			return errors.Wrap(err, "failed to check whether key exists")
 		}
 	}
