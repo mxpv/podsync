@@ -23,7 +23,9 @@ linters:
     - errcheck
 
 run:
-  deadline: 3m
-  skip-dirs:
+  timeout: 3m
+
+issues:
+  exclude-dirs:
     - bin
     - docs
