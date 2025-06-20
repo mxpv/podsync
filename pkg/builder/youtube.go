@@ -309,7 +309,8 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 			// Parse date added to playlist / publication date
 			dateStr := ""
 			playlistItem, ok := playlist[video.Id]
-			if ok {
+			if ok && playlistItem.PublishedAt > snippet.PublishedAt{
+				// Use playlist item publish date if it's more recent
 				dateStr = playlistItem.PublishedAt
 			} else {
 				dateStr = snippet.PublishedAt
@@ -319,7 +320,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 			if err != nil {
 				return errors.Wrapf(err, "failed to parse video publish date: %s", dateStr)
 			}
-
+						
 			// Sometimes YouTube retrun empty content defailt, use arbitrary one
 			var seconds int64 = 1
 			if video.ContentDetails != nil {
