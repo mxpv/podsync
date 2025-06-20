@@ -38,11 +38,15 @@ func Build(_ctx context.Context, feed *model.Feed, cfg *Config, hostname string)
 
 	var (
 		now         = time.Now().UTC()
-		author      = feed.Title
+		author      = feed.Author
 		title       = feed.Title
 		description = feed.Description
 		feedLink    = feed.ItemURL
 	)
+
+	if author ==  "<notfound>" {
+		author = feed.Title
+	}
 
 	if cfg.Custom.Author != "" {
 		author = cfg.Custom.Author
