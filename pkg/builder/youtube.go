@@ -212,20 +212,20 @@ func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info 
 			return err
 		}
 
-		feed.Title = fmt.Sprintf("%s: %s", playlist.Snippet.ChannelTitle, playlist.Snippet.Title)
+		feed.Title = playlist.Snippet.Title
 		feed.Description = playlist.Snippet.Description
 
 		feed.ItemURL = fmt.Sprintf("https://youtube.com/playlist?list=%s", playlist.Id)
 		feed.ItemID = playlist.Id
 
-		feed.Author = "<notfound>"
+		feed.Author = playlist.Snippet.ChannelTitle
 
 		if date, err := yt.parseDate(playlist.Snippet.PublishedAt); err != nil {
 			return err
 		} else { // nolint:golint
 			feed.PubDate = date
 		}
-
+		
 		thumbnails = playlist.Snippet.Thumbnails
 
 	default:
@@ -236,8 +236,8 @@ func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info 
 		feed.Description = fmt.Sprintf("%s (%s)", feed.Title, feed.PubDate)
 	}
 
-	feed.CoverArt = yt.selectThumbnail(thumbnails, feed.CoverArtQuality, "")
-
+		feed.CoverArt = yt.selectThumbnail(thumbnails, feed.CoverArtQuality, "")
+	
 	return nil
 }
 
