@@ -1,6 +1,7 @@
 package ytdl
 
 import (
+    "encoding/json"
 	"context"
 	"fmt"
 	"io"
@@ -23,6 +24,26 @@ const (
 	DefaultDownloadTimeout = 10 * time.Minute
 	UpdatePeriod           = 24 * time.Hour
 )
+
+type PlaylistMetadataThumbnail struct {
+	Id string `json:"id"`
+	Url string `json:"url"`
+	Resolution string `json:"resolution"`
+	Width int `json:"width"`
+	Height int `json:"height"`
+}
+
+type PlaylistMetadata struct {
+  Id string `json:"id"`
+  Title string `json:"title"`
+  Description string `json:"description"`
+  Thumbnails []PlaylistMetadataThumbnail `json:"thumbnails"`
+  Channel string `json:"channel"`
+  ChannelId string `json:"channel_id"`
+  ChannelUrl string `json:"channel_url"`
+  WebpageUrl string `json:"webpage_url"`
+
+}
 
 var (
 	ErrTooManyRequests = errors.New(http.StatusText(http.StatusTooManyRequests))
@@ -154,6 +175,36 @@ func (dl *YoutubeDl) Update(ctx context.Context) error {
 
 	log.Info(output)
 	return nil
+}
+
+
+func (dl *YoutubeDl) PlaylistMetadata(ctx context.Context, url string) (metadata PlaylistMetadata, err error) {
+	log.Info("getting playlist metadata for: ", url)
+	args := []string{
+		"--playlist-items", "0",
+		"-J", // JSON output
+		"-q", // quiet mode
+		"--no-warnings", // suppress warnings
+		url,
+	}
+	dl.updateLock.Lock()
+	defer dl.updateLock.Unlock()
+	output, err := dl.exec(ctx, args...)
+	if err != nil {
+		log.WithError(err).Errorf("youtube-dl error: %s", url)
+
+		// YouTube might block host with HTTP Error 429: Too Many Requests
+		if strings.Contains(output, "HTTP Error 429") {
+			return PlaylistMetadata{}, ErrTooManyRequests
+		}
+
+		log.Error(output)
+		return PlaylistMetadata{}, errors.New(output)
+	}
+
+	var playlistMetadata PlaylistMetadata
+	json.Unmarshal([]byte(output), &playlistMetadata)
+	return playlistMetadata, nil
 }
 
 func (dl *YoutubeDl) Download(ctx context.Context, feedConfig *feed.Config, episode *model.Episode) (r io.ReadCloser, err error) {

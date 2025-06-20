@@ -16,7 +16,11 @@ import (
 	"google.golang.org/api/youtube/v3"
 
 	"github.com/mxpv/podsync/pkg/model"
+	"github.com/mxpv/podsync/pkg/ytdl"
 )
+type Downloader interface {
+	PlaylistMetadata(ctx context.Context, url string) (metadata ytdl.PlaylistMetadata, err error) 
+}
 
 const (
 	maxYoutubeResults       = 50
@@ -35,6 +39,7 @@ func (key apiKey) Get() (string, string) {
 type YouTubeBuilder struct {
 	client *youtube.Service
 	key    apiKey
+	downloader Downloader
 }
 
 // Cost: 5 units (call method: 1, snippet: 2, contentDetails: 2)
@@ -225,8 +230,17 @@ func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info 
 		} else { // nolint:golint
 			feed.PubDate = date
 		}
-		
-		thumbnails = playlist.Snippet.Thumbnails
+		metadata, err := yt.downloader.PlaylistMetadata(ctx, feed.ItemURL)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get playlist metadata for %s", feed.ItemURL)
+		}
+		log.Infof("Playlist metadata: %v", metadata)
+		if(len(metadata.Thumbnails) > 0) {
+			// best qualtiy thumbnail is the last one
+			feed.CoverArt = metadata.Thumbnails[len(metadata.Thumbnails)-1].Url
+		} else {
+			thumbnails = playlist.Snippet.Thumbnails
+		}
 
 	default:
 		return errors.New("unsupported link format")
@@ -235,9 +249,9 @@ func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info 
 	if feed.Description == "" {
 		feed.Description = fmt.Sprintf("%s (%s)", feed.Title, feed.PubDate)
 	}
-
+	if feed.CoverArt == "" {
 		feed.CoverArt = yt.selectThumbnail(thumbnails, feed.CoverArtQuality, "")
-	
+	}
 	return nil
 }
 
@@ -457,7 +471,7 @@ func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *feed.Config) (*model.F
 	return _feed, nil
 }
 
-func NewYouTubeBuilder(key string) (*YouTubeBuilder, error) {
+func NewYouTubeBuilder(key string, ytdlp Downloader) (*YouTubeBuilder, error) {
 	if key == "" {
 		return nil, errors.New("empty YouTube API key")
 	}
@@ -467,5 +481,5 @@ func NewYouTubeBuilder(key string) (*YouTubeBuilder, error) {
 		return nil, errors.Wrap(err, "failed to create youtube client")
 	}
 
-	return &YouTubeBuilder{client: yt, key: apiKey(key)}, nil
+	return &YouTubeBuilder{client: yt, key: apiKey(key), downloader:ytdlp}, nil
 }
