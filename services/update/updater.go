@@ -23,6 +23,7 @@ import (
 
 type Downloader interface {
 	Download(ctx context.Context, feedConfig *feed.Config, episode *model.Episode) (io.ReadCloser, error)
+	PlaylistMetadata(ctx context.Context, url string) (metadata ytdl.PlaylistMetadata, err error) 
 }
 
 type TokenList []string
