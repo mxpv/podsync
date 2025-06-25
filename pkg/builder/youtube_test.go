@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/mxpv/podsync/pkg/feed"
+	"github.com/mxpv/podsync/pkg/ytdl"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -17,12 +18,30 @@ var (
 	ytKey   = os.Getenv("YOUTUBE_TEST_API_KEY")
 )
 
+// Mock downloader for testing - doesn't require youtube-dl to be installed
+type mockDownloader struct{}
+
+func (m *mockDownloader) PlaylistMetadata(ctx context.Context, url string) (metadata ytdl.PlaylistMetadata, err error) {
+	return ytdl.PlaylistMetadata{
+		Id:          "test-id",
+		Title:       "Test Playlist",
+		Description: "Test Description",
+		Channel:     "Test Channel",
+		ChannelId:   "test-channel-id",
+		ChannelUrl:  "https://youtube.com/channel/test-channel-id",
+		WebpageUrl:  url,
+	}, nil
+}
+
 func TestYT_QueryChannel(t *testing.T) {
 	if ytKey == "" {
 		t.Skip("YouTube API key is not provided")
 	}
 
-	builder, err := NewYouTubeBuilder(ytKey)
+	// Use mock downloader to avoid requiring youtube-dl installation
+	downloader := &mockDownloader{}
+
+	builder, err := NewYouTubeBuilder(ytKey, downloader)
 	require.NoError(t, err)
 
 	channel, err := builder.listChannels(testCtx, model.TypeChannel, "UC2yTVSttx7lxAOAzx1opjoA", "id")
@@ -39,7 +58,10 @@ func TestYT_BuildFeed(t *testing.T) {
 		t.Skip("YouTube API key is not provided")
 	}
 
-	builder, err := NewYouTubeBuilder(ytKey)
+	// Use mock downloader to avoid requiring youtube-dl installation
+	downloader := &mockDownloader{}
+
+	builder, err := NewYouTubeBuilder(ytKey, downloader)
 	require.NoError(t, err)
 
 	urls := []string{
@@ -79,7 +101,10 @@ func TestYT_GetVideoCount(t *testing.T) {
 		t.Skip("YouTube API key is not provided")
 	}
 
-	builder, err := NewYouTubeBuilder(ytKey)
+	// Use mock downloader to avoid requiring youtube-dl installation
+	downloader := &mockDownloader{}
+
+	builder, err := NewYouTubeBuilder(ytKey, downloader)
 	require.NoError(t, err)
 
 	feeds := []*model.Info{
