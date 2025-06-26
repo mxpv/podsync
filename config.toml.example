@@ -17,6 +17,8 @@ hostname = "https://my.test.host:4443"
 bind_address = "172.20.10.2"
 # Specify path for reverse proxy and only [A-Za-z0-9]
 path = "test"
+# Optional. Enable Web UI. Feeds have to be include in OPML file to appear (see below)
+web_ui = true
 # Optional. If you want to use TLS you must set the TLS flag and path to the certificate file and private key file.
 tls = true
 certificate_path = "/var/www/cert.pem"  

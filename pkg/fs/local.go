@@ -18,14 +18,18 @@ type LocalConfig struct {
 
 // Local implements local file storage
 type Local struct {
-	rootDir string
+	rootDir      string
+	WebUIEnabled bool
 }
 
-func NewLocal(rootDir string) (*Local, error) {
-	return &Local{rootDir: rootDir}, nil
+func NewLocal(rootDir string, webUIEnabled bool) (*Local, error) {
+	return &Local{rootDir: rootDir, WebUIEnabled: webUIEnabled}, nil
 }
 
 func (l *Local) Open(name string) (http.File, error) {
+	if name == "/index.html" && l.WebUIEnabled {
+		return os.Open("./html/index.html")
+	}
 	path := filepath.Join(l.rootDir, name)
 	return os.Open(path)
 }

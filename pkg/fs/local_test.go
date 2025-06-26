@@ -15,7 +15,7 @@ var (
 )
 
 func TestNewLocal(t *testing.T) {
-	local, err := NewLocal("")
+	local, err := NewLocal("", false)
 	assert.NoError(t, err)
 	assert.NotNil(t, local)
 }
@@ -24,7 +24,7 @@ func TestLocal_Create(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "")
 	assert.NoError(t, err)
 
-	stor, err := NewLocal(tmpDir)
+	stor, err := NewLocal(tmpDir, false)
 	assert.NoError(t, err)
 
 	written, err := stor.Create(testCtx, "1/test", bytes.NewBuffer([]byte{1, 5, 7, 8, 3}))
@@ -42,7 +42,7 @@ func TestLocal_Size(t *testing.T) {
 
 	defer os.RemoveAll(tmpDir)
 
-	stor, err := NewLocal(tmpDir)
+	stor, err := NewLocal(tmpDir, false)
 	assert.NoError(t, err)
 
 	_, err = stor.Create(testCtx, "1/test", bytes.NewBuffer([]byte{1, 5, 7, 8, 3}))
@@ -54,7 +54,7 @@ func TestLocal_Size(t *testing.T) {
 }
 
 func TestLocal_NoSize(t *testing.T) {
-	stor, err := NewLocal("")
+	stor, err := NewLocal("", false)
 	assert.NoError(t, err)
 
 	_, err = stor.Size(testCtx, "1/test")
@@ -65,7 +65,7 @@ func TestLocal_Delete(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "")
 	assert.NoError(t, err)
 
-	stor, err := NewLocal(tmpDir)
+	stor, err := NewLocal(tmpDir, false)
 	assert.NoError(t, err)
 
 	_, err = stor.Create(testCtx, "1/test", bytes.NewBuffer([]byte{1, 5, 7, 8, 3}))

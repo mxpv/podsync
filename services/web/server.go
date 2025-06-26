@@ -31,6 +31,8 @@ type Config struct {
 	// DataDir is a path to a directory to keep XML feeds and downloaded episodes,
 	// that will be available to user via web server for download.
 	DataDir string `toml:"data_dir"`
+	// WebUIEnabled is a flag indicating if web UI is enabled
+	WebUIEnabled bool `toml:"web_ui"`
 }
 
 func New(cfg Config, storage http.FileSystem) *Server {

@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podsync</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* Fonts and base styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f2f2f7;
+        }
+        
+        .episode-card {
+            transition: all 0.2s ease;
+            border: none;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .episode-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        /* Purple play button */
+        .play-button {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #AF52DE, #9D4EDD);
+            color: white;
+            border: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(175, 82, 222, 0.3);
+        }
+        .play-button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #9D4EDD, #8B5CF6);
+            box-shadow: 0 4px 12px rgba(175, 82, 222, 0.4);
+        }
+        .play-button i {
+            font-size: 1.2rem;
+            margin-left: 2px; /* Optical centering for play icon */
+        }
+        
+        /* Typography */
+        .episode-meta {
+            font-size: 0.85rem;
+            color: #8E8E93;
+            font-weight: 400;
+        }
+        .feed-badge {
+            background: #8E8E93;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 6px;
+            padding: 4px 8px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .feed-badge:hover {
+            background: #6D6D70;
+            color: white;
+            text-decoration: none;
+            transform: translateY(-1px);
+        }
+        .duration-badge {
+            background-color: #F2F2F7;
+            color: #8E8E93;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 6px;
+            padding: 4px 8px;
+        }
+        .description-text {
+            color: #3C3C43;
+            line-height: 1.4;
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+        
+        /* Loading spinner */
+        .loading-spinner {
+            border: 3px solid #F2F2F7;
+            border-top: 3px solid #AF52DE;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .audio-player {
+            width: 100%;
+            margin-top: 12px;
+            border-radius: 8px;
+        }
+        .controls-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        /* Episode images */
+        .episode-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+        }
+        .episode-image-placeholder {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #F2F2F7, #E5E5EA);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8E8E93;
+            font-size: 1.8rem;
+        }
+        
+        /* Episode title */
+        .episode-title {
+            color: #1D1D1F;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            line-height: 1.3;
+        }
+        .episode-title:hover {
+            color: #AF52DE;
+            text-decoration: none;
+        }
+        
+        /* Navigation */
+        .navbar {
+            background: white !important;
+            border: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: #1D1D1F !important;
+        }
+        .navbar-text {
+            color: #8E8E93 !important;
+            font-weight: 500;
+        }
+        .navbar .btn-outline-secondary {
+            border-color: #8E8E93;
+            color: #8E8E93;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.8rem;
+            padding: 4px 8px;
+        }
+        .navbar .btn-outline-secondary:hover {
+            background-color: #8E8E93;
+            border-color: #8E8E93;
+            color: white;
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #AF52DE, #9D4EDD);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 8px 16px;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #9D4EDD, #8B5CF6);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(175, 82, 222, 0.3);
+        }
+        
+        .btn-outline-secondary {
+            border-color: #AF52DE;
+            color: #AF52DE;
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 8px 16px;
+        }
+        .btn-outline-secondary:hover {
+            background-color: #AF52DE;
+            border-color: #AF52DE;
+        }
+        
+        .btn-outline-info {
+            border-color: #AF52DE;
+            color: #AF52DE;
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 8px 16px;
+        }
+        .btn-outline-info:hover {
+            background-color: #AF52DE;
+            border-color: #AF52DE;
+        }
+        
+        /* Small action buttons */
+        .btn-sm {
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.8rem;
+            padding: 6px 12px;
+        }
+        .btn-outline-primary {
+            border-color: #AF52DE;
+            color: #AF52DE;
+        }
+        .btn-outline-primary:hover {
+            background-color: #AF52DE;
+            border-color: #AF52DE;
+        }
+        .btn-outline-success {
+            border-color: #34C759;
+            color: #34C759;
+        }
+        .btn-outline-success:hover {
+            background-color: #34C759;
+            border-color: #34C759;
+        }
+        .btn-outline-warning {
+            border-color: #FF9500;
+            color: #FF9500;
+        }
+        .btn-outline-warning:hover {
+            background-color: #FF9500;
+            border-color: #FF9500;
+        }
+        
+        /* YouTube button styling */
+        .btn-youtube {
+            border-color: #FF0000;
+            color: #FF0000;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.8rem;
+            padding: 6px 12px;
+        }
+        .btn-youtube:hover {
+            background-color: #FF0000;
+            border-color: #FF0000;
+            color: white;
+        }
+        
+        /* Header styling */
+        h2 {
+            color: #1D1D1F;
+            font-weight: 700;
+            font-size: 2rem;
+        }
+        
+        /* Container adjustments */
+        .container {
+            max-width: 900px;
+        }
+        
+        /* Card body padding */
+        .episode-card .card-body {
+            padding: 20px;
+        }
+        
+        /* Error styling */
+        .alert-danger {
+            background-color: #FEEBEE;
+            border-color: #FF3B30;
+            color: #D70015;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-headphones me-2"></i>
+                Podsync
+            </a>
+            <div class="navbar-nav ms-auto d-flex align-items-center gap-3">
+                <span class="navbar-text" id="episode-count">
+                    Loading episodes...
+                </span>
+                <a href="podsync.opml" target="_blank" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-file-code me-1"></i>
+                    OPML
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h2 class="mb-3">
+                    <i class="bi bi-list-ul me-2"></i>
+                    Latest Episodes
+                </h2>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loading" class="text-center">
+            <div class="loading-spinner"></div>
+            <p class="text-muted">Loading episodes from feeds...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-message" class="alert alert-danger d-none" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Error!</strong> <span id="error-text"></span>
+        </div>
+
+        <!-- Episodes List -->
+        <div id="episodes-container" class="d-none">
+            <!-- Episodes will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Include the OPML/RSS parsing functions -->
+    <script>
+        // Paste your JavaScript functions here
+        /**
+         * Loads OPML XML from a URL and converts it to a JavaScript dictionary
+         * @param {string} url - The URL containing the OPML XML
+         * @returns {Promise<Object>} A promise that resolves to the OPML data as a dictionary
+         */
+        async function loadOPMLFromURL(url) {
+            try {
+                // Fetch the OPML XML from the URL
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`Error loading OPML. HTTP status: ${response.status}`);
+                }
+                
+                const xmlText = await response.text();
+                
+                // Parse the XML
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                
+                // Check for parsing errors
+                const parserError = xmlDoc.querySelector('parsererror');
+                if (parserError) {
+                    throw new Error('OPML XML parsing error: ' + parserError.textContent);
+                }
+                
+                // Convert OPML to dictionary
+                return parseOPMLToDict(xmlDoc);
+                
+            } catch (error) {
+                console.error('Error loading OPML:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * Parses OPML XML document to a JavaScript dictionary
+         * @param {Document} xmlDoc - The parsed XML document
+         * @returns {Object} The OPML data as a dictionary
+         */
+        function parseOPMLToDict(xmlDoc) {
+            const opml = xmlDoc.querySelector('opml');
+            if (!opml) {
+                throw new Error('Invalid OPML: no opml element found');
+            }
+            
+            const result = {
+                version: opml.getAttribute('version') || '1.0',
+                head: {},
+                body: []
+            };
+            
+            // Parse head section
+            const head = opml.querySelector('head');
+            if (head) {
+                for (const child of head.children) {
+                    result.head[child.tagName] = child.textContent;
+                }
+            }
+            
+            // Parse body section
+            const body = opml.querySelector('body');
+            if (body) {
+                result.body = parseOutlines(body.querySelectorAll(':scope > outline'));
+            }
+            
+            return result;
+        }
+
+        /**
+         * Recursively parses outline elements
+         * @param {NodeList} outlines - The outline elements to parse
+         * @returns {Array} Array of outline objects
+         */
+        function parseOutlines(outlines) {
+            const result = [];
+            
+            for (const outline of outlines) {
+                const item = {};
+                
+                // Get all attributes
+                for (const attr of outline.attributes) {
+                    item[attr.name] = attr.value;
+                }
+                
+                // Check for child outlines
+                const childOutlines = outline.querySelectorAll(':scope > outline');
+                if (childOutlines.length > 0) {
+                    item.children = parseOutlines(childOutlines);
+                }
+                
+                result.push(item);
+            }
+            
+            return result;
+        }
+
+        /**
+         * Fetches and parses RSS feed to extract episodes
+         * @param {string} feedUrl - The RSS feed URL
+         * @returns {Promise<Array>} Array of episode objects
+         */
+        async function fetchEpisodesFromFeed(feedUrl) {
+            try {
+                const response = await fetch(feedUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const rssText = await response.text();
+                const parser = new DOMParser();
+                const rssDoc = parser.parseFromString(rssText, 'text/xml');
+                
+                // Check for parsing errors
+                const parserError = rssDoc.querySelector('parsererror');
+                if (parserError) {
+                    throw new Error('RSS parsing error: ' + parserError.textContent);
+                }
+                
+                return parseRSSEpisodes(rssDoc, feedUrl);
+                
+            } catch (error) {
+                console.error(`Error fetching feed ${feedUrl}:`, error);
+                return []; // Return empty array on error to continue processing other feeds
+            }
+        }
+
+        /**
+         * Parses RSS XML to extract episode information
+         * @param {Document} rssDoc - The parsed RSS XML document
+         * @param {string} feedUrl - The original feed URL for reference
+         * @returns {Array} Array of episode objects
+         */
+        function parseRSSEpisodes(rssDoc, feedUrl) {
+            const episodes = [];
+            const channel = rssDoc.querySelector('channel');
+            
+            if (!channel) {
+                console.warn(`No channel found in RSS feed: ${feedUrl}`);
+                return episodes;
+            }
+            
+            // Get feed metadata
+            const feedTitle = channel.querySelector('title')?.textContent || 'Unknown Feed';
+            const feedDescription = channel.querySelector('description')?.textContent || '';
+            const feedLink = channel.querySelector('link')?.textContent || '';
+            
+            // Get all items (episodes)
+            const items = channel.querySelectorAll('item');
+            
+            items.forEach(item => {
+                const episode = {
+                    feedUrl: feedUrl,
+                    feedTitle: feedTitle,
+                    feedLink: feedLink,
+                    title: item.querySelector('title')?.textContent || 'Untitled Episode',
+                    description: item.querySelector('description')?.textContent || '',
+                    link: item.querySelector('link')?.textContent || '',
+                    pubDate: item.querySelector('pubDate')?.textContent || '',
+                    guid: item.querySelector('guid')?.textContent || '',
+                    author: item.querySelector('author')?.textContent || 
+                           item.querySelector('itunes\\:author, author[itunes]')?.textContent || '',
+                    duration: item.querySelector('itunes\\:duration, duration[itunes]')?.textContent || '',
+                    image: item.querySelector('itunes\\:image, image[itunes]')?.getAttribute('href') || 
+                           channel.querySelector('itunes\\:image, image[itunes]')?.getAttribute('href') || 
+                           channel.querySelector('image url')?.textContent || '',
+                    enclosureUrl: item.querySelector('enclosure')?.getAttribute('url') || '',
+                    enclosureType: item.querySelector('enclosure')?.getAttribute('type') || '',
+                    enclosureLength: item.querySelector('enclosure')?.getAttribute('length') || ''
+                };
+                
+                // Parse publication date
+                if (episode.pubDate) {
+                    episode.pubDateParsed = new Date(episode.pubDate);
+                    // Fallback if date parsing fails
+                    if (isNaN(episode.pubDateParsed.getTime())) {
+                        episode.pubDateParsed = new Date(0); // Unix epoch as fallback
+                    }
+                } else {
+                    episode.pubDateParsed = new Date(0);
+                }
+                
+                episodes.push(episode);
+            });
+            
+            return episodes;
+        }
+
+        /**
+         * Fetches all episodes from OPML feeds and sorts them by publication date
+         * @param {Object} opmlData - The parsed OPML data
+         * @returns {Promise<Array>} Array of all episodes sorted by publication date (newest first)
+         */
+        async function getAllEpisodesSortedByDate(opmlData) {
+            const allEpisodes = [];
+            const feedUrls = extractFeedUrls(opmlData.body);
+            
+            console.log(`Found ${feedUrls.length} feeds to process...`);
+            
+            // Fetch episodes from all feeds concurrently
+            const episodePromises = feedUrls.map(async (feedData) => {
+                console.log(`Fetching episodes from: ${feedData.title}`);
+                const episodes = await fetchEpisodesFromFeed(feedData.xmlUrl);
+                return episodes;
+            });
+            
+            // Wait for all feeds to be processed
+            const episodeArrays = await Promise.all(episodePromises);
+            
+            // Flatten the array of arrays
+            episodeArrays.forEach(episodes => {
+                allEpisodes.push(...episodes);
+            });
+            
+            // Sort by publication date (newest first)
+            allEpisodes.sort((a, b) => b.pubDateParsed.getTime() - a.pubDateParsed.getTime());
+            
+            console.log(`Total episodes found: ${allEpisodes.length}`);
+            return allEpisodes;
+        }
+
+        /**
+         * Recursively extracts feed URLs from OPML body structure
+         * @param {Array} outlines - OPML outline array
+         * @returns {Array} Array of feed objects with title and xmlUrl
+         */
+        function extractFeedUrls(outlines) {
+            const feeds = [];
+            
+            outlines.forEach(outline => {
+                // If this outline has an xmlUrl, it's a feed
+                if (outline.xmlUrl) {
+                    feeds.push({
+                        title: outline.title || outline.text || 'Unknown Feed',
+                        xmlUrl: outline.xmlUrl,
+                        htmlUrl: outline.htmlUrl || '',
+                        description: outline.description || ''
+                    });
+                }
+                
+                // Recursively check children
+                if (outline.children && outline.children.length > 0) {
+                    feeds.push(...extractFeedUrls(outline.children));
+                }
+            });
+            
+            return feeds;
+        }
+
+        // UI-specific functions
+        let allEpisodes = [];
+
+        /**
+         * Loads episodes and displays them in the UI
+         */
+        async function loadEpisodes() {
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('error-message');
+            const episodesContainer = document.getElementById('episodes-container');
+            const episodeCount = document.getElementById('episode-count');
+            
+            // Show loading, hide others
+            loading.classList.remove('d-none');
+            errorMessage.classList.add('d-none');
+            episodesContainer.classList.add('d-none');
+            
+            try {
+                // You can change this URL to your OPML file
+                const opmlUrl = 'podsync.opml';
+                const opmlData = await loadOPMLFromURL(opmlUrl);
+                
+                allEpisodes = await getAllEpisodesSortedByDate(opmlData);
+                
+                // Update episode count
+                episodeCount.textContent = `${allEpisodes.length} episodes loaded`;
+                
+                // Display all episodes
+                displayEpisodesInUI(allEpisodes);
+                
+                // Hide loading, show episodes
+                loading.classList.add('d-none');
+                episodesContainer.classList.remove('d-none');
+                
+            } catch (error) {
+                console.error('Error loading episodes:', error);
+                
+                // Show error
+                loading.classList.add('d-none');
+                document.getElementById('error-text').textContent = error.message;
+                errorMessage.classList.remove('d-none');
+            }
+        }
+
+        /**
+         * Displays episodes in the UI
+         * @param {Array} episodes - Episodes to display
+         */
+        function displayEpisodesInUI(episodes) {
+            const container = document.getElementById('episodes-container');
+            
+            container.innerHTML = episodes.map((episode, index) => {
+                const date = episode.pubDateParsed.toLocaleDateString();
+                const time = episode.pubDateParsed.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const shortDesc = episode.description ? 
+                    (episode.description.length > 200 ? 
+                        episode.description.substring(0, 200) + '...' : 
+                        episode.description) : 
+                    'No description available';
+                
+                // Clean up HTML tags from description
+                const cleanDesc = shortDesc.replace(/<[^>]*>/g, '');
+                
+                return `
+                    <div class="card episode-card mb-3">
+                        <div class="card-body">
+                            <div class="row align-items-start">
+                                <div class="col-auto">
+                                    <div class="controls-section d-flex flex-column align-items-center gap-2">
+                                        ${episode.enclosureUrl ? 
+                                            `<button class="play-button" onclick="togglePlay('${episode.enclosureUrl}', this)" title="Play episode">
+                                                <i class="bi bi-play-fill"></i>
+                                            </button>` :
+                                            `<div class="play-button" style="opacity: 0.5;" title="No audio available">
+                                                <i class="bi bi-music-note"></i>
+                                            </div>`
+                                        }
+                                        ${episode.enclosureUrl ? 
+                                            `<a href="${episode.enclosureUrl}" target="_blank" class="text-success" style="font-size: 1.2rem;" title="Download Audio">
+                                                <i class="bi bi-download"></i>
+                                            </a>` : ''
+                                        }
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="d-flex flex-wrap align-items-center mb-2">
+                                        ${episode.feedLink ? 
+                                            `<a href="${episode.feedLink}" target="_blank" class="badge feed-badge me-2">${episode.feedTitle}</a>` :
+                                            `<span class="badge feed-badge me-2">${episode.feedTitle}</span>`
+                                        }
+                                        <a href="${episode.feedUrl}" target="_blank" class="text-warning me-2" style="font-size: 0.9rem;" title="RSS Feed">
+                                            <i class="bi bi-rss"></i>
+                                        </a>
+                                        ${episode.author ? 
+                                            `<small class="episode-meta me-2">by ${episode.author}</small>` : ''
+                                        }
+                                        ${episode.duration ? 
+                                            `<span class="badge duration-badge me-2">
+                                                <i class="bi bi-clock me-1"></i>${episode.duration}
+                                            </span>` : ''
+                                        }
+                                        <small class="episode-meta">
+                                            <i class="bi bi-calendar me-1"></i>${date} ${time}
+                                        </small>
+                                    </div>
+                                    
+                                    <h5 class="card-title mb-2">
+                                        ${episode.link ? 
+                                            `<a href="${episode.link}" target="_blank" class="episode-title">${episode.title}</a>` :
+                                            `<span class="episode-title">${episode.title}</span>`
+                                        }
+                                    </h5>
+                                    
+                                    <p class="description-text mb-2">${cleanDesc}</p>
+                                    
+                                    ${episode.enclosureUrl ? 
+                                        `<audio class="audio-player d-none" controls preload="none">
+                                            <source src="${episode.enclosureUrl}" type="${episode.enclosureType || 'audio/mpeg'}">
+                                            Your browser does not support the audio element.
+                                        </audio>` : ''
+                                    }
+                                </div>
+                                <div class="col-auto">
+                                    ${episode.image ? 
+                                        `<img src="${episode.image}" alt="${episode.title}" class="episode-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                         <div class="episode-image-placeholder" style="display: none;">
+                                             <i class="bi bi-image"></i>
+                                         </div>` :
+                                        `<div class="episode-image-placeholder">
+                                             <i class="bi bi-image"></i>
+                                         </div>`
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /**
+         * Toggles audio playback
+         * @param {string} audioUrl - URL of the audio file
+         * @param {HTMLElement} button - The play button element
+         */
+        function togglePlay(audioUrl, button) {
+            const audioPlayer = button.closest('.card-body').querySelector('.audio-player');
+            const icon = button.querySelector('i');
+            
+            if (audioPlayer.classList.contains('d-none')) {
+                // Show player and start playing
+                audioPlayer.classList.remove('d-none');
+                audioPlayer.play();
+                icon.className = 'bi bi-pause-fill';
+                button.title = 'Pause episode';
+            } else {
+                // Toggle play/pause
+                if (audioPlayer.paused) {
+                    audioPlayer.play();
+                    icon.className = 'bi bi-pause-fill';
+                    button.title = 'Pause episode';
+                } else {
+                    audioPlayer.pause();
+                    icon.className = 'bi bi-play-fill';
+                    button.title = 'Play episode';
+                }
+            }
+            
+            // Add event listeners for when audio ends
+            audioPlayer.addEventListener('ended', function() {
+                icon.className = 'bi bi-play-fill';
+                button.title = 'Play episode';
+            });
+        }
+
+        // Load episodes when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEpisodes();
+        });
+    </script>
+</body>
+</html>
