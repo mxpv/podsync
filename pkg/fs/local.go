@@ -26,6 +26,12 @@ func NewLocal(rootDir string) (*Local, error) {
 }
 
 func (l *Local) Open(name string) (http.File, error) {
+	if (name == "/index.html") {
+		// allow users to override the index.html by placing one in the data dir.
+		if  _, err := os.Stat(filepath.Join(l.rootDir, name)); errors.Is(err, os.ErrNotExist) { 
+			return os.Open("./html/index.html")
+		}
+	}
 	path := filepath.Join(l.rootDir, name)
 	return os.Open(path)
 }
