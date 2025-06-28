@@ -133,6 +133,7 @@ $ docker pull ghcr.io/mxpv/podsync:latest
 $ docker run \
     -p 8080:8080 \
     -v $(pwd)/data:/app/data/ \
+    -v $(pwd)/db:/app/db/ \
     -v $(pwd)/config.toml:/app/config.toml \
     ghcr.io/mxpv/podsync:latest
 ```
@@ -146,6 +147,7 @@ services:
     container_name: podsync
     volumes:
       - ./data:/app/data/
+      - ./db:/app/db/
       - ./config.toml:/app/config.toml
     ports:
       - 8080:8080
