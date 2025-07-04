@@ -1,4 +1,4 @@
-FROM golang:1.20 as builder
+FROM golang:1.23 as builder
 
 ENV TAG="nightly"
 ENV COMMIT=""
@@ -23,6 +23,7 @@ RUN apk --no-cache add ca-certificates python3 py3-pip ffmpeg tzdata \
     libc6-compat && ln -s /lib/libc.so.6 /usr/lib/libresolv.so.2
 
 COPY --from=builder /usr/bin/yt-dlp /usr/bin/youtube-dl
+COPY --from=builder /usr/bin/yt-dlp /usr/bin/yt-dlp
 COPY --from=builder /build/bin/podsync /app/podsync
 
 ENTRYPOINT ["/app/podsync"]
