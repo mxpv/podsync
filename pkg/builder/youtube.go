@@ -18,6 +18,7 @@ import (
 	"github.com/mxpv/podsync/pkg/model"
 )
 
+
 const (
 	maxYoutubeResults       = 50
 	hdBytesPerSecond        = 350000
@@ -37,21 +38,60 @@ type YouTubeBuilder struct {
 	key    apiKey
 }
 
-// Cost: 5 units (call method: 1, snippet: 2, contentDetails: 2)
-// See https://developers.google.com/youtube/v3/docs/channels/list#part
-func (yt *YouTubeBuilder) listChannels(ctx context.Context, linkType model.Type, id string, parts string) (*youtube.Channel, error) {
-	req := yt.client.Channels.List(parts)
+// resolveHandle uses youtube.Search.List to find a channel ID for a given handle.
+// Cost: 100 units for the search.
+func (yt *YouTubeBuilder) resolveHandle(ctx context.Context, handle string) (string, error) {
+	if !strings.HasPrefix(handle, "@") {
+		return "", errors.Errorf("handle %q does not start with @", handle)
+	}
 
-	switch linkType {
-	case model.TypeChannel:
-		req = req.Id(id)
-	case model.TypeUser:
-		req = req.ForUsername(id)
-	default:
-		return nil, errors.New("unsupported link type")
+	searchParts := []string{"id"}
+	searchCall := yt.client.Search.List(searchParts).Q(handle).Type("channel").MaxResults(1)
+
+	resp, err := searchCall.Context(ctx).Do(yt.key)
+
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to search for handle %s", handle)
+	}
+
+	if len(resp.Items) == 0 || resp.Items[0].Id == nil || resp.Items[0].Id.ChannelId == "" {
+		return "", errors.Wrapf(model.ErrNotFound, "handle %s not found or no channel ID associated", handle)
+	}
+
+	return resp.Items[0].Id.ChannelId, nil
+}
+
+// Cost: 5 units (call method: 1, snippet: 2, contentDetails: 2) if not resolving handle.
+// If resolving handle, additional 100 units for search.
+// See https://developers.google.com/youtube/v3/docs/channels/list#part
+func (yt *YouTubeBuilder) listChannels(ctx context.Context, linkType model.Type, id string, partsStr string) (*youtube.Channel, error) {
+	partsSlice := strings.Split(partsStr, ",")
+	req := yt.client.Channels.List(partsSlice)
+	var resolvedID = id
+
+	if strings.HasPrefix(id, "@") {
+		// Handles are always treated as channels for the purpose of fetching channel details.
+		// The original linkType might have been TypeUser or TypeChannel based on URL parsing,
+		// but the core identifier is the handle.
+		actualChannelID, err := yt.resolveHandle(ctx, id)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to resolve handle %s", id)
+		}
+		resolvedID = actualChannelID
+		req = req.Id(resolvedID)
+	} else {
+		switch linkType {
+		case model.TypeChannel:
+			req = req.Id(id)
+		case model.TypeUser: // Legacy user URL
+			req = req.ForUsername(id)
+		default:
+			return nil, errors.Errorf("unsupported link type for listChannels: %s", linkType)
+		}
 	}
 
 	resp, err := req.Context(ctx).Do(yt.key)
+
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query channel")
 	}
@@ -66,8 +106,9 @@ func (yt *YouTubeBuilder) listChannels(ctx context.Context, linkType model.Type,
 
 // Cost: 3 units (call method: 1, snippet: 2)
 // See https://developers.google.com/youtube/v3/docs/playlists/list#part
-func (yt *YouTubeBuilder) listPlaylists(ctx context.Context, id, channelID string, parts string) (*youtube.Playlist, error) {
-	req := yt.client.Playlists.List(parts)
+func (yt *YouTubeBuilder) listPlaylists(ctx context.Context, id, channelID string, partsStr string) (*youtube.Playlist, error) {
+	partsSlice := strings.Split(partsStr, ",")
+	req := yt.client.Playlists.List(partsSlice)
 
 	if id != "" {
 		req = req.Id(id)
@@ -76,6 +117,7 @@ func (yt *YouTubeBuilder) listPlaylists(ctx context.Context, id, channelID strin
 	}
 
 	resp, err := req.Context(ctx).Do(yt.key)
+
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query playlist")
 	}
@@ -97,12 +139,15 @@ func (yt *YouTubeBuilder) listPlaylistItems(ctx context.Context, feed *model.Fee
 		count = feed.PageSize
 	}
 
-	req := yt.client.PlaylistItems.List("id,snippet").MaxResults(int64(count)).PlaylistId(feed.ItemID)
+	// Parts for PlaylistItems.List is hardcoded to "id,snippet" in the original code constructing `req`.
+	playlistItemParts := []string{"id", "snippet"}
+	req := yt.client.PlaylistItems.List(playlistItemParts).MaxResults(int64(count)).PlaylistId(feed.ItemID)
 	if pageToken != "" {
 		req = req.PageToken(pageToken)
 	}
 
 	resp, err := req.Context(ctx).Do(yt.key)
+
 	if err != nil {
 		return nil, "", errors.Wrap(err, "failed to query playlist items")
 	}
@@ -175,10 +220,11 @@ func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info 
 	var (
 		thumbnails *youtube.ThumbnailDetails
 	)
+	originalItemID := info.ItemID // Store original item ID for later use, especially for handles
 
 	switch info.LinkType {
 	case model.TypeChannel, model.TypeUser:
-		// Cost: 5 units for channel or user
+		// Cost: 5 units for channel or user (plus 100 if resolving handle)
 		channel, err := yt.listChannels(ctx, info.LinkType, info.ItemID, "id,snippet,contentDetails")
 		if err != nil {
 			return err
@@ -187,15 +233,31 @@ func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info 
 		feed.Title = channel.Snippet.Title
 		feed.Description = channel.Snippet.Description
 
-		if channel.Kind == "youtube#channel" {
-			feed.ItemURL = fmt.Sprintf("https://youtube.com/channel/%s", channel.Id)
-			feed.Author = "<notfound>"
+		// If the original ItemID was a handle, use it for ItemURL and Author
+		if strings.HasPrefix(originalItemID, "@") {
+			feed.ItemURL = fmt.Sprintf("https://youtube.com/%s", originalItemID)
+			feed.Author = originalItemID
 		} else {
-			feed.ItemURL = fmt.Sprintf("https://youtube.com/user/%s", channel.Snippet.CustomUrl)
-			feed.Author = channel.Snippet.CustomUrl
+			// Existing logic for non-handle channel/user URLs
+			if channel.Kind == "youtube#channel" {
+				feed.ItemURL = fmt.Sprintf("https://youtube.com/channel/%s", channel.Id)
+				// For channels not identified by a user-facing name initially,
+				// it's often better to use channel title as author if CustomUrl is not available or not fitting.
+				// However, CustomUrl if available and different from ID is usually what users expect.
+				// If channel.Snippet.CustomUrl is available and starts with @, it's a handle.
+				// If not, channel title is a good fallback.
+				if channel.Snippet.CustomUrl != "" {
+					feed.Author = channel.Snippet.CustomUrl
+				} else {
+					feed.Author = channel.Snippet.Title // Fallback to title
+				}
+			} else { // Legacy user (rarely distinct from channel nowadays)
+				feed.ItemURL = fmt.Sprintf("https://youtube.com/user/%s", channel.Snippet.CustomUrl) // CustomUrl is the username here
+				feed.Author = channel.Snippet.CustomUrl
+			}
 		}
 
-		feed.ItemID = channel.ContentDetails.RelatedPlaylists.Uploads
+		feed.ItemID = channel.ContentDetails.RelatedPlaylists.Uploads // This ItemID is now the uploads playlist ID
 
 		if date, err := yt.parseDate(channel.Snippet.PublishedAt); err != nil {
 			return err
@@ -206,27 +268,68 @@ func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info 
 		thumbnails = channel.Snippet.Thumbnails
 
 	case model.TypePlaylist:
-		// Cost: 3 units for playlist
-		playlist, err := yt.listPlaylists(ctx, info.ItemID, "", "id,snippet")
-		if err != nil {
-			return err
+		originalItemID := info.ItemID // Preserve original ItemID for author/URL if it's a handle
+		isHandle := strings.HasPrefix(info.ItemID, "@")
+
+		if isHandle {
+			channelId, err := yt.resolveHandle(ctx, info.ItemID)
+			if err != nil {
+				return errors.Wrapf(err, "failed to resolve handle for playlist query: %s", info.ItemID)
+			}
+
+			// Fetch channel details to get uploads playlist and metadata
+			// Using TypeChannel here as we are operating on a channelId
+			// Cost: 5 units (plus 100 for prior handle resolution)
+			channel, err := yt.listChannels(ctx, model.TypeChannel, channelId, "id,snippet,contentDetails")
+			if err != nil {
+				return errors.Wrapf(err, "failed to list channel for handle-based playlist: %s", info.ItemID)
+			}
+
+			feed.Title = fmt.Sprintf("%s - All Uploads", channel.Snippet.Title)
+			feed.Description = channel.Snippet.Description
+			// Use the original handle for ItemURL as per task description
+			feed.ItemURL = fmt.Sprintf("https://youtube.com/%s/playlists", originalItemID)
+			feed.Author = originalItemID // The handle itself
+
+			if date, errDate := yt.parseDate(channel.Snippet.PublishedAt); errDate != nil {
+				return errDate
+			} else {
+				feed.PubDate = date
+			}
+			thumbnails = channel.Snippet.Thumbnails // Use channel thumbnails for cover art
+
+			// This is key: set ItemID to the channel's uploads playlist ID
+			if channel.ContentDetails == nil || channel.ContentDetails.RelatedPlaylists == nil || channel.ContentDetails.RelatedPlaylists.Uploads == "" {
+				return errors.Errorf("could not find uploads playlist for channel: %s (resolved from handle %s)", channelId, originalItemID)
+			}
+			feed.ItemID = channel.ContentDetails.RelatedPlaylists.Uploads
+			// The LinkType on the feed object can remain TypePlaylist.
+			// The ItemID now points to a concrete playlist (the uploads playlist).
+		} else { // Not a handle, so info.ItemID is assumed to be a standard playlist ID (PL...)
+			// Cost: 3 units for playlist (id,snippet,status,contentDetails)
+			playlist, err := yt.listPlaylists(ctx, info.ItemID, "", "id,snippet,status,contentDetails")
+			if err != nil {
+				return err
+			}
+
+			if playlist.Status != nil && playlist.Status.PrivacyStatus == "private" && !feed.PrivateFeed {
+				return errors.Errorf("playlist %s is private. To allow, set private_feed = true in config for this feed", info.ItemID)
+			}
+
+			// Existing logic for standard playlists
+			feed.Title = fmt.Sprintf("%s: %s", playlist.Snippet.ChannelTitle, playlist.Snippet.Title)
+			feed.Description = playlist.Snippet.Description
+			feed.ItemURL = fmt.Sprintf("https://youtube.com/playlist?list=%s", playlist.Id)
+			feed.Author = playlist.Snippet.ChannelTitle
+
+			if date, errDate := yt.parseDate(playlist.Snippet.PublishedAt); errDate != nil {
+				return errDate
+			} else {
+				feed.PubDate = date
+			}
+			thumbnails = playlist.Snippet.Thumbnails
+			feed.ItemID = playlist.Id // Ensure ItemID is the playlist ID
 		}
-
-		feed.Title = fmt.Sprintf("%s: %s", playlist.Snippet.ChannelTitle, playlist.Snippet.Title)
-		feed.Description = playlist.Snippet.Description
-
-		feed.ItemURL = fmt.Sprintf("https://youtube.com/playlist?list=%s", playlist.Id)
-		feed.ItemID = playlist.Id
-
-		feed.Author = "<notfound>"
-
-		if date, err := yt.parseDate(playlist.Snippet.PublishedAt); err != nil {
-			return err
-		} else { // nolint:golint
-			feed.PubDate = date
-		}
-
-		thumbnails = playlist.Snippet.Thumbnails
 
 	default:
 		return errors.New("unsupported link format")
@@ -288,12 +391,16 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 
 	// Loop in each slices of 50 (or less) IDs and query their description
 	for _, idsI := range idsList {
-		req, err := yt.client.Videos.List("id,snippet,contentDetails").Id(idsI).Context(ctx).Do(yt.key)
+		videoPartsSlice := []string{"id", "snippet", "contentDetails"}
+		req := yt.client.Videos.List(videoPartsSlice).Id(idsI)
+
+		resp, err := req.Context(ctx).Do(yt.key)
+
 		if err != nil {
 			return errors.Wrap(err, "failed to query video descriptions")
 		}
 
-		for _, video := range req.Items {
+		for _, video := range resp.Items {
 			var (
 				snippet  = video.Snippet
 				videoID  = video.Id
@@ -461,10 +568,12 @@ func NewYouTubeBuilder(key string) (*YouTubeBuilder, error) {
 		return nil, errors.New("empty YouTube API key")
 	}
 
-	yt, err := youtube.New(&http.Client{})
+
+	httpClient := &http.Client{} // Or any other http.Client setup you might have
+	ytService, err := youtube.New(httpClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create youtube client")
+		return nil, errors.Wrap(err, "failed to create youtube client for builder")
 	}
 
-	return &YouTubeBuilder{client: yt, key: apiKey(key)}, nil
+	return &YouTubeBuilder{client: ytService, key: apiKey(key)}, nil
 }
