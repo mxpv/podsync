@@ -18,19 +18,6 @@ import (
 	"github.com/mxpv/podsync/pkg/model"
 )
 
-// MockAPIInternal holds functions that simulate the Do() method of YouTube API calls for testing.
-// This struct and the ActiveInternalMockAPI variable are used by tests in youtube_test.go.
-type MockAPIInternal struct { // Exported
-	SearchListFunc        func(q, typeValue string, parts []string) (*youtube.SearchListResponse, error)
-	ChannelsListFunc      func(id, forUsername string, parts []string) (*youtube.ChannelListResponse, error)
-	PlaylistItemsListFunc func(playlistId string, parts []string, maxResults int64) (*youtube.PlaylistItemListResponse, error)
-	VideosListFunc        func(videoIds []string, parts []string) (*youtube.VideoListResponse, error)
-	PlaylistsListFunc     func(playlistID, channelID string, parts []string) (*youtube.PlaylistListResponse, error)
-}
-
-// ActiveInternalMockAPI is a global variable to hold the mock API functions for the current test.
-// It is set by test helpers (e.g., mockYoutubeBuilder in youtube_test.go).
-var ActiveInternalMockAPI *MockAPIInternal // Exported
 
 const (
 	maxYoutubeResults       = 50
@@ -61,15 +48,7 @@ func (yt *YouTubeBuilder) resolveHandle(ctx context.Context, handle string) (str
 	searchParts := []string{"id"}
 	searchCall := yt.client.Search.List(searchParts).Q(handle).Type("channel").MaxResults(1)
 
-	var resp *youtube.SearchListResponse
-	var err error
-
-	if ActiveInternalMockAPI != nil && ActiveInternalMockAPI.SearchListFunc != nil {
-		// Parameters for mock: query, type, parts
-		resp, err = ActiveInternalMockAPI.SearchListFunc(handle, "channel", searchParts)
-	} else {
-		resp, err = searchCall.Context(ctx).Do(yt.key)
-	}
+	resp, err := searchCall.Context(ctx).Do(yt.key)
 
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to search for handle %s", handle)
@@ -111,27 +90,7 @@ func (yt *YouTubeBuilder) listChannels(ctx context.Context, linkType model.Type,
 		}
 	}
 
-	var resp *youtube.ChannelListResponse
-	var err error
-
-	if ActiveInternalMockAPI != nil && ActiveInternalMockAPI.ChannelsListFunc != nil {
-		// Determine effective ID/username for mock
-		mockID := ""
-		mockUsername := ""
-		if strings.HasPrefix(id, "@") { // resolvedID is used for req.Id()
-			mockID = resolvedID
-		} else {
-			switch linkType {
-			case model.TypeChannel:
-				mockID = id
-			case model.TypeUser:
-				mockUsername = id
-			}
-		}
-		resp, err = ActiveInternalMockAPI.ChannelsListFunc(mockID, mockUsername, partsSlice)
-	} else {
-		resp, err = req.Context(ctx).Do(yt.key)
-	}
+	resp, err := req.Context(ctx).Do(yt.key)
 
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query channel")
@@ -157,15 +116,7 @@ func (yt *YouTubeBuilder) listPlaylists(ctx context.Context, id, channelID strin
 		req = req.ChannelId(channelID)
 	}
 
-	var resp *youtube.PlaylistListResponse
-	var err error
-
-	if ActiveInternalMockAPI != nil && ActiveInternalMockAPI.PlaylistsListFunc != nil {
-		resp, err = ActiveInternalMockAPI.PlaylistsListFunc(id, channelID, partsSlice)
-	} else {
-		// The Do call on PlaylistListCall returns *youtube.PlaylistListResponse
-		resp, err = req.Context(ctx).Do(yt.key)
-	}
+	resp, err := req.Context(ctx).Do(yt.key)
 
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to query playlist")
@@ -195,14 +146,7 @@ func (yt *YouTubeBuilder) listPlaylistItems(ctx context.Context, feed *model.Fee
 		req = req.PageToken(pageToken)
 	}
 
-	var resp *youtube.PlaylistItemListResponse
-	var err error
-
-	if ActiveInternalMockAPI != nil && ActiveInternalMockAPI.PlaylistItemsListFunc != nil {
-		resp, err = ActiveInternalMockAPI.PlaylistItemsListFunc(feed.ItemID, playlistItemParts, int64(count))
-	} else {
-		resp, err = req.Context(ctx).Do(yt.key)
-	}
+	resp, err := req.Context(ctx).Do(yt.key)
 
 	if err != nil {
 		return nil, "", errors.Wrap(err, "failed to query playlist items")
@@ -450,14 +394,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 		videoPartsSlice := []string{"id", "snippet", "contentDetails"}
 		req := yt.client.Videos.List(videoPartsSlice).Id(idsI)
 
-		var resp *youtube.VideoListResponse
-		var err error
-
-		if ActiveInternalMockAPI != nil && ActiveInternalMockAPI.VideosListFunc != nil {
-			resp, err = ActiveInternalMockAPI.VideosListFunc(strings.Split(idsI, ","), videoPartsSlice)
-		} else {
-			resp, err = req.Context(ctx).Do(yt.key)
-		}
+		resp, err := req.Context(ctx).Do(yt.key)
 
 		if err != nil {
 			return errors.Wrap(err, "failed to query video descriptions")
@@ -631,13 +568,6 @@ func NewYouTubeBuilder(key string) (*YouTubeBuilder, error) {
 		return nil, errors.New("empty YouTube API key")
 	}
 
-	// If activeInternalMockAPI is set, we are in a test context.
-	// The key might be a placeholder if mocks are used.
-	// However, NewYouTubeBuilder itself doesn't know about activeInternalMockAPI.
-	// The test helper `mockYoutubeBuilder` creates the builder and sets activeInternalMockAPI.
-	// So, this function remains as is. The `key` check is still relevant for non-mocked test runs
-	// or production.
-	// The actual *youtube.Service instance will be used, and its .Do() calls get intercepted.
 
 	httpClient := &http.Client{} // Or any other http.Client setup you might have
 	ytService, err := youtube.New(httpClient)
