@@ -21,6 +21,7 @@ any device in podcast client.
 ## Features
 
 - Works with YouTube and Vimeo.
+- **YouTube handle URL support** (e.g., `@channelname` format).
 - Supports feeds configuration: video/audio, high/low quality, max video height, etc.
 - mp3 encoding
 - Update scheduler supports cron expressions
@@ -31,18 +32,20 @@ any device in podcast client.
 - One-click deployment for AWS.
 - Runs on Windows, Mac OS, Linux, and Docker.
 - Supports ARM.
-- Automatic youtube-dl self update.
+- **Uses yt-dlp** (maintained fork of youtube-dl) for improved reliability.
 - Supports API keys rotation.
 
 ## Dependencies
 
 If you're running the CLI as binary (e.g. not via Docker), you need to make sure that dependencies are available on
-your system. Currently, Podsync depends on `youtube-dl` ,  `ffmpeg`, and `go`.
+your system. Currently, Podsync depends on `yt-dlp` (or `youtube-dl`), `ffmpeg`, and `go`.
 
 On Mac you can install those with `brew`:
 ```
-brew install youtube-dl ffmpeg go
+brew install yt-dlp ffmpeg go
 ```
+
+**Note**: For better reliability and YouTube handle URL support, use `yt-dlp` instead of the deprecated `youtube-dl`.
 
 ## Documentation
 
@@ -88,6 +91,8 @@ youtube = "PASTE YOUR API KEY HERE"
 [feeds]
     [feeds.ID1]
     url = "https://www.youtube.com/channel/UCxC5Ls6DwqV0e-CYcAKkExQ"
+    # You can also use YouTube handle URLs:
+    # url = "https://www.youtube.com/@channelname"
 ```
 
 If you want to hide Podsync behind reverse proxy like nginx, you can use `hostname` field:
