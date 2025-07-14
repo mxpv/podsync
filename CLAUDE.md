@@ -88,6 +88,8 @@ The application uses TOML configuration files. See `config.toml.example` for all
 ### Git Workflow
 - Write short, expressive commit messages that clearly describe the change
 - Do not include automated signatures or generation notices in commit messages
+- Don't add "Generated with Claude Code" to commit messages
+- Don't add "Co-Authored-By: Claude noreply@anthropic.com" to commit messages
 - Keep commits focused and atomic - one logical change per commit
 - Ensure the build passes before pushing commits
 
