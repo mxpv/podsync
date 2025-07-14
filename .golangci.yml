@@ -1,4 +1,4 @@
-version: 2
+version: "2"
 
 run:
   timeout: 3m
@@ -20,6 +20,3 @@ linters:
     - errcheck
 
 issues:
-  exclude-dirs:
-    - bin
-    - docs
