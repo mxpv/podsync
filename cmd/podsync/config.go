@@ -35,6 +35,8 @@ type Config struct {
 	Tokens map[model.Provider]StringSlice `toml:"tokens"`
 	// Downloader (youtube-dl) configuration
 	Downloader ytdl.Config `toml:"downloader"`
+	// Global cleanup policy applied to feeds that don't specify their own cleanup policy
+	Cleanup *feed.Cleanup `toml:"cleanup"`
 }
 
 type Log struct {
@@ -178,6 +180,11 @@ func (c *Config) applyDefaults(configPath string) {
 
 		if _feed.PlaylistSort == "" {
 			_feed.PlaylistSort = model.SortingAsc
+		}
+
+		// Apply global cleanup policy if feed doesn't have its own
+		if _feed.Clean == nil && c.Cleanup != nil {
+			_feed.Clean = c.Cleanup
 		}
 	}
 }

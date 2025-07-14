@@ -1,5 +1,11 @@
 # This is an example of TOML configuration file for Podsync.
 
+# Global cleanup policy applied to feeds that don't specify their own cleanup policy.
+# When set, this policy is used as a fallback for all feeds.
+# Comment out or remove this section if you don't want a global cleanup policy.
+[cleanup]
+keep_last = 50  # Keep last 50 episodes globally (unless overridden per feed)
+
 # Web server related configuration.
 [server]
 # HTTP server port.
@@ -75,8 +81,9 @@ vimeo = [ # Multiple keys will be rotated.
   # If set then overwrite 'update_period'.
   cron_schedule = "@every 12h"
 
-  # Whether to cleanup old episodes.
+  # Whether to cleanup old episodes for this specific feed.
   # Keep last 10 episodes (order desc by PubDate)
+  # This overrides the global cleanup policy if one is set.
   clean = { keep_last = 10 }
 
   # Optional Golang regexp format.
