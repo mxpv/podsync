@@ -18,8 +18,9 @@ import (
 	"github.com/mxpv/podsync/pkg/model"
 	"github.com/mxpv/podsync/pkg/ytdl"
 )
+
 type Downloader interface {
-	PlaylistMetadata(ctx context.Context, url string) (metadata ytdl.PlaylistMetadata, err error) 
+	PlaylistMetadata(ctx context.Context, url string) (metadata ytdl.PlaylistMetadata, err error)
 }
 
 const (
@@ -37,8 +38,8 @@ func (key apiKey) Get() (string, string) {
 }
 
 type YouTubeBuilder struct {
-	client *youtube.Service
-	key    apiKey
+	client     *youtube.Service
+	key        apiKey
 	downloader Downloader
 }
 
@@ -235,7 +236,7 @@ func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info 
 			return errors.Wrapf(err, "failed to get playlist metadata for %s", feed.ItemURL)
 		}
 		log.Infof("Playlist metadata: %v", metadata)
-		if(len(metadata.Thumbnails) > 0) {
+		if len(metadata.Thumbnails) > 0 {
 			// best qualtiy thumbnail is the last one
 			feed.CoverArt = metadata.Thumbnails[len(metadata.Thumbnails)-1].Url
 		} else {
@@ -323,7 +324,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 			// Parse date added to playlist / publication date
 			dateStr := ""
 			playlistItem, ok := playlist[video.Id]
-			if ok && playlistItem.PublishedAt > snippet.PublishedAt{
+			if ok && playlistItem.PublishedAt > snippet.PublishedAt {
 				// Use playlist item publish date if it's more recent
 				dateStr = playlistItem.PublishedAt
 			} else {
@@ -334,7 +335,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 			if err != nil {
 				return errors.Wrapf(err, "failed to parse video publish date: %s", dateStr)
 			}
-						
+
 			// Sometimes YouTube retrun empty content defailt, use arbitrary one
 			var seconds int64 = 1
 			if video.ContentDetails != nil {
@@ -481,5 +482,5 @@ func NewYouTubeBuilder(key string, ytdlp Downloader) (*YouTubeBuilder, error) {
 		return nil, errors.Wrap(err, "failed to create youtube client")
 	}
 
-	return &YouTubeBuilder{client: yt, key: apiKey(key), downloader:ytdlp}, nil
+	return &YouTubeBuilder{client: yt, key: apiKey(key), downloader: ytdlp}, nil
 }

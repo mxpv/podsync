@@ -44,7 +44,7 @@ func Build(_ctx context.Context, feed *model.Feed, cfg *Config, hostname string)
 		feedLink    = feed.ItemURL
 	)
 
-	if author ==  "<notfound>" {
+	if author == "<notfound>" {
 		author = feed.Title
 	}
 
