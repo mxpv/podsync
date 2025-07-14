@@ -18,5 +18,3 @@ linters:
     - whitespace
   disable:
     - errcheck
-
-issues:
