@@ -13,6 +13,7 @@ import (
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
 
 	"github.com/mxpv/podsync/pkg/model"
@@ -46,7 +47,7 @@ type YouTubeBuilder struct {
 // Cost: 5 units (call method: 1, snippet: 2, contentDetails: 2)
 // See https://developers.google.com/youtube/v3/docs/channels/list#part
 func (yt *YouTubeBuilder) listChannels(ctx context.Context, linkType model.Type, id string, parts string) (*youtube.Channel, error) {
-	req := yt.client.Channels.List(parts)
+	req := yt.client.Channels.List(strings.Split(parts, ","))
 
 	switch linkType {
 	case model.TypeChannel:
@@ -73,7 +74,7 @@ func (yt *YouTubeBuilder) listChannels(ctx context.Context, linkType model.Type,
 // Cost: 3 units (call method: 1, snippet: 2)
 // See https://developers.google.com/youtube/v3/docs/playlists/list#part
 func (yt *YouTubeBuilder) listPlaylists(ctx context.Context, id, channelID string, parts string) (*youtube.Playlist, error) {
-	req := yt.client.Playlists.List(parts)
+	req := yt.client.Playlists.List(strings.Split(parts, ","))
 
 	if id != "" {
 		req = req.Id(id)
@@ -103,7 +104,7 @@ func (yt *YouTubeBuilder) listPlaylistItems(ctx context.Context, feed *model.Fee
 		count = feed.PageSize
 	}
 
-	req := yt.client.PlaylistItems.List("id,snippet").MaxResults(int64(count)).PlaylistId(feed.ItemID)
+	req := yt.client.PlaylistItems.List([]string{"id", "snippet"}).MaxResults(int64(count)).PlaylistId(feed.ItemID)
 	if pageToken != "" {
 		req = req.PageToken(pageToken)
 	}
@@ -303,7 +304,7 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 
 	// Loop in each slices of 50 (or less) IDs and query their description
 	for _, idsI := range idsList {
-		req, err := yt.client.Videos.List("id,snippet,contentDetails").Id(idsI).Context(ctx).Do(yt.key)
+		req, err := yt.client.Videos.List([]string{"id", "snippet", "contentDetails"}).Id(idsI).Context(ctx).Do(yt.key)
 		if err != nil {
 			return errors.Wrap(err, "failed to query video descriptions")
 		}
@@ -477,7 +478,7 @@ func NewYouTubeBuilder(key string, ytdlp Downloader) (*YouTubeBuilder, error) {
 		return nil, errors.New("empty YouTube API key")
 	}
 
-	yt, err := youtube.New(&http.Client{})
+	yt, err := youtube.NewService(context.Background(), option.WithHTTPClient(&http.Client{}))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create youtube client")
 	}
