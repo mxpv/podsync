@@ -87,12 +87,13 @@ The application uses TOML configuration files. See `config.toml.example` for all
 - Follow the existing code style and patterns in the repository
 
 ### Testing and Quality Assurance
-- Always run `make test` before committing changes or opening pull requests
-- **CRITICAL**: Always run `golangci-lint run` after making code changes to ensure proper formatting and linting
-- Ensure all tests pass and linting checks pass before committing
+- **CRITICAL**: Always run BOTH `make test` AND `golangci-lint run` after making any code changes
+- Run tests first with `make test` to ensure functionality works correctly
+- Run linter with `golangci-lint run` to ensure proper formatting and code quality
+- Ensure ALL tests pass AND ALL linting checks pass before committing
 - Review code carefully for spelling errors, typos, and grammatical mistakes
 - Test changes locally with different configurations when applicable
-- The project uses golangci-lint with strict formatting rules - code must pass ALL linting checks
+- The project uses golangci-lint with strict formatting rules - code must pass ALL checks
 
 ### Git Workflow
 - Write short, expressive commit messages that clearly describe the change
@@ -122,4 +123,4 @@ This project uses golangci-lint with strict formatting rules configured in `.gol
 - Consistent spacing around assignment operators (`key: value` not `key:value`)
 - Space after commas in function parameters and struct literals
 
-**Always run `golangci-lint run` after making ANY code changes to catch formatting issues before committing.**
+**Always run BOTH `make test` AND `golangci-lint run` after making ANY code changes to ensure both functionality and formatting are correct before committing.**
