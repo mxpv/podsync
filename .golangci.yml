@@ -1,29 +1,25 @@
+version: 2
+
+run:
+  timeout: 3m
+
 linters:
   enable:
-    - structcheck
-    - varcheck
     - staticcheck
     - unconvert
-    - gofmt
-    - goimports
-    - golint
+    - revive  # replacement for golint
     - ineffassign
-    - vet
+    - govet
     - unused
     - misspell
     - bodyclose
-    - interfacer
-    - unconvert
-    - maligned
-    # - depguard
     - nakedret
     - prealloc
     - whitespace
   disable:
     - errcheck
 
-run:
-  deadline: 3m
-  skip-dirs:
+issues:
+  exclude-dirs:
     - bin
     - docs
