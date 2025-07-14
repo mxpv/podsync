@@ -84,6 +84,7 @@ timeout = 15
 	assert.EqualValues(t, 86400, feed.Filters.MaxDuration)
 	assert.EqualValues(t, 365, feed.Filters.MaxAge)
 	assert.EqualValues(t, 1, feed.Filters.MinAge)
+	require.NotNil(t, feed.Clean)
 	assert.EqualValues(t, 10, feed.Clean.KeepLast)
 	assert.EqualValues(t, model.SortingDesc, feed.PlaylistSort)
 
@@ -231,6 +232,114 @@ data_dir = "/data"
 
 	assert.True(t, config.Database.Badger.Truncate)
 	assert.True(t, config.Database.Badger.FileIO)
+}
+
+func TestGlobalCleanupPolicy(t *testing.T) {
+	t.Run("global cleanup policy applied to feeds without cleanup", func(t *testing.T) {
+		const file = `
+[cleanup]
+keep_last = 25
+
+[server]
+data_dir = "/data"
+
+[feeds]
+  [feeds.FEED1]
+  url = "https://youtube.com/channel/test1"
+  
+  [feeds.FEED2]
+  url = "https://youtube.com/channel/test2"
+  clean = { keep_last = 5 }
+`
+		path := setup(t, file)
+		defer os.Remove(path)
+
+		config, err := LoadConfig(path)
+		assert.NoError(t, err)
+		require.NotNil(t, config)
+
+		// Global cleanup policy should be set
+		require.NotNil(t, config.Cleanup)
+		assert.EqualValues(t, 25, config.Cleanup.KeepLast)
+
+		// FEED1 should inherit global cleanup policy
+		feed1, ok := config.Feeds["FEED1"]
+		assert.True(t, ok)
+		require.NotNil(t, feed1.Clean)
+		assert.EqualValues(t, 25, feed1.Clean.KeepLast)
+
+		// FEED2 should keep its own cleanup policy
+		feed2, ok := config.Feeds["FEED2"]
+		assert.True(t, ok)
+		require.NotNil(t, feed2.Clean)
+		assert.EqualValues(t, 5, feed2.Clean.KeepLast)
+	})
+
+	t.Run("no global cleanup policy", func(t *testing.T) {
+		const file = `
+[server]
+data_dir = "/data"
+
+[feeds]
+  [feeds.FEED1]
+  url = "https://youtube.com/channel/test1"
+  
+  [feeds.FEED2]
+  url = "https://youtube.com/channel/test2"
+  clean = { keep_last = 5 }
+`
+		path := setup(t, file)
+		defer os.Remove(path)
+
+		config, err := LoadConfig(path)
+		assert.NoError(t, err)
+		require.NotNil(t, config)
+
+		// Global cleanup policy should not be set
+		assert.Nil(t, config.Cleanup)
+
+		// FEED1 should have no cleanup policy
+		feed1, ok := config.Feeds["FEED1"]
+		assert.True(t, ok)
+		assert.Nil(t, feed1.Clean)
+
+		// FEED2 should keep its own cleanup policy
+		feed2, ok := config.Feeds["FEED2"]
+		assert.True(t, ok)
+		require.NotNil(t, feed2.Clean)
+		assert.EqualValues(t, 5, feed2.Clean.KeepLast)
+	})
+
+	t.Run("feed cleanup overrides global cleanup", func(t *testing.T) {
+		const file = `
+[cleanup]
+keep_last = 100
+
+[server]
+data_dir = "/data"
+
+[feeds]
+  [feeds.FEED1]
+  url = "https://youtube.com/channel/test1"
+  clean = { keep_last = 10 }
+`
+		path := setup(t, file)
+		defer os.Remove(path)
+
+		config, err := LoadConfig(path)
+		assert.NoError(t, err)
+		require.NotNil(t, config)
+
+		// Global cleanup policy should be set
+		require.NotNil(t, config.Cleanup)
+		assert.EqualValues(t, 100, config.Cleanup.KeepLast)
+
+		// FEED1 should use its own cleanup policy, not the global one
+		feed1, ok := config.Feeds["FEED1"]
+		assert.True(t, ok)
+		require.NotNil(t, feed1.Clean)
+		assert.EqualValues(t, 10, feed1.Clean.KeepLast)
+	})
 }
 
 func setup(t *testing.T, file string) string {

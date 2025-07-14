@@ -327,11 +327,16 @@ func (u *Manager) cleanup(ctx context.Context, feedConfig *feed.Config) error {
 	var (
 		feedID = feedConfig.ID
 		logger = log.WithField("feed_id", feedID)
-		count  = feedConfig.Clean.KeepLast
 		list   []*model.Episode
 		result *multierror.Error
 	)
 
+	if feedConfig.Clean == nil {
+		logger.Debug("no cleanup policy configured")
+		return nil
+	}
+
+	count := feedConfig.Clean.KeepLast
 	if count < 1 {
 		logger.Info("nothing to clean")
 		return nil
