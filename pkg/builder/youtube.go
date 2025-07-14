@@ -13,6 +13,7 @@ import (
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
 
 	"github.com/mxpv/podsync/pkg/model"
@@ -477,7 +478,7 @@ func NewYouTubeBuilder(key string, ytdlp Downloader) (*YouTubeBuilder, error) {
 		return nil, errors.New("empty YouTube API key")
 	}
 
-	yt, err := youtube.New(&http.Client{})
+	yt, err := youtube.NewService(context.Background(), option.WithHTTPClient(&http.Client{}))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create youtube client")
 	}
