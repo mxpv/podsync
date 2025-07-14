@@ -33,7 +33,6 @@ func (t *TwitchBuilder) Build(_ctx context.Context, cfg *feed.Config) (*model.Fe
 	}
 
 	if info.LinkType == model.TypeUser {
-
 		users, err := t.client.GetUsers(&helix.UsersParams{
 			Logins: []string{info.ItemID},
 		})
@@ -51,7 +50,7 @@ func (t *TwitchBuilder) Build(_ctx context.Context, cfg *feed.Config) (*model.Fe
 
 		isStreaming := false
 		streamID := ""
-		streams, err := t.client.GetStreams(&helix.StreamsParams{
+		streams, _ := t.client.GetStreams(&helix.StreamsParams{
 			UserIDs: []string{user.ID},
 		})
 		if len(streams.Data.Streams) > 0 {
@@ -72,10 +71,8 @@ func (t *TwitchBuilder) Build(_ctx context.Context, cfg *feed.Config) (*model.Fe
 
 		var added = 0
 		for _, video := range videos.Data.Videos {
-
 			// Do not add the video of an ongoing stream because it will be incomplete
 			if !isStreaming || video.StreamID != streamID {
-
 				date, err := time.Parse(time.RFC3339, video.PublishedAt)
 				if err != nil {
 					return nil, errors.Wrapf(err, "cannot parse PublishedAt time: %s", video.PublishedAt)
@@ -92,7 +89,7 @@ func (t *TwitchBuilder) Build(_ctx context.Context, cfg *feed.Config) (*model.Fe
 
 				feed.Episodes = append(feed.Episodes, &model.Episode{
 					ID:          video.ID,
-					Title:       fmt.Sprintf("%s (%s)", video.Title, date),
+					Title:       fmt.Sprintf("%s (%s)", video.Title, date.Format("2006-01-02 15:04 UTC")),
 					Description: video.Description,
 					Thumbnail:   thumbnailUrl,
 					Duration:    durationSeconds,
@@ -107,11 +104,9 @@ func (t *TwitchBuilder) Build(_ctx context.Context, cfg *feed.Config) (*model.Fe
 					return feed, nil
 				}
 			}
-
 		}
 
 		return feed, nil
-
 	}
 
 	return nil, errors.New("unsupported feed type")
