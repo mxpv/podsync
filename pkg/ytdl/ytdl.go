@@ -1,8 +1,8 @@
 package ytdl
 
 import (
-    "encoding/json"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -26,23 +26,22 @@ const (
 )
 
 type PlaylistMetadataThumbnail struct {
-	Id string `json:"id"`
-	Url string `json:"url"`
+	Id         string `json:"id"`
+	Url        string `json:"url"`
 	Resolution string `json:"resolution"`
-	Width int `json:"width"`
-	Height int `json:"height"`
+	Width      int    `json:"width"`
+	Height     int    `json:"height"`
 }
 
 type PlaylistMetadata struct {
-  Id string `json:"id"`
-  Title string `json:"title"`
-  Description string `json:"description"`
-  Thumbnails []PlaylistMetadataThumbnail `json:"thumbnails"`
-  Channel string `json:"channel"`
-  ChannelId string `json:"channel_id"`
-  ChannelUrl string `json:"channel_url"`
-  WebpageUrl string `json:"webpage_url"`
-
+	Id          string                      `json:"id"`
+	Title       string                      `json:"title"`
+	Description string                      `json:"description"`
+	Thumbnails  []PlaylistMetadataThumbnail `json:"thumbnails"`
+	Channel     string                      `json:"channel"`
+	ChannelId   string                      `json:"channel_id"`
+	ChannelUrl  string                      `json:"channel_url"`
+	WebpageUrl  string                      `json:"webpage_url"`
 }
 
 var (
@@ -177,13 +176,12 @@ func (dl *YoutubeDl) Update(ctx context.Context) error {
 	return nil
 }
 
-
 func (dl *YoutubeDl) PlaylistMetadata(ctx context.Context, url string) (metadata PlaylistMetadata, err error) {
 	log.Info("getting playlist metadata for: ", url)
 	args := []string{
 		"--playlist-items", "0",
-		"-J", // JSON output
-		"-q", // quiet mode
+		"-J",            // JSON output
+		"-q",            // quiet mode
 		"--no-warnings", // suppress warnings
 		url,
 	}
