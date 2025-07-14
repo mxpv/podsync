@@ -104,16 +104,12 @@ hostname = "https://my.test.host:4443"
 
 Server will be accessible from `http://localhost:8080`, but episode links will point to `https://my.test.host:4443/ID1/...`
 
-## One click deployment
-
-[![Deploy to AWS](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=Podsync&templateURL=https://podsync-cf.s3.amazonaws.com/cloud_formation.yml)
-
 ## How to run
 
 
 ### Build and run as binary:
 
-Make sure you have created the file `config.toml`. Also note the location of the `data_dir`. Depending on the operating system, you may have to choose a different location since `/app/data` might be not writable. 
+Make sure you have created the file `config.toml`. Also note the location of the `data_dir`. Depending on the operating system, you may have to choose a different location since `/app/data` might be not writable.
 
 ```
 $ git clone https://github.com/mxpv/podsync
@@ -128,6 +124,7 @@ Use the editor [Visual Studio Code](https://code.visualstudio.com/) and install 
 
 
 ### Run via Docker:
+
 ```
 $ docker pull ghcr.io/mxpv/podsync:latest
 $ docker run \
@@ -139,8 +136,9 @@ $ docker run \
 ```
 
 ### Run via Docker Compose:
+
 ```
-$ cat docker-compose.yml 
+$ cat docker-compose.yml
 services:
   podsync:
     image: ghcr.io/mxpv/podsync
