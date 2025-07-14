@@ -1,6 +1,6 @@
 module github.com/mxpv/podsync
 
-go 1.21
+go 1.24
 
 require (
 	github.com/BrianHicks/finch v0.0.0-20140409222414-419bd73c29ec
