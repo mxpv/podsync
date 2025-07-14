@@ -46,6 +46,13 @@ go test -v ./...    # Run tests with verbose output
 go test ./pkg/...   # Test specific packages
 ```
 
+### Linting and Formatting
+```bash
+golangci-lint run   # Run all configured linters and formatters
+gofmt -s -w .       # Format all Go files
+goimports -w .      # Organize imports and format
+```
+
 ### Running
 ```bash
 ./bin/podsync --config config.toml    # Run with config file
@@ -81,9 +88,11 @@ The application uses TOML configuration files. See `config.toml.example` for all
 
 ### Testing and Quality Assurance
 - Always run `make test` before committing changes or opening pull requests
-- Ensure all tests pass and maintain or improve test coverage
+- **CRITICAL**: Always run `golangci-lint run` after making code changes to ensure proper formatting and linting
+- Ensure all tests pass and linting checks pass before committing
 - Review code carefully for spelling errors, typos, and grammatical mistakes
 - Test changes locally with different configurations when applicable
+- The project uses golangci-lint with strict formatting rules - code must pass ALL linting checks
 
 ### Git Workflow
 - Write short, expressive commit messages that clearly describe the change
@@ -101,3 +110,16 @@ The application uses TOML configuration files. See `config.toml.example` for all
 - API key rotation support for rate limiting
 - Cron-based scheduling for feed updates
 - Episode filtering and cleanup capabilities
+
+## Formatting and Linting Requirements
+
+This project uses golangci-lint with strict formatting rules configured in `.golangci.yml`. Common formatting requirements include:
+
+- Proper spacing around operators (`if condition {` not `if(condition){`)
+- Correct struct field alignment and spacing
+- Proper import ordering (standard library, third-party, local packages)
+- No trailing whitespace
+- Consistent spacing around assignment operators (`key: value` not `key:value`)
+- Space after commas in function parameters and struct literals
+
+**Always run `golangci-lint run` after making ANY code changes to catch formatting issues before committing.**
