@@ -68,7 +68,13 @@ func (u *Manager) Update(ctx context.Context, feedConfig *feed.Config) error {
 		return errors.Wrap(err, "update failed")
 	}
 
-	if err := u.downloadEpisodes(ctx, feedConfig); err != nil {
+	// Fetch episodes for download
+	episodesToDownload, err := u.fetchEpisodes(ctx, feedConfig)
+	if err != nil {
+		return errors.Wrap(err, "fetch episodes failed")
+	}
+
+	if err := u.downloadEpisodes(ctx, feedConfig, episodesToDownload); err != nil {
 		return errors.Wrap(err, "download failed")
 	}
 
@@ -147,17 +153,17 @@ func (u *Manager) updateFeed(ctx context.Context, feedConfig *feed.Config) error
 	return nil
 }
 
-func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config) error {
+func (u *Manager) fetchEpisodes(ctx context.Context, feedConfig *feed.Config) ([]*model.Episode, error) {
 	var (
 		feedID       = feedConfig.ID
 		downloadList []*model.Episode
 		pageSize     = feedConfig.PageSize
 	)
 
-	log.WithField("page_size", pageSize).Info("downloading episodes")
+	log.WithField("page_size", pageSize).Info("fetching episodes for download")
 
 	// Build the list of files to download
-	if err := u.db.WalkEpisodes(ctx, feedID, func(episode *model.Episode) error {
+	err := u.db.WalkEpisodes(ctx, feedID, func(episode *model.Episode) error {
 		var (
 			logger = log.WithFields(log.Fields{"episode_id": episode.ID})
 		)
@@ -180,13 +186,20 @@ func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config)
 		log.Debugf("adding %s (%q) to queue", episode.ID, episode.Title)
 		downloadList = append(downloadList, episode)
 		return nil
-	}); err != nil {
-		return errors.Wrapf(err, "failed to build update list")
+	})
+
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to build update list")
 	}
 
+	return downloadList, nil
+}
+
+func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config, downloadList []*model.Episode) error {
 	var (
 		downloadCount = len(downloadList)
 		downloaded    = 0
+		feedID        = feedConfig.ID
 	)
 
 	if downloadCount > 0 {
