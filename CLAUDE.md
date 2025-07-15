@@ -98,7 +98,7 @@ The application uses TOML configuration files. See `config.toml.example` for all
 ### Git Workflow
 - Keep commit messages brief and to the point
 - Use a short, descriptive commit title (50 characters or less)
-- Include a brief commit body that summarizes changes in 1-3 sentences when needed
+- Include a brief commit body that summarizes changes in 1-3 sentences when needed (wrap at 120 characters)
 - Do not include automated signatures or generation notices in commit messages or pull requests
 - Don't add "Generated with Claude Code" to commit messages or pull request descriptions
 - Don't add "Co-Authored-By: Claude noreply@anthropic.com" to commit messages or pull request descriptions
