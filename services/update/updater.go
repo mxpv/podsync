@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"sort"
 	"time"
 
@@ -274,20 +273,21 @@ func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config,
 			return err
 		}
 
-		if feedConfig.PostDownloadHook != "" {
-			cmd := exec.Command("/bin/sh", "-c", feedConfig.PostDownloadHook)
-			var outputBuffer, stderrBuffer bytes.Buffer
-			cmd.Stdout = &outputBuffer
-			cmd.Stderr = &stderrBuffer
-			cmd.Env = os.Environ()
-			cmd.Env = append(cmd.Env,
-				"EPISODE_FILE="+fmt.Sprintf("%s/%s", feedID, episodeName),
-				"EPISODE_FEED_NAME="+feedID,
-				"EPISODE_TITLE="+episode.Title)
-			if err := cmd.Run(); err != nil {
-				logger.Warningf("Failed to execute %s: %s", feedConfig.PostDownloadHook, stderrBuffer.String())
+		// Execute post episode download hooks
+		if len(feedConfig.PostEpisodeDownload) > 0 {
+			env := []string{
+				"EPISODE_FILE=" + fmt.Sprintf("%s/%s", feedID, episodeName),
+				"FEED_NAME=" + feedID,
+				"EPISODE_TITLE=" + episode.Title,
 			}
-			logger.Infof("PostDownloadHook %s output: %s", feedConfig.PostDownloadHook, outputBuffer.String())
+
+			for i, hook := range feedConfig.PostEpisodeDownload {
+				if err := hook.Invoke(env); err != nil {
+					logger.Errorf("failed to execute post episode download hook %d: %v", i+1, err)
+				} else {
+					logger.Infof("post episode download hook %d executed successfully", i+1)
+				}
+			}
 		}
 
 		// Update file status in database
