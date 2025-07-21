@@ -38,8 +38,8 @@ type Config struct {
 	Custom Custom `toml:"custom"`
 	// List of additional youtube-dl arguments passed at download time
 	YouTubeDLArgs []string `toml:"youtube_dl_args"`
-	// Execute specified command after successful download
-	PostDownloadHook string `toml:"post_download_hook"`
+	// Post episode download hooks
+	PostEpisodeDownload []*ExecHook `toml:"post_episode_download"`
 	// Included in OPML file
 	OPML bool `toml:"opml"`
 	// Private feed (not indexed by podcast aggregators)
