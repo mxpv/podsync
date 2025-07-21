@@ -14,6 +14,8 @@ jobs:
     name: Build
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
+    permissions:
+      contents: read
 
     strategy:
       matrix:
@@ -34,6 +36,8 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/setup-go@v5
@@ -49,6 +53,11 @@ jobs:
     name: Checks
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      # Required: allow read access to the content for analysis.
+      # See https://github.com/golangci/golangci-lint-action?tab=readme-ov-file#annotations
+      contents: read
+      pull-requests: read
 
     steps:
       - uses: actions/setup-go@v5
