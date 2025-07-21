@@ -83,7 +83,7 @@ port = 8080
   data_dir = "/app/data/"
 
 [tokens]
-youtube = "PASTE YOUR API KEY HERE"
+youtube = "PASTE YOUR API KEY HERE" # See config.toml.example for environment variables
 
 [feeds]
     [feeds.ID1]
