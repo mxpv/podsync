@@ -40,8 +40,6 @@ jobs:
           additional_permissions: |
             actions: read
 
-          model: "claude-opus-4-20250514"
-
           allowed_tools: "Bash(go:*),Bash(golangci-lint:*),Bash(make:*),View,GlobTool,GrepTool,BatchTool,mcp__github"
 
           # Optional: Add custom instructions for Claude to customize its behavior for your project
