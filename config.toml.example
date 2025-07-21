@@ -104,6 +104,20 @@ vimeo = [ # Multiple keys will be rotated.
   # When set to true, podcasts indexers such as iTunes or Google Podcasts will not index this podcast
   private_feed = true
 
+  # Optional post-episode download hooks
+  # Execute commands after each episode is downloaded
+  # Available environment variables: EPISODE_FILE, FEED_NAME, EPISODE_TITLE
+  
+  # Webhook notification example
+  [[feeds.ID1.post_episode_download]]
+  command = ["curl", "-X", "POST", "-d", "New episode: $EPISODE_TITLE", "https://webhook.example.com/notify"]
+  timeout = 30
+
+  # Custom script example
+  [[feeds.ID1.post_episode_download]]
+  command = ["/path/to/your/process-episode.sh"]
+  timeout = 120
+
   # Optional feed customizations
   [feeds.ID1.custom]
   title = "Level1News"
