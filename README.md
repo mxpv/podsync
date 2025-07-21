@@ -27,6 +27,7 @@ any device in podcast client.
 - Feeds customizations (custom artwork, category, language, etc).
 - OPML export.
 - Supports episodes cleanup (keep last X episodes).
+- Configurable hooks for custom integrations and workflows.
 - One-click deployment for AWS.
 - Runs on Windows, Mac OS, Linux, and Docker.
 - Supports ARM.

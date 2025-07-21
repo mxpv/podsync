@@ -38,7 +38,12 @@ type Config struct {
 	Custom Custom `toml:"custom"`
 	// List of additional youtube-dl arguments passed at download time
 	YouTubeDLArgs []string `toml:"youtube_dl_args"`
-	// Post episode download hooks
+	// Post episode download hooks - executed after each episode is successfully downloaded
+	// Multiple hooks can be configured and will execute in sequence
+	// Example:
+	//   [[feeds.ID1.post_episode_download]]
+	//   command = ["echo", "Downloaded: $EPISODE_TITLE"]
+	//   timeout = 10
 	PostEpisodeDownload []*ExecHook `toml:"post_episode_download"`
 	// Included in OPML file
 	OPML bool `toml:"opml"`
