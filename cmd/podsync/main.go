@@ -135,6 +135,26 @@ func main() {
 		log.WithError(err).Fatal("failed to open storage")
 	}
 
+	environmentVariableMap := map[model.Provider]string{
+		model.ProviderYoutube:    "YOUTUBE_API_KEY",
+		model.ProviderVimeo:      "VIMEO_API_KEY",
+		model.ProviderSoundcloud: "SOUNDCLOUD_API_KEY",
+		model.ProviderTwitch:     "TWITCH_API_KEY",
+	}
+
+	// Replace API keys from config with environment variables
+	for provider, environmentVariable := range environmentVariableMap {
+		val, ok := os.LookupEnv(environmentVariable)
+		if ok {
+			log.Infof("Found %s environment variable, replacing config token with it", environmentVariable)
+			// If no tokens are provided in the config.toml, we need to create a new map
+			if cfg.Tokens == nil {
+				cfg.Tokens = make(map[model.Provider]StringSlice)
+			}
+			cfg.Tokens[provider] = []string{val}
+		}
+	}
+
 	// Run updater thread
 	log.Debug("creating key providers")
 	keys := map[model.Provider]feed.KeyProvider{}
