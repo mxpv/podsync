@@ -156,3 +156,7 @@ $ docker compose up
 ## 📦 How to make a release
 
 Just push a git tag. CI will do the rest.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
