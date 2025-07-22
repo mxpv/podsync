@@ -45,12 +45,49 @@ func TestParseYoutubeURL_User(t *testing.T) {
 	require.Equal(t, "fxigr1", id)
 }
 
+func TestParseYoutubeURL_Handle(t *testing.T) {
+	// Test basic handle URL
+	link, _ := url.ParseRequestURI("https://www.youtube.com/@username")
+	kind, id, err := parseYoutubeURL(link)
+	require.NoError(t, err)
+	require.Equal(t, model.TypeHandle, kind)
+	require.Equal(t, "username", id)
+
+	// Test handle URL with /videos
+	link, _ = url.ParseRequestURI("https://youtube.com/@testchannel/videos")
+	kind, id, err = parseYoutubeURL(link)
+	require.NoError(t, err)
+	require.Equal(t, model.TypeHandle, kind)
+	require.Equal(t, "testchannel", id)
+
+	// Test handle URL without www
+	link, _ = url.ParseRequestURI("https://youtube.com/@myhandle")
+	kind, id, err = parseYoutubeURL(link)
+	require.NoError(t, err)
+	require.Equal(t, model.TypeHandle, kind)
+	require.Equal(t, "myhandle", id)
+}
+
 func TestParseYoutubeURL_InvalidLink(t *testing.T) {
 	link, _ := url.ParseRequestURI("https://www.youtube.com/user///")
 	_, _, err := parseYoutubeURL(link)
 	require.Error(t, err)
 
 	link, _ = url.ParseRequestURI("https://www.youtube.com/channel//videos")
+	_, _, err = parseYoutubeURL(link)
+	require.Error(t, err)
+
+	// Test invalid handle URLs
+	link, _ = url.ParseRequestURI("https://www.youtube.com/@")
+	_, _, err = parseYoutubeURL(link)
+	require.Error(t, err)
+
+	link, _ = url.ParseRequestURI("https://www.youtube.com/")
+	_, _, err = parseYoutubeURL(link)
+	require.Error(t, err)
+
+	// Test handle without @ symbol
+	link, _ = url.ParseRequestURI("https://www.youtube.com/username")
 	_, _, err = parseYoutubeURL(link)
 	require.Error(t, err)
 }
