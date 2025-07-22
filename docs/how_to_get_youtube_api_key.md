@@ -23,10 +23,10 @@ youtube = "AIzaSyD4w2s-k79YNR98ABC"
 ```
 Or set the environment variable:
 ```sh
-export YOUTUBE_API_KEY="AIzaSyD4w2s-k79YNR98ABC"
+export PODSYNC_YOUTUBE_API_KEY="AIzaSyD4w2s-k79YNR98ABC"
 ```
 
 For API key rotation, you can specify multiple keys separated by spaces:
 ```sh
-export YOUTUBE_API_KEY="AIzaSyD4w2s-k79YNR98ABC AIzaSyD4w2s-k79YNR98DEF"
+export PODSYNC_YOUTUBE_API_KEY="AIzaSyD4w2s-k79YNR98ABC AIzaSyD4w2s-k79YNR98DEF"
 ```
