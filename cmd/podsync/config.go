@@ -193,10 +193,10 @@ func (c *Config) applyDefaults(configPath string) {
 
 func (c *Config) applyEnv() {
 	envVars := map[model.Provider]string{
-		model.ProviderYoutube:    "YOUTUBE_API_KEY",
-		model.ProviderVimeo:      "VIMEO_API_KEY",
-		model.ProviderSoundcloud: "SOUNDCLOUD_API_KEY",
-		model.ProviderTwitch:     "TWITCH_API_KEY",
+		model.ProviderYoutube:    "PODSYNC_YOUTUBE_API_KEY",
+		model.ProviderVimeo:      "PODSYNC_VIMEO_API_KEY",
+		model.ProviderSoundcloud: "PODSYNC_SOUNDCLOUD_API_KEY",
+		model.ProviderTwitch:     "PODSYNC_TWITCH_API_KEY",
 	}
 
 	// Replace API keys from config with environment variables

@@ -360,8 +360,8 @@ data_dir = "/data"
 		defer os.Remove(path)
 
 		// Set environment variables
-		t.Setenv("YOUTUBE_API_KEY", "env_youtube_key")
-		t.Setenv("VIMEO_API_KEY", "env_vimeo_key")
+		t.Setenv("PODSYNC_YOUTUBE_API_KEY", "env_youtube_key")
+		t.Setenv("PODSYNC_VIMEO_API_KEY", "env_vimeo_key")
 
 		config, err := LoadConfig(path)
 		assert.NoError(t, err)
@@ -388,7 +388,7 @@ data_dir = "/data"
 		defer os.Remove(path)
 
 		// Set environment variable with multiple keys
-		t.Setenv("YOUTUBE_API_KEY", "key1 key2 key3")
+		t.Setenv("PODSYNC_YOUTUBE_API_KEY", "key1 key2 key3")
 
 		config, err := LoadConfig(path)
 		assert.NoError(t, err)
