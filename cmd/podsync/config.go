@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/pelletier/go-toml"
@@ -71,6 +72,7 @@ func LoadConfig(path string) (*Config, error) {
 	}
 
 	config.applyDefaults(path)
+	config.applyEnv()
 
 	if err := config.validate(); err != nil {
 		return nil, err
@@ -185,6 +187,30 @@ func (c *Config) applyDefaults(configPath string) {
 		// Apply global cleanup policy if feed doesn't have its own
 		if _feed.Clean == nil && c.Cleanup != nil {
 			_feed.Clean = c.Cleanup
+		}
+	}
+}
+
+func (c *Config) applyEnv() {
+	envVars := map[model.Provider]string{
+		model.ProviderYoutube:    "YOUTUBE_API_KEY",
+		model.ProviderVimeo:      "VIMEO_API_KEY",
+		model.ProviderSoundcloud: "SOUNDCLOUD_API_KEY",
+		model.ProviderTwitch:     "TWITCH_API_KEY",
+	}
+
+	// Replace API keys from config with environment variables
+	for provider, envVar := range envVars {
+		val, ok := os.LookupEnv(envVar)
+		if ok {
+			log.Infof("Found %s environment variable, replacing config token with it", envVar)
+			// If no tokens are provided in the config.toml, we need to create a new map
+			if c.Tokens == nil {
+				c.Tokens = make(map[model.Provider]StringSlice)
+			}
+			// Support multiple keys separated by spaces for API key rotation
+			keys := strings.Fields(val)
+			c.Tokens[provider] = keys
 		}
 	}
 }

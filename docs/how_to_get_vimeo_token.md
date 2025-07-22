@@ -18,3 +18,8 @@ Or set the environment variable:
 ```sh
 export VIMEO_API_KEY="ecd4d34b07bcb9509ABCD"
 ```
+
+For API key rotation, you can specify multiple keys separated by spaces:
+```sh
+export VIMEO_API_KEY="ecd4d34b07bcb9509ABCD fdc5e45c18cda0610EFGH"
+```
