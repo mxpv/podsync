@@ -17,7 +17,7 @@ remembering last played position, sync between devices and offline listening. Th
 on YouTube and Vimeo. So the aim of Podsync is to make your life easier and enable you to view/listen to content on
 any device in podcast client.
 
-## Features
+## ✨ Features
 
 - Works with YouTube and Vimeo.
 - Supports feeds configuration: video/audio, high/low quality, max video height, etc.
@@ -34,7 +34,7 @@ any device in podcast client.
 - Automatic yt-dlp self update.
 - Supports API keys rotation.
 
-## Dependencies
+## 📋 Dependencies
 
 If you're running the CLI as binary (e.g. not via Docker), you need to make sure that dependencies are available on
 your system. Currently, Podsync depends on `yt-dlp` ,  `ffmpeg`, and `go`.
@@ -44,14 +44,14 @@ On Mac you can install those with `brew`:
 brew install yt-dlp ffmpeg go
 ```
 
-## Documentation
+## 📖 Documentation
 
 - [How to get Vimeo API token](./docs/how_to_get_vimeo_token.md)
 - [How to get YouTube API Key](./docs/how_to_get_youtube_api_key.md)
 - [Podsync on QNAP NAS Guide](./docs/how_to_setup_podsync_on_qnap_nas.md)
 - [Schedule updates with cron](./docs/cron.md)
 
-## Nightly builds
+## 🌙 Nightly builds
 
 Nightly builds uploaded every midnight from the `main` branch and available for testing:
 
@@ -59,14 +59,14 @@ Nightly builds uploaded every midnight from the `main` branch and available for 
 $ docker run -it --rm ghcr.io/mxpv/podsync:nightly
 ```
 
-### Access tokens
+### 🔑 Access tokens
 
 In order to query YouTube or Vimeo API you have to obtain an API token first.
 
 - [How to get YouTube API key](https://elfsight.com/blog/2016/12/how-to-get-youtube-api-key-tutorial/)
 - [Generate an access token for Vimeo](https://developer.vimeo.com/api/guides/start#generate-access-token)
 
-## Configuration
+## ⚙️ Configuration
 
 You need to create a configuration file (for instance `config.toml`) and specify the list of feeds that you're going to host.
 See [config.toml.example](./config.toml.example) for all possible configuration keys available in Podsync.
@@ -104,7 +104,7 @@ hostname = "https://my.test.host:4443"
 
 Server will be accessible from `http://localhost:8080`, but episode links will point to `https://my.test.host:4443/ID1/...`
 
-## How to run
+## 🚀 How to run
 
 
 ### Build and run as binary:
@@ -118,12 +118,12 @@ $ make
 $ ./bin/podsync --config config.toml
 ```
 
-### How to debug
+### 🐛 How to debug
 
 Use the editor [Visual Studio Code](https://code.visualstudio.com/) and install the official [Go](https://marketplace.visualstudio.com/items?itemName=golang.go) extension. Afterwards you can execute "Run & Debug" ▶︎ "Debug Podsync" to debug the application. The required configuration is already prepared (see `.vscode/launch.json`).
 
 
-### Run via Docker:
+### 🐳 Run via Docker:
 
 ```
 $ docker pull ghcr.io/mxpv/podsync:latest
@@ -135,7 +135,7 @@ $ docker run \
     ghcr.io/mxpv/podsync:latest
 ```
 
-### Run via Docker Compose:
+### 🐳 Run via Docker Compose:
 
 ```
 $ cat docker-compose.yml
@@ -153,6 +153,6 @@ services:
 $ docker compose up
 ```
 
-## How to make a release
+## 📦 How to make a release
 
 Just push a git tag. CI will do the rest.
