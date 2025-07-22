@@ -201,7 +201,7 @@ func main() {
 		for _, _feed := range cfg.Feeds {
 			// Track if this feed has an explicit cron schedule
 			hasExplicitCronSchedule := _feed.CronSchedule != ""
-			
+
 			if _feed.CronSchedule == "" {
 				_feed.CronSchedule = fmt.Sprintf("@every %s", _feed.UpdatePeriod.String())
 			}
@@ -215,7 +215,7 @@ func main() {
 
 			m[cronFeed.ID] = cronID
 			log.Debugf("-> %s (update '%s')", cronFeed.ID, cronFeed.CronSchedule)
-			
+
 			// Only perform initial update if no explicit cron schedule is configured
 			// This prevents unwanted updates when using fixed schedules in Docker deployments
 			if !hasExplicitCronSchedule {
