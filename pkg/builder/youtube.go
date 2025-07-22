@@ -44,6 +44,32 @@ type YouTubeBuilder struct {
 	downloader Downloader
 }
 
+// Cost: 100 units (call: 1, snippet: 99)
+// See https://developers.google.com/youtube/v3/docs/search/list#part
+func (yt *YouTubeBuilder) resolveHandle(ctx context.Context, handle string) (string, error) {
+	req := yt.client.Search.List([]string{"snippet"}).
+		Q(handle).
+		Type("channel").
+		MaxResults(1)
+
+	resp, err := req.Context(ctx).Do(yt.key)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to search for handle: %s", handle)
+	}
+
+	if len(resp.Items) == 0 {
+		return "", model.ErrNotFound
+	}
+
+	// Get the channel ID from the search result
+	channelID := resp.Items[0].Snippet.ChannelId
+	if channelID == "" {
+		return "", errors.New("channel ID not found in search results")
+	}
+
+	return channelID, nil
+}
+
 // Cost: 5 units (call method: 1, snippet: 2, contentDetails: 2)
 // See https://developers.google.com/youtube/v3/docs/channels/list#part
 func (yt *YouTubeBuilder) listChannels(ctx context.Context, linkType model.Type, id string, parts string) (*youtube.Channel, error) {
@@ -54,6 +80,13 @@ func (yt *YouTubeBuilder) listChannels(ctx context.Context, linkType model.Type,
 		req = req.Id(id)
 	case model.TypeUser:
 		req = req.ForUsername(id)
+	case model.TypeHandle:
+		// Resolve handle to channel ID first
+		channelID, err := yt.resolveHandle(ctx, id)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to resolve handle: %s", id)
+		}
+		req = req.Id(channelID)
 	default:
 		return nil, errors.New("unsupported link type")
 	}
@@ -157,8 +190,8 @@ func (yt *YouTubeBuilder) selectThumbnail(snippet *youtube.ThumbnailDetails, qua
 
 func (yt *YouTubeBuilder) GetVideoCount(ctx context.Context, info *model.Info) (uint64, error) {
 	switch info.LinkType {
-	case model.TypeChannel, model.TypeUser:
-		// Cost: 3 units
+	case model.TypeChannel, model.TypeUser, model.TypeHandle:
+		// Cost: 3 units for channel/user, 103 units for handle (100 + 3)
 		if channel, err := yt.listChannels(ctx, info.LinkType, info.ItemID, "id,statistics"); err != nil {
 			return 0, err
 		} else { // nolint:golint
@@ -184,8 +217,8 @@ func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info 
 	)
 
 	switch info.LinkType {
-	case model.TypeChannel, model.TypeUser:
-		// Cost: 5 units for channel or user
+	case model.TypeChannel, model.TypeUser, model.TypeHandle:
+		// Cost: 5 units for channel/user, 105 units for handle (100 + 5)
 		channel, err := yt.listChannels(ctx, info.LinkType, info.ItemID, "id,snippet,contentDetails")
 		if err != nil {
 			return err
@@ -194,7 +227,11 @@ func (yt *YouTubeBuilder) queryFeed(ctx context.Context, feed *model.Feed, info 
 		feed.Title = channel.Snippet.Title
 		feed.Description = channel.Snippet.Description
 
-		if channel.Kind == "youtube#channel" {
+		if info.LinkType == model.TypeHandle {
+			// For handles, use the handle URL format
+			feed.ItemURL = fmt.Sprintf("https://youtube.com/@%s", info.ItemID)
+			feed.Author = fmt.Sprintf("@%s", info.ItemID)
+		} else if channel.Kind == "youtube#channel" {
 			feed.ItemURL = fmt.Sprintf("https://youtube.com/channel/%s", channel.Id)
 			feed.Author = "<notfound>"
 		} else {

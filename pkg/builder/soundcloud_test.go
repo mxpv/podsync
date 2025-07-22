@@ -1,12 +1,15 @@
 package builder
 
 import (
+	"context"
 	"testing"
 
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var testCtx = context.Background()
 
 func TestSoundCloud_BuildFeed(t *testing.T) {
 	builder, err := NewSoundcloudBuilder()
