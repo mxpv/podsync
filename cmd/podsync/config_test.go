@@ -342,6 +342,63 @@ data_dir = "/data"
 	})
 }
 
+func TestEnvironmentVariables(t *testing.T) {
+	t.Run("environment variables override config tokens", func(t *testing.T) {
+		const file = `
+[tokens]
+youtube = "original_key"
+vimeo = "original_vimeo_key"
+
+[server]
+data_dir = "/data"
+
+[feeds]
+  [feeds.A]
+  url = "https://youtube.com/watch?v=ygIUF678y40"
+`
+		path := setup(t, file)
+		defer os.Remove(path)
+
+		// Set environment variables
+		t.Setenv("YOUTUBE_API_KEY", "env_youtube_key")
+		t.Setenv("VIMEO_API_KEY", "env_vimeo_key")
+
+		config, err := LoadConfig(path)
+		assert.NoError(t, err)
+		require.NotNil(t, config)
+
+		// Environment variables should override config values
+		require.Len(t, config.Tokens[model.ProviderYoutube], 1)
+		assert.Equal(t, "env_youtube_key", config.Tokens[model.ProviderYoutube][0])
+
+		require.Len(t, config.Tokens[model.ProviderVimeo], 1)
+		assert.Equal(t, "env_vimeo_key", config.Tokens[model.ProviderVimeo][0])
+	})
+
+	t.Run("environment variables support multiple keys", func(t *testing.T) {
+		const file = `
+[server]
+data_dir = "/data"
+
+[feeds]
+  [feeds.A]
+  url = "https://youtube.com/watch?v=ygIUF678y40"
+`
+		path := setup(t, file)
+		defer os.Remove(path)
+
+		// Set environment variable with multiple keys
+		t.Setenv("YOUTUBE_API_KEY", "key1 key2 key3")
+
+		config, err := LoadConfig(path)
+		assert.NoError(t, err)
+		require.NotNil(t, config)
+
+		// Should parse multiple keys from environment variable
+		assert.ElementsMatch(t, []string{"key1", "key2", "key3"}, config.Tokens[model.ProviderYoutube])
+	})
+}
+
 func setup(t *testing.T, file string) string {
 	t.Helper()
 

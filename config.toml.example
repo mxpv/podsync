@@ -49,6 +49,8 @@ key_file_path = "/var/www/priv.pem"
 #   VIMEO_API_KEY for Vimeo
 #   SOUNDCLOUD_API_KEY for Soundcloud
 #   TWITCH_API_KEY for Twitch (format: CLIENT_ID:CLIENT_SECRET)
+# Environment variables support multiple keys separated by spaces for API key rotation:
+#   export YOUTUBE_API_KEY="key1 key2 key3"
 [tokens]
 youtube = "YOUTUBE_API_TOKEN" # YouTube API Key. See https://developers.google.com/youtube/registering_an_application
 vimeo = [ # Multiple keys will be rotated.
