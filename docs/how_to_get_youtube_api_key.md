@@ -19,14 +19,14 @@
 ![Copy token](img/youtube_copy_token.png)
 ```toml
 [tokens]
-youtube = "AIzaSyD4w2s-k79YNR98ABC"
+youtube = "key1"
 ```
 Or set the environment variable:
 ```sh
-export PODSYNC_YOUTUBE_API_KEY="AIzaSyD4w2s-k79YNR98ABC"
+export PODSYNC_YOUTUBE_API_KEY="key1"
 ```
 
 For API key rotation, you can specify multiple keys separated by spaces:
 ```sh
-export PODSYNC_YOUTUBE_API_KEY="AIzaSyD4w2s-k79YNR98ABC AIzaSyD4w2s-k79YNR98DEF"
+export PODSYNC_YOUTUBE_API_KEY="key1 key2"
 ```
