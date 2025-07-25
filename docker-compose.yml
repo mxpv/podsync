@@ -1,13 +1,16 @@
-version: '2.2'
-
 services:
   podsync:
     container_name: podsync
     image: mxpv/podsync:latest
     restart: always
     ports:
-      - 80:80
+      - 8080:8080
     volumes:
       - ./data:/app/data/
       - ./db:/app/db/
       - ./config.toml:/app/config.toml
+    # environment:
+    #   - PODSYNC_YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+    #   - PODSYNC_VIMEO_API_KEY=${VIMEO_API_KEY}
+    #   - PODSYNC_SOUNDCLOUD_API_KEY=${SOUNDCLOUD_API_KEY}
+    #   - PODSYNC_TWITCH_API_KEY=${TWITCH_API_KEY}
