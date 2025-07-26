@@ -12,14 +12,14 @@
 7. Copy a token to your CLI's configuration file or set it as an environment variable.
 ```toml
 [tokens]
-vimeo = "ecd4d34b07bcb9509ABCD"
+vimeo = "key1"
 ```
 Or set the environment variable:
 ```sh
-export PODSYNC_VIMEO_API_KEY="ecd4d34b07bcb9509ABCD"
+export PODSYNC_VIMEO_API_KEY="key1"
 ```
 
 For API key rotation, you can specify multiple keys separated by spaces:
 ```sh
-export PODSYNC_VIMEO_API_KEY="ecd4d34b07bcb9509ABCD fdc5e45c18cda0610EFGH"
+export PODSYNC_VIMEO_API_KEY="key1 key2"
 ```
