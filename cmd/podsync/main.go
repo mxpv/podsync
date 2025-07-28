@@ -240,7 +240,7 @@ func main() {
 	}
 
 	// Run web server
-	srv := web.New(cfg.Server, storage)
+	srv := web.New(cfg.Server, storage, database)
 
 	group.Go(func() error {
 		log.Infof("running listener at %s", srv.Addr)
