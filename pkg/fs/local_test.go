@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -79,6 +80,9 @@ func TestLocal_Delete(t *testing.T) {
 
 	_, err = os.Stat(filepath.Join(tmpDir, "1", "test"))
 	assert.True(t, os.IsNotExist(err))
+
+	err = stor.Delete(testCtx, "1/test")
+	assert.True(t, errors.Is(err, os.ErrNotExist))
 }
 
 func TestLocal_copyFile(t *testing.T) {

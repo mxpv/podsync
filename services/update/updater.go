@@ -398,9 +398,15 @@ func (u *Manager) cleanup(ctx context.Context, feedConfig *feed.Config) error {
 			path        = fmt.Sprintf("%s/%s", feedConfig.ID, episodeName)
 		)
 
-		if err := u.fs.Delete(ctx, path); err != nil {
-			result = multierror.Append(result, errors.Wrapf(err, "failed to delete episode: %s", episode.ID))
-			continue
+		err := u.fs.Delete(ctx, path)
+		if err != nil {
+			if !errors.Is(err, os.ErrNotExist) {
+				logger.WithError(err).Errorf("failed to delete episode file: %s", episode.ID)
+				result = multierror.Append(result, errors.Wrapf(err, "failed to delete episode: %s", episode.ID))
+				continue
+			}
+
+			logger.WithField("episode_id", episode.ID).Info("episode was not found - file does not exist")
 		}
 
 		if err := u.db.UpdateEpisode(feedID, episode.ID, func(episode *model.Episode) error {

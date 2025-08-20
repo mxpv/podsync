@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -64,10 +65,14 @@ func TestS3_Delete(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = stor.Size(testCtx, "1/test")
-	assert.True(t, os.IsNotExist(err))
+	assert.True(t, errors.Is(err, os.ErrNotExist))
 
 	_, ok := files["1/test"]
 	assert.False(t, ok)
+
+	err = stor.Delete(testCtx, "1/test")
+	assert.True(t, errors.Is(err, os.ErrNotExist))
+
 }
 
 func TestS3_BuildKey(t *testing.T) {
