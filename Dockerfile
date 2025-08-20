@@ -18,9 +18,7 @@ FROM alpine:3.21
 
 WORKDIR /app
 
-RUN apk --no-cache add ca-certificates python3 py3-pip ffmpeg tzdata \
-    # https://github.com/golang/go/issues/59305
-    libc6-compat && ln -s /lib/libc.so.6 /usr/lib/libresolv.so.2
+RUN apk --no-cache add ca-certificates python3 py3-pip ffmpeg tzdata libc6-compat
 
 COPY --from=builder /usr/bin/yt-dlp /usr/local/bin/youtube-dl
 COPY --from=builder /build/bin/podsync /app/podsync

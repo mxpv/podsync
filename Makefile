@@ -16,11 +16,18 @@ TAG ?= $(shell git tag --points-at HEAD)
 COMMIT ?= $(shell git rev-parse --short HEAD)
 DATE := $(shell date)
 
-LDFLAGS := "-X 'main.version=${TAG}' -X 'main.commit=${COMMIT}' -X 'main.date=${DATE}' -X 'main.arch=${GOARCH}'"
+#
+# Go optimizations
+# -ldflags -s Remove symbol table
+# -ldflags -w Remove debug information
+# -trimpath Remove all file system paths from the compiled binary
+# -tags netgo Use the netgo network stack (Go DNS resolver)
+#
+LDFLAGS := "-s -w -X 'main.version=${TAG}' -X 'main.commit=${COMMIT}' -X 'main.date=${DATE}' -X 'main.arch=${GOARCH}'"
 
 .PHONY: build
 build:
-	go build -ldflags ${LDFLAGS} -o bin/podsync ./cmd/podsync
+	go build -trimpath -tags netgo -ldflags ${LDFLAGS} -o bin/podsync ./cmd/podsync
 
 #
 # Build a local Docker image
