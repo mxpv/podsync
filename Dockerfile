@@ -1,4 +1,4 @@
-FROM golang:1.24 AS builder
+FROM golang:1.25 AS builder
 
 ENV TAG="nightly"
 ENV COMMIT=""
@@ -22,6 +22,7 @@ RUN apk --no-cache add ca-certificates python3 py3-pip ffmpeg tzdata \
     # https://github.com/golang/go/issues/59305
     libc6-compat && ln -s /lib/libc.so.6 /usr/lib/libresolv.so.2
 
+RUN chmod 777 /usr/local/bin
 COPY --from=builder /usr/bin/yt-dlp /usr/local/bin/youtube-dl
 COPY --from=builder /build/bin/podsync /app/podsync
 COPY --from=builder /build/html/index.html /app/html/index.html
