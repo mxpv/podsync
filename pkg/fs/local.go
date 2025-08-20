@@ -36,7 +36,10 @@ func (l *Local) Open(name string) (http.File, error) {
 
 func (l *Local) Delete(_ctx context.Context, name string) error {
 	path := filepath.Join(l.rootDir, name)
-	return os.Remove(path)
+	if err := os.Remove(path); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (l *Local) Create(_ctx context.Context, name string, reader io.Reader) (int64, error) {

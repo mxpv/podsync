@@ -65,6 +65,13 @@ func (s *S3) Delete(ctx context.Context, name string) error {
 		Bucket: &s.bucket,
 		Key:    &key,
 	})
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() == "NotFound" {
+				return os.ErrNotExist
+			}
+		}
+	}
 	return err
 }
 
