@@ -2,6 +2,7 @@ package fs
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -37,7 +38,7 @@ func (l *Local) Open(name string) (http.File, error) {
 func (l *Local) Delete(_ctx context.Context, name string) error {
 	path := filepath.Join(l.rootDir, name)
 	if err := os.Remove(path); err != nil {
-		return err
+		return fmt.Errorf("failed to delete file %s: %w", path, err)
 	}
 	return nil
 }
