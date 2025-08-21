@@ -72,7 +72,6 @@ func TestS3_Delete(t *testing.T) {
 
 	err = stor.Delete(testCtx, "1/test")
 	assert.True(t, errors.Is(err, os.ErrNotExist))
-
 }
 
 func TestS3_BuildKey(t *testing.T) {
