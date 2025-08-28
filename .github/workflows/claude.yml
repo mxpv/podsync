@@ -32,17 +32,11 @@ jobs:
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@beta
+        uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          additional_permissions: |
-            actions: read
-
-          allowed_tools: "Bash(go:*),Bash(golangci-lint:*),Bash(make:*),View,GlobTool,GrepTool,BatchTool,mcp__github"
-
-          custom_instructions: |
-            Follow our coding standards
-            Ensure tests and lints pass before making commits or PRs
-            Run 'make test' to verify all tests pass
-            Use Go conventions and best practices
+          claude_args: |
+            --max-turns 10
+            --allowedTools "Bash(go:*),Bash(golangci-lint:*),Bash(make:*),View,GlobTool,GrepTool,BatchTool,mcp__github"
+            --system-prompt "Follow our coding standards. Ensure tests and lints pass before making commits or PRs. Run 'make test' to verify all tests pass"
