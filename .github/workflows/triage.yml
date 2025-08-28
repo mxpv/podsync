@@ -5,11 +5,13 @@ on:
 
 jobs:
   triage-issue:
+    name: Triage
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
       issues: write
+      id-token: write
 
     steps:
       - name: Checkout repository

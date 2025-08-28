@@ -6,6 +6,7 @@ on:
 
 jobs:
   deduplicate:
+    name: Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
