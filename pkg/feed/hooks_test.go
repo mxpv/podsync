@@ -1,6 +1,10 @@
 package feed
 
 import (
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
@@ -93,8 +97,28 @@ func TestExecuteHook_CornerCases(t *testing.T) {
 }
 
 func TestExecuteHook_CurlWebhook(t *testing.T) {
+	// Create a local test server to avoid external dependencies
+	receivedData := ""
+	receivedHeaders := make(map[string]string)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Capture the request data for verification
+		body, err := io.ReadAll(r.Body)
+		if err == nil {
+			receivedData = string(body)
+		}
+		receivedHeaders["Content-Type"] = r.Header.Get("Content-Type")
+		receivedHeaders["User-Agent"] = r.Header.Get("User-Agent")
+
+		// Return a simple response
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, `{"status": "ok"}`)
+	}))
+	defer server.Close()
+
+	// Use the local test server URL instead of external httpbin.org
 	hook := &ExecHook{
-		Command: []string{"curl -s -X POST -d \"$EPISODE_TITLE\" httpbin.org/post"},
+		Command: []string{fmt.Sprintf("curl -s -X POST -d \"$EPISODE_TITLE\" %s", server.URL)},
 		Timeout: 10,
 	}
 
@@ -106,4 +130,8 @@ func TestExecuteHook_CurlWebhook(t *testing.T) {
 
 	err := hook.Invoke(env)
 	assert.NoError(t, err, "Curl webhook should execute successfully")
+
+	// Verify that the request was actually made and data was received
+	assert.Equal(t, "Test Episode for Webhook", receivedData, "Server should receive the episode title")
+	assert.Contains(t, receivedHeaders["User-Agent"], "curl", "Request should be made by curl")
 }
