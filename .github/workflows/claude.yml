@@ -37,6 +37,5 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
           claude_args: |
-            --max-turns 10
-            --allowedTools "Bash(go:*),Bash(golangci-lint:*),Bash(make:*),View,GlobTool,GrepTool,BatchTool,mcp__github"
+            --allowedTools "Bash(go:*),Bash(golangci-lint:*),Bash(make:*),View,Edit,Write,GlobTool,GrepTool,BatchTool,mcp__github"
             --system-prompt "Follow our coding standards. Ensure tests and lints pass before making commits or PRs. Run 'make test' to verify all tests pass"
