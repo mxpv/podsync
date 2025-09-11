@@ -20,7 +20,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/zackradisic/soundcloud-api v0.1.8
 	golang.org/x/oauth2 v0.31.0
-	golang.org/x/sync v0.16.0
+	golang.org/x/sync v0.17.0
 	google.golang.org/api v0.249.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
