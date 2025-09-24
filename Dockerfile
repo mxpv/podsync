@@ -13,12 +13,13 @@ RUN make build
 RUN wget -O /usr/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp && \
     chmod a+rwx /usr/bin/yt-dlp
 
-# Alpine 3.21 will go EOL on 2026-11-01
-FROM alpine:3.21
+# Alpine 3.22 will go EOL on 2027-05-01
+FROM alpine:3.22
 
 WORKDIR /app
 
-RUN apk --no-cache add ca-certificates python3 py3-pip ffmpeg tzdata libc6-compat
+# deno is required for yt-dlp (ref: https://github.com/yt-dlp/yt-dlp/issues/14404)
+RUN apk --no-cache add ca-certificates python3 py3-pip ffmpeg tzdata libc6-compat deno
 
 RUN chmod 777 /usr/local/bin
 COPY --from=builder /usr/bin/yt-dlp /usr/local/bin/youtube-dl
