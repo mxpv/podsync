@@ -62,7 +62,7 @@ jobs:
     steps:
       - uses: actions/setup-go@v5
       - uses: actions/checkout@v5
-      - uses: golangci/golangci-lint-action@v8
+      - uses: golangci/golangci-lint-action@v9
 
       - name: Go mod
         env:
