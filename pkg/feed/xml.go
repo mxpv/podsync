@@ -94,9 +94,9 @@ func Build(_ctx context.Context, feed *model.Feed, cfg *Config, hostname string)
 	}
 
 	if cfg.Custom.Explicit {
-		p.IExplicit = "yes"
+		p.IExplicit = "true"
 	} else {
-		p.IExplicit = "no"
+		p.IExplicit = "false"
 	}
 
 	if cfg.Custom.Language != "" {
@@ -154,9 +154,9 @@ func Build(_ctx context.Context, feed *model.Feed, cfg *Config, hostname string)
 		}
 
 		if cfg.Custom.Explicit {
-			item.IExplicit = "yes"
+			item.IExplicit = "true"
 		} else {
-			item.IExplicit = "no"
+			item.IExplicit = "false"
 		}
 
 		if _, err := p.AddItem(item); err != nil {
