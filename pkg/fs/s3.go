@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -79,12 +81,23 @@ func (s *S3) Create(ctx context.Context, name string, reader io.Reader) (int64, 
 	key := s.buildKey(name)
 	logger := log.WithField("key", key)
 
+	// Detect MIME type from the first 512 bytes and then replay them with the rest of the stream.
+	buf := make([]byte, 512)
+	n, err := io.ReadFull(reader, buf)
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		return 0, errors.Wrap(err, "failed to read file header for MIME detection")
+	}
+	head := buf[:n]
+	m := mimetype.Detect(head)
+	body := io.MultiReader(bytes.NewReader(head), reader)
+
 	logger.Infof("uploading file to %s", s.bucket)
-	r := &readerWithN{Reader: reader}
-	_, err := s.uploader.UploadWithContext(ctx, &s3manager.UploadInput{
-		Bucket: &s.bucket,
-		Key:    &key,
-		Body:   r,
+	r := &readerWithN{Reader: body}
+	_, err = s.uploader.UploadWithContext(ctx, &s3manager.UploadInput{
+		Body:        r,
+		Bucket:      &s.bucket,
+		ContentType: aws.String(m.String()),
+		Key:         &key,
 	})
 	if err != nil {
 		return 0, errors.Wrap(err, "failed to upload file")
