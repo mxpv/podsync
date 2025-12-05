@@ -83,14 +83,17 @@ func (s *S3) Create(ctx context.Context, name string, reader io.Reader) (int64, 
 
 	// Detect MIME type from the first 512 bytes and then replay them with the rest of the stream.
 	buf := make([]byte, 512)
-	n, _ := io.ReadFull(reader, buf)
+	n, err := io.ReadFull(reader, buf)
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		return 0, errors.Wrap(err, "failed to read file header for MIME detection")
+	}
 	head := buf[:n]
 	m := mimetype.Detect(head)
 	body := io.MultiReader(bytes.NewReader(head), reader)
 
 	logger.Infof("uploading file to %s", s.bucket)
 	r := &readerWithN{Reader: body}
-	_, err := s.uploader.UploadWithContext(ctx, &s3manager.UploadInput{
+	_, err = s.uploader.UploadWithContext(ctx, &s3manager.UploadInput{
 		Body:        r,
 		Bucket:      &s.bucket,
 		ContentType: aws.String(m.String()),
