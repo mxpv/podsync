@@ -21,8 +21,11 @@ path = "test"
 web_ui = true
 # Optional. If you want to use TLS you must set the TLS flag and path to the certificate file and private key file.
 tls = true
-certificate_path = "/var/www/cert.pem"  
+certificate_path = "/var/www/cert.pem"
 key_file_path = "/var/www/priv.pem"
+# Optional. Enable debug endpoints (/debug/vars) for runtime metrics. Disabled by default for security.
+# Only enable this if you need to debug the application and the endpoint is not publicly accessible.
+debug_endpoints = false
 
 # Configure where to store the episode data
 [storage]

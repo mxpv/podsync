@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/json"
+	"expvar"
 	"fmt"
 	"net/http"
 	"time"
@@ -39,6 +40,8 @@ type Config struct {
 	DataDir string `toml:"data_dir"`
 	// WebUIEnabled is a flag indicating if web UI is enabled
 	WebUIEnabled bool `toml:"web_ui"`
+	// DebugEndpoints enables /debug/vars endpoint for runtime metrics (disabled by default)
+	DebugEndpoints bool `toml:"debug_endpoints"`
 }
 
 func New(cfg Config, storage http.FileSystem, database db.Storage) *Server {
@@ -59,13 +62,25 @@ func New(cfg Config, storage http.FileSystem, database db.Storage) *Server {
 	srv.Addr = fmt.Sprintf("%s:%d", bindAddress, port)
 	log.Debugf("using address: %s:%s", bindAddress, srv.Addr)
 
+	// Use a custom mux instead of http.DefaultServeMux to avoid exposing
+	// debug endpoints registered by imported packages (security fix for #799)
+	mux := http.NewServeMux()
+
 	fileServer := http.FileServer(storage)
 
 	log.Debugf("handle path: /%s", cfg.Path)
-	http.Handle(fmt.Sprintf("/%s", cfg.Path), fileServer)
+	mux.Handle(fmt.Sprintf("/%s", cfg.Path), fileServer)
 
 	// Add health check endpoint
-	http.HandleFunc("/health", srv.healthCheckHandler)
+	mux.HandleFunc("/health", srv.healthCheckHandler)
+
+	// Optionally enable debug endpoints (disabled by default for security)
+	if cfg.DebugEndpoints {
+		log.Info("debug endpoints enabled at /debug/vars")
+		mux.Handle("/debug/vars", expvar.Handler())
+	}
+
+	srv.Handler = mux
 
 	return &srv
 }
