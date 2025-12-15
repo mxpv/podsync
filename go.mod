@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.144
 	github.com/dgraph-io/badger v1.6.2
 	github.com/eduncan911/podcast v1.4.2
-	github.com/gabriel-vasile/mimetype v1.4.11
+	github.com/gabriel-vasile/mimetype v1.4.12
 	github.com/gilliek/go-opml v1.0.0
 	github.com/golang/mock v1.6.0
 	github.com/hashicorp/go-multierror v1.1.1
