@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - name: Run Claude Code
         id: claude
@@ -36,6 +38,10 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
+          # Allow Go development tools and file operations for code changes and PRs
           claude_args: |
-            --allowedTools "Bash(go:*),Bash(golangci-lint:*),Bash(make:*),View,Edit,Write,GlobTool,GrepTool,BatchTool,mcp__github"
-            --system-prompt "Follow our coding standards. Ensure tests and lints pass before making commits or PRs. Run 'make test' to verify all tests pass"
+            --allowedTools Edit Read Write Glob Grep "Bash(go:*)" "Bash(golangci-lint:*)" "Bash(make:*)" "Bash(git:*)" "Bash(gh:*)" mcp__github
+
+          # This is an optional setting that allows Claude to read CI results on PRs
+          additional_permissions: |
+            actions: read
