@@ -50,7 +50,8 @@ debug_endpoints = false
 # Alternatively, you can set the following environment variables:
 #   PODSYNC_YOUTUBE_API_KEY for YouTube
 #   PODSYNC_VIMEO_API_KEY for Vimeo
-#   PODSYNC_SOUNDCLOUD_API_KEY for Soundcloud
+#   PODSYNC_SOUNDCLOUD_CLIENT_ID for Soundcloud (optional client_id override)
+#   PODSYNC_SOUNDCLOUD_API_KEY for Soundcloud (deprecated alias of PODSYNC_SOUNDCLOUD_CLIENT_ID)
 #   PODSYNC_TWITCH_API_KEY for Twitch (format: CLIENT_ID:CLIENT_SECRET)
 # Environment variables support multiple keys separated by spaces for API key rotation:
 #   export PODSYNC_YOUTUBE_API_KEY="key1 key2 key3"
@@ -60,6 +61,10 @@ vimeo = [ # Multiple keys will be rotated.
   "VIMEO_API_KEY_1", # Vimeo developer keys. See https://developer.vimeo.com/api/guides/start#generate-access-token
   "VIMEO_API_KEY_2"
 ]
+
+# Optional. SoundCloud client_id override.
+# If unset, Podsync will auto-scrape a working client_id.
+# soundcloud = "SOUNDCLOUD_CLIENT_ID"
 
 # The list of data sources to be hosted by Podsync.
 # These are channels, users, playlists, etc.
