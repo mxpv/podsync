@@ -19,7 +19,7 @@ any device in podcast client.
 
 ## ✨ Features
 
-- Works with YouTube and Vimeo.
+- Works with YouTube, Vimeo, Twitch, and SoundCloud.
 - Supports feeds configuration: video/audio, high/low quality, max video height, etc.
 - mp3 encoding
 - Update scheduler supports cron expressions
@@ -66,6 +66,10 @@ In order to query YouTube or Vimeo API you have to obtain an API token first.
 - [How to get YouTube API key](https://elfsight.com/blog/2016/12/how-to-get-youtube-api-key-tutorial/)
 - [Generate an access token for Vimeo](https://developer.vimeo.com/api/guides/start#generate-access-token)
 
+SoundCloud does not require a permanent API token. Podsync uses an internal SoundCloud API wrapper that can
+automatically scrape a working `client_id` as needed. You may optionally provide your own `client_id` to reduce
+breakage if SoundCloud changes their public site.
+
 ## ⚙️ Configuration
 
 You need to create a configuration file (for instance `config.toml`) and specify the list of feeds that you're going to host.
@@ -104,17 +108,25 @@ hostname = "https://my.test.host:4443"
 
 Server will be accessible from `http://localhost:8080`, but episode links will point to `https://my.test.host:4443/ID1/...`
 
+### 🎵 SoundCloud URL formats
+
+Podsync supports the following SoundCloud URL formats:
+
+- **Playlists:** `https://soundcloud.com/<username>/sets/<playlist>`
+- **User profiles (uploads feed):** `https://soundcloud.com/<username>` (or `https://soundcloud.com/<username>/tracks`)
+
 ### 🌍 Environment Variables
 
 Podsync supports the following environment variables for configuration and API keys:
 
-| Variable Name                | Description                                                                               | Example Value(s)                              |
-|------------------------------|-------------------------------------------------------------------------------------------|-----------------------------------------------|
-| `PODSYNC_CONFIG_PATH`        | Path to the configuration file (overrides `--config` CLI flag)                            | `/app/config.toml`                            |
-| `PODSYNC_YOUTUBE_API_KEY`    | YouTube API key(s), space-separated for rotation                                          | `key1` or `key1 key2 key3` |
-| `PODSYNC_VIMEO_API_KEY`      | Vimeo API key(s), space-separated for rotation                                            | `key1` or `key1 key2`        |
-| `PODSYNC_SOUNDCLOUD_API_KEY` | SoundCloud API key(s), space-separated for rotation                                       | `soundcloud_key1 soundcloud_key2`             |
-| `PODSYNC_TWITCH_API_KEY`     | Twitch API credentials in the format `CLIENT_ID:CLIENT_SECRET`, space-separated for multi | `id1:secret1 id2:secret2`                     |
+| Variable Name                   | Description                                                                                | Example Value(s)                              |
+|--------------------------------|--------------------------------------------------------------------------------------------|-----------------------------------------------|
+| `PODSYNC_CONFIG_PATH`          | Path to the configuration file (overrides `--config` CLI flag)                             | `/app/config.toml`                            |
+| `PODSYNC_YOUTUBE_API_KEY`      | YouTube API key(s), space-separated for rotation                                           | `key1` or `key1 key2 key3`                    |
+| `PODSYNC_VIMEO_API_KEY`        | Vimeo API key(s), space-separated for rotation                                             | `key1` or `key1 key2`                         |
+| `PODSYNC_SOUNDCLOUD_CLIENT_ID` | SoundCloud client_id override (optional). If unset, Podsync auto-scrapes a working client_id | `client_id1 client_id2`                     |
+| `PODSYNC_SOUNDCLOUD_API_KEY`   | (Deprecated) Alias for `PODSYNC_SOUNDCLOUD_CLIENT_ID` for backward compatibility           | `client_id1 client_id2`                       |
+| `PODSYNC_TWITCH_API_KEY`       | Twitch API credentials in the format `CLIENT_ID:CLIENT_SECRET`, space-separated for multi | `id1:secret1 id2:secret2`                     |
 
 ## 🚀 How to run
 
@@ -139,12 +151,7 @@ Use the editor [Visual Studio Code](https://code.visualstudio.com/) and install 
 
 ```
 $ docker pull ghcr.io/mxpv/podsync:latest
-$ docker run \
-    -p 8080:8080 \
-    -v $(pwd)/data:/app/data/ \
-    -v $(pwd)/db:/app/db/ \
-    -v $(pwd)/config.toml:/app/config.toml \
-    ghcr.io/mxpv/podsync:latest
+$ docker run     -p 8080:8080     -v $(pwd)/data:/app/data/     -v $(pwd)/db:/app/db/     -v $(pwd)/config.toml:/app/config.toml     ghcr.io/mxpv/podsync:latest
 ```
 
 ### 🐳 Run via Docker Compose:

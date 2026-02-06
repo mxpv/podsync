@@ -149,3 +149,43 @@ func TestParseVimeoURL_InvalidLink(t *testing.T) {
 	_, _, err = parseVimeoURL(link)
 	require.Error(t, err)
 }
+
+func TestParseSoundcloudURL_Playlist(t *testing.T) {
+	link, _ := url.ParseRequestURI("https://soundcloud.com/user/sets/example-set")
+	kind, id, err := parseSoundcloudURL(link)
+	require.NoError(t, err)
+	require.Equal(t, model.TypePlaylist, kind)
+	require.Equal(t, "example-set", id)
+}
+
+func TestParseSoundcloudURL_UserProfile(t *testing.T) {
+	link, _ := url.ParseRequestURI("https://soundcloud.com/username")
+	kind, id, err := parseSoundcloudURL(link)
+	require.NoError(t, err)
+	require.Equal(t, model.TypeUser, kind)
+	require.Equal(t, "username", id)
+
+	// /tracks alias
+	link, _ = url.ParseRequestURI("https://soundcloud.com/username/tracks")
+	kind, id, err = parseSoundcloudURL(link)
+	require.NoError(t, err)
+	require.Equal(t, model.TypeUser, kind)
+	require.Equal(t, "username", id)
+}
+
+func TestParseSoundcloudURL_Invalid(t *testing.T) {
+	// obvious reserved routes should not be treated as usernames
+	link, _ := url.ParseRequestURI("https://soundcloud.com/discover")
+	_, _, err := parseSoundcloudURL(link)
+	require.Error(t, err)
+
+	// missing playlist slug
+	link, _ = url.ParseRequestURI("https://soundcloud.com/user/sets")
+	_, _, err = parseSoundcloudURL(link)
+	require.Error(t, err)
+
+	// unsupported path under a user
+	link, _ = url.ParseRequestURI("https://soundcloud.com/user/likes")
+	_, _, err = parseSoundcloudURL(link)
+	require.Error(t, err)
+}

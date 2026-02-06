@@ -195,13 +195,23 @@ func (c *Config) applyEnv() {
 	envVars := map[model.Provider]string{
 		model.ProviderYoutube:    "PODSYNC_YOUTUBE_API_KEY",
 		model.ProviderVimeo:      "PODSYNC_VIMEO_API_KEY",
-		model.ProviderSoundcloud: "PODSYNC_SOUNDCLOUD_API_KEY",
+		model.ProviderSoundcloud: "PODSYNC_SOUNDCLOUD_CLIENT_ID",
 		model.ProviderTwitch:     "PODSYNC_TWITCH_API_KEY",
 	}
 
 	// Replace API keys from config with environment variables
 	for provider, envVar := range envVars {
 		val, ok := os.LookupEnv(envVar)
+
+		// Backward compatibility for SoundCloud:
+		// Older versions used PODSYNC_SOUNDCLOUD_API_KEY, which actually held a SoundCloud client_id.
+		if !ok && provider == model.ProviderSoundcloud {
+			val, ok = os.LookupEnv("PODSYNC_SOUNDCLOUD_API_KEY")
+			if ok {
+				envVar = "PODSYNC_SOUNDCLOUD_API_KEY"
+			}
+		}
+
 		if ok {
 			log.Infof("Found %s environment variable, replacing config token with it", envVar)
 			// If no tokens are provided in the config.toml, we need to create a new map
