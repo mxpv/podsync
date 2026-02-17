@@ -33,6 +33,7 @@ timeout = 15
   [feeds.XYZ]
   url = "https://youtube.com/watch?v=ygIUF678y40"
   page_size = 48
+  filename_template = "{{pub_date}}_{{title}}_{{id}}"
   update_period = "5h"
   format = "audio"
   quality = "low"
@@ -76,6 +77,7 @@ timeout = 15
 	assert.True(t, ok)
 	assert.Equal(t, "https://youtube.com/watch?v=ygIUF678y40", feed.URL)
 	assert.EqualValues(t, 48, feed.PageSize)
+	assert.EqualValues(t, "{{pub_date}}_{{title}}_{{id}}", feed.FilenameTemplate)
 	assert.EqualValues(t, 5*time.Hour, feed.UpdatePeriod)
 	assert.EqualValues(t, "audio", feed.Format)
 	assert.EqualValues(t, "low", feed.Quality)
@@ -103,6 +105,24 @@ timeout = 15
 
 	assert.True(t, config.Downloader.SelfUpdate)
 	assert.EqualValues(t, 15, config.Downloader.Timeout)
+}
+
+func TestFilenameTemplateValidation(t *testing.T) {
+	const file = `
+[server]
+data_dir = "/data"
+
+[feeds]
+  [feeds.A]
+  url = "https://youtube.com/watch?v=ygIUF678y40"
+  filename_template = "{{bad_token}}_{{id}}"
+`
+	path := setup(t, file)
+	defer os.Remove(path)
+
+	_, err := LoadConfig(path)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid filename_template")
 }
 
 func TestLoadEmptyKeyList(t *testing.T) {
