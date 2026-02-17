@@ -111,6 +111,11 @@ vimeo = [ # Multiple keys will be rotated.
   # unexpected behaviour. You should only use this if you know what you are doing, and have read up on youtube-dl's options!
   youtube_dl_args = ["--write-sub", "--embed-subs", "--sub-lang", "en,en-US,en-GB"]
 
+  # Optional filename template for downloaded media and RSS enclosure links (without extension).
+  # Supported tokens: {{id}}, {{title}}, {{pub_date}}, {{feed_id}}
+  # Example output: 2026-02-08_My_Video_Title_dQw4w9WgXcQ.mp4
+  filename_template = "{{pub_date}}_{{title}}_{{id}}"
+
   # When set to true, podcasts indexers such as iTunes or Google Podcasts will not index this podcast
   private_feed = true
 

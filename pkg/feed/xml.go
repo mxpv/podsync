@@ -3,6 +3,7 @@ package feed
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -16,6 +17,14 @@ import (
 
 // sort.Interface implementation
 type timeSlice []*model.Episode
+
+const defaultFilenameTemplate = "{{id}}"
+
+var (
+	filenameTemplateTokenPattern = regexp.MustCompile(`{{\s*([a-z_]+)\s*}}`)
+	invalidFilenameCharsPattern  = regexp.MustCompile(`[^A-Za-z0-9._ -]+`)
+	multiWhitespacePattern       = regexp.MustCompile(`\s+`)
+)
 
 func (p timeSlice) Len() int {
 	return len(p)
@@ -168,15 +177,11 @@ func Build(_ctx context.Context, feed *model.Feed, cfg *Config, hostname string)
 }
 
 func EpisodeName(feedConfig *Config, episode *model.Episode) string {
-	ext := "mp4"
-	if feedConfig.Format == model.FormatAudio {
-		ext = "mp3"
-	}
-	if feedConfig.Format == model.FormatCustom {
-		ext = feedConfig.CustomFormat.Extension
-	}
+	return fmt.Sprintf("%s.%s", EpisodeBaseName(feedConfig, episode), episodeExtension(feedConfig))
+}
 
-	return fmt.Sprintf("%s.%s", episode.ID, ext)
+func LegacyEpisodeName(feedConfig *Config, episode *model.Episode) string {
+	return fmt.Sprintf("%s.%s", episode.ID, episodeExtension(feedConfig))
 }
 
 func EnclosureFromExtension(feedConfig *Config) itunes.EnclosureType {
@@ -200,4 +205,89 @@ func EnclosureFromExtension(feedConfig *Config) itunes.EnclosureType {
 	default:
 		return -1
 	}
+}
+
+func EpisodeBaseName(feedConfig *Config, episode *model.Episode) string {
+	template := strings.TrimSpace(feedConfig.FilenameTemplate)
+	if template == "" {
+		template = defaultFilenameTemplate
+	}
+
+	pubDate := "0000-00-00"
+	if !episode.PubDate.IsZero() {
+		pubDate = episode.PubDate.UTC().Format("2006-01-02")
+	}
+
+	replacements := map[string]string{
+		"id":       episode.ID,
+		"title":    episode.Title,
+		"pub_date": pubDate,
+		"feed_id":  feedConfig.ID,
+	}
+
+	rendered := filenameTemplateTokenPattern.ReplaceAllStringFunc(template, func(token string) string {
+		match := filenameTemplateTokenPattern.FindStringSubmatch(token)
+		if len(match) < 2 {
+			return ""
+		}
+		return replacements[match[1]]
+	})
+
+	name := sanitizeFilename(rendered)
+	if name == "" {
+		name = sanitizeFilename(episode.ID)
+	}
+	if name == "" {
+		name = "episode"
+	}
+	return name
+}
+
+func ValidateFilenameTemplate(template string) error {
+	template = strings.TrimSpace(template)
+	if template == "" {
+		return nil
+	}
+
+	allowed := map[string]struct{}{
+		"id":       {},
+		"title":    {},
+		"pub_date": {},
+		"feed_id":  {},
+	}
+
+	matches := filenameTemplateTokenPattern.FindAllStringSubmatch(template, -1)
+	for _, match := range matches {
+		if len(match) < 2 {
+			continue
+		}
+		if _, ok := allowed[match[1]]; !ok {
+			return errors.Errorf("unknown filename template token %q", match[1])
+		}
+	}
+
+	return nil
+}
+
+func episodeExtension(feedConfig *Config) string {
+	ext := "mp4"
+	if feedConfig.Format == model.FormatAudio {
+		ext = "mp3"
+	}
+	if feedConfig.Format == model.FormatCustom {
+		ext = strings.TrimSpace(feedConfig.CustomFormat.Extension)
+	}
+	ext = strings.TrimPrefix(ext, ".")
+	if ext == "" {
+		ext = "mp4"
+	}
+	return ext
+}
+
+func sanitizeFilename(value string) string {
+	cleaned := strings.TrimSpace(value)
+	cleaned = invalidFilenameCharsPattern.ReplaceAllString(cleaned, "")
+	cleaned = multiWhitespacePattern.ReplaceAllString(cleaned, "_")
+	cleaned = strings.Trim(cleaned, "._- ")
+	return cleaned
 }

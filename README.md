@@ -12,6 +12,15 @@
 Podsync - is a simple, free service that lets you listen to any YouTube / Vimeo channels, playlists or user videos in
 podcast format.
 
+## Fork note (wrxco)
+
+This fork intentionally keeps upstream behavior unchanged except for one feature set:
+
+- configurable `filename_template` for downloaded media and RSS enclosure paths
+- optional one-time filename migration CLI (`--migrate-filenames`, `--migrate-filenames-dry-run`)
+
+All other behavior is intended to match upstream `mxpv/podsync`.
+
 Podcast applications have a rich functionality for content delivery - automatic download of new episodes,
 remembering last played position, sync between devices and offline listening. This functionality is not available
 on YouTube and Vimeo. So the aim of Podsync is to make your life easier and enable you to view/listen to content on
@@ -128,6 +137,20 @@ $ git clone https://github.com/mxpv/podsync
 $ cd podsync
 $ make
 $ ./bin/podsync --config config.toml
+```
+
+### 🗂️ One-time filename migration
+
+If you changed `filename_template` and want to migrate already-downloaded files:
+
+```
+$ ./bin/podsync --config config.toml --migrate-filenames
+```
+
+Preview only (no writes):
+
+```
+$ ./bin/podsync --config config.toml --migrate-filenames --migrate-filenames-dry-run
 ```
 
 ### 🐛 How to debug

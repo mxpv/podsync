@@ -125,6 +125,9 @@ func (c *Config) validate() error {
 		if f.URL == "" {
 			result = multierror.Append(result, errors.Errorf("URL is required for %q", id))
 		}
+		if err := feed.ValidateFilenameTemplate(f.FilenameTemplate); err != nil {
+			result = multierror.Append(result, errors.Wrapf(err, "invalid filename_template for %q", id))
+		}
 	}
 
 	return result.ErrorOrNil()
