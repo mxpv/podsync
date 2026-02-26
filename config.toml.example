@@ -128,6 +128,15 @@ vimeo = [ # Multiple keys will be rotated.
   command = ["/path/to/your/process-episode.sh"]
   timeout = 120
 
+  # Optional episode download error hooks
+  # Execute commands when an episode download fails (e.g. to notify on cookie expiry)
+  # Available environment variables: FEED_NAME, EPISODE_TITLE, ERROR_MESSAGE
+
+  # Webhook notification example
+  [[feeds.ID1.on_episode_download_error]]
+  command = ["curl", "-X", "POST", "-d", "Download failed for $FEED_NAME: $ERROR_MESSAGE", "https://webhook.example.com/notify"]
+  timeout = 30
+
   # Optional feed customizations
   [feeds.ID1.custom]
   title = "Level1News"
