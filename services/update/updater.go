@@ -255,6 +255,23 @@ func (u *Manager) downloadEpisodes(ctx context.Context, feedConfig *feed.Config,
 				break
 			}
 
+			// Execute episode download error hooks
+			if len(feedConfig.OnEpisodeDownloadError) > 0 {
+				env := []string{
+					"FEED_NAME=" + feedID,
+					"EPISODE_TITLE=" + episode.Title,
+					"ERROR_MESSAGE=" + err.Error(),
+				}
+
+				for i, hook := range feedConfig.OnEpisodeDownloadError {
+					if hookErr := hook.Invoke(env); hookErr != nil {
+						logger.Errorf("failed to execute episode download error hook %d: %v", i+1, hookErr)
+					} else {
+						logger.Infof("episode download error hook %d executed successfully", i+1)
+					}
+				}
+			}
+
 			if err := u.db.UpdateEpisode(feedID, episode.ID, func(episode *model.Episode) error {
 				episode.Status = model.EpisodeError
 				return nil
