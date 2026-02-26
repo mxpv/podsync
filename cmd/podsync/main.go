@@ -13,6 +13,7 @@ import (
 	"github.com/mxpv/podsync/pkg/feed"
 	"github.com/mxpv/podsync/pkg/model"
 	"github.com/mxpv/podsync/services/update"
+	"github.com/mxpv/podsync/services/migrate"
 	"github.com/mxpv/podsync/services/web"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
@@ -27,6 +28,8 @@ import (
 type Opts struct {
 	ConfigPath string `long:"config" short:"c" default:"config.toml" env:"PODSYNC_CONFIG_PATH"`
 	Headless   bool   `long:"headless"`
+	MigrateFilenames bool `long:"migrate-filenames" description:"Migrate existing downloaded filenames to current filename_template and exit"`
+	MigrateFilenamesDryRun bool `long:"migrate-filenames-dry-run" description:"Preview filename migration without writing changes (requires --migrate-filenames)"`
 	Debug      bool   `long:"debug"`
 	NoBanner   bool   `long:"no-banner"`
 }
@@ -71,6 +74,9 @@ func main() {
 	if opts.Debug {
 		log.SetLevel(log.DebugLevel)
 	}
+	if opts.MigrateFilenamesDryRun && !opts.MigrateFilenames {
+		log.Fatal("--migrate-filenames-dry-run requires --migrate-filenames")
+	}
 
 	if !opts.NoBanner {
 		log.Info(banner)
@@ -107,11 +113,6 @@ func main() {
 		}
 	}
 
-	downloader, err := ytdl.New(ctx, cfg.Downloader)
-	if err != nil {
-		log.WithError(err).Fatal("youtube-dl error")
-	}
-
 	database, err := db.NewBadger(&cfg.Database)
 	if err != nil {
 		log.WithError(err).Fatal("failed to open database")
@@ -133,6 +134,29 @@ func main() {
 	}
 	if err != nil {
 		log.WithError(err).Fatal("failed to open storage")
+	}
+
+	if opts.MigrateFilenames {
+		migration := migrate.New(cfg.Feeds, database, storage, opts.MigrateFilenamesDryRun)
+		result, err := migration.Run(ctx)
+		if err != nil {
+			log.WithError(err).Fatal("filename migration failed")
+		}
+		log.WithFields(log.Fields{
+			"feeds":        result.Feeds,
+			"episodes":     result.Episodes,
+			"migrated":     result.Migrated,
+			"already_good": result.AlreadyGood,
+			"missing_old":  result.MissingOld,
+			"skipped_existing_target": result.SkippedDueToExistingTarget,
+			"dry_run":      opts.MigrateFilenamesDryRun,
+		}).Info("filename migration completed")
+		return
+	}
+
+	downloader, err := ytdl.New(ctx, cfg.Downloader)
+	if err != nil {
+		log.WithError(err).Fatal("youtube-dl error")
 	}
 
 	// Run updater thread

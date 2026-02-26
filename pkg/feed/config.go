@@ -51,6 +51,9 @@ type Config struct {
 	PrivateFeed bool `toml:"private_feed"`
 	// Playlist sort
 	PlaylistSort model.Sorting `toml:"playlist_sort"`
+	// FilenameTemplate controls output media filename (without extension)
+	// Supported tokens: {{id}}, {{title}}, {{pub_date}}, {{feed_id}}
+	FilenameTemplate string `toml:"filename_template"`
 }
 
 type CustomFormat struct {
