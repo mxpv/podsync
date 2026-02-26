@@ -45,6 +45,14 @@ type Config struct {
 	//   command = ["echo", "Downloaded: $EPISODE_TITLE"]
 	//   timeout = 10
 	PostEpisodeDownload []*ExecHook `toml:"post_episode_download"`
+	// Episode download error hooks - executed when an episode download fails
+	// Available environment variables: FEED_NAME, EPISODE_TITLE, ERROR_MESSAGE
+	// Multiple hooks can be configured and will execute in sequence
+	// Example:
+	//   [[feeds.ID1.on_episode_download_error]]
+	//   command = ["curl", "-X", "POST", "-d", "Download failed: $ERROR_MESSAGE", "https://webhook.example.com/notify"]
+	//   timeout = 30
+	OnEpisodeDownloadError []*ExecHook `toml:"on_episode_download_error"`
 	// Included in OPML file
 	OPML bool `toml:"opml"`
 	// Private feed (not indexed by podcast aggregators)
