@@ -27,7 +27,7 @@ jobs:
           go-version: 1.25
       - uses: actions/checkout@v6
       - run: make build
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: podsync-${{ matrix.os }}
           path: bin/
