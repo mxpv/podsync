@@ -128,6 +128,11 @@ func (c *Config) validate() error {
 		if err := feed.ValidateFilenameTemplate(f.FilenameTemplate); err != nil {
 			result = multierror.Append(result, errors.Wrapf(err, "invalid filename_template for %q", id))
 		}
+		if f.Format == model.FormatCustom {
+			if err := feed.ValidateCustomExtension(f.CustomFormat.Extension); err != nil {
+				result = multierror.Append(result, errors.Wrapf(err, "invalid custom_format.extension for %q", id))
+			}
+		}
 	}
 
 	return result.ErrorOrNil()

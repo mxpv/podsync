@@ -95,4 +95,27 @@ func TestValidateFilenameTemplate(t *testing.T) {
 	assert.NoError(t, ValidateFilenameTemplate(""))
 	assert.NoError(t, ValidateFilenameTemplate("{{pub_date}}_{{title}}_{{id}}"))
 	assert.Error(t, ValidateFilenameTemplate("{{unknown}}_{{id}}"))
+	assert.Error(t, ValidateFilenameTemplate("{{ID}}_{{id}}"))
+	assert.Error(t, ValidateFilenameTemplate("{{pub-date}}_{{id}}"))
+}
+
+func TestValidateCustomExtension(t *testing.T) {
+	assert.NoError(t, ValidateCustomExtension(".M4A"))
+	assert.Error(t, ValidateCustomExtension(""))
+	assert.Error(t, ValidateCustomExtension("../mp3"))
+}
+
+func TestEpisodeNameWithCustomExtensionNormalization(t *testing.T) {
+	cfg := &Config{
+		ID:     "test",
+		Format: model.FormatCustom,
+		CustomFormat: CustomFormat{
+			Extension: ".M4A",
+		},
+	}
+	episode := &model.Episode{ID: "abc123", Title: "Title"}
+	assert.Equal(t, "abc123.m4a", EpisodeName(cfg, episode))
+
+	cfg.CustomFormat.Extension = "../bad"
+	assert.Equal(t, "abc123.mp4", EpisodeName(cfg, episode))
 }
