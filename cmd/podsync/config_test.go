@@ -125,6 +125,47 @@ data_dir = "/data"
 	assert.Contains(t, err.Error(), "invalid filename_template")
 }
 
+func TestCustomFormatExtensionValidation(t *testing.T) {
+	t.Run("rejects invalid extension", func(t *testing.T) {
+		const file = `
+[server]
+data_dir = "/data"
+
+[feeds]
+  [feeds.A]
+  url = "https://youtube.com/watch?v=ygIUF678y40"
+  format = "custom"
+  [feeds.A.custom_format]
+  extension = "../mp3"
+`
+		path := setup(t, file)
+		defer os.Remove(path)
+
+		_, err := LoadConfig(path)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid custom_format.extension")
+	})
+
+	t.Run("accepts normalized extension", func(t *testing.T) {
+		const file = `
+[server]
+data_dir = "/data"
+
+[feeds]
+  [feeds.A]
+  url = "https://youtube.com/watch?v=ygIUF678y40"
+  format = "custom"
+  [feeds.A.custom_format]
+  extension = ".M4A"
+`
+		path := setup(t, file)
+		defer os.Remove(path)
+
+		_, err := LoadConfig(path)
+		assert.NoError(t, err)
+	})
+}
+
 func TestLoadEmptyKeyList(t *testing.T) {
 	const file = `
 [tokens]

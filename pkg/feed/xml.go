@@ -21,10 +21,20 @@ type timeSlice []*model.Episode
 const defaultFilenameTemplate = "{{id}}"
 
 var (
-	filenameTemplateTokenPattern = regexp.MustCompile(`{{\s*([a-z_]+)\s*}}`)
-	invalidFilenameCharsPattern  = regexp.MustCompile(`[^A-Za-z0-9._ -]+`)
-	multiWhitespacePattern       = regexp.MustCompile(`\s+`)
+	filenameTemplateTokenPattern       = regexp.MustCompile(`{{\s*([a-z_]+)\s*}}`)
+	filenameTemplatePlaceholderPattern = regexp.MustCompile(`{{\s*([^{}]*)\s*}}`)
+	filenameTemplateTokenNamePattern   = regexp.MustCompile(`^[a-z_]+$`)
+	validExtensionPattern              = regexp.MustCompile(`^[a-z0-9]+$`)
+	invalidFilenameCharsPattern        = regexp.MustCompile(`[^A-Za-z0-9._ -]+`)
+	multiWhitespacePattern             = regexp.MustCompile(`\s+`)
 )
+
+var filenameTemplateAllowedTokens = map[string]struct{}{
+	"id":       {},
+	"title":    {},
+	"pub_date": {},
+	"feed_id":  {},
+}
 
 func (p timeSlice) Len() int {
 	return len(p)
@@ -185,7 +195,7 @@ func LegacyEpisodeName(feedConfig *Config, episode *model.Episode) string {
 }
 
 func EnclosureFromExtension(feedConfig *Config) itunes.EnclosureType {
-	ext := feedConfig.CustomFormat.Extension
+	ext := normalizeExtension(feedConfig.CustomFormat.Extension)
 
 	switch ext {
 	case "m4a":
@@ -249,39 +259,54 @@ func ValidateFilenameTemplate(template string) error {
 		return nil
 	}
 
-	allowed := map[string]struct{}{
-		"id":       {},
-		"title":    {},
-		"pub_date": {},
-		"feed_id":  {},
-	}
-
-	matches := filenameTemplateTokenPattern.FindAllStringSubmatch(template, -1)
+	matches := filenameTemplatePlaceholderPattern.FindAllStringSubmatch(template, -1)
 	for _, match := range matches {
 		if len(match) < 2 {
 			continue
 		}
-		if _, ok := allowed[match[1]]; !ok {
-			return errors.Errorf("unknown filename template token %q", match[1])
+		token := strings.TrimSpace(match[1])
+		if !filenameTemplateTokenNamePattern.MatchString(token) {
+			return errors.Errorf("unknown filename template token %q", token)
+		}
+		if _, ok := filenameTemplateAllowedTokens[token]; !ok {
+			return errors.Errorf("unknown filename template token %q", token)
 		}
 	}
 
 	return nil
 }
 
+func ValidateCustomExtension(extension string) error {
+	normalized := normalizeExtension(extension)
+	if normalized == "" {
+		return errors.New("custom format extension cannot be empty")
+	}
+	if !validExtensionPattern.MatchString(normalized) {
+		return errors.Errorf("custom format extension %q must contain only letters and numbers", extension)
+	}
+	return nil
+}
+
 func episodeExtension(feedConfig *Config) string {
-	ext := "mp4"
+	defaultExt := "mp4"
 	if feedConfig.Format == model.FormatAudio {
-		ext = "mp3"
+		defaultExt = "mp3"
 	}
+
+	ext := defaultExt
 	if feedConfig.Format == model.FormatCustom {
-		ext = strings.TrimSpace(feedConfig.CustomFormat.Extension)
+		ext = normalizeExtension(feedConfig.CustomFormat.Extension)
 	}
-	ext = strings.TrimPrefix(ext, ".")
-	if ext == "" {
-		ext = "mp4"
+	if ext == "" || !validExtensionPattern.MatchString(ext) {
+		ext = defaultExt
 	}
 	return ext
+}
+
+func normalizeExtension(extension string) string {
+	normalized := strings.TrimSpace(extension)
+	normalized = strings.TrimPrefix(normalized, ".")
+	return strings.ToLower(normalized)
 }
 
 func sanitizeFilename(value string) string {

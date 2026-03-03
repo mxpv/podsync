@@ -153,6 +153,8 @@ Preview only (no writes):
 $ ./bin/podsync --config config.toml --migrate-filenames --migrate-filenames-dry-run
 ```
 
+Note: when `storage.type = "s3"`, only dry-run mode is supported currently. Non-dry-run migration requires readable legacy files and should be run against local storage.
+
 ### 🐛 How to debug
 
 Use the editor [Visual Studio Code](https://code.visualstudio.com/) and install the official [Go](https://marketplace.visualstudio.com/items?itemName=golang.go) extension. Afterwards you can execute "Run & Debug" ▶︎ "Debug Podsync" to debug the application. The required configuration is already prepared (see `.vscode/launch.json`).
