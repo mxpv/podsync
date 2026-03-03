@@ -24,11 +24,11 @@ type Service struct {
 }
 
 type Result struct {
-	Feeds       int
-	Episodes    int
-	Migrated    int
-	AlreadyGood int
-	MissingOld  int
+	Feeds                      int
+	Episodes                   int
+	Migrated                   int
+	AlreadyGood                int
+	MissingOld                 int
 	SkippedDueToExistingTarget int
 }
 
@@ -87,6 +87,8 @@ func (s *Service) Run(ctx context.Context) (*Result, error) {
 			if _, existingErr := s.fs.Size(ctx, newPath); existingErr == nil {
 				result.SkippedDueToExistingTarget++
 				return nil
+			} else if !os.IsNotExist(existingErr) {
+				return errors.Wrapf(existingErr, "failed to stat target file %q during migration", newPath)
 			}
 
 			legacyFile, err := s.fs.Open(legacyPath)
