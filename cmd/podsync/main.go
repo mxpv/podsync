@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -194,6 +195,8 @@ func main() {
 	updates := make(chan *feed.Config, 16)
 	defer close(updates)
 
+	// Save ctx before errgroup so feed updates aren't cancelled by web server lifecycle events
+	feedCtx := ctx
 	group, ctx := errgroup.WithContext(ctx)
 	defer func() {
 		if err := group.Wait(); err != nil && (err != context.Canceled && err != http.ErrServerClosed) {
@@ -211,7 +214,7 @@ func main() {
 		for {
 			select {
 			case _feed := <-updates:
-				if err := manager.Update(ctx, _feed); err != nil {
+				if err := manager.Update(feedCtx, _feed); err != nil {
 					log.WithError(err).Errorf("failed to update feed: %s", _feed.URL)
 				} else {
 					log.Infof("next update of %s: %s", _feed.ID, c.Entry(m[_feed.ID]).Next)
@@ -272,11 +275,16 @@ func main() {
 
 	group.Go(func() error {
 		log.Infof("running listener at %s", srv.Addr)
+		var err error
 		if cfg.Server.TLS {
-			return srv.ListenAndServeTLS(cfg.Server.CertificatePath, cfg.Server.KeyFilePath)
+			err = srv.ListenAndServeTLS(cfg.Server.CertificatePath, cfg.Server.KeyFilePath)
 		} else {
-			return srv.ListenAndServe()
+			err = srv.ListenAndServe()
 		}
+		if errors.Is(err, http.ErrServerClosed) {
+			return nil
+		}
+		return err
 	})
 
 	group.Go(func() error {
