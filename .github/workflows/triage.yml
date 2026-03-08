@@ -55,16 +55,37 @@ jobs:
                - Technical areas mentioned
                - Severity or priority indicators
 
-            4. Check if this is a TRIVIAL QUESTION that can be answered from documentation:
+            4. Check if this is a QUESTION that can be answered from documentation or configuration:
                - Read the README.md and docs/ folder for relevant information
-               - Common topics: configuration, cron schedules, API keys, Docker setup, NAS setup
-               - Documentation files: README.md, docs/cron.md, docs/how_to_get_youtube_api_key.md, docs/how_to_get_vimeo_token.md
+               - IMPORTANT: Read config.toml.example for all available configuration options
+               - Common topics: configuration, cron schedules, API keys, Docker setup, NAS setup, database settings, cleanup policies
+               - Documentation files: README.md, config.toml.example, docs/cron.md, docs/how_to_get_youtube_api_key.md, docs/how_to_get_vimeo_token.md
 
-               If the question IS answered in documentation:
-               - Post a helpful comment with the answer and link to relevant docs
+               If the question CAN BE SOLVED with configuration:
+               - Post a helpful comment explaining the relevant config option(s)
+               - Include a TOML code example showing exactly how to configure it
+               - Reference the config.toml.example file
                - Apply a "question" label if available
                - Close the issue as "completed" using mcp__github__update_issue
                - Be friendly and encourage the user to reopen if they need more help
+
+               Example response format for config questions:
+               ```
+               This can be configured using the `[cleanup]` section in your config.toml:
+
+               ```toml
+               [cleanup]
+               keep_last = 50  # Keep only the last 50 episodes
+               ```
+
+               You can also configure cleanup per-feed:
+               ```toml
+               [feeds.myfeed]
+               clean = { keep_last = 10 }
+               ```
+
+               See config.toml.example for more options.
+               ```
 
             5. For NON-TRIVIAL issues (bugs, feature requests, etc.):
                - Apply appropriate labels from the available list
