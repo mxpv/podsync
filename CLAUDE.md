@@ -23,6 +23,7 @@ Podsync is a Go-based service that converts YouTube, Vimeo, and SoundCloud chann
 ### Services (`services/`)
 - **update/**: Feed update orchestration and scheduling
 - **web/**: HTTP server for serving podcast feeds and media files
+- **migrate/**: Filename migration tooling for transitioning to custom filename templates
 
 ### Key Dependencies
 - youtube-dl/yt-dlp for media downloading
@@ -55,9 +56,12 @@ goimports -w .      # Organize imports and format
 
 ### Running
 ```bash
-./bin/podsync --config config.toml    # Run with config file
-./bin/podsync --debug                 # Run with debug logging
-./bin/podsync --headless              # Run once and exit (no web server)
+./bin/podsync --config config.toml      # Run with config file
+./bin/podsync --debug                   # Run with debug logging
+./bin/podsync --headless                # Run once and exit (no web server)
+./bin/podsync --no-banner               # Suppress ASCII banner on startup
+./bin/podsync --migrate-filenames       # Migrate files to current filename_template and exit
+./bin/podsync --migrate-filenames-dry-run --migrate-filenames  # Preview migration without changes
 ```
 
 ### Docker
@@ -69,14 +73,19 @@ docker run -it --rm localhost/podsync:latest
 ### Development Debugging
 Use VS Code with the Go extension. The repository includes `.vscode/launch.json` with a "Debug Podsync" configuration that runs with `config.toml`.
 
+### Dev Container
+The repository includes a `.devcontainer/` configuration for VS Code or GitHub Codespaces with Go tooling pre-configured.
+
 ## Configuration
 
 The application uses TOML configuration files. See `config.toml.example` for all available options. Key sections:
 - `[server]`: Web server settings (port, hostname, TLS)
-- `[storage]`: Local or S3 storage configuration  
+- `[storage]`: Local or S3 storage configuration
 - `[tokens]`: API keys for YouTube/Vimeo
 - `[feeds]`: Feed definitions with URLs and settings
+  - `filename_template`: Custom naming for downloaded files (tokens: `{{id}}`, `{{title}}`, `{{pub_date}}`, `{{feed_id}}`)
 - `[downloader]`: youtube-dl configuration
+- `[log]`: Log file settings (filename, rotation, debug mode)
 
 ## Development Guidelines
 
@@ -123,6 +132,7 @@ The application uses TOML configuration files. See `config.toml.example` for all
 - API key rotation support for rate limiting
 - Cron-based scheduling for feed updates
 - Episode filtering and cleanup capabilities
+- Customizable filename templates with migration tooling for existing files
 
 ## Formatting and Linting Requirements
 
