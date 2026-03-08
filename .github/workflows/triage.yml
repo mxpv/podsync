@@ -28,8 +28,11 @@ jobs:
 
       - name: Triage issue with Claude
         uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ github.token }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          show_full_output: true
           prompt: |
             You're an issue triage assistant for GitHub issues. Your task is to analyze the issue, apply appropriate labels, and help users with trivial questions.
 
@@ -64,7 +67,6 @@ jobs:
                - Post a helpful comment using `gh issue comment` explaining the relevant config option(s)
                - Include a TOML code example showing EXACTLY how to configure it
                - Reference the config.toml.example file
-               - Be friendly and encourage the user to reopen if they need more help
                - Apply a "question" label if available
                - Do NOT close the issue - leave it open for the maintainer to close after user confirmation
 
