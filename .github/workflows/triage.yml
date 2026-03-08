@@ -98,10 +98,21 @@ jobs:
                - Select priority labels if you can determine urgency
 
             6. Check for DUPLICATE issues:
-               - Use mcp__github__search_issues to find similar issues
-               - If this is a clear duplicate of an existing open issue:
-                 - Post a comment linking to the original issue
-                 - Close the issue as a duplicate
+               - Search for similar existing issues using mcp__github__search_issues:
+                 - Run MULTIPLE searches with different keyword combinations
+                 - Try synonyms and related terms (e.g., "indexing" -> "crawl", "scrape", "robots")
+                 - Search for core concepts, not just exact phrases
+                 - Include both open and closed issues
+               - Criteria for duplicates:
+                 - Same bug or error being reported
+                 - Same feature request (even if worded differently)
+                 - Same question being asked
+                 - Issues describing the same root problem
+               - If this is a clear duplicate of an existing issue:
+                 - Post a comment linking to the original issue(s)
+                 - Apply a "duplicate" label
+                 - Close the issue as "not planned" using mcp__github__update_issue with state: "closed" and state_reason: "not_planned"
+                 - Be polite and suggest the user follow the original issue
                - This is the ONLY case where you should close an issue
 
             IMPORTANT GUIDELINES:
