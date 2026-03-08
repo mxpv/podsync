@@ -23,7 +23,7 @@ jobs:
       - name: Check for duplicate issues
         uses: anthropics/claude-code-action@v1
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
             Analyze this new issue and check if it's a duplicate of existing issues in the repository.
 
@@ -44,11 +44,12 @@ jobs:
             If you find duplicates:
             - Add a comment on the new issue linking to the original issue(s)
             - Apply a "duplicate" label to the new issue
+            - Close the issue as "not planned" using mcp__github__update_issue with state: "closed" and state_reason: "not_planned"
             - Be polite and explain why it's a duplicate
             - Suggest the user follow the original issue for updates
 
             If it's NOT a duplicate:
-            - Don't add any comments
+            - Don't add any comments or close the issue
             - You may apply appropriate topic labels based on the issue content
 
             Use these tools:
