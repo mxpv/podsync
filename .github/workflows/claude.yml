@@ -44,5 +44,5 @@ jobs:
 
           # Allow Go development tools and file operations for code changes and PRs
           claude_args: |
-            --allowedTools Edit Read Write Glob Grep "Bash(go:*)" "Bash(golangci-lint:*)" "Bash(make:*)" "Bash(git:*)" "Bash(gh:*)" mcp__github
+            --allowedTools "Edit,Read,Write,Glob,Grep,Bash(go:*),Bash(golangci-lint:*),Bash(make:*),Bash(git:*),Bash(gh:*),mcp__github"
 
