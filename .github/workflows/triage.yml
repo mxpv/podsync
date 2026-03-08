@@ -41,12 +41,12 @@ jobs:
 
             1. First, fetch the list of labels available in this repository by running: `gh label list`.
 
-            2. Use the GitHub tools to get context about the issue:
-               - mcp__github__issue_read: Retrieve the issue's details including title, description, comments, and existing labels
-               - mcp__github__issue_write: Apply labels or close the issue
-               - mcp__github__search_issues: Find similar issues for context
-               - mcp__github__list_issues: Understand labeling patterns
-               - mcp__github__add_issue_comment: Post a helpful response when needed
+            2. Use gh CLI to interact with the issue:
+               - gh issue view: Get issue details
+               - gh issue edit: Apply labels or close the issue
+               - gh search issues: Find similar issues for context
+               - gh issue list: Understand labeling patterns
+               - gh issue comment: Post a helpful response when needed
 
             3. Analyze the issue content, considering:
                - The issue title and description
@@ -61,7 +61,7 @@ jobs:
                - Documentation files: README.md, config.toml.example, docs/cron.md, docs/how_to_get_youtube_api_key.md, docs/how_to_get_vimeo_token.md
 
                If the question CAN BE SOLVED with an EXISTING configuration option:
-               - Post a helpful comment using mcp__github__add_issue_comment explaining the relevant config option(s)
+               - Post a helpful comment using `gh issue comment` explaining the relevant config option(s)
                - Include a TOML code example showing EXACTLY how to configure it
                - Reference the config.toml.example file
                - Be friendly and encourage the user to reopen if they need more help
@@ -97,7 +97,7 @@ jobs:
                - Select priority labels if you can determine urgency
 
             6. Check for DUPLICATE issues:
-               - Search for similar existing issues using mcp__github__search_issues:
+               - Search for similar existing issues using `gh search issues`:
                  - Run MULTIPLE searches with different keyword combinations
                  - Try synonyms and related terms (e.g., "indexing" -> "crawl", "scrape", "robots")
                  - Search for core concepts, not just exact phrases
@@ -110,7 +110,7 @@ jobs:
                - If this is a clear duplicate of an existing issue:
                  - Post a comment linking to the original issue(s)
                  - Apply a "duplicate" label
-                 - Close the issue as "not planned" using mcp__github__issue_write with state: "closed" and state_reason: "duplicate"
+                 - Close the issue using `gh issue close --reason duplicate`
                  - Be polite and suggest the user follow the original issue
                - This is the ONLY case where you should close an issue
 
@@ -120,4 +120,4 @@ jobs:
             - For bugs and feature requests, only apply labels without commenting
 
           claude_args: |
-            --allowedTools "Bash(gh label list),Read,Glob,mcp__github__add_issue_comment,mcp__github__issue_read,mcp__github__issue_write,mcp__github__search_issues,mcp__github__list_issues"
+            --allowedTools "Bash(gh:*),Read,Glob"
