@@ -125,7 +125,44 @@ min_duration = 60                      # Minimum duration in seconds
 max_duration = 3600                    # Maximum duration in seconds
 min_age = 1                            # Skip episodes newer than N days
 max_age = 365                          # Skip episodes older than N days
+```
 
+### Filter Examples
+
+All filters are evaluated with AND logic — an episode must satisfy every configured filter to be downloaded. Use [Go regular expression syntax](https://pkg.go.dev/regexp/syntax) to express complex conditions within a single filter field.
+
+**Exclude episodes with any of several keywords** (OR logic via regex alternation):
+```toml
+[feeds.my_feed.filters]
+# Exclude episodes whose title contains "Live", "LIVE", "Q&A", or "q&a"
+not_title = "(?i)(live|q&a)"
+```
+
+**Include only episodes matching any of several keywords**:
+```toml
+[feeds.my_feed.filters]
+# Include only episodes whose title contains "tutorial", "how-to", or "guide" (case-insensitive)
+title = "(?i)(tutorial|how.to|guide)"
+```
+
+**Combine title and duration filters** (both conditions must be satisfied):
+```toml
+[feeds.my_feed.filters]
+# Exclude short clips and previews AND require a minimum duration of 10 minutes
+not_title = "(?i)(short clip|preview|trailer)"
+min_duration = 600
+```
+
+**Match a phrase** (use `\b` for word boundaries or anchor patterns with `^`/`$`):
+```toml
+[feeds.my_feed.filters]
+# Include only episodes that contain the exact phrase "full episode" (case-insensitive)
+title = "(?i)full episode"
+```
+
+> **Note**: `title` and `description` filters include episodes that match; `not_title` and `not_description` exclude episodes that match. Duration and age filters always exclude episodes outside the specified range.
+
+```toml
 [feeds.my_feed.custom]                 # Override feed metadata
 title = "Custom Title"
 description = "Custom description"
