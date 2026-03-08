@@ -120,4 +120,4 @@ jobs:
             - For bugs and feature requests, only apply labels without commenting
 
           claude_args: |
-            --allowedTools "Bash(gh label list),Read,Glob,mcp__github"
+            --allowedTools "Bash(gh label list),Read,Glob,mcp__github__add_issue_comment,mcp__github__issue_read,mcp__github__issue_write,mcp__github__search_issues,mcp__github__list_issues"
