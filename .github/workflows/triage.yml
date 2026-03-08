@@ -28,8 +28,6 @@ jobs:
 
       - name: Triage issue with Claude
         uses: anthropics/claude-code-action@v1
-        env:
-          GH_TOKEN: ${{ github.token }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           show_full_output: true
@@ -122,4 +120,4 @@ jobs:
             - For bugs and feature requests, only apply labels without commenting
 
           claude_args: |
-            --allowedTools "Bash(gh label:*),Bash(gh issue:*),Bash(gh search:*),Read,Glob"
+            --allowedTools "Bash,Read,Glob,Grep"
