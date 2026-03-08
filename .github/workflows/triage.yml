@@ -2,6 +2,12 @@ name: Issue Triage
 on:
   issues:
     types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to triage'
+        required: true
+        type: number
 
 jobs:
   triage-issue:
@@ -30,7 +36,7 @@ jobs:
 
             Issue Information:
             - REPO: ${{ github.repository }}
-            - ISSUE_NUMBER: ${{ github.event.issue.number }}
+            - ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
 
             TASK OVERVIEW:
 
