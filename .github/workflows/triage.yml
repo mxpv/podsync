@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       issue_number:
-        description: 'Issue number to triage'
+        description: "Issue number to triage"
         required: true
         type: number
 
@@ -14,7 +14,7 @@ jobs:
   triage-issue:
     name: Triage
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     permissions:
       contents: read
       issues: write
