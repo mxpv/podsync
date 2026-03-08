@@ -61,13 +61,13 @@ jobs:
                - Common topics: configuration, cron schedules, API keys, Docker setup, NAS setup, database settings, cleanup policies
                - Documentation files: README.md, config.toml.example, docs/cron.md, docs/how_to_get_youtube_api_key.md, docs/how_to_get_vimeo_token.md
 
-               If the question CAN BE SOLVED with configuration:
-               - Post a helpful comment explaining the relevant config option(s)
-               - Include a TOML code example showing exactly how to configure it
+               If the question CAN BE SOLVED with an EXISTING configuration option:
+               - Post a helpful comment using mcp__github__create_issue_comment explaining the relevant config option(s)
+               - Include a TOML code example showing EXACTLY how to configure it
                - Reference the config.toml.example file
-               - Apply a "question" label if available
-               - Close the issue as "completed" using mcp__github__update_issue
                - Be friendly and encourage the user to reopen if they need more help
+               - Apply a "question" label if available
+               - Do NOT close the issue - leave it open for the maintainer to close after user confirmation
 
                Example response format for config questions:
                ```
@@ -84,17 +84,29 @@ jobs:
                clean = { keep_last = 10 }
                ```
 
-               See config.toml.example for more options.
+               See config.toml.example for more options. Feel free to close this issue if that resolves your question!
                ```
+
+               If the question CANNOT be solved with existing configuration:
+               - Apply a "question" label and optionally an "enhancement" label
+               - Post a brief comment acknowledging the question and noting that this feature/option doesn't currently exist
+               - Leave the issue open for maintainer review
 
             5. For NON-TRIVIAL issues (bugs, feature requests, etc.):
                - Apply appropriate labels from the available list
                - Do NOT post comments for these
                - Select priority labels if you can determine urgency
 
+            6. Check for DUPLICATE issues:
+               - Use mcp__github__search_issues to find similar issues
+               - If this is a clear duplicate of an existing open issue:
+                 - Post a comment linking to the original issue
+                 - Close the issue as a duplicate
+               - This is the ONLY case where you should close an issue
+
             IMPORTANT GUIDELINES:
             - Be helpful and friendly in any comments you post
-            - Only close issues if you've provided a complete answer or redirected appropriately
+            - NEVER close issues except for duplicates - leave them open for maintainer review
             - For bugs and feature requests, only apply labels without commenting
 
           claude_args: |

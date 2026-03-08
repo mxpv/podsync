@@ -108,6 +108,7 @@ The application uses TOML configuration files. See `config.toml.example` for all
 - The project uses golangci-lint with strict formatting rules - code must pass ALL checks
 
 ### Git Workflow
+- **NEVER commit or push changes unless explicitly asked by the user**
 - Keep commit messages brief and to the point
 - Use a short, descriptive commit title (50 characters or less)
 - Include a brief commit body that summarizes changes in 1-3 sentences when needed (wrap at 120 characters)
