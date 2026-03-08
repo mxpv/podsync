@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Podsync is a Go-based service that converts YouTube, Vimeo, and SoundCloud channels into podcast feeds. It downloads video/audio content and generates RSS feeds that can be consumed by podcast clients.
+Podsync is a Go-based service that converts YouTube, Vimeo, SoundCloud, and Twitch channels into podcast feeds. It downloads video/audio content and generates RSS feeds that can be consumed by podcast clients.
 
 ## Key Architecture Components
 
@@ -13,16 +13,16 @@ Podsync is a Go-based service that converts YouTube, Vimeo, and SoundCloud chann
 - **config.go**: TOML configuration loading and validation with defaults
 
 ### Core Packages (`pkg/`)
-- **builder/**: Media downloaders for different platforms (YouTube, Vimeo, SoundCloud)
-- **feed/**: RSS/podcast feed generation and management, OPML export
+- **builder/**: Media downloaders for different platforms (YouTube, Vimeo, SoundCloud, Twitch)
+- **feed/**: RSS/podcast feed generation and management, OPML export, hooks, API key rotation
 - **db/**: BadgerDB-based storage for metadata and state
 - **fs/**: Storage abstraction supporting local filesystem and S3-compatible storage
 - **model/**: Core data structures and domain models
 - **ytdl/**: YouTube-dl wrapper for media downloading
 
 ### Services (`services/`)
-- **update/**: Feed update orchestration and scheduling
-- **web/**: HTTP server for serving podcast feeds and media files
+- **update/**: Feed update orchestration, scheduling, episode filtering via matcher.go
+- **web/**: HTTP server for serving podcast feeds, media files, and health checks
 - **migrate/**: Filename migration tooling for transitioning to custom filename templates
 
 ### Key Dependencies
@@ -31,6 +31,281 @@ Podsync is a Go-based service that converts YouTube, Vimeo, and SoundCloud chann
 - go-toml for configuration
 - robfig/cron for scheduling
 - AWS SDK for S3 storage
+
+## Episode Lifecycle
+
+Understanding how episodes flow through the system:
+
+### Discovery Phase
+- Episodes are discovered during feed updates via platform APIs (YouTube Data API v3, Vimeo API, SoundCloud, Twitch)
+- `updateFeed()` in `services/update/updater.go:99-154` queries the platform API
+- New episodes are stored in BadgerDB with status `EpisodeNew`
+- Episodes matching feed URL are identified by provider-specific parsing in `pkg/builder/`
+
+### Download Phase
+- `fetchEpisodes()` iterates episodes with status `EpisodeNew` or `EpisodeError`
+- Episodes are filtered by match rules (title, description, duration, age) in `services/update/matcher.go:27-72`
+- Only `page_size` episodes are queued per update cycle (default 50)
+- Downloads happen to temp directory first, then copied to storage to prevent incomplete files
+- On success: status set to `EpisodeDownloaded` with file size recorded
+- On failure: status set to `EpisodeError`, retry attempted next cycle
+
+### Cleanup Phase (Important!)
+- `cleanup()` in `updater.go:373-441` runs AFTER each successful update cycle
+- **Only triggered if `clean.keep_last` is configured** (global or per-feed)
+- Keeps most recent N episodes by PubDate (descending order)
+- Deleted episodes have status changed to `EpisodeCleaned` and title/description cleared
+- **Files are deleted from storage but database records are retained**
+- This is a soft-delete: episodes remain in the database forever
+
+### Episode Removal from Database
+- Episodes are removed from the database only if they:
+  1. Are no longer returned by the platform API, AND
+  2. Have status `EpisodeNew` (never downloaded)
+- Episodes with status `EpisodeDownloaded` or `EpisodeCleaned` are NEVER removed from the database
+- There is NO mechanism to compact or prune the database of old episode records
+
+## Database Behavior (BadgerDB)
+
+### Data Storage
+- Uses versioned keyspace: `podsync/v1/`
+- Key prefixes: `feed/{feedID}` for feeds, `episode/{feedID}/{episodeID}` for episodes
+- Both use JSON serialization
+- Records are append-only; deleted episodes remain with `EpisodeCleaned` status
+
+### Database Growth and Limitations
+- **Database grows indefinitely** as new episodes are discovered
+- Deleted/cleaned episodes remain in DB forever (not physically removed)
+- **No built-in compaction or garbage collection** mechanism
+- No configuration option to prune old episode records
+- `keep_last` only deletes files, not database records
+- For very large feeds, database file size can grow significantly over time
+
+### Configuration Options
+```toml
+[database]
+dir = "/path/to/db"  # defaults to {config_dir}/db
+
+[database.badger]
+truncate = true      # enable value log truncation
+file_io = true       # use file I/O instead of mmap
+```
+
+## Configuration Reference
+
+### Feed Configuration (`[feeds.{ID}]`)
+```toml
+[feeds.my_feed]
+url = "https://youtube.com/..."        # Required: platform URL
+page_size = 50                         # Episodes to fetch per update (default 50)
+update_period = "6h"                   # How often to check (default 6h)
+cron_schedule = "0 */6 * * *"          # Cron expression (overrides update_period)
+quality = "high"                       # "high" or "low" (default "high")
+format = "video"                       # "audio", "video", or "custom"
+max_height = 720                       # Maximum video height (720, 1080, 1440, etc.)
+playlist_sort = "desc"                 # "asc" or "desc" for playlist ordering
+filename_template = "{{id}}"           # Tokens: {{id}}, {{title}}, {{pub_date}}, {{feed_id}}
+opml = true                            # Include in OPML export
+private_feed = false                   # Don't index by podcast aggregators
+youtube_dl_args = ["--arg1", "val"]    # Additional youtube-dl arguments
+
+[feeds.my_feed.custom_format]          # When format = "custom"
+youtube_dl_format = "bestvideo+bestaudio"
+extension = "mkv"
+
+[feeds.my_feed.clean]
+keep_last = 10                         # Keep only N most recent episodes (deletes files, not DB records)
+
+[feeds.my_feed.filters]
+title = "regex pattern"                # Include if title matches
+not_title = "regex pattern"            # Exclude if title matches
+description = "regex pattern"          # Include if description matches
+not_description = "regex pattern"      # Exclude if description matches
+min_duration = 60                      # Minimum duration in seconds
+max_duration = 3600                    # Maximum duration in seconds
+min_age = 1                            # Skip episodes newer than N days
+max_age = 365                          # Skip episodes older than N days
+
+[feeds.my_feed.custom]                 # Override feed metadata
+title = "Custom Title"
+description = "Custom description"
+author = "Author Name"
+link = "https://example.com"
+cover_art = "https://example.com/image.jpg"
+cover_art_quality = "high"             # "high" or "low"
+category = "Technology"
+subcategories = ["Software How-To"]
+explicit = false
+lang = "en"
+ownerName = "Owner"
+ownerEmail = "owner@example.com"
+```
+
+### Hooks Configuration
+```toml
+[feeds.my_feed.hooks.on_episode_download]
+command = ["notify-send", "Downloaded: ${EPISODE_TITLE}"]
+timeout = 60  # seconds
+
+[feeds.my_feed.hooks.on_episode_download_error]
+command = ["logger", "Failed: ${ERROR_MESSAGE}"]
+timeout = 60
+```
+Environment variables available: `EPISODE_FILE`, `FEED_NAME`, `EPISODE_TITLE`, `ERROR_MESSAGE`
+
+### Server Configuration
+```toml
+[server]
+port = 8080                            # HTTP port
+hostname = "https://example.com"       # External URL for feed links
+bind_address = "*"                     # IP to bind ("*" for all)
+path = "feeds"                         # URL path prefix (alphanumeric only)
+web_ui = false                         # Enable web UI
+tls = false                            # Enable HTTPS
+certificate_path = "/path/to/cert.pem"
+key_file_path = "/path/to/key.pem"
+debug_endpoints = false                # Enable /debug/vars metrics
+```
+
+### Storage Configuration
+```toml
+[storage]
+type = "local"                         # "local" or "s3"
+
+[storage.local]
+data_dir = "/path/to/data"             # Required for local storage
+
+[storage.s3]
+endpoint_url = "https://s3.amazonaws.com"
+region = "us-east-1"
+bucket = "my-bucket"
+prefix = "podsync"
+```
+
+### API Tokens
+```toml
+[tokens]
+youtube = "API_KEY"                    # Single key
+youtube = ["KEY1", "KEY2", "KEY3"]     # Multiple keys for rotation
+vimeo = "TOKEN"
+soundcloud = "KEY"
+twitch = "CLIENT_ID:CLIENT_SECRET"     # Must include both
+```
+Environment variables: `PODSYNC_YOUTUBE_API_KEY`, `PODSYNC_VIMEO_API_KEY`, etc. (space-separated for multiple keys)
+
+### Downloader Configuration
+```toml
+[downloader]
+self_update = false                    # Auto-update youtube-dl every 24h
+timeout = 15                           # Download timeout in minutes (default 15)
+custom_binary = "/path/to/yt-dlp"      # Custom youtube-dl/yt-dlp binary
+```
+
+### Global Cleanup
+```toml
+[cleanup]
+keep_last = 50                         # Applied to all feeds unless overridden
+```
+
+### Logging
+```toml
+[log]
+filename = "/path/to/podsync.log"
+max_size = 100                         # MB
+max_backups = 3
+max_age = 28                           # days
+compress = true
+debug = false
+```
+
+## Platform-Specific Behaviors
+
+### YouTube (`pkg/builder/youtube.go`)
+- **Supported**: Channels, Users, Handles (@username), Playlists
+- **Not Supported**: Live streams and Premiered videos (automatically skipped)
+- API costs: Channel/User 5 units, Handle 105 units (requires extra lookup), Playlist 3 units/request
+- Thumbnail quality: uses maxres > high > medium > default
+- Size estimation based on duration and quality (not actual file size)
+- Supports playlist_sort for ordering
+
+### Vimeo (`pkg/builder/vimeo.go`)
+- **Supported**: Channels, Groups, Users
+- Paginated API with 50 items per page
+- Size estimated from duration and resolution
+
+### SoundCloud (`pkg/builder/soundcloud.go`)
+- **Supported**: Playlists only (`/sets/` URLs)
+- **Not Supported**: Individual tracks, user profiles, likes playlists
+- No API key required
+- Size roughly estimated from duration
+
+### Twitch (`pkg/builder/twitch.go`)
+- **Supported**: User channels (video archives only)
+- **Not Supported**: Clips, highlights, ongoing streams
+- Requires `CLIENT_ID:CLIENT_SECRET` token format
+- Max 100 videos per request
+
+### API Key Rotation
+- All platforms support multiple keys for rotation
+- Round-robin rotation via `RotatedKeyProvider` in `pkg/feed/key.go`
+- Helps avoid hitting single API quota limits
+
+## Web Server Endpoints
+
+- `/{path}/{feed_id}.xml` - RSS/Podcast feed
+- `/{path}/{feed_id}/{episode_name}` - Episode file download
+- `/{path}/podsync.opml` - OPML export (feeds with `opml = true`)
+- `/{path}/index.html` - Web UI (if enabled, local storage only)
+- `/health` - Health check (returns 503 if episodes failed in last 24h)
+- `/debug/vars` - Runtime metrics (if `debug_endpoints = true`)
+
+## Storage Behavior
+
+### Local Storage
+- Files stored in `{data_dir}/{feed_id}/{episode_name}`
+- Web UI served from `./html/index.html` if enabled
+
+### S3 Storage
+- Files stored with key: `{prefix}/{feed_id}/{episode_name}`
+- **Cannot serve files via Podsync** - content must be hosted externally
+- **Filename migration not supported** (except dry-run)
+- Web UI not available
+
+### Filename Generation
+- Template tokens: `{{id}}`, `{{title}}`, `{{pub_date}}` (YYYY-MM-DD), `{{feed_id}}`
+- Default template: `{{id}}` if not configured
+- Sanitization removes invalid characters, normalizes whitespace
+- `--migrate-filenames` CLI flag renames existing files to match current template
+
+## Error Handling
+
+- YouTube 429 (rate limit): stops current batch, retries next cycle
+- Download failures: episode status set to `EpisodeError`, retried next cycle
+- API failures: logged, scheduler continues with other feeds
+- Download timeout: configurable via `downloader.timeout` (default 15 minutes)
+- Hooks available for error notification (`on_episode_download_error`)
+
+## Limitations and Known Issues
+
+### Database
+- No automatic compaction/garbage collection
+- Deleted episodes remain in database forever
+- `keep_last` only deletes files, not database records
+- Database grows indefinitely with feed updates
+
+### Platforms
+- YouTube: Live/Premiered videos skipped automatically
+- SoundCloud: Only playlist URLs supported
+- Twitch: Archives only, no clips/highlights
+
+### Storage
+- S3: Cannot serve files through Podsync, no filename migration
+- Local: Web UI requires `./html/index.html` to exist
+
+### Performance
+- Feed updates are sequential (not parallel)
+- Large playlists paginated with 50-item batches
+- All episodes loaded into memory when walking database
 
 ## Common Development Commands
 
@@ -75,17 +350,6 @@ Use VS Code with the Go extension. The repository includes `.vscode/launch.json`
 
 ### Dev Container
 The repository includes a `.devcontainer/` configuration for VS Code or GitHub Codespaces with Go tooling pre-configured.
-
-## Configuration
-
-The application uses TOML configuration files. See `config.toml.example` for all available options. Key sections:
-- `[server]`: Web server settings (port, hostname, TLS)
-- `[storage]`: Local or S3 storage configuration
-- `[tokens]`: API keys for YouTube/Vimeo
-- `[feeds]`: Feed definitions with URLs and settings
-  - `filename_template`: Custom naming for downloaded files (tokens: `{{id}}`, `{{title}}`, `{{pub_date}}`, `{{feed_id}}`)
-- `[downloader]`: youtube-dl configuration
-- `[log]`: Log file settings (filename, rotation, debug mode)
 
 ## Development Guidelines
 
@@ -142,6 +406,19 @@ When mentioned on GitHub issues with requests like "take a look" or "can you fix
 - Open a pull request with the solution
 - If a fix is not possible or requirements are unclear, respond in the issue explaining what's needed or asking for clarification
 
+## Maintaining This Documentation
+
+**IMPORTANT**: Keep this CLAUDE.md file up to date whenever making changes to the codebase:
+
+- **New features**: Document new configuration options, CLI flags, endpoints, or capabilities
+- **Behavior changes**: Update relevant sections when modifying how episodes are processed, stored, or cleaned up
+- **New platform support**: Add platform-specific documentation under "Platform-Specific Behaviors"
+- **API changes**: Update configuration examples and available options
+- **Bug fixes that affect documented behavior**: Correct any documentation that no longer reflects reality
+- **New limitations or removed limitations**: Update the "Limitations and Known Issues" section
+
+This ensures Claude can accurately answer questions about current Podsync behavior and capabilities.
+
 ## Formatting and Linting Requirements
 
 This project uses golangci-lint with strict formatting rules configured in `.golangci.yml`. Common formatting requirements include:
@@ -154,3 +431,23 @@ This project uses golangci-lint with strict formatting rules configured in `.gol
 - Space after commas in function parameters and struct literals
 
 **Always run `go fmt ./...`, `golangci-lint run`, AND `make test` after making ANY code changes to ensure both functionality and formatting are correct before committing.**
+
+## Key File References
+
+- Main entry: `cmd/podsync/main.go`
+- Config loading: `cmd/podsync/config.go`
+- Feed update: `services/update/updater.go` (episode lifecycle, cleanup)
+- Episode filtering: `services/update/matcher.go`
+- Database: `pkg/db/badger.go`
+- Storage: `pkg/fs/local.go`, `pkg/fs/s3.go`
+- Feed generation: `pkg/feed/xml.go` (RSS, filename handling)
+- Filename migration: `services/migrate/migrate.go`
+- Web server: `services/web/server.go`
+- YouTube builder: `pkg/builder/youtube.go`
+- Vimeo builder: `pkg/builder/vimeo.go`
+- SoundCloud builder: `pkg/builder/soundcloud.go`
+- Twitch builder: `pkg/builder/twitch.go`
+- URL parsing: `pkg/builder/url.go`
+- youtube-dl wrapper: `pkg/ytdl/ytdl.go`
+- Hooks: `pkg/feed/hooks.go`
+- API key rotation: `pkg/feed/key.go`
