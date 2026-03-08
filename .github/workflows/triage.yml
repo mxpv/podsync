@@ -65,11 +65,6 @@ jobs:
                - Close the issue as "completed" using mcp__github__update_issue
                - Be friendly and encourage the user to reopen if they need more help
 
-               If the question would be better as a DISCUSSION:
-               - Post a comment suggesting they use GitHub Discussions for general questions
-               - Provide the link: https://github.com/${{ github.repository }}/discussions
-               - Close the issue as "not_planned"
-
             5. For NON-TRIVIAL issues (bugs, feature requests, etc.):
                - Apply appropriate labels from the available list
                - Do NOT post comments for these
