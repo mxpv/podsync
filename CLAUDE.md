@@ -134,6 +134,13 @@ The application uses TOML configuration files. See `config.toml.example` for all
 - Episode filtering and cleanup capabilities
 - Customizable filename templates with migration tooling for existing files
 
+## GitHub Issue Handling
+
+When mentioned on GitHub issues with requests like "take a look" or "can you fix this":
+- Investigate the issue and attempt to implement a fix
+- Open a pull request with the solution
+- If a fix is not possible or requirements are unclear, respond in the issue explaining what's needed or asking for clarification
+
 ## Formatting and Linting Requirements
 
 This project uses golangci-lint with strict formatting rules configured in `.golangci.yml`. Common formatting requirements include:
