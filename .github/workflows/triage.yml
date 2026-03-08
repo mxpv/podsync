@@ -122,4 +122,4 @@ jobs:
             - For bugs and feature requests, only apply labels without commenting
 
           claude_args: |
-            --allowedTools "Bash(gh:*),Read,Glob"
+            --allowedTools "Bash(gh label:*),Bash(gh issue:*),Bash(gh search:*),Read,Glob"
