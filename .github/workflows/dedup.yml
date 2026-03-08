@@ -1,4 +1,5 @@
 name: Issue Deduplication
+run-name: "Dedup #${{ github.event.issue.number || inputs.issue_number }}"
 
 on:
   issues:

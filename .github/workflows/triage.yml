@@ -1,4 +1,5 @@
 name: Issue Triage
+run-name: "Triage #${{ github.event.issue.number || inputs.issue_number }}"
 on:
   issues:
     types: [opened]
