@@ -39,8 +39,12 @@ jobs:
 
             Your task:
             1. Use mcp__github__get_issue to get details of the current issue (#${{ github.event.issue.number || inputs.issue_number }})
-            2. Search for similar existing issues using mcp__github__search_issues with relevant keywords from the issue title and body
-            3. Compare the new issue with existing ones to identify potential duplicates
+            2. Search for similar existing issues using mcp__github__search_issues:
+               - Run MULTIPLE searches with different keyword combinations
+               - Try synonyms and related terms (e.g., "indexing" -> "crawl", "scrape", "robots")
+               - Search for core concepts, not just exact phrases
+               - Include both open and closed issues
+            3. Compare the new issue with all found issues to identify potential duplicates
 
             Criteria for duplicates:
             - Same bug or error being reported
