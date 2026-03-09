@@ -16,7 +16,7 @@ var (
 )
 
 func TestNewLocal(t *testing.T) {
-	local, err := NewLocal("", false)
+	local, err := NewLocal("", false, false)
 	assert.NoError(t, err)
 	assert.NotNil(t, local)
 }
@@ -25,7 +25,7 @@ func TestLocal_Create(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "")
 	assert.NoError(t, err)
 
-	stor, err := NewLocal(tmpDir, false)
+	stor, err := NewLocal(tmpDir, false, false)
 	assert.NoError(t, err)
 
 	written, err := stor.Create(testCtx, "1/test", bytes.NewBuffer([]byte{1, 5, 7, 8, 3}))
@@ -43,7 +43,7 @@ func TestLocal_Size(t *testing.T) {
 
 	defer os.RemoveAll(tmpDir)
 
-	stor, err := NewLocal(tmpDir, false)
+	stor, err := NewLocal(tmpDir, false, false)
 	assert.NoError(t, err)
 
 	_, err = stor.Create(testCtx, "1/test", bytes.NewBuffer([]byte{1, 5, 7, 8, 3}))
@@ -55,7 +55,7 @@ func TestLocal_Size(t *testing.T) {
 }
 
 func TestLocal_NoSize(t *testing.T) {
-	stor, err := NewLocal("", false)
+	stor, err := NewLocal("", false, false)
 	assert.NoError(t, err)
 
 	_, err = stor.Size(testCtx, "1/test")
@@ -66,7 +66,7 @@ func TestLocal_Delete(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "")
 	assert.NoError(t, err)
 
-	stor, err := NewLocal(tmpDir, false)
+	stor, err := NewLocal(tmpDir, false, false)
 	assert.NoError(t, err)
 
 	_, err = stor.Create(testCtx, "1/test", bytes.NewBuffer([]byte{1, 5, 7, 8, 3}))
@@ -100,4 +100,48 @@ func TestLocal_copyFile(t *testing.T) {
 	stat, err := os.Stat(file)
 	assert.NoError(t, err)
 	assert.EqualValues(t, 3, stat.Size())
+}
+
+func TestLocal_NoListing(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "")
+	assert.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	// Create a file inside a subdirectory
+	stor, err := NewLocal(tmpDir, false, true)
+	assert.NoError(t, err)
+
+	_, err = stor.Create(testCtx, "feed1/episode.mp3", bytes.NewBuffer([]byte{1, 2, 3}))
+	assert.NoError(t, err)
+
+	// Opening a file should work
+	file, err := stor.Open("/feed1/episode.mp3")
+	assert.NoError(t, err)
+	file.Close()
+
+	// Opening a directory should return ErrNotExist when NoListing is enabled
+	_, err = stor.Open("/feed1")
+	assert.True(t, os.IsNotExist(err))
+
+	// Opening root should also return ErrNotExist
+	_, err = stor.Open("/")
+	assert.True(t, os.IsNotExist(err))
+}
+
+func TestLocal_NoListing_Disabled(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "")
+	assert.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	// Create storage with NoListing disabled
+	stor, err := NewLocal(tmpDir, false, false)
+	assert.NoError(t, err)
+
+	_, err = stor.Create(testCtx, "feed1/episode.mp3", bytes.NewBuffer([]byte{1, 2, 3}))
+	assert.NoError(t, err)
+
+	// Opening a directory should work when NoListing is disabled
+	file, err := stor.Open("/feed1")
+	assert.NoError(t, err)
+	file.Close()
 }

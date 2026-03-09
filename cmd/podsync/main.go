@@ -126,7 +126,7 @@ func main() {
 	var storage fs.Storage
 	switch cfg.Storage.Type {
 	case "local":
-		storage, err = fs.NewLocal(cfg.Storage.Local.DataDir, cfg.Server.WebUIEnabled)
+		storage, err = fs.NewLocal(cfg.Storage.Local.DataDir, cfg.Server.WebUIEnabled, cfg.Server.NoListing)
 	case "s3":
 		storage, err = fs.NewS3(cfg.Storage.S3) // serving files from S3 is not supported, so no WebUI either
 	default:

@@ -21,10 +21,11 @@ type LocalConfig struct {
 type Local struct {
 	rootDir      string
 	WebUIEnabled bool
+	NoListing    bool
 }
 
-func NewLocal(rootDir string, webUIEnabled bool) (*Local, error) {
-	return &Local{rootDir: rootDir, WebUIEnabled: webUIEnabled}, nil
+func NewLocal(rootDir string, webUIEnabled bool, noListing bool) (*Local, error) {
+	return &Local{rootDir: rootDir, WebUIEnabled: webUIEnabled, NoListing: noListing}, nil
 }
 
 func (l *Local) Open(name string) (http.File, error) {
@@ -32,7 +33,25 @@ func (l *Local) Open(name string) (http.File, error) {
 		return os.Open("./html/index.html")
 	}
 	path := filepath.Join(l.rootDir, name)
-	return os.Open(path)
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	// If NoListing is enabled, prevent directory listings by returning 404
+	if l.NoListing {
+		stat, err := file.Stat()
+		if err != nil {
+			file.Close()
+			return nil, err
+		}
+		if stat.IsDir() {
+			file.Close()
+			return nil, os.ErrNotExist
+		}
+	}
+
+	return file, nil
 }
 
 func (l *Local) Delete(_ctx context.Context, name string) error {

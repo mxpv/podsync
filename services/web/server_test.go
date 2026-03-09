@@ -1,12 +1,16 @@
 package web
 
 import (
+	"bytes"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/mxpv/podsync/pkg/fs"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type mockFileSystem struct{}
@@ -99,4 +103,83 @@ func TestNoIndexEnabledWhenConfigured(t *testing.T) {
 	rec = httptest.NewRecorder()
 	srv.Handler.ServeHTTP(rec, req)
 	assert.Equal(t, "noindex, nofollow", rec.Header().Get("X-Robots-Tag"))
+}
+
+func TestNoListingDisabledByDefault(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create storage with NoListing disabled (default)
+	storage, err := fs.NewLocal(tmpDir, false, false)
+	require.NoError(t, err)
+
+	// Create a file inside a subdirectory
+	_, err = storage.Create(context.Background(), "feeds/episode.mp3", bytes.NewReader([]byte("audio content")))
+	require.NoError(t, err)
+
+	cfg := Config{
+		Port: 8080,
+		Path: "",
+	}
+
+	srv := New(cfg, storage, nil)
+
+	// Accessing a directory should return 200 with directory listing
+	req := httptest.NewRequest(http.MethodGet, "/feeds/", nil)
+	rec := httptest.NewRecorder()
+	srv.Handler.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Contains(t, rec.Body.String(), "episode.mp3")
+
+	// Accessing root should also return 200 with directory listing
+	req = httptest.NewRequest(http.MethodGet, "/", nil)
+	rec = httptest.NewRecorder()
+	srv.Handler.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Contains(t, rec.Body.String(), "feeds")
+
+	// Accessing a file should work
+	req = httptest.NewRequest(http.MethodGet, "/feeds/episode.mp3", nil)
+	rec = httptest.NewRecorder()
+	srv.Handler.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "audio content", rec.Body.String())
+}
+
+func TestNoListingEnabledWhenConfigured(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create storage with NoListing enabled
+	storage, err := fs.NewLocal(tmpDir, false, true)
+	require.NoError(t, err)
+
+	// Create a file inside a subdirectory
+	_, err = storage.Create(context.Background(), "feeds/episode.mp3", bytes.NewReader([]byte("audio content")))
+	require.NoError(t, err)
+
+	cfg := Config{
+		Port:      8080,
+		Path:      "",
+		NoListing: true,
+	}
+
+	srv := New(cfg, storage, nil)
+
+	// Accessing a directory should return 404
+	req := httptest.NewRequest(http.MethodGet, "/feeds/", nil)
+	rec := httptest.NewRecorder()
+	srv.Handler.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+
+	// Accessing root should also return 404
+	req = httptest.NewRequest(http.MethodGet, "/", nil)
+	rec = httptest.NewRecorder()
+	srv.Handler.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+
+	// Accessing a file should still work
+	req = httptest.NewRequest(http.MethodGet, "/feeds/episode.mp3", nil)
+	rec = httptest.NewRecorder()
+	srv.Handler.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "audio content", rec.Body.String())
 }
