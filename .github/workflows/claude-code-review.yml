@@ -6,6 +6,8 @@ on:
 
 jobs:
   claude-review:
+    # Skip dependabot PRs - they're dependency bumps that don't need code review
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -28,7 +30,6 @@ jobs:
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          allowed_bots: 'dependabot[bot]'
           claude_args: |
             --allowedTools "Bash,Read,Glob,Grep"
 
