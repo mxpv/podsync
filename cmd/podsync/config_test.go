@@ -460,6 +460,45 @@ data_dir = "/data"
 	})
 }
 
+func TestNoIndexConfig(t *testing.T) {
+	t.Run("disabled by default", func(t *testing.T) {
+		const file = `
+[server]
+data_dir = "/data"
+
+[feeds]
+  [feeds.A]
+  url = "https://youtube.com/watch?v=ygIUF678y40"
+`
+		path := setup(t, file)
+		defer os.Remove(path)
+
+		config, err := LoadConfig(path)
+		assert.NoError(t, err)
+		require.NotNil(t, config)
+		assert.False(t, config.Server.NoIndex)
+	})
+
+	t.Run("enabled when configured", func(t *testing.T) {
+		const file = `
+[server]
+data_dir = "/data"
+no_index = true
+
+[feeds]
+  [feeds.A]
+  url = "https://youtube.com/watch?v=ygIUF678y40"
+`
+		path := setup(t, file)
+		defer os.Remove(path)
+
+		config, err := LoadConfig(path)
+		assert.NoError(t, err)
+		require.NotNil(t, config)
+		assert.True(t, config.Server.NoIndex)
+	})
+}
+
 func setup(t *testing.T, file string) string {
 	t.Helper()
 

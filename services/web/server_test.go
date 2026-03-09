@@ -54,3 +54,49 @@ func TestDebugEndpointEnabledWhenConfigured(t *testing.T) {
 	// Verify it contains expvar data (cmdline is always present)
 	assert.True(t, strings.Contains(rec.Body.String(), "cmdline"))
 }
+
+func TestNoIndexDisabledByDefault(t *testing.T) {
+	cfg := Config{
+		Port: 8080,
+		Path: "feeds",
+	}
+
+	srv := New(cfg, &mockFileSystem{}, nil)
+
+	// robots.txt should return 404 when disabled
+	req := httptest.NewRequest(http.MethodGet, "/robots.txt", nil)
+	rec := httptest.NewRecorder()
+	srv.Handler.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+
+	// X-Robots-Tag header should not be present on feed requests
+	req = httptest.NewRequest(http.MethodGet, "/feeds/test.xml", nil)
+	rec = httptest.NewRecorder()
+	srv.Handler.ServeHTTP(rec, req)
+	assert.Empty(t, rec.Header().Get("X-Robots-Tag"))
+}
+
+func TestNoIndexEnabledWhenConfigured(t *testing.T) {
+	cfg := Config{
+		Port:    8080,
+		Path:    "feeds",
+		NoIndex: true,
+	}
+
+	srv := New(cfg, &mockFileSystem{}, nil)
+
+	// robots.txt should return disallow all
+	req := httptest.NewRequest(http.MethodGet, "/robots.txt", nil)
+	rec := httptest.NewRecorder()
+	srv.Handler.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "text/plain", rec.Header().Get("Content-Type"))
+	assert.Contains(t, rec.Body.String(), "User-agent: *")
+	assert.Contains(t, rec.Body.String(), "Disallow: /")
+
+	// X-Robots-Tag header should be present on all responses
+	req = httptest.NewRequest(http.MethodGet, "/feeds/test.xml", nil)
+	rec = httptest.NewRecorder()
+	srv.Handler.ServeHTTP(rec, req)
+	assert.Equal(t, "noindex, nofollow", rec.Header().Get("X-Robots-Tag"))
+}
