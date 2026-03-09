@@ -148,7 +148,8 @@ func TestNoListingDisabledByDefault(t *testing.T) {
 func TestNoListingEnabledWhenConfigured(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	// Create storage with NoListing enabled
+	// Create storage with NoListing enabled - directory listing is controlled by the
+	// http.FileSystem implementation (Local storage), not by Config.NoListing.
 	storage, err := fs.NewLocal(tmpDir, false, true)
 	require.NoError(t, err)
 
@@ -157,9 +158,8 @@ func TestNoListingEnabledWhenConfigured(t *testing.T) {
 	require.NoError(t, err)
 
 	cfg := Config{
-		Port:      8080,
-		Path:      "",
-		NoListing: true,
+		Port: 8080,
+		Path: "",
 	}
 
 	srv := New(cfg, storage, nil)
