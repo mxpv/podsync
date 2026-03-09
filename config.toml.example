@@ -26,6 +26,10 @@ key_file_path = "/var/www/priv.pem"
 # Optional. Enable debug endpoints (/debug/vars) for runtime metrics. Disabled by default for security.
 # Only enable this if you need to debug the application and the endpoint is not publicly accessible.
 debug_endpoints = false
+# Optional. Block search engine indexing by serving robots.txt and adding X-Robots-Tag header.
+no_index = false
+# Optional. Disable directory listings, return 404 for folder access (e.g. GET / or GET /feedID).
+no_listing = false
 
 # Configure where to store the episode data
 [storage]

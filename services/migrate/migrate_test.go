@@ -88,7 +88,7 @@ func TestRunMigratesLegacyFilename(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
 
-	storage, err := fs.NewLocal(tmpDir, false)
+	storage, err := fs.NewLocal(tmpDir, false, false)
 	require.NoError(t, err)
 
 	tdb := newTestDB()
@@ -134,7 +134,7 @@ func TestRunDryRunDoesNotWrite(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
 
-	storage, err := fs.NewLocal(tmpDir, false)
+	storage, err := fs.NewLocal(tmpDir, false, false)
 	require.NoError(t, err)
 
 	tdb := newTestDB()
@@ -178,7 +178,7 @@ func TestRunFailsOnUnexpectedSecondTargetStatError(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
 
-	baseStorage, err := fs.NewLocal(tmpDir, false)
+	baseStorage, err := fs.NewLocal(tmpDir, false, false)
 	require.NoError(t, err)
 
 	tdb := newTestDB()

@@ -203,6 +203,7 @@ certificate_path = "/path/to/cert.pem"
 key_file_path = "/path/to/key.pem"
 debug_endpoints = false                # Enable /debug/vars metrics
 no_index = false                       # Block search engine indexing (serves robots.txt and X-Robots-Tag header)
+no_listing = false                     # Disable directory listings, return 404 for folder access
 ```
 
 ### Storage Configuration

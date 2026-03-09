@@ -44,6 +44,8 @@ type Config struct {
 	DebugEndpoints bool `toml:"debug_endpoints"`
 	// NoIndex blocks search engine indexing by serving robots.txt and adding X-Robots-Tag header (disabled by default)
 	NoIndex bool `toml:"no_index"`
+	// NoListing returns 404 for directory listings, only serving actual files (disabled by default)
+	NoListing bool `toml:"no_listing"`
 }
 
 func New(cfg Config, storage http.FileSystem, database db.Storage) *Server {
