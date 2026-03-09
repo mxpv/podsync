@@ -42,6 +42,8 @@ type Config struct {
 	WebUIEnabled bool `toml:"web_ui"`
 	// DebugEndpoints enables /debug/vars endpoint for runtime metrics (disabled by default)
 	DebugEndpoints bool `toml:"debug_endpoints"`
+	// NoIndex blocks search engine indexing by serving robots.txt and adding X-Robots-Tag header (disabled by default)
+	NoIndex bool `toml:"no_index"`
 }
 
 func New(cfg Config, storage http.FileSystem, database db.Storage) *Server {
@@ -81,6 +83,11 @@ func New(cfg Config, storage http.FileSystem, database db.Storage) *Server {
 	}
 
 	srv.Handler = mux
+	if cfg.NoIndex {
+		log.Info("search engine indexing blocked (no_index enabled)")
+		mux.HandleFunc("/robots.txt", robotsTxtHandler)
+		srv.Handler = noIndexMiddleware(srv.Handler)
+	}
 
 	return &srv
 }
@@ -132,4 +139,16 @@ func (s *Server) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(status)
+}
+
+func robotsTxtHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("User-agent: *\nDisallow: /\n"))
+}
+
+func noIndexMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Robots-Tag", "noindex, nofollow")
+		next.ServeHTTP(w, r)
+	})
 }

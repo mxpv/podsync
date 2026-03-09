@@ -202,6 +202,7 @@ tls = false                            # Enable HTTPS
 certificate_path = "/path/to/cert.pem"
 key_file_path = "/path/to/key.pem"
 debug_endpoints = false                # Enable /debug/vars metrics
+no_index = false                       # Block search engine indexing (serves robots.txt and X-Robots-Tag header)
 ```
 
 ### Storage Configuration
@@ -295,6 +296,7 @@ debug = false
 - `/{path}/index.html` - Web UI (if enabled, local storage only)
 - `/health` - Health check (returns 503 if episodes failed in last 24h)
 - `/debug/vars` - Runtime metrics (if `debug_endpoints = true`)
+- `/robots.txt` - Search engine blocking (if `no_index = true`)
 
 ## Storage Behavior
 
