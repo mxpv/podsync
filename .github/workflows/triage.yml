@@ -18,7 +18,6 @@ jobs:
     permissions:
       contents: read
       issues: write
-      id-token: write
 
     steps:
       - name: Checkout repository
@@ -30,6 +29,8 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          allowed_non_write_users: "*"
           show_full_output: true
           prompt: |
             You're an issue triage assistant for GitHub issues. Your task is to analyze the issue, apply appropriate labels, and help users with trivial questions.
