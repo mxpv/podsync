@@ -67,7 +67,7 @@ jobs:
           YOUTUBE_TEST_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: go test -coverprofile=coverage.txt ./...
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
