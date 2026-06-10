@@ -43,7 +43,12 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: 1.25
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - uses: actions/checkout@v6
+      - name: Run Web UI tests
+        run: node --test html/index.test.js
       - env:
           VIMEO_TEST_API_KEY: ${{ secrets.VIMEO_ACCESS_TOKEN }}
           YOUTUBE_TEST_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
