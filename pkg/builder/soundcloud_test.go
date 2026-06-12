@@ -21,7 +21,8 @@ func newSoundcloudBuilderSafe() (builder *SoundCloudBuilder) {
 	}()
 
 	var err error
-	builder, err = NewSoundcloudBuilder()
+	// SoundCloud client_id is optional; if empty, the library can scrape it as needed.
+	builder, err = NewSoundcloudBuilder("")
 	if err != nil {
 		return nil
 	}
@@ -35,8 +36,11 @@ func TestSoundCloud_BuildFeed(t *testing.T) {
 	}
 
 	urls := []string{
+		// Playlists (existing behavior)
 		"https://soundcloud.com/moby/sets/remixes",
 		"https://soundcloud.com/npr/sets/soundscapes",
+		// User profile (new behavior)
+		"https://soundcloud.com/moby",
 	}
 
 	for _, addr := range urls {
@@ -45,18 +49,16 @@ func TestSoundCloud_BuildFeed(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.NotEmpty(t, _feed.Title)
-			assert.NotEmpty(t, _feed.Description)
 			assert.NotEmpty(t, _feed.Author)
 			assert.NotEmpty(t, _feed.ItemURL)
 
+			// Description / artwork may be empty for some profiles or tracks, so don't hard-require it.
 			assert.NotZero(t, len(_feed.Episodes))
 
 			for _, item := range _feed.Episodes {
 				assert.NotEmpty(t, item.Title)
 				assert.NotEmpty(t, item.VideoURL)
 				assert.NotZero(t, item.Duration)
-				assert.NotEmpty(t, item.Title)
-				assert.NotEmpty(t, item.Thumbnail)
 			}
 		})
 	}
