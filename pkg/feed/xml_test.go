@@ -48,6 +48,32 @@ func TestBuildXML(t *testing.T) {
 	assert.EqualValues(t, out.Items[0].Enclosure.Type, itunes.MP4)
 }
 
+func TestBuildXMLSkipsEpisodeWithoutTitle(t *testing.T) {
+	feed := model.Feed{
+		Episodes: []*model.Episode{
+			{
+				ID:          "no-title",
+				Status:      model.EpisodeDownloaded,
+				Description: "description",
+			},
+			{
+				ID:          "ok",
+				Status:      model.EpisodeDownloaded,
+				Title:       "title",
+				Description: "description",
+			},
+		},
+	}
+
+	cfg := Config{ID: "test"}
+
+	out, err := Build(context.Background(), &feed, &cfg, "http://localhost/")
+	// A single episode with a missing title must not fail the whole feed build
+	require.NoError(t, err)
+	require.Len(t, out.Items, 1)
+	assert.Equal(t, "ok", out.Items[0].GUID)
+}
+
 func TestBuildXMLWithFilenameTemplate(t *testing.T) {
 	feed := model.Feed{
 		Episodes: []*model.Episode{

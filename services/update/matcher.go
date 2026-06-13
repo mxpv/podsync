@@ -42,6 +42,13 @@ func matchFilters(episode *model.Episode, filters *feed.Filters) bool {
 		return false
 	}
 
+	return matchDurationAndAge(episode, filters, logger)
+}
+
+// matchDurationAndAge evaluates the filters that depend only on metadata that is always
+// present on an episode record (duration and publish date). It is used as a cheap pre-filter
+// for cleaned episodes, whose title/description may have to be fetched separately.
+func matchDurationAndAge(episode *model.Episode, filters *feed.Filters, logger log.FieldLogger) bool {
 	if filters.MaxDuration > 0 && episode.Duration > filters.MaxDuration {
 		logger.WithField("filter", "max_duration").Infof("skipping due to duration filter (%ds)", episode.Duration)
 		return false
