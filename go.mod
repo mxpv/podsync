@@ -22,7 +22,7 @@ require (
 	github.com/zackradisic/soundcloud-api v0.1.8
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sync v0.21.0
-	google.golang.org/api v0.285.0
+	google.golang.org/api v0.286.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
