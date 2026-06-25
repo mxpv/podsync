@@ -207,7 +207,11 @@ func (u *Manager) discoveryWindow(ctx context.Context, feedConfig *feed.Config) 
 
 	existing, err := u.db.GetFeed(ctx, feedConfig.ID)
 	if err != nil {
-		// Brand new feed: nothing scanned yet. Stay shallow to avoid a surprise back-catalog download.
+		if err == model.ErrNotFound {
+			// Brand new feed: nothing scanned yet. Stay shallow to avoid a surprise back-catalog download.
+			return time.Time{}, time.Time{}
+		}
+		log.WithError(err).WithField("feed_id", feedConfig.ID).Warn("failed to load existing feed for discovery-window calculation; staying shallow")
 		return time.Time{}, time.Time{}
 	}
 
