@@ -166,13 +166,6 @@ func (u *Manager) updateFeed(ctx context.Context, feedConfig *feed.Config) error
 		return err
 	}
 
-	// Carry forward the discovery high-water mark so the deep scan only repeats while catching up.
-	result.ScannedThrough = nextScannedThrough(since, watermark, result, processed, &feedConfig.Filters)
-
-	if err := u.db.AddFeed(ctx, feedConfig.ID, result); err != nil {
-		return err
-	}
-
 	for _, episode := range result.Episodes {
 		delete(episodeSet, episode.ID)
 	}
@@ -186,7 +179,23 @@ func (u *Manager) updateFeed(ctx context.Context, feedConfig *feed.Config) error
 		}
 	}
 
-	if err := u.resurrectEpisodes(feedConfig, cleaned, downloaded, apiEpisodes); err != nil {
+	resurrected, err := u.resurrectEpisodes(feedConfig, cleaned, downloaded, apiEpisodes)
+	if err != nil {
+		return err
+	}
+
+	// Resurrected episodes were just flipped from cleaned back to EpisodeNew, so they are pending
+	// download again, not "processed". Drop them so the deep-scan high-water mark does not advance
+	// past episodes that still need to download; otherwise the next shallow cycle would prune them
+	// before they finish.
+	for id := range resurrected {
+		delete(processed, id)
+	}
+
+	// Carry forward the discovery high-water mark so the deep scan only repeats while catching up.
+	result.ScannedThrough = nextScannedThrough(since, watermark, result, processed, &feedConfig.Filters)
+
+	if err := u.db.AddFeed(ctx, feedConfig.ID, result); err != nil {
 		return err
 	}
 
@@ -289,8 +298,9 @@ func oldestPubDate(episodes []*model.Episode) time.Time {
 // filters again, e.g. when max_age is increased to cover episodes that were already downloaded
 // and deleted. It works off the database records directly, so re-inclusion does not depend on the
 // episode still being within the page_size API window.
-func (u *Manager) resurrectEpisodes(feedConfig *feed.Config, cleaned, downloaded []*model.Episode, apiEpisodes map[string]*model.Episode) error {
+func (u *Manager) resurrectEpisodes(feedConfig *feed.Config, cleaned, downloaded []*model.Episode, apiEpisodes map[string]*model.Episode) (map[string]struct{}, error) {
 	filters := &feedConfig.Filters
+	resurrected := make(map[string]struct{})
 
 	// Cheap pre-filter on duration/age, which are always present on the record.
 	// Title/description filters are applied later, after any missing metadata is recovered.
@@ -302,7 +312,7 @@ func (u *Manager) resurrectEpisodes(feedConfig *feed.Config, cleaned, downloaded
 	}
 
 	if len(candidates) == 0 {
-		return nil
+		return resurrected, nil
 	}
 
 	// Resurrect only episodes that would survive the cleanup policy, otherwise
@@ -345,11 +355,12 @@ func (u *Manager) resurrectEpisodes(feedConfig *feed.Config, cleaned, downloaded
 			}
 			return nil
 		}); err != nil {
-			return errors.Wrapf(err, "failed to re-queue cleaned episode %s", episode.ID)
+			return nil, errors.Wrapf(err, "failed to re-queue cleaned episode %s", episode.ID)
 		}
+		resurrected[episode.ID] = struct{}{}
 	}
 
-	return nil
+	return resurrected, nil
 }
 
 // keepLastSurvivors returns the subset of candidates that would remain after applying the

@@ -240,7 +240,8 @@ func TestResurrectCleanedEpisodeMatchingFiltersAgain(t *testing.T) {
 
 	cfg := &feed.Config{ID: "1", Filters: feed.Filters{MaxAge: 60}}
 
-	require.NoError(t, manager.resurrectEpisodes(cfg, cleaned, nil, nil))
+	_, err := manager.resurrectEpisodes(cfg, cleaned, nil, nil)
+	require.NoError(t, err)
 
 	episode, err := manager.db.GetEpisode(ctx, "1", "old")
 	require.NoError(t, err)
@@ -267,7 +268,8 @@ func TestResurrectRecoversWipedMetadataFromAPIResult(t *testing.T) {
 
 	cfg := &feed.Config{ID: "1", Filters: feed.Filters{MaxAge: 60, MinDuration: 120}}
 
-	require.NoError(t, manager.resurrectEpisodes(cfg, cleaned, nil, apiEpisodes))
+	_, err := manager.resurrectEpisodes(cfg, cleaned, nil, apiEpisodes)
+	require.NoError(t, err)
 
 	episode, err := manager.db.GetEpisode(ctx, "1", "old")
 	require.NoError(t, err)
@@ -290,7 +292,8 @@ func TestResurrectSkipsWipedEpisodeWithoutAPIMetadata(t *testing.T) {
 	cfg := &feed.Config{ID: "1", Filters: feed.Filters{MaxAge: 60, MinDuration: 120}}
 
 	// No apiEpisodes: nothing to title the episode with, so it stays cleaned for now
-	require.NoError(t, manager.resurrectEpisodes(cfg, cleaned, nil, map[string]*model.Episode{}))
+	_, err := manager.resurrectEpisodes(cfg, cleaned, nil, map[string]*model.Episode{})
+	require.NoError(t, err)
 
 	episode, err := manager.db.GetEpisode(ctx, "1", "old")
 	require.NoError(t, err)
@@ -310,7 +313,8 @@ func TestResurrectSkipsEpisodeFailingTextFilter(t *testing.T) {
 
 	cfg := &feed.Config{ID: "1", Filters: feed.Filters{MaxAge: 60, NotTitle: "(?i)live"}}
 
-	require.NoError(t, manager.resurrectEpisodes(cfg, cleaned, nil, nil))
+	_, err := manager.resurrectEpisodes(cfg, cleaned, nil, nil)
+	require.NoError(t, err)
 
 	episode, err := manager.db.GetEpisode(ctx, "1", "old")
 	require.NoError(t, err)
@@ -329,7 +333,8 @@ func TestResurrectSkipsEpisodeNotMatchingFilters(t *testing.T) {
 
 	cfg := &feed.Config{ID: "1", Filters: feed.Filters{MaxAge: 60}}
 
-	require.NoError(t, manager.resurrectEpisodes(cfg, cleaned, nil, nil))
+	_, err := manager.resurrectEpisodes(cfg, cleaned, nil, nil)
+	require.NoError(t, err)
 
 	episode, err := manager.db.GetEpisode(ctx, "1", "old")
 	require.NoError(t, err)
@@ -353,7 +358,8 @@ func TestResurrectSkipsEpisodeThatWouldBeCleanedAgain(t *testing.T) {
 	// the old one would result in cleanup deleting it again
 	cfg := &feed.Config{ID: "1", Clean: &feed.Cleanup{KeepLast: 1}}
 
-	require.NoError(t, manager.resurrectEpisodes(cfg, []*model.Episode{old}, []*model.Episode{downloaded}, nil))
+	_, err := manager.resurrectEpisodes(cfg, []*model.Episode{old}, []*model.Episode{downloaded}, nil)
+	require.NoError(t, err)
 
 	episode, err := manager.db.GetEpisode(ctx, "1", "old")
 	require.NoError(t, err)
@@ -375,12 +381,43 @@ func TestResurrectKeepsEpisodeWithinKeepLastWindow(t *testing.T) {
 
 	cfg := &feed.Config{ID: "1", Clean: &feed.Cleanup{KeepLast: 2}}
 
-	require.NoError(t, manager.resurrectEpisodes(cfg, []*model.Episode{old}, []*model.Episode{downloaded}, nil))
+	_, err := manager.resurrectEpisodes(cfg, []*model.Episode{old}, []*model.Episode{downloaded}, nil)
+	require.NoError(t, err)
 
 	episode, err := manager.db.GetEpisode(ctx, "1", "old")
 	require.NoError(t, err)
 	assert.Equal(t, model.EpisodeNew, episode.Status)
 	assert.Equal(t, "Old Episode", episode.Title)
+}
+
+func TestResurrectReportsResurrectedIDsHoldingWatermark(t *testing.T) {
+	manager := newTestManager(t)
+
+	pubDate := time.Now().AddDate(0, 0, -150)
+	old := &model.Episode{ID: "old", Title: "Old Episode", PubDate: pubDate, Status: model.EpisodeCleaned}
+	seedEpisodes(t, manager, "1", []*model.Episode{old})
+
+	cfg := &feed.Config{ID: "1", Filters: feed.Filters{MaxAge: 200}}
+
+	resurrected, err := manager.resurrectEpisodes(cfg, []*model.Episode{old}, nil, nil)
+	require.NoError(t, err)
+	require.Contains(t, resurrected, "old", "a re-queued episode must be reported so the watermark accounts for it")
+
+	// The episode is now pending download again. Removing it from the processed set must keep the
+	// deep-scan high-water mark from advancing past it, so the next cycle stays deep and the
+	// shallow removal loop cannot prune it before it downloads.
+	var (
+		watermark = time.Now().AddDate(0, 0, -100)
+		since     = time.Now().AddDate(0, 0, -200)
+		result    = &model.Feed{Episodes: []*model.Episode{old}}
+		processed = map[string]struct{}{"old": {}} // it was cleaned, so initially counted as done
+	)
+	for id := range resurrected {
+		delete(processed, id)
+	}
+
+	got := nextScannedThrough(since, watermark, result, processed, &cfg.Filters)
+	assert.Equal(t, watermark, got, "watermark must not advance while a resurrected episode is still pending")
 }
 
 func TestResurrectWithNoCleanedEpisodesDoesNothing(t *testing.T) {
@@ -394,7 +431,8 @@ func TestResurrectWithNoCleanedEpisodesDoesNothing(t *testing.T) {
 
 	cfg := &feed.Config{ID: "1"}
 
-	require.NoError(t, manager.resurrectEpisodes(cfg, nil, nil, nil))
+	_, err := manager.resurrectEpisodes(cfg, nil, nil, nil)
+	require.NoError(t, err)
 
 	episode, err := manager.db.GetEpisode(ctx, "1", "done")
 	require.NoError(t, err)
