@@ -21,7 +21,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/zackradisic/soundcloud-api v0.1.8
 	golang.org/x/oauth2 v0.36.0
-	golang.org/x/sync v0.21.0
+	golang.org/x/sync v0.22.0
 	google.golang.org/api v0.287.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
