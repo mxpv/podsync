@@ -62,6 +62,10 @@ type Config struct {
 	// FilenameTemplate controls output media filename (without extension)
 	// Supported tokens: {{id}}, {{title}}, {{pub_date}}, {{feed_id}}
 	FilenameTemplate string `toml:"filename_template"`
+	// DiscoverSince is a runtime-only hint (not configurable) set by the updater to request a
+	// deep discovery pass: the builder pages back through the channel until episodes are older
+	// than this date instead of stopping at PageSize. Zero means the default shallow discovery.
+	DiscoverSince time.Time `toml:"-"`
 }
 
 type CustomFormat struct {

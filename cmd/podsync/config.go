@@ -167,7 +167,7 @@ func (c *Config) applyDefaults(configPath string) {
 		c.Database.Dir = filepath.Join(filepath.Dir(configPath), "db")
 	}
 
-	for _, _feed := range c.Feeds {
+	for id, _feed := range c.Feeds {
 		if _feed.UpdatePeriod == 0 {
 			_feed.UpdatePeriod = model.DefaultUpdatePeriod
 		}
@@ -195,6 +195,18 @@ func (c *Config) applyDefaults(configPath string) {
 		// Apply global cleanup policy if feed doesn't have its own
 		if _feed.Clean == nil && c.Cleanup != nil {
 			_feed.Clean = c.Cleanup
+		}
+
+		// keep_last greater than page_size means a normal (shallow) update only ever sees
+		// page_size episodes, so the retention window can never be filled. When max_age is set
+		// the updater performs a one-time deep discovery to cover it, so the mismatch is fine;
+		// only warn when there is no max_age to drive that deeper look-back.
+		if _feed.Clean != nil && _feed.Clean.KeepLast > _feed.PageSize && _feed.Filters.MaxAge <= 0 {
+			log.Warnf(
+				"feed %q: clean.keep_last (%d) is greater than page_size (%d) and no max_age is set; "+
+					"set page_size >= keep_last (or configure max_age) so the retention window can be filled",
+				id, _feed.Clean.KeepLast, _feed.PageSize,
+			)
 		}
 	}
 }

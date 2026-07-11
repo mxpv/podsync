@@ -23,6 +23,7 @@ import (
 
 type Downloader interface {
 	Download(ctx context.Context, feedConfig *feed.Config, episode *model.Episode) (io.ReadCloser, error)
+	// PlaylistMetadata is required by the platform builders (passed through to builder.New).
 	PlaylistMetadata(ctx context.Context, url string) (metadata ytdl.PlaylistMetadata, err error)
 }
 
@@ -113,26 +114,55 @@ func (u *Manager) updateFeed(ctx context.Context, feedConfig *feed.Config) error
 		return err
 	}
 
+	// Decide how far back to discover. Normally this is a shallow scan (page_size); when max_age
+	// has been expanded beyond what was ever scanned, request a one-time deep scan to the cutoff.
+	since, watermark := u.discoveryWindow(ctx, feedConfig)
+	feedConfig.DiscoverSince = since
+	if !since.IsZero() {
+		log.WithField("feed_id", feedConfig.ID).Infof("max_age extended beyond scanned history, performing deep discovery back to %s", since.Format("2006-01-02"))
+	}
+
 	// Query API to get episodes
 	log.Debug("building feed")
 	result, err := provider.Build(ctx, feedConfig)
+	feedConfig.DiscoverSince = time.Time{} // consumed by the builder; don't leak into the next cycle
 	if err != nil {
 		return err
 	}
 
 	log.Debugf("received %d episode(s) for %q", len(result.Episodes), result.Title)
 
-	episodeSet := make(map[string]struct{})
+	// Index the fresh API metadata. Used to restore metadata for cleaned episodes that older
+	// versions stored without a title/description when they are resurrected.
+	apiEpisodes := make(map[string]*model.Episode, len(result.Episodes))
+	for _, episode := range result.Episodes {
+		apiEpisodes[episode.ID] = episode
+	}
+
+	var (
+		episodeSet = make(map[string]struct{})
+		cleaned    []*model.Episode
+		downloaded []*model.Episode
+		// processed holds episodes that don't need a first download attempt (downloaded, cleaned,
+		// or errored). Used to decide when a deep-scan catch-up is complete.
+		processed = make(map[string]struct{})
+	)
 	if err := u.db.WalkEpisodes(ctx, feedConfig.ID, func(episode *model.Episode) error {
-		if episode.Status != model.EpisodeDownloaded && episode.Status != model.EpisodeCleaned {
+		switch episode.Status {
+		case model.EpisodeDownloaded:
+			downloaded = append(downloaded, episode)
+			processed[episode.ID] = struct{}{}
+		case model.EpisodeCleaned:
+			cleaned = append(cleaned, episode)
+			processed[episode.ID] = struct{}{}
+		default:
 			episodeSet[episode.ID] = struct{}{}
+			if episode.Status == model.EpisodeError {
+				processed[episode.ID] = struct{}{}
+			}
 		}
 		return nil
 	}); err != nil {
-		return err
-	}
-
-	if err := u.db.AddFeed(ctx, feedConfig.ID, result); err != nil {
 		return err
 	}
 
@@ -149,8 +179,216 @@ func (u *Manager) updateFeed(ctx context.Context, feedConfig *feed.Config) error
 		}
 	}
 
+	resurrected, err := u.resurrectEpisodes(feedConfig, cleaned, downloaded, apiEpisodes)
+	if err != nil {
+		return err
+	}
+
+	// Resurrected episodes were just flipped from cleaned back to EpisodeNew, so they are pending
+	// download again, not "processed". Drop them so the deep-scan high-water mark does not advance
+	// past episodes that still need to download; otherwise the next shallow cycle would prune them
+	// before they finish.
+	for id := range resurrected {
+		delete(processed, id)
+	}
+
+	// Carry forward the discovery high-water mark so the deep scan only repeats while catching up.
+	result.ScannedThrough = nextScannedThrough(since, watermark, result, processed, &feedConfig.Filters)
+
+	if err := u.db.AddFeed(ctx, feedConfig.ID, result); err != nil {
+		return err
+	}
+
 	log.Debug("successfully saved updates to storage")
 	return nil
+}
+
+// discoveryWindow decides whether the next build should perform a deep (max_age-driven) discovery
+// pass. It returns the cutoff date to page back to (zero means the normal shallow discovery) and
+// the current scan high-water mark to carry forward. A deep scan is requested only when max_age
+// now reaches further back than anything previously scanned, so it happens once per expansion
+// rather than every cycle.
+func (u *Manager) discoveryWindow(ctx context.Context, feedConfig *feed.Config) (since, watermark time.Time) {
+	maxAge := feedConfig.Filters.MaxAge
+	if maxAge <= 0 {
+		return time.Time{}, time.Time{}
+	}
+
+	existing, err := u.db.GetFeed(ctx, feedConfig.ID)
+	if err != nil {
+		if err == model.ErrNotFound {
+			// Brand new feed: nothing scanned yet. Stay shallow to avoid a surprise back-catalog download.
+			return time.Time{}, time.Time{}
+		}
+		log.WithError(err).WithField("feed_id", feedConfig.ID).Warn("failed to load existing feed for discovery-window calculation; staying shallow")
+		return time.Time{}, time.Time{}
+	}
+
+	watermark = existing.ScannedThrough
+	if watermark.IsZero() {
+		// Upgrade path (feed predates this field): derive the mark from the oldest episode we have
+		// already processed, so an expansion past it still triggers a one-time catch-up.
+		watermark = oldestProcessedPubDate(existing.Episodes)
+	}
+	if watermark.IsZero() {
+		return time.Time{}, watermark
+	}
+
+	cutoff := time.Now().AddDate(0, 0, -maxAge)
+	if cutoff.Before(watermark) {
+		return cutoff, watermark
+	}
+	return time.Time{}, watermark
+}
+
+// nextScannedThrough computes the discovery high-water mark to persist after a build. On a shallow
+// scan it preserves the existing mark (or establishes a baseline for a new feed). On a deep scan it
+// advances the mark to the cutoff only once every matching in-range episode is accounted for
+// (downloaded, cleaned, or errored); until then it keeps the old mark so the next cycle scans deep
+// again and the freshly discovered episodes are not pruned before they finish downloading.
+func nextScannedThrough(since, watermark time.Time, result *model.Feed, processed map[string]struct{}, filters *feed.Filters) time.Time {
+	if since.IsZero() {
+		if !watermark.IsZero() {
+			return watermark
+		}
+		return oldestPubDate(result.Episodes)
+	}
+
+	for _, episode := range result.Episodes {
+		if !matchFilters(episode, filters) {
+			continue
+		}
+		if _, ok := processed[episode.ID]; !ok {
+			return watermark
+		}
+	}
+	return since
+}
+
+func oldestProcessedPubDate(episodes []*model.Episode) time.Time {
+	var oldest time.Time
+	for _, episode := range episodes {
+		if episode.Status != model.EpisodeDownloaded && episode.Status != model.EpisodeCleaned {
+			continue
+		}
+		if episode.PubDate.IsZero() {
+			continue
+		}
+		if oldest.IsZero() || episode.PubDate.Before(oldest) {
+			oldest = episode.PubDate
+		}
+	}
+	return oldest
+}
+
+func oldestPubDate(episodes []*model.Episode) time.Time {
+	var oldest time.Time
+	for _, episode := range episodes {
+		if episode.PubDate.IsZero() {
+			continue
+		}
+		if oldest.IsZero() || episode.PubDate.Before(oldest) {
+			oldest = episode.PubDate
+		}
+	}
+	return oldest
+}
+
+// resurrectEpisodes re-queues previously cleaned (soft-deleted) episodes that match the current
+// filters again, e.g. when max_age is increased to cover episodes that were already downloaded
+// and deleted. It works off the database records directly, so re-inclusion does not depend on the
+// episode still being within the page_size API window.
+func (u *Manager) resurrectEpisodes(feedConfig *feed.Config, cleaned, downloaded []*model.Episode, apiEpisodes map[string]*model.Episode) (map[string]struct{}, error) {
+	filters := &feedConfig.Filters
+	resurrected := make(map[string]struct{})
+
+	// Cheap pre-filter on duration/age, which are always present on the record.
+	// Title/description filters are applied later, after any missing metadata is recovered.
+	var candidates []*model.Episode
+	for _, episode := range cleaned {
+		if matchDurationAndAge(episode, filters, log.WithField("episode_id", episode.ID)) {
+			candidates = append(candidates, episode)
+		}
+	}
+
+	if len(candidates) == 0 {
+		return resurrected, nil
+	}
+
+	// Resurrect only episodes that would survive the cleanup policy, otherwise
+	// every update cycle would re-download episodes just for cleanup to delete them again.
+	if feedConfig.Clean != nil && feedConfig.Clean.KeepLast > 0 {
+		candidates = keepLastSurvivors(candidates, downloaded, feedConfig.Clean.KeepLast)
+	}
+
+	for _, episode := range candidates {
+		// Episodes cleaned by older versions were stored without a title/description. Recover that
+		// metadata from the current feed query (the deep discovery scan brings in-range episodes
+		// back into the result), so title/description filters can be evaluated and the re-downloaded
+		// episode has metadata for the feed build.
+		if episode.Title == "" {
+			if api, ok := apiEpisodes[episode.ID]; ok {
+				episode.Title = api.Title
+				episode.Description = api.Description
+			}
+		}
+
+		// Without a title the episode cannot be published; leave it cleaned until it reappears in
+		// the feed query (e.g. once a deep scan covers it) and we can recover its metadata.
+		if episode.Title == "" {
+			continue
+		}
+
+		if !matchFilters(episode, filters) {
+			continue
+		}
+
+		log.WithField("episode_id", episode.ID).Info("re-queueing previously cleaned episode that matches filters again")
+		title, description := episode.Title, episode.Description
+		if err := u.db.UpdateEpisode(feedConfig.ID, episode.ID, func(saved *model.Episode) error {
+			saved.Status = model.EpisodeNew
+			if saved.Title == "" {
+				saved.Title = title
+			}
+			if saved.Description == "" {
+				saved.Description = description
+			}
+			return nil
+		}); err != nil {
+			return nil, errors.Wrapf(err, "failed to re-queue cleaned episode %s", episode.ID)
+		}
+		resurrected[episode.ID] = struct{}{}
+	}
+
+	return resurrected, nil
+}
+
+// keepLastSurvivors returns the subset of candidates that would remain after applying the
+// keep_last cleanup policy, given the currently downloaded episodes. Ranking is by PubDate.
+func keepLastSurvivors(candidates, downloaded []*model.Episode, keepLast int) []*model.Episode {
+	all := make([]*model.Episode, 0, len(downloaded)+len(candidates))
+	all = append(all, downloaded...)
+	all = append(all, candidates...)
+	sort.Slice(all, func(i, j int) bool {
+		return all[i].PubDate.After(all[j].PubDate)
+	})
+
+	if len(all) > keepLast {
+		all = all[:keepLast]
+	}
+
+	surviving := make(map[string]struct{}, len(all))
+	for _, episode := range all {
+		surviving[episode.ID] = struct{}{}
+	}
+
+	kept := candidates[:0]
+	for _, episode := range candidates {
+		if _, ok := surviving[episode.ID]; ok {
+			kept = append(kept, episode)
+		}
+	}
+	return kept
 }
 
 func (u *Manager) fetchEpisodes(ctx context.Context, feedConfig *feed.Config) ([]*model.Episode, error) {
@@ -426,10 +664,12 @@ func (u *Manager) cleanup(ctx context.Context, feedConfig *feed.Config) error {
 			logger.WithField("episode_id", episode.ID).Info("episode was not found - file does not exist")
 		}
 
+		// Only the file is removed; the episode metadata is retained so the record
+		// can be resurrected later (e.g. when max_age is increased) without losing
+		// its title/description. Cleaned episodes are already excluded from the feed
+		// by their status, so keeping the metadata has no effect on the output.
 		if err := u.db.UpdateEpisode(feedID, episode.ID, func(episode *model.Episode) error {
 			episode.Status = model.EpisodeCleaned
-			episode.Title = ""
-			episode.Description = ""
 			return nil
 		}); err != nil {
 			result = multierror.Append(result, errors.Wrapf(err, "failed to set state for cleaned episode: %s", episode.ID))

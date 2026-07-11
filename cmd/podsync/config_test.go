@@ -1,15 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/mxpv/podsync/services/web"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/mxpv/podsync/pkg/model"
+	"github.com/mxpv/podsync/services/web"
 )
 
 func TestLoadConfig(t *testing.T) {
@@ -213,6 +215,81 @@ data_dir = "/data"
 	assert.EqualValues(t, feed.Quality, "high")
 	assert.EqualValues(t, feed.Custom.CoverArtQuality, "high")
 	assert.EqualValues(t, feed.Format, "video")
+}
+
+func TestKeepLastPageSizeWarning(t *testing.T) {
+	t.Run("warns when keep_last exceeds page_size and no max_age", func(t *testing.T) {
+		var buf bytes.Buffer
+		log.SetOutput(&buf)
+		t.Cleanup(func() { log.SetOutput(os.Stderr) })
+
+		const file = `
+[server]
+data_dir = "/data"
+
+[feeds]
+  [feeds.A]
+  url = "https://youtube.com/watch?v=ygIUF678y40"
+  page_size = 5
+  clean = { keep_last = 20 }
+`
+		path := setup(t, file)
+		defer os.Remove(path)
+
+		config, err := LoadConfig(path)
+		require.NoError(t, err)
+		require.NotNil(t, config)
+		assert.Contains(t, buf.String(), "clean.keep_last")
+	})
+
+	t.Run("does not warn when max_age is configured", func(t *testing.T) {
+		var buf bytes.Buffer
+		log.SetOutput(&buf)
+		t.Cleanup(func() { log.SetOutput(os.Stderr) })
+
+		const file = `
+[server]
+data_dir = "/data"
+
+[feeds]
+  [feeds.A]
+  url = "https://youtube.com/watch?v=ygIUF678y40"
+  page_size = 5
+  clean = { keep_last = 20 }
+  filters = { max_age = 30 }
+`
+		path := setup(t, file)
+		defer os.Remove(path)
+
+		config, err := LoadConfig(path)
+		require.NoError(t, err)
+		require.NotNil(t, config)
+		assert.NotContains(t, buf.String(), "clean.keep_last")
+	})
+
+	t.Run("does not warn when keep_last is within page_size", func(t *testing.T) {
+		var buf bytes.Buffer
+		log.SetOutput(&buf)
+		t.Cleanup(func() { log.SetOutput(os.Stderr) })
+
+		const file = `
+[server]
+data_dir = "/data"
+
+[feeds]
+  [feeds.A]
+  url = "https://youtube.com/watch?v=ygIUF678y40"
+  page_size = 50
+  clean = { keep_last = 20 }
+`
+		path := setup(t, file)
+		defer os.Remove(path)
+
+		config, err := LoadConfig(path)
+		require.NoError(t, err)
+		require.NotNil(t, config)
+		assert.NotContains(t, buf.String(), "clean.keep_last")
+	})
 }
 
 func TestHttpServerListenAddress(t *testing.T) {
