@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: 1.25
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: make build
       - uses: actions/upload-artifact@v7
         with:
@@ -43,7 +43,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: 1.25
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - env:
           VIMEO_TEST_API_KEY: ${{ secrets.VIMEO_ACCESS_TOKEN }}
           YOUTUBE_TEST_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
@@ -60,7 +60,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: 1.25
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Run tests with coverage
         env:
           VIMEO_TEST_API_KEY: ${{ secrets.VIMEO_ACCESS_TOKEN }}
@@ -85,7 +85,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: 1.25
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: golangci/golangci-lint-action@v9
 
       - name: Go mod
