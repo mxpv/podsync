@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
@@ -338,8 +339,13 @@ func (u *Manager) buildXML(ctx context.Context, feedConfig *feed.Config) error {
 		return err
 	}
 
+	xmlData := podcast.String()
+	xmlHeader := "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+	styleSheetLine := "<?xml-stylesheet type=\"text/xsl\" href=\"./feed-stylesheet.xsl\"?>"
+	xmlData = strings.Replace(xmlData, xmlHeader, fmt.Sprintf("%s\n%s", xmlHeader, styleSheetLine), 1)
+
 	var (
-		reader  = bytes.NewReader([]byte(podcast.String()))
+		reader  = bytes.NewReader([]byte(xmlData))
 		xmlName = fmt.Sprintf("%s.xml", feedConfig.ID)
 	)
 
