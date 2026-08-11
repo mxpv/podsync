@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
@@ -20,6 +21,33 @@ import (
 	"github.com/mxpv/podsync/pkg/model"
 	"github.com/mxpv/podsync/pkg/ytdl"
 )
+
+const feedStyleSheetName = "feed-stylesheet.xsl"
+const feedStyleSheetContent = `<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output method="html" encoding="UTF-8" />
+  <xsl:template match="/rss">
+    <html>
+      <head>
+        <title><xsl:value-of select="channel/title"/></title>
+        <style>
+          body { font: 14px/1.5 system-ui, sans-serif; color: #0f172a; margin: 1.5rem; }
+          h1 { margin-bottom: 0.25rem; }
+        </style>
+      </head>
+      <body>
+        <h1><xsl:value-of select="channel/title"/></h1>
+        <p><xsl:value-of select="channel/description"/></p>
+        <ol>
+          <xsl:for-each select="channel/item">
+            <li><a href="{enclosure/@url}"><xsl:value-of select="title"/></a></li>
+          </xsl:for-each>
+        </ol>
+      </body>
+    </html>
+  </xsl:template>
+</xsl:stylesheet>
+`
 
 type Downloader interface {
 	Download(ctx context.Context, feedConfig *feed.Config, episode *model.Episode) (io.ReadCloser, error)
@@ -338,8 +366,24 @@ func (u *Manager) buildXML(ctx context.Context, feedConfig *feed.Config) error {
 		return err
 	}
 
+	const maxStyleSheetWriteAttempts = 2
+	styleSheetReader := strings.NewReader(feedStyleSheetContent)
+	for i := 0; i < maxStyleSheetWriteAttempts; i++ {
+		if _, err := u.fs.Create(ctx, feedStyleSheetName, styleSheetReader); err != nil {
+			log.WithError(err).Warn("failed to create feed stylesheet; trying once more before generating XML")
+			styleSheetReader = strings.NewReader(feedStyleSheetContent)
+			continue
+		}
+		break
+	}
+
+	xmlData := podcast.String()
+	xmlHeader := "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+	styleSheetLine := "<?xml-stylesheet type=\"text/xsl\" href=\"./feed-stylesheet.xsl\"?>"
+	xmlData = strings.Replace(xmlData, xmlHeader, fmt.Sprintf("%s\n%s", xmlHeader, styleSheetLine), 1)
+
 	var (
-		reader  = bytes.NewReader([]byte(podcast.String()))
+		reader  = bytes.NewReader([]byte(xmlData))
 		xmlName = fmt.Sprintf("%s.xml", feedConfig.ID)
 	)
 
