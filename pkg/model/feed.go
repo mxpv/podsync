@@ -65,6 +65,10 @@ type Feed struct {
 	UpdatedAt       time.Time  `json:"updated_at"`
 	PlaylistSort    Sorting    `json:"playlist_sort"`
 	PrivateFeed     bool       `json:"private_feed"`
+	// ScannedThrough is the oldest publish date discovery has paged back to. It is a high-water
+	// mark used to decide when max_age has been expanded beyond what was ever scanned, so a deep
+	// (max_age-driven) discovery pass is only triggered once per expansion instead of every cycle.
+	ScannedThrough time.Time `json:"scanned_through"`
 }
 
 type EpisodeStatus string

@@ -11,6 +11,7 @@ import (
 
 	itunes "github.com/eduncan911/podcast"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/mxpv/podsync/pkg/model"
 )
@@ -166,6 +167,14 @@ func Build(_ctx context.Context, feed *model.Feed, cfg *Config, hostname string)
 		)
 
 		item.AddEnclosure(downloadURL, enclosureType, episode.Size)
+
+		// p.AddItem requires a non-empty title. An episode without one cannot be
+		// represented in the feed (e.g. metadata was never populated), so skip it
+		// instead of failing the whole feed build for every other episode.
+		if item.Title == "" {
+			log.Warnf("skipping episode %q in feed %q: missing title", episode.ID, cfg.ID)
+			continue
+		}
 
 		// p.AddItem requires description to be not empty, use workaround
 		if item.Description == "" {

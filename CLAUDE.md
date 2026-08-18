@@ -38,9 +38,12 @@ Understanding how episodes flow through the system:
 
 ### Discovery Phase
 - Episodes are discovered during feed updates via platform APIs (YouTube Data API v3, Vimeo API, SoundCloud, Twitch)
-- `updateFeed()` in `services/update/updater.go:99-154` queries the platform API
+- `updateFeed()` in `services/update/updater.go:99-169` queries the platform API
 - New episodes are stored in BadgerDB with status `EpisodeNew`
 - Episodes matching feed URL are identified by provider-specific parsing in `pkg/builder/`
+- **Discovery depth (`max_age`-driven deep scan)**: normal updates do a shallow scan (the `page_size` most-recent episodes). To discover **never-before-seen** older episodes after `max_age` is increased, the updater triggers a one-time deep scan that pages the channel back to the `max_age` cutoff instead of stopping at `page_size`. The decision lives in `discoveryWindow()` (`services/update/updater.go`): each feed record stores `ScannedThrough`, a high-water mark of the oldest publish date discovery has paged to; a deep scan runs only when the `max_age` cutoff is older than `ScannedThrough` (i.e. `max_age` was actually expanded), so it costs nothing in steady state. The cutoff is passed to the builder via `feed.Config.DiscoverSince` (runtime-only field); the YouTube builder honors it in `queryItemsSince()`, bounded by `maxDeepScanPages` (20) as a quota backstop. `nextScannedThrough()` advances the mark to the cutoff only once every matching in-range episode is downloaded/cleaned/errored, so multi-cycle catch-up (bounded by `page_size` downloads per cycle) isn't truncated by episode pruning. Brand-new feeds stay shallow (no surprise back-catalog download). Currently implemented for YouTube only.
+- Previously cleaned episodes (`EpisodeCleaned`) that match the current filters again (e.g. after `max_age` is increased) are re-queued: status is reset to `EpisodeNew` (`resurrectEpisodes()` in `services/update/updater.go`). This works **off the database records directly, so it is independent of the `page_size` API window** — a cleaned episode no longer needs to be returned by the current feed query to be re-included. Cleaned records retain their metadata (see cleanup phase), so filters are evaluated against the stored title/description. Episodes cleaned by older podsync versions had their title/description wiped; for those the metadata is recovered from the current feed query (the deep-discovery scan brings in-range episodes back into the result with fresh metadata). An episode that still has no title — not in the DB and not in the feed query — is left cleaned until a later cycle surfaces it. When `keep_last` is configured, only episodes that would survive the next cleanup are re-queued (ranked by `PubDate` via `keepLastSurvivors()`), to avoid a re-download/re-clean loop.
+- Feed XML build (`feed.Build()` in `pkg/feed/xml.go`) skips any downloaded episode with an empty title (logging a warning) instead of aborting the entire feed build for one malformed item. (Original podsync aborted the whole feed on any empty title/description.)
 
 ### Download Phase
 - `fetchEpisodes()` iterates episodes with status `EpisodeNew` or `EpisodeError`
@@ -51,12 +54,13 @@ Understanding how episodes flow through the system:
 - On failure: status set to `EpisodeError`, retry attempted next cycle
 
 ### Cleanup Phase (Important!)
-- `cleanup()` in `updater.go:373-441` runs AFTER each successful update cycle
+- `cleanup()` in `updater.go:456-524` runs AFTER each successful update cycle
 - **Only triggered if `clean.keep_last` is configured** (global or per-feed)
 - Keeps most recent N episodes by PubDate (descending order)
-- Deleted episodes have status changed to `EpisodeCleaned` and title/description cleared
+- Deleted episodes have status changed to `EpisodeCleaned`; their title/description are **retained** so the record can be resurrected later (e.g. after `max_age` is increased) without losing metadata. Cleaned episodes are excluded from the feed by status, so keeping metadata has no effect on output.
 - **Files are deleted from storage but database records are retained**
 - This is a soft-delete: episodes remain in the database forever
+- **`keep_last` vs `page_size`**: a shallow update only sees `page_size` episodes, so on its own it can't fill a larger retention window. This is fine when `max_age` is set (the deep-discovery scan covers the look-back — see Discovery Phase) or when episodes were already discovered earlier. A startup warning is logged only when `clean.keep_last > page_size` **and** no `max_age` is configured (`applyDefaults()` in `cmd/podsync/config.go`).
 
 ### Episode Removal from Database
 - Episodes are removed from the database only if they:

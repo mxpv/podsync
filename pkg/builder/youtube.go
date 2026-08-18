@@ -130,9 +130,10 @@ func (yt *YouTubeBuilder) listPlaylists(ctx context.Context, id, channelID strin
 
 // Cost: 3 units (call: 1, snippet: 2)
 // See https://developers.google.com/youtube/v3/docs/playlistItems/list#part
-func (yt *YouTubeBuilder) listPlaylistItems(ctx context.Context, feed *model.Feed, pageToken string) ([]*youtube.PlaylistItem, string, error) {
+func (yt *YouTubeBuilder) listPlaylistItems(ctx context.Context, feed *model.Feed, pageToken string, fullPage bool) ([]*youtube.PlaylistItem, string, error) {
 	count := maxYoutubeResults
-	if count > feed.PageSize {
+	// During a deep (max_age-driven) scan we page through full result sets regardless of PageSize.
+	if !fullPage && count > feed.PageSize {
 		// If we need less than 50
 		count = feed.PageSize
 	}
@@ -412,7 +413,11 @@ func (yt *YouTubeBuilder) queryVideoDescriptions(ctx context.Context, playlist m
 // Cost:
 // ASC mode = (3 units + 5 units) * X pages = 8 units per page
 // DESC mode = 3 units * (number of pages in the entire playlist) + 5 units
-func (yt *YouTubeBuilder) queryItems(ctx context.Context, feed *model.Feed) error {
+func (yt *YouTubeBuilder) queryItems(ctx context.Context, feed *model.Feed, since time.Time) error {
+	if !since.IsZero() {
+		return yt.queryItemsSince(ctx, feed, since)
+	}
+
 	var (
 		token       string
 		count       int
@@ -420,7 +425,7 @@ func (yt *YouTubeBuilder) queryItems(ctx context.Context, feed *model.Feed) erro
 	)
 
 	for {
-		items, pageToken, err := yt.listPlaylistItems(ctx, feed, token)
+		items, pageToken, err := yt.listPlaylistItems(ctx, feed, token, false)
 		if err != nil {
 			return err
 		}
@@ -450,17 +455,69 @@ func (yt *YouTubeBuilder) queryItems(ctx context.Context, feed *model.Feed) erro
 		}
 	}
 
+	return yt.queryDescriptionsForSnippets(ctx, allSnippets, feed)
+}
+
+// maxDeepScanPages bounds a max_age-driven discovery pass as a quota backstop.
+const maxDeepScanPages = 20
+
+// queryItemsSince pages back through the channel until episodes are older than the cutoff
+// (a max_age-driven deep scan), instead of stopping at PageSize. It is bounded by
+// maxDeepScanPages to guard against a misconfigured max_age draining API quota.
+func (yt *YouTubeBuilder) queryItemsSince(ctx context.Context, feed *model.Feed, since time.Time) error {
+	var (
+		token       string
+		pages       int
+		allSnippets []*youtube.PlaylistItemSnippet
+	)
+
+	for {
+		items, pageToken, err := yt.listPlaylistItems(ctx, feed, token, true)
+		if err != nil {
+			return err
+		}
+
+		token = pageToken
+		pages++
+
+		if len(items) == 0 {
+			break
+		}
+
+		reachedCutoff := false
+		for _, item := range items {
+			// Keep only episodes within the requested window; the page that crosses the
+			// cutoff is where we stop.
+			if date, err := yt.parseDate(item.Snippet.PublishedAt); err == nil {
+				if date.Before(since) {
+					reachedCutoff = true
+					continue
+				}
+			}
+			allSnippets = append(allSnippets, item.Snippet)
+		}
+
+		if reachedCutoff || token == "" {
+			break
+		}
+
+		if pages >= maxDeepScanPages {
+			log.Warnf("deep scan for feed %q reached the %d-page cap before covering max_age; older episodes were not discovered (consider lowering max_age)", feed.ItemID, maxDeepScanPages)
+			break
+		}
+	}
+
+	return yt.queryDescriptionsForSnippets(ctx, allSnippets, feed)
+}
+
+func (yt *YouTubeBuilder) queryDescriptionsForSnippets(ctx context.Context, allSnippets []*youtube.PlaylistItemSnippet, feed *model.Feed) error {
 	snippets := map[string]*youtube.PlaylistItemSnippet{}
 	for _, snippet := range allSnippets {
 		snippets[snippet.ResourceId.VideoId] = snippet
 	}
 
 	// Query video descriptions from the list of ids
-	if err := yt.queryVideoDescriptions(ctx, snippets, feed); err != nil {
-		return err
-	}
-
-	return nil
+	return yt.queryVideoDescriptions(ctx, snippets, feed)
 }
 
 func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *feed.Config) (*model.Feed, error) {
@@ -491,13 +548,14 @@ func (yt *YouTubeBuilder) Build(ctx context.Context, cfg *feed.Config) (*model.F
 		return nil, err
 	}
 
-	if err := yt.queryItems(ctx, _feed); err != nil {
+	if err := yt.queryItems(ctx, _feed, cfg.DiscoverSince); err != nil {
 		return nil, err
 	}
 
 	// YT API client gets 50 episodes per query.
-	// Round up to page size.
-	if len(_feed.Episodes) > _feed.PageSize {
+	// Round up to page size, unless a deep (max_age-driven) scan is requested, in which case
+	// we keep every episode within the window so the caller can catch up the back-catalog.
+	if cfg.DiscoverSince.IsZero() && len(_feed.Episodes) > _feed.PageSize {
 		_feed.Episodes = _feed.Episodes[:_feed.PageSize]
 	}
 
