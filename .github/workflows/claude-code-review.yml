@@ -1,7 +1,7 @@
-name: Claude Code Review
+name: Claude Code
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, ready_for_review, reopened]
 
 jobs:
@@ -14,22 +14,25 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
-      id-token: write
 
     steps:
-      - name: Checkout repository
+      - name: Checkout base repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          # Full history so the review can read git blame and past changes.
+          fetch-depth: 0
 
-      - name: Run Claude Code Review
+      - name: Review
         id: claude-review
         uses: anthropics/claude-code-action@v1.0.193
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
-          plugins: 'code-review@claude-code-plugins'
-          prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
+          # Fork contributors don't have write access, so the action would stop
+          # before running Claude. allowed_non_write_users requires github_token.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          allowed_non_write_users: "*"
+          plugin_marketplaces: "https://github.com/anthropics/claude-code.git"
+          plugins: "code-review@claude-code-plugins"
+          prompt: "/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
           claude_args: |
             --allowedTools "Bash,Read,Glob,Grep"
-
