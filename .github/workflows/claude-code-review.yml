@@ -4,6 +4,11 @@ on:
   pull_request_target:
     types: [opened, synchronize, ready_for_review, reopened]
 
+# Cancel superseded reviews when a pull request branch is pushed again.
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   claude-review:
     # Skip dependabot PRs - they're dependency bumps that don't need code review
@@ -13,7 +18,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      issues: write
+      issues: read
 
     steps:
       - name: Checkout base repository
@@ -21,6 +26,8 @@ jobs:
         with:
           # Full history so the review can read git blame and past changes.
           fetch-depth: 0
+          # The review never pushes, so don't leave a token in .git/config.
+          persist-credentials: false
 
       - name: Review
         id: claude-review
@@ -33,6 +40,9 @@ jobs:
           allowed_non_write_users: "*"
           plugin_marketplaces: "https://github.com/anthropics/claude-code.git"
           plugins: "code-review@claude-code-plugins"
-          prompt: "/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
+          prompt: "/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }} --comment"
+          # This job reads untrusted pull request content while repository
+          # credentials are present, so Bash is restricted to the specific
+          # read-only commands the review needs rather than a full shell.
           claude_args: |
-            --allowedTools "Bash,Read,Glob,Grep"
+            --allowedTools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr list:*),Bash(gh pr comment:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh search:*),Bash(git log:*),Bash(git blame:*),Bash(git show:*),Read,Glob,Grep,mcp__github_inline_comment__create_inline_comment"
