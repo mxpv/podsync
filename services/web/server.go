@@ -70,7 +70,7 @@ func New(cfg Config, storage http.FileSystem, database db.Storage) *Server {
 	// debug endpoints registered by imported packages (security fix for #799)
 	mux := http.NewServeMux()
 
-	var fileServer http.Handler = http.FileServer(storage)
+	fileServer := http.FileServer(storage)
 	mountPath := "/"
 	if cfg.Path != "" {
 		mountPath = fmt.Sprintf("/%s", cfg.Path)
