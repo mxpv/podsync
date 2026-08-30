@@ -53,10 +53,11 @@ var (
 )
 
 func main() {
-	log.SetFormatter(&log.TextFormatter{
+	formatter := &log.TextFormatter{
 		TimestampFormat: time.RFC3339,
 		FullTimestamp:   true,
-	})
+	}
+	log.SetFormatter(formatter)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
@@ -99,6 +100,7 @@ func main() {
 	if cfg.Log.Filename != "" {
 		log.Infof("Using log file: %s", cfg.Log.Filename)
 
+		formatter.DisableColors = true
 		log.SetOutput(&lumberjack.Logger{
 			Filename:   cfg.Log.Filename,
 			MaxSize:    cfg.Log.MaxSize,
