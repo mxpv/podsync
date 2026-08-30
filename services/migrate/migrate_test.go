@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 	"testing"
 	"time"
@@ -108,7 +108,7 @@ func TestRunMigratesLegacyFilename(t *testing.T) {
 	}
 
 	legacyName := feed.LegacyEpisodeName(cfg, episode)
-	legacyPath := filepath.Join(feedID, legacyName)
+	legacyPath := path.Join(feedID, legacyName)
 	_, err = storage.Create(ctx, legacyPath, strings.NewReader("video-bytes"))
 	require.NoError(t, err)
 
@@ -117,7 +117,7 @@ func TestRunMigratesLegacyFilename(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	newPath := filepath.Join(feedID, feed.EpisodeName(cfg, episode))
+	newPath := path.Join(feedID, feed.EpisodeName(cfg, episode))
 	_, err = storage.Size(ctx, newPath)
 	require.NoError(t, err)
 
@@ -153,7 +153,7 @@ func TestRunDryRunDoesNotWrite(t *testing.T) {
 		FilenameTemplate: "{{pub_date}}_{{title}}_{{id}}",
 	}
 
-	legacyPath := filepath.Join(feedID, feed.LegacyEpisodeName(cfg, episode))
+	legacyPath := path.Join(feedID, feed.LegacyEpisodeName(cfg, episode))
 	_, err = storage.Create(ctx, legacyPath, strings.NewReader("video-bytes"))
 	require.NoError(t, err)
 
@@ -162,7 +162,7 @@ func TestRunDryRunDoesNotWrite(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	newPath := filepath.Join(feedID, feed.EpisodeName(cfg, episode))
+	newPath := path.Join(feedID, feed.EpisodeName(cfg, episode))
 	_, err = storage.Size(ctx, newPath)
 	require.Error(t, err)
 	assert.True(t, os.IsNotExist(err))
@@ -197,11 +197,11 @@ func TestRunFailsOnUnexpectedSecondTargetStatError(t *testing.T) {
 		FilenameTemplate: "{{pub_date}}_{{title}}_{{id}}",
 	}
 
-	legacyPath := filepath.Join(feedID, feed.LegacyEpisodeName(cfg, episode))
+	legacyPath := path.Join(feedID, feed.LegacyEpisodeName(cfg, episode))
 	_, err = baseStorage.Create(ctx, legacyPath, strings.NewReader("video-bytes"))
 	require.NoError(t, err)
 
-	newPath := filepath.Join(feedID, feed.EpisodeName(cfg, episode))
+	newPath := path.Join(feedID, feed.EpisodeName(cfg, episode))
 	storage := &flakySizeStorage{Storage: baseStorage, targetPath: newPath}
 
 	svc := New(map[string]*feed.Config{feedID: cfg}, tdb, storage, false)

@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,13 +19,19 @@ func TestExecuteHook_WriteEnvToFile(t *testing.T) {
 	tempDir := t.TempDir()
 	tempFile := filepath.Join(tempDir, "env_output.txt")
 
+	command := []string{"sh", "-c", `printenv | grep '^TEST_VAR=' > "$TEST_OUTPUT_FILE"`}
+	if runtime.GOOS == "windows" {
+		command = []string{"powershell.exe", "-NoProfile", "-Command", `[IO.File]::WriteAllText($env:TEST_OUTPUT_FILE, "TEST_VAR=" + $env:TEST_VAR)`}
+	}
+
 	hook := &ExecHook{
-		Command: []string{"sh", "-c", "printenv | grep '^TEST_VAR=' > " + tempFile},
+		Command: command,
 		Timeout: 5,
 	}
 
 	env := []string{
 		"TEST_VAR=test-value",
+		"TEST_OUTPUT_FILE=" + tempFile,
 	}
 
 	err := hook.Invoke(env)
@@ -73,7 +80,7 @@ func TestExecuteHook_CornerCases(t *testing.T) {
 		{
 			name: "successful command",
 			hook: &ExecHook{
-				Command: []string{"echo", "test"},
+				Command: []string{os.Args[0], "-test.run=^$"},
 			},
 			env:         []string{"TEST=value"},
 			expectError: false,
@@ -118,7 +125,7 @@ func TestExecuteHook_CurlWebhook(t *testing.T) {
 
 	// Use the local test server URL instead of external httpbin.org
 	hook := &ExecHook{
-		Command: []string{fmt.Sprintf("curl -s -X POST -d \"$EPISODE_TITLE\" %s", server.URL)},
+		Command: []string{"curl", "-s", "-X", "POST", "-d", "Test Episode for Webhook", server.URL},
 		Timeout: 10,
 	}
 
