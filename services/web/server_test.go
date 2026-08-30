@@ -19,6 +19,57 @@ func (m *mockFileSystem) Open(name string) (http.File, error) {
 	return nil, http.ErrMissingFile
 }
 
+func TestServerPathPrefix(t *testing.T) {
+	tmpDir := t.TempDir()
+	storage, err := fs.NewLocal(tmpDir, false, false)
+	require.NoError(t, err)
+
+	_, err = storage.Create(context.Background(), "example.xml", bytes.NewReader([]byte("feed content")))
+	require.NoError(t, err)
+	_, err = storage.Create(context.Background(), "example/episode.mp3", bytes.NewReader([]byte("audio content")))
+	require.NoError(t, err)
+
+	srv := New(Config{Port: 8080, Path: "podcasts"}, storage, nil)
+
+	tests := []struct {
+		name   string
+		path   string
+		status int
+		body   string
+	}{
+		{
+			name:   "feed under configured path",
+			path:   "/podcasts/example.xml",
+			status: http.StatusOK,
+			body:   "feed content",
+		},
+		{
+			name:   "episode under configured path",
+			path:   "/podcasts/example/episode.mp3",
+			status: http.StatusOK,
+			body:   "audio content",
+		},
+		{
+			name:   "file outside configured path",
+			path:   "/example.xml",
+			status: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, tt.path, nil)
+			rec := httptest.NewRecorder()
+			srv.Handler.ServeHTTP(rec, req)
+
+			assert.Equal(t, tt.status, rec.Code)
+			if tt.body != "" {
+				assert.Equal(t, tt.body, rec.Body.String())
+			}
+		})
+	}
+}
+
 func TestDebugEndpointDisabledByDefault(t *testing.T) {
 	cfg := Config{
 		Port: 8080,

@@ -70,10 +70,16 @@ func New(cfg Config, storage http.FileSystem, database db.Storage) *Server {
 	// debug endpoints registered by imported packages (security fix for #799)
 	mux := http.NewServeMux()
 
-	fileServer := http.FileServer(storage)
+	var fileServer http.Handler = http.FileServer(storage)
+	mountPath := "/"
+	if cfg.Path != "" {
+		mountPath = fmt.Sprintf("/%s", cfg.Path)
+		fileServer = http.StripPrefix(mountPath, fileServer)
+		mountPath += "/"
+	}
 
-	log.Debugf("handle path: /%s", cfg.Path)
-	mux.Handle(fmt.Sprintf("/%s", cfg.Path), fileServer)
+	log.Debugf("handle path: %s", mountPath)
+	mux.Handle(mountPath, fileServer)
 
 	// Add health check endpoint
 	mux.HandleFunc("/health", srv.healthCheckHandler)
