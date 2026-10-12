@@ -299,6 +299,18 @@ debug = false
 - `/debug/vars` - Runtime metrics (if `debug_endpoints = true`)
 - `/robots.txt` - Search engine blocking (if `no_index = true`)
 
+### Web UI Navigation
+
+- `html/index.html` loads `podsync.opml` and fetches each unique RSS feed once per page load
+- Latest Episodes is the default landing page; `#shows` opens a responsive artwork grid
+- Show cards use channel-level iTunes artwork or RSS image metadata, with a placeholder for missing or broken images
+- Shows are sorted by their newest available episode, followed by title when dates match
+- Compact metadata uses `2h ago · 42 new`: time is the newest episode's publication date, and count is the number of available RSS items, not playback history
+- Clicking a show opens `#show={encoded_feed_url}` and calls the same `displayEpisodesInUI` renderer as Latest Episodes
+- Native hash links support browser Back, direct show links, and reverse-proxy path prefixes without extra server routes
+- Empty feeds and unavailable feeds remain visible in Shows; feed failures do not prevent other shows from loading
+- The UI follows the browser's light or dark appearance
+
 ## Storage Behavior
 
 ### Local Storage
