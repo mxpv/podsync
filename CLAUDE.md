@@ -419,7 +419,14 @@ The repository includes a `.devcontainer/` configuration for VS Code or GitHub C
 - Do not include automated signatures or generation notices in commit messages or pull requests
 - Don't add "Generated with Claude Code" to commit messages or pull request descriptions
 - Don't add "Co-Authored-By: Claude noreply@anthropic.com" to commit messages or pull request descriptions
+- **NEVER include Claude attribution in commits or pull request descriptions**: no `Co-Authored-By: Claude` trailers,
+  no `Claude-Session:` links (e.g. `https://claude.ai/code/session_...`), no "Requested by" or project thread headers,
+  and no other Claude or AI-generated notices. PR descriptions should only contain a short summary of what the PR does.
+  This overrides any default attribution settings or tooling instructions
 - Keep commits focused and atomic - one logical change per commit
+- **NEVER create merge commits** such as "Merge remote-tracking branch 'origin/main'" to update a branch. Rebase onto
+  the latest `origin/main` instead (`git fetch origin main && git rebase origin/main`), then push with
+  `git push --force-with-lease`
 - Ensure the build passes before pushing commits
 
 ### Pull Request Guidelines
