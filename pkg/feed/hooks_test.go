@@ -24,9 +24,11 @@ func TestExecuteHook_WriteEnvToFile(t *testing.T) {
 		command = []string{"powershell.exe", "-NoProfile", "-Command", `[IO.File]::WriteAllText($env:TEST_OUTPUT_FILE, "TEST_VAR=" + $env:TEST_VAR)`}
 	}
 
+	// PowerShell can take several seconds to start on a cold Windows runner,
+	// so leave plenty of headroom before the hook is killed.
 	hook := &ExecHook{
 		Command: command,
-		Timeout: 5,
+		Timeout: 60,
 	}
 
 	env := []string{

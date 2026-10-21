@@ -2,9 +2,12 @@ package builder
 
 import (
 	"context"
+	"errors"
 	"os"
 	"testing"
+	"time"
 
+	"github.com/silentsokolov/go-vimeo/vimeo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -15,6 +18,34 @@ var (
 	vimeoKey = os.Getenv("VIMEO_TEST_API_KEY")
 )
 
+// retryOnVimeoRateLimit calls fn again after the rate limit resets when the
+// live Vimeo API answers with HTTP 429. CI jobs from several pull requests
+// share one token, so short bursts of rate limiting are expected.
+func retryOnVimeoRateLimit(t *testing.T, fn func() error) error {
+	t.Helper()
+
+	const maxAttempts = 3
+
+	for attempt := 1; ; attempt++ {
+		err := fn()
+
+		var rateErr *vimeo.RateLimitError
+		if err == nil || attempt == maxAttempts || !errors.As(err, &rateErr) {
+			return err
+		}
+
+		wait := time.Until(rateErr.Rate.Reset) + time.Second
+		if wait < time.Second {
+			wait = time.Second
+		} else if wait > 90*time.Second {
+			wait = 90 * time.Second
+		}
+
+		t.Logf("Vimeo rate limit hit, retrying in %s (attempt %d/%d)", wait.Round(time.Second), attempt, maxAttempts)
+		time.Sleep(wait)
+	}
+}
+
 func TestQueryVimeoChannel(t *testing.T) {
 	if vimeoKey == "" {
 		t.Skip("Vimeo API key is not provided")
@@ -24,7 +55,7 @@ func TestQueryVimeoChannel(t *testing.T) {
 	require.NoError(t, err)
 
 	podcast := &model.Feed{ItemID: "staffpicks", Quality: model.QualityHigh}
-	err = builder.queryChannel(podcast)
+	err = retryOnVimeoRateLimit(t, func() error { return builder.queryChannel(podcast) })
 	require.NoError(t, err)
 
 	assert.Equal(t, "https://vimeo.com/channels/staffpicks", podcast.ItemURL)
@@ -43,7 +74,7 @@ func TestQueryVimeoGroup(t *testing.T) {
 	require.NoError(t, err)
 
 	podcast := &model.Feed{ItemID: "motion", Quality: model.QualityHigh}
-	err = builder.queryGroup(podcast)
+	err = retryOnVimeoRateLimit(t, func() error { return builder.queryGroup(podcast) })
 	require.NoError(t, err)
 
 	assert.Equal(t, "https://vimeo.com/groups/motion", podcast.ItemURL)
@@ -62,7 +93,7 @@ func TestQueryVimeoUser(t *testing.T) {
 	require.NoError(t, err)
 
 	podcast := &model.Feed{ItemID: "motionarray", Quality: model.QualityHigh}
-	err = builder.queryUser(podcast)
+	err = retryOnVimeoRateLimit(t, func() error { return builder.queryUser(podcast) })
 	require.NoError(t, err)
 
 	require.Equal(t, "https://vimeo.com/motionarray", podcast.ItemURL)
@@ -81,7 +112,10 @@ func TestQueryVimeoVideos(t *testing.T) {
 
 	feed := &model.Feed{ItemID: "staffpicks", Quality: model.QualityHigh}
 
-	err = builder.queryVideos(builder.client.Channels.ListVideo, feed)
+	err = retryOnVimeoRateLimit(t, func() error {
+		feed.Episodes = nil
+		return builder.queryVideos(builder.client.Channels.ListVideo, feed)
+	})
 	require.NoError(t, err)
 
 	require.Equal(t, vimeoDefaultPageSize, len(feed.Episodes))
