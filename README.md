@@ -195,3 +195,15 @@ This fork adds the following features while maintaining compatibility with upstr
 
 - Configurable `filename_template` for downloaded media and RSS enclosure paths
 - Optional one-time filename migration CLI (`--migrate-filenames`, `--migrate-filenames-dry-run`)
+- Responsive web UI with Latest Episodes and Shows navigation
+
+### Web UI
+
+Enable `web_ui = true` in `[server]` when using local storage. Latest Episodes remains the landing page.
+The Shows tab displays artwork, names, and compact metadata such as `2h ago · 42 new` for feeds included
+in `podsync.opml`. The time comes from the newest episode's publication date, and the count is the number
+of episodes currently available in that RSS feed. Playback history is not tracked.
+
+Click a show's artwork to browse only its episodes, using the same episode cards, playback, and download
+controls as Latest Episodes. Shows are sorted by their newest episode, and browser Back and bookmarked
+show links work with the existing web UI, including under a reverse-proxy path prefix.
