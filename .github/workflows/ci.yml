@@ -48,10 +48,9 @@ jobs:
         with:
           go-version: 1.25
       - uses: actions/checkout@v6
-      - env:
-          VIMEO_TEST_API_KEY: ${{ secrets.VIMEO_ACCESS_TOKEN }}
-          YOUTUBE_TEST_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-        run: make test
+      # Live API tests run only in the Coverage job, so concurrent jobs don't
+      # exhaust the shared Vimeo rate limit.
+      - run: make test
 
   coverage:
     name: Coverage
