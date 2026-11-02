@@ -483,14 +483,31 @@
 
         function getChannelImageUrl(channel) {
             const itunesImage = getDirectChildByTagName(channel, 'itunes:image');
-
-            if (itunesImage) {
-                return itunesImage.getAttribute('href') || '';
-            }
-
             const image = getDirectChildByTagName(channel, 'image');
             const imageUrl = image ? getDirectChildByTagName(image, 'url') : null;
-            return imageUrl?.textContent || '';
+
+            return itunesImage?.getAttribute('href')?.trim() ||
+                imageUrl?.textContent?.trim() || '';
+        }
+
+        /**
+         * Finds episode artwork in the common item-level image tags
+         * @param {Element} item - The RSS <item> element
+         * @returns {string} The image URL, or an empty string if none is found
+         */
+        function getItemImageUrl(item) {
+            const itunesImage = item.getElementsByTagName('itunes:image')[0];
+            const thumbnail = item.getElementsByTagName('media:thumbnail')[0];
+            const content = Array.from(item.getElementsByTagName('media:content')).find(node =>
+                node.getAttribute('medium') === 'image' ||
+                (node.getAttribute('type') || '').startsWith('image/'));
+            const image = getDirectChildByTagName(item, 'image');
+            const imageUrl = image ? getDirectChildByTagName(image, 'url') || image : null;
+
+            return itunesImage?.getAttribute('href')?.trim() ||
+                thumbnail?.getAttribute('url')?.trim() ||
+                content?.getAttribute('url')?.trim() ||
+                imageUrl?.textContent?.trim() || '';
         }
 
         /**
@@ -530,8 +547,7 @@
                     author: item.querySelector('author')?.textContent ||
                             item.querySelector('itunes\\:author, author[itunes]')?.textContent || '',
                     duration: item.querySelector('itunes\\:duration, duration[itunes]')?.textContent || '',
-                    image: item.getElementsByTagName('itunes:image')[0]?.getAttribute('href') ||
-                            channelImage,
+                    image: getItemImageUrl(item) || channelImage,
                     enclosureUrl: item.querySelector('enclosure')?.getAttribute('url') || '',
                     enclosureType: item.querySelector('enclosure')?.getAttribute('type') || '',
                     enclosureLength: item.querySelector('enclosure')?.getAttribute('length') || ''
@@ -553,7 +569,6 @@
 
             return episodes;
         }
-
 
         /**
          * Fetches all episodes from OPML feeds and sorts them by publication date

@@ -46,6 +46,7 @@ function loadParserFunctions() {
     const functionNames = [
         'getDirectChildByTagName',
         'getChannelImageUrl',
+        'getItemImageUrl',
         'parseRSSEpisodes'
     ];
     const extracted = functionNames
@@ -62,12 +63,16 @@ function makeTextNode(textContent) {
     return { textContent };
 }
 
-function makeImageNode(href) {
+function makeNode(attributes) {
     return {
         getAttribute(name) {
-            return name === 'href' ? href : null;
+            return name in attributes ? attributes[name] : null;
         }
     };
+}
+
+function makeImageNode(href) {
+    return makeNode({ href });
 }
 
 function makeItem(options = {}) {
@@ -99,8 +104,19 @@ function makeItem(options = {}) {
                 return [makeImageNode(options.imageHref)];
             }
 
+            if (tagName === 'media:thumbnail' && options.thumbnailUrl) {
+                return [makeNode({ url: options.thumbnailUrl })];
+            }
+
+            if (tagName === 'media:content' && options.mediaContent) {
+                return options.mediaContent.map(makeNode);
+            }
+
             return [];
-        }
+        },
+        children: options.rssImageUrl ?
+            [{ tagName: 'image', children: [{ tagName: 'url', textContent: options.rssImageUrl }] }] :
+            []
     };
 }
 
@@ -167,4 +183,55 @@ test('parseRSSEpisodes ignores descendant item itunes images for channel fallbac
 
     assert.equal(episodes[0].image, '');
     assert.equal(episodes[1].image, 'https://example.com/second-episode.jpg');
+});
+
+test('parseRSSEpisodes reads item media:thumbnail', () => {
+    const parseRSSEpisodes = loadParserFunctions();
+    const item = makeItem({ thumbnailUrl: 'https://example.com/thumb.jpg' });
+    const channel = makeChannel({
+        items: [item],
+        directItunesImageHref: 'https://example.com/channel.jpg'
+    });
+
+    const episodes = parseRSSEpisodes(makeRssDoc(channel), 'https://example.com/feed.xml');
+
+    assert.equal(episodes[0].image, 'https://example.com/thumb.jpg');
+});
+
+test('parseRSSEpisodes reads image media:content and skips other media', () => {
+    const parseRSSEpisodes = loadParserFunctions();
+    const item = makeItem({
+        mediaContent: [
+            { url: 'https://example.com/episode.mp4', type: 'video/mp4' },
+            { url: 'https://example.com/cover.png', medium: 'image' }
+        ]
+    });
+    const channel = makeChannel({ items: [item] });
+
+    const episodes = parseRSSEpisodes(makeRssDoc(channel), 'https://example.com/feed.xml');
+
+    assert.equal(episodes[0].image, 'https://example.com/cover.png');
+});
+
+test('parseRSSEpisodes reads item RSS image url', () => {
+    const parseRSSEpisodes = loadParserFunctions();
+    const item = makeItem({ rssImageUrl: ' https://example.com/item.jpg ' });
+    const channel = makeChannel({ items: [item] });
+
+    const episodes = parseRSSEpisodes(makeRssDoc(channel), 'https://example.com/feed.xml');
+
+    assert.equal(episodes[0].image, 'https://example.com/item.jpg');
+});
+
+test('parseRSSEpisodes prefers item itunes:image over other tags', () => {
+    const parseRSSEpisodes = loadParserFunctions();
+    const item = makeItem({
+        imageHref: 'https://example.com/itunes.jpg',
+        thumbnailUrl: 'https://example.com/thumb.jpg'
+    });
+    const channel = makeChannel({ items: [item] });
+
+    const episodes = parseRSSEpisodes(makeRssDoc(channel), 'https://example.com/feed.xml');
+
+    assert.equal(episodes[0].image, 'https://example.com/itunes.jpg');
 });

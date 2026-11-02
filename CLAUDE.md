@@ -360,6 +360,7 @@ make                # Build and run tests
 make test           # Run all unit tests
 go test -v ./...    # Run tests with verbose output
 go test ./pkg/...   # Test specific packages
+node --test html/index.test.js  # Web UI parser tests (Node 22)
 ```
 
 ### Linting and Formatting
