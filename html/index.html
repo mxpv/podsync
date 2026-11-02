@@ -471,6 +471,28 @@
             }
         }
 
+        function getDirectChildByTagName(parent, tagName) {
+            for (const child of parent.children) {
+                if (child.tagName === tagName) {
+                    return child;
+                }
+            }
+
+            return null;
+        }
+
+        function getChannelImageUrl(channel) {
+            const itunesImage = getDirectChildByTagName(channel, 'itunes:image');
+
+            if (itunesImage) {
+                return itunesImage.getAttribute('href') || '';
+            }
+
+            const image = getDirectChildByTagName(channel, 'image');
+            const imageUrl = image ? getDirectChildByTagName(image, 'url') : null;
+            return imageUrl?.textContent || '';
+        }
+
         /**
          * Parses RSS XML to extract episode information
          * @param {Document} rssDoc - The parsed RSS XML document
@@ -490,6 +512,7 @@
             const feedTitle = channel.querySelector('title')?.textContent || 'Unknown Feed';
             const feedDescription = channel.querySelector('description')?.textContent || '';
             const feedLink = channel.querySelector('link')?.textContent || '';
+            const channelImage = getChannelImageUrl(channel);
 
             // Get all items (episodes)
             const items = channel.querySelectorAll('item');
@@ -507,9 +530,8 @@
                     author: item.querySelector('author')?.textContent ||
                             item.querySelector('itunes\\:author, author[itunes]')?.textContent || '',
                     duration: item.querySelector('itunes\\:duration, duration[itunes]')?.textContent || '',
-                    image: item.querySelector('itunes\\:image, image[itunes]')?.getAttribute('href') ||
-                           channel.querySelector('itunes\\:image, image[itunes]')?.getAttribute('href') ||
-                           channel.querySelector('image url')?.textContent || '',
+                    image: item.getElementsByTagName('itunes:image')[0]?.getAttribute('href') ||
+                            channelImage,
                     enclosureUrl: item.querySelector('enclosure')?.getAttribute('url') || '',
                     enclosureType: item.querySelector('enclosure')?.getAttribute('type') || '',
                     enclosureLength: item.querySelector('enclosure')?.getAttribute('length') || ''
@@ -531,6 +553,7 @@
 
             return episodes;
         }
+
 
         /**
          * Fetches all episodes from OPML feeds and sorts them by publication date

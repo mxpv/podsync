@@ -74,6 +74,21 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  web:
+    name: Web UI
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Run Web UI tests
+        run: node --test html/index.test.js
+
   checks:
     name: Checks
     runs-on: ubuntu-latest
