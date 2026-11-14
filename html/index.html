@@ -284,36 +284,211 @@
             color: #D70015;
             border-radius: 12px;
         }
+
+        /* Library navigation and show artwork grid */
+        .library-header {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            width: 100%;
+        }
+        .library-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-left: auto;
+        }
+        .library-nav {
+            display: flex;
+            gap: 28px;
+            width: 100%;
+            margin-top: 8px;
+        }
+        .library-nav-link {
+            display: inline-flex;
+            align-items: center;
+            min-height: 44px;
+            padding: 8px 0;
+            border-bottom: 3px solid transparent;
+            color: #65656E;
+            font-weight: 500;
+            text-decoration: none;
+        }
+        .library-nav-link:hover,
+        .library-nav-link[aria-current="page"] {
+            color: #9D4EDD;
+        }
+        .library-nav-link[aria-current="page"] {
+            border-bottom-color: #AF52DE;
+        }
+        .container.shows-layout {
+            max-width: 1120px;
+        }
+        .shows-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 28px 16px;
+            padding-bottom: 32px;
+        }
+        .show-link {
+            display: block;
+            min-width: 0;
+            color: #1D1D1F;
+            text-decoration: none;
+            border-radius: 12px;
+        }
+        .show-link:focus-visible {
+            outline: 3px solid #AF52DE;
+            outline-offset: 6px;
+        }
+        .show-artwork {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            aspect-ratio: 1;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #E5E5EA;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .show-artwork img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .show-artwork-placeholder {
+            color: #8E8E93;
+            font-size: 3rem;
+        }
+        .show-name {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            overflow-wrap: anywhere;
+            margin: 12px 0 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.35;
+        }
+        .show-link:hover .show-name {
+            color: #9D4EDD;
+        }
+        .show-meta {
+            margin: 0;
+            color: #65656E;
+            font-size: 0.8rem;
+        }
+        .show-navigation {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .show-navigation a {
+            display: inline-flex;
+            align-items: center;
+            min-height: 44px;
+            color: #9D4EDD;
+            text-decoration: none;
+        }
+        #page-title {
+            overflow-wrap: anywhere;
+        }
+        @media (min-width: 600px) {
+            .shows-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 32px 24px;
+            }
+        }
+        @media (min-width: 992px) {
+            .shows-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+        @media (max-width: 575px) {
+            .library-actions {
+                gap: 10px;
+            }
+            .navbar-text {
+                font-size: 0.8rem;
+            }
+        }
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #141418;
+                color: #F5F5F7;
+            }
+            .navbar {
+                background: #202024 !important;
+            }
+            .navbar-brand {
+                color: #F5F5F7 !important;
+            }
+            h2, .episode-title, .show-link {
+                color: #F5F5F7;
+            }
+            .episode-card {
+                background: #202024;
+            }
+            .description-text {
+                color: #D7D7DD;
+            }
+            .duration-badge, .episode-image-placeholder, .show-artwork {
+                background: #2C2C31;
+            }
+            .library-nav-link, .show-meta, #empty-message {
+                color: #ABABB3;
+            }
+            .library-nav-link:hover,
+            .library-nav-link[aria-current="page"],
+            .show-link:hover .show-name,
+            .show-navigation a {
+                color: #C583F0;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg shadow-sm">
+    <header class="navbar shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="bi bi-headphones me-2"></i>
-                Podsync
-            </a>
-            <div class="navbar-nav ms-auto d-flex align-items-center gap-3">
-                <span class="navbar-text" id="episode-count">
-                    Loading episodes...
-                </span>
-                <a href="podsync.opml" target="_blank" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-file-code me-1"></i>
-                    OPML
+            <div class="library-header">
+                <a class="navbar-brand" href="#episodes">
+                    <i class="bi bi-headphones me-2"></i>
+                    Podsync
                 </a>
+                <div class="library-actions">
+                    <span class="navbar-text" id="episode-count" role="status">
+                        Loading...
+                    </span>
+                    <a href="podsync.opml" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-file-code me-1"></i>
+                        OPML
+                    </a>
+                </div>
             </div>
+            <nav class="library-nav" aria-label="Library">
+                <a href="#episodes" class="library-nav-link" id="episodes-nav" aria-current="page">Latest Episodes</a>
+                <a href="#shows" class="library-nav-link" id="shows-nav">Shows</a>
+            </nav>
         </div>
-    </nav>
+    </header>
 
     <!-- Main Content -->
-    <div class="container mt-4">
+    <main class="container mt-4" id="main-content">
+        <div id="show-navigation" class="show-navigation d-none mb-3">
+            <a href="#shows"><i class="bi bi-chevron-left me-1" aria-hidden="true"></i>Shows</a>
+            <a id="show-rss" target="_blank" rel="noopener"><i class="bi bi-rss me-1" aria-hidden="true"></i>RSS</a>
+        </div>
         <!-- Header -->
         <div class="row mb-4">
             <div class="col">
                 <h2 class="mb-3">
-                    <i class="bi bi-list-ul me-2"></i>
-                    Latest Episodes
+                    <i id="page-icon" class="bi bi-list-ul me-2" aria-hidden="true"></i>
+                    <span id="page-title">Latest Episodes</span>
                 </h2>
             </div>
         </div>
@@ -321,7 +496,7 @@
         <!-- Loading Spinner -->
         <div id="loading" class="text-center">
             <div class="loading-spinner"></div>
-            <p class="text-muted">Loading episodes from feeds...</p>
+            <p class="episode-meta">Loading feeds...</p>
         </div>
 
         <!-- Error Message -->
@@ -330,18 +505,26 @@
             <strong>Error!</strong> <span id="error-text"></span>
         </div>
 
+        <div id="feed-warning" class="alert alert-warning d-none" role="status"></div>
+
+        <div id="empty-message" class="text-center d-none">
+            <p id="empty-text"></p>
+        </div>
+
+        <!-- Shows List -->
+        <div id="shows-container" class="shows-grid d-none" aria-label="Podcast shows"></div>
+
         <!-- Episodes List -->
         <div id="episodes-container" class="d-none">
             <!-- Episodes will be dynamically inserted here -->
         </div>
-    </div>
+    </main>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Include the OPML/RSS parsing functions -->
     <script>
-        // Paste your JavaScript functions here
         /**
          * Loads OPML XML from a URL and converts it to a JavaScript dictionary
          * @param {string} url - The URL containing the OPML XML
@@ -440,13 +623,11 @@
         }
 
         /**
-         * Fetches and parses RSS feed to extract episodes
-         * @param {string} feedUrl - The RSS feed URL
-         * @returns {Promise<Array>} Array of episode objects
+         * Fetches a show's channel metadata and episodes together.
          */
-        async function fetchEpisodesFromFeed(feedUrl) {
+        async function fetchFeed(feedData) {
             try {
-                const response = await fetch(feedUrl);
+                const response = await fetch(feedData.xmlUrl);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -462,11 +643,63 @@
                     throw new Error('RSS parsing error: ' + parserError.textContent);
                 }
                 
-                return parseRSSEpisodes(rssDoc, feedUrl);
+                const channel = rssDoc.querySelector('channel');
+                if (!channel) {
+                    throw new Error('RSS feed has no channel');
+                }
+
+                const episodes = parseRSSEpisodes(rssDoc, feedData.xmlUrl);
+                episodes.sort((a, b) => b.pubDateParsed - a.pubDateParsed);
+                const latestEpisode = episodes.find(episode => episode.pubDateParsed.getTime() > 0);
+
+                return {
+                    ...feedData,
+                    title: rssChild(channel, 'title')?.textContent.trim() || feedData.title,
+                    image: feedArtwork(channel),
+                    episodes,
+                    latestEpisodeDate: latestEpisode?.pubDateParsed || null,
+                    unavailable: false
+                };
                 
             } catch (error) {
-                console.error(`Error fetching feed ${feedUrl}:`, error);
-                return []; // Return empty array on error to continue processing other feeds
+                console.error(`Error fetching feed ${feedData.xmlUrl}:`, error);
+                return {
+                    ...feedData,
+                    image: '',
+                    episodes: [],
+                    latestEpisodeDate: null,
+                    unavailable: true
+                };
+            }
+        }
+
+        // Only inspect channel children, so an episode's title or artwork cannot
+        // accidentally be used as the show's metadata.
+        function rssChild(parent, name) {
+            return Array.from(parent.children).find(child =>
+                child.localName === name && child.namespaceURI === parent.namespaceURI);
+        }
+
+        function itunesChild(parent, name) {
+            return Array.from(parent.children).find(child =>
+                child.localName === name &&
+                (child.namespaceURI === 'http://www.itunes.com/dtds/podcast-1.0.dtd' ||
+                 child.namespaceURI === 'https://www.itunes.com/dtds/podcast-1.0.dtd'));
+        }
+
+        function feedArtwork(channel) {
+            const image = rssChild(channel, 'image');
+            return itunesChild(channel, 'image')?.getAttribute('href') ||
+                (image ? rssChild(image, 'url')?.textContent.trim() : '') || '';
+        }
+
+        function webURL(value, base = document.baseURI) {
+            if (!value) return '';
+            try {
+                const url = new URL(value, base);
+                return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+            } catch {
+                return '';
             }
         }
 
@@ -486,9 +719,9 @@
             }
             
             // Get feed metadata
-            const feedTitle = channel.querySelector('title')?.textContent || 'Unknown Feed';
-            const feedDescription = channel.querySelector('description')?.textContent || '';
-            const feedLink = channel.querySelector('link')?.textContent || '';
+            const feedTitle = rssChild(channel, 'title')?.textContent || 'Unknown Feed';
+            const feedLink = rssChild(channel, 'link')?.textContent || '';
+            const channelImage = feedArtwork(channel);
             
             // Get all items (episodes)
             const items = channel.querySelectorAll('item');
@@ -503,12 +736,10 @@
                     link: item.querySelector('link')?.textContent || '',
                     pubDate: item.querySelector('pubDate')?.textContent || '',
                     guid: item.querySelector('guid')?.textContent || '',
-                    author: item.querySelector('author')?.textContent || 
-                           item.querySelector('itunes\\:author, author[itunes]')?.textContent || '',
-                    duration: item.querySelector('itunes\\:duration, duration[itunes]')?.textContent || '',
-                    image: item.querySelector('itunes\\:image, image[itunes]')?.getAttribute('href') || 
-                           channel.querySelector('itunes\\:image, image[itunes]')?.getAttribute('href') || 
-                           channel.querySelector('image url')?.textContent || '',
+                    author: item.querySelector('author')?.textContent ||
+                           itunesChild(item, 'author')?.textContent || '',
+                    duration: itunesChild(item, 'duration')?.textContent || '',
+                    image: itunesChild(item, 'image')?.getAttribute('href') || channelImage,
                     enclosureUrl: item.querySelector('enclosure')?.getAttribute('url') || '',
                     enclosureType: item.querySelector('enclosure')?.getAttribute('type') || '',
                     enclosureLength: item.querySelector('enclosure')?.getAttribute('length') || ''
@@ -529,39 +760,6 @@
             });
             
             return episodes;
-        }
-
-        /**
-         * Fetches all episodes from OPML feeds and sorts them by publication date
-         * @param {Object} opmlData - The parsed OPML data
-         * @returns {Promise<Array>} Array of all episodes sorted by publication date (newest first)
-         */
-        async function getAllEpisodesSortedByDate(opmlData) {
-            const allEpisodes = [];
-            const feedUrls = extractFeedUrls(opmlData.body);
-            
-            console.log(`Found ${feedUrls.length} feeds to process...`);
-            
-            // Fetch episodes from all feeds concurrently
-            const episodePromises = feedUrls.map(async (feedData) => {
-                console.log(`Fetching episodes from: ${feedData.title}`);
-                const episodes = await fetchEpisodesFromFeed(feedData.xmlUrl);
-                return episodes;
-            });
-            
-            // Wait for all feeds to be processed
-            const episodeArrays = await Promise.all(episodePromises);
-            
-            // Flatten the array of arrays
-            episodeArrays.forEach(episodes => {
-                allEpisodes.push(...episodes);
-            });
-            
-            // Sort by publication date (newest first)
-            allEpisodes.sort((a, b) => b.pubDateParsed.getTime() - a.pubDateParsed.getTime());
-            
-            console.log(`Total episodes found: ${allEpisodes.length}`);
-            return allEpisodes;
         }
 
         /**
@@ -594,46 +792,171 @@
 
         // UI-specific functions
         let allEpisodes = [];
+        let allShows = [];
+        let libraryLoading = true;
+        let libraryError = '';
 
         /**
-         * Loads episodes and displays them in the UI
+         * Load each feed once and share its data between all library views.
          */
-        async function loadEpisodes() {
-            const loading = document.getElementById('loading');
-            const errorMessage = document.getElementById('error-message');
-            const episodesContainer = document.getElementById('episodes-container');
-            const episodeCount = document.getElementById('episode-count');
-            
-            // Show loading, hide others
-            loading.classList.remove('d-none');
-            errorMessage.classList.add('d-none');
-            episodesContainer.classList.add('d-none');
-            
+        async function loadLibrary() {
+            renderCurrentView();
             try {
-                // You can change this URL to your OPML file
-                const opmlUrl = 'podsync.opml';
-                const opmlData = await loadOPMLFromURL(opmlUrl);
-                
-                allEpisodes = await getAllEpisodesSortedByDate(opmlData);
-                
-                // Update episode count
-                episodeCount.textContent = `${allEpisodes.length} episodes loaded`;
-                
-                // Display all episodes
-                displayEpisodesInUI(allEpisodes);
-                
-                // Hide loading, show episodes
-                loading.classList.add('d-none');
-                episodesContainer.classList.remove('d-none');
-                
+                const opmlData = await loadOPMLFromURL('podsync.opml');
+                const feeds = new Map();
+                extractFeedUrls(opmlData.body).forEach(feed => {
+                    const xmlUrl = new URL(feed.xmlUrl, document.baseURI).href;
+                    feeds.set(xmlUrl, { ...feed, xmlUrl });
+                });
+                allShows = await Promise.all(Array.from(feeds.values(), fetchFeed));
+                allShows.sort((a, b) => {
+                    const dateDifference = (b.latestEpisodeDate?.getTime() || 0) -
+                        (a.latestEpisodeDate?.getTime() || 0);
+                    return dateDifference || a.title.localeCompare(b.title);
+                });
+                allEpisodes = allShows.flatMap(show => show.episodes);
+                allEpisodes.sort((a, b) => b.pubDateParsed - a.pubDateParsed);
             } catch (error) {
-                console.error('Error loading episodes:', error);
-                
-                // Show error
-                loading.classList.add('d-none');
-                document.getElementById('error-text').textContent = error.message;
-                errorMessage.classList.remove('d-none');
+                console.error('Error loading library:', error);
+                libraryError = error.message;
+            } finally {
+                libraryLoading = false;
+                renderCurrentView();
             }
+        }
+
+        function relativeEpisodeDate(date) {
+            const seconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+            if (seconds < 60) return 'now';
+            const units = [
+                [31536000, 'y'], [2592000, 'mo'], [604800, 'w'],
+                [86400, 'd'], [3600, 'h'], [60, 'm']
+            ];
+            const [size, label] = units.find(([size]) => seconds >= size);
+            return `${Math.floor(seconds / size)}${label} ago`;
+        }
+
+        function showMetadata(show) {
+            if (show.unavailable) return 'Unavailable';
+            const age = show.latestEpisodeDate ? `${relativeEpisodeDate(show.latestEpisodeDate)} · ` : '';
+            return `${age}${show.episodes.length} new`;
+        }
+
+        function displayShowsInUI() {
+            const container = document.getElementById('shows-container');
+            container.replaceChildren();
+            allShows.forEach(show => {
+                const link = document.createElement('a');
+                link.className = 'show-link';
+                link.href = `#show=${encodeURIComponent(show.xmlUrl)}`;
+                link.setAttribute('aria-label', `${show.title}, ${showMetadata(show)}`);
+
+                const artwork = document.createElement('span');
+                artwork.className = 'show-artwork';
+                const placeholder = document.createElement('i');
+                placeholder.className = 'bi bi-headphones show-artwork-placeholder';
+                placeholder.setAttribute('aria-hidden', 'true');
+                artwork.append(placeholder);
+
+                const imageURL = webURL(show.image, show.xmlUrl);
+                if (imageURL) {
+                    const image = document.createElement('img');
+                    image.src = imageURL;
+                    image.alt = '';
+                    image.loading = 'lazy';
+                    image.decoding = 'async';
+                    placeholder.classList.add('d-none');
+                    image.addEventListener('error', () => {
+                        image.remove();
+                        placeholder.classList.remove('d-none');
+                    }, { once: true });
+                    artwork.append(image);
+                }
+
+                const name = document.createElement('span');
+                name.className = 'show-name';
+                name.textContent = show.title;
+                const metadata = document.createElement('p');
+                metadata.className = 'show-meta';
+                metadata.textContent = showMetadata(show);
+                link.append(artwork, name, metadata);
+                container.append(link);
+            });
+        }
+
+        function currentRoute() {
+            if (location.hash === '#shows') return { page: 'shows' };
+            if (location.hash.startsWith('#show=')) {
+                try {
+                    return { page: 'show', xmlUrl: decodeURIComponent(location.hash.slice(6)) };
+                } catch {
+                    return { page: 'show', xmlUrl: '' };
+                }
+            }
+            return { page: 'episodes' };
+        }
+
+        function renderCurrentView() {
+            const route = currentRoute();
+            const show = allShows.find(feed => feed.xmlUrl === route.xmlUrl);
+            const showsPage = route.page === 'shows';
+            const showPage = route.page === 'show';
+
+            document.querySelectorAll('.audio-player').forEach(audio => audio.pause());
+            document.getElementById('main-content').classList.toggle('shows-layout', showsPage);
+            document.getElementById('page-title').textContent = showsPage ? 'Shows' :
+                showPage ? (show?.title || 'Show Episodes') : 'Latest Episodes';
+            document.getElementById('page-icon').className = showsPage ?
+                'bi bi-grid me-2' : 'bi bi-list-ul me-2';
+            const activeNav = route.page === 'episodes' ? 'episodes-nav' : 'shows-nav';
+            ['episodes-nav', 'shows-nav'].forEach(id => {
+                const link = document.getElementById(id);
+                if (id === activeNav) link.setAttribute('aria-current', 'page');
+                else link.removeAttribute('aria-current');
+            });
+
+            document.getElementById('show-navigation').classList.toggle('d-none', !showPage);
+            const rssLink = document.getElementById('show-rss');
+            rssLink.classList.toggle('d-none', !show || !webURL(show.xmlUrl));
+            if (show) rssLink.href = webURL(show.xmlUrl);
+
+            const count = document.getElementById('episode-count');
+            count.textContent = libraryLoading ? 'Loading...' : libraryError ? '' :
+                showsPage ? `${allShows.length} shows` :
+                showPage ? (show ? showMetadata(show) : '') : `${allEpisodes.length} episodes loaded`;
+
+            document.getElementById('loading').classList.toggle('d-none', !libraryLoading);
+            document.getElementById('error-message').classList.toggle('d-none', !libraryError);
+            document.getElementById('error-text').textContent = libraryError;
+            ['episodes-container', 'shows-container', 'empty-message', 'feed-warning'].forEach(id => {
+                document.getElementById(id).classList.add('d-none');
+            });
+            if (libraryLoading || libraryError) return;
+
+            const unavailableCount = allShows.filter(feed => feed.unavailable).length;
+            if (unavailableCount && !showPage) {
+                const warning = document.getElementById('feed-warning');
+                warning.textContent = `${unavailableCount} ${unavailableCount === 1 ? 'feed' : 'feeds'} could not be loaded.`;
+                warning.classList.remove('d-none');
+            }
+
+            if (showsPage && allShows.length) {
+                displayShowsInUI();
+                document.getElementById('shows-container').classList.remove('d-none');
+                return;
+            }
+            const episodes = showPage ? (show?.episodes || []) : allEpisodes;
+            if (!showsPage && episodes.length) {
+                displayEpisodesInUI(episodes);
+                document.getElementById('episodes-container').classList.remove('d-none');
+                return;
+            }
+
+            const message = showsPage ? 'No shows available.' :
+                showPage && !show ? 'Show not found.' :
+                show?.unavailable ? 'This show could not be loaded.' : 'No episodes available.';
+            document.getElementById('empty-text').textContent = message;
+            document.getElementById('empty-message').classList.remove('d-none');
         }
 
         /**
@@ -767,9 +1090,15 @@
             });
         }
 
-        // Load episodes when page loads
+        // Hash links keep navigation on the existing HTML page, including when
+        // Podsync is served under a reverse-proxy path prefix.
+        window.addEventListener('hashchange', function() {
+            renderCurrentView();
+            window.scrollTo(0, 0);
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
-            loadEpisodes();
+            loadLibrary();
         });
     </script>
 </body>
