@@ -156,8 +156,15 @@ func Build(_ctx context.Context, feed *model.Feed, cfg *Config, hostname string)
 		if feed.Format == model.FormatAudio {
 			enclosureType = itunes.MP3
 		}
+		var mimeOverride string
 		if feed.Format == model.FormatCustom {
 			enclosureType = EnclosureFromExtension(cfg)
+			if mime, ok := enclosureMIMEOverrides[normalizeExtension(cfg.CustomFormat.Extension)]; ok {
+				// Placeholder that passes the podcast library validation, the
+				// MIME type is replaced after the item is added.
+				enclosureType = itunes.M4A
+				mimeOverride = mime
+			}
 		}
 
 		var (
@@ -178,8 +185,12 @@ func Build(_ctx context.Context, feed *model.Feed, cfg *Config, hostname string)
 			item.IExplicit = "false"
 		}
 
-		if _, err := p.AddItem(item); err != nil {
+		n, err := p.AddItem(item)
+		if err != nil {
 			return nil, errors.Wrapf(err, "failed to add item to podcast (id %q)", episode.ID)
+		}
+		if mimeOverride != "" && n > 0 && p.Items[n-1].Enclosure != nil {
+			p.Items[n-1].Enclosure.TypeFormatted = mimeOverride
 		}
 	}
 
@@ -192,6 +203,13 @@ func EpisodeName(feedConfig *Config, episode *model.Episode) string {
 
 func LegacyEpisodeName(feedConfig *Config, episode *model.Episode) string {
 	return fmt.Sprintf("%s.%s", episode.ID, episodeExtension(feedConfig))
+}
+
+// enclosureMIMEOverrides maps custom format extensions that have no
+// itunes.EnclosureType to the MIME type written to the feed.
+var enclosureMIMEOverrides = map[string]string{
+	"opus": "audio/ogg",
+	"ogg":  "audio/ogg",
 }
 
 func EnclosureFromExtension(feedConfig *Config) itunes.EnclosureType {

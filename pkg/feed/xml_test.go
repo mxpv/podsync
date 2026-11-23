@@ -75,6 +75,48 @@ func TestBuildXMLWithFilenameTemplate(t *testing.T) {
 	assert.Equal(t, "http://localhost/test/2025-12-31_A_title_with_chars_video123.mp4", out.Items[0].Enclosure.URL)
 }
 
+func TestBuildXMLOpusEnclosure(t *testing.T) {
+	cases := []struct {
+		name      string
+		extension string
+		wantURL   string
+	}{
+		{name: "opus", extension: ".Opus", wantURL: "http://localhost/test/1.opus"},
+		{name: "ogg", extension: "ogg", wantURL: "http://localhost/test/1.ogg"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			feed := model.Feed{
+				Format: model.FormatCustom,
+				Episodes: []*model.Episode{
+					{
+						ID:          "1",
+						Status:      model.EpisodeDownloaded,
+						Title:       "title",
+						Description: "description",
+						Size:        1234,
+					},
+				},
+			}
+
+			cfg := Config{
+				ID:           "test",
+				Format:       model.FormatCustom,
+				CustomFormat: CustomFormat{YouTubeDLFormat: "bestaudio", Extension: tc.extension},
+			}
+
+			out, err := Build(context.Background(), &feed, &cfg, "http://localhost/")
+			require.NoError(t, err)
+			require.Len(t, out.Items, 1)
+			require.NotNil(t, out.Items[0].Enclosure)
+			assert.Equal(t, tc.wantURL, out.Items[0].Enclosure.URL)
+			assert.Equal(t, "audio/ogg", out.Items[0].Enclosure.TypeFormatted)
+			assert.Contains(t, out.String(), `<enclosure url="`+tc.wantURL+`" length="1234" type="audio/ogg"></enclosure>`)
+		})
+	}
+}
+
 func TestEpisodeNameTemplate(t *testing.T) {
 	cfg := &Config{
 		ID:               "test",
