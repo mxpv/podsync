@@ -112,6 +112,8 @@ youtube_dl_args = ["--arg1", "val"]    # Additional youtube-dl arguments
 [feeds.my_feed.custom_format]          # When format = "custom"
 youtube_dl_format = "bestvideo+bestaudio"
 extension = "mkv"
+# Enclosure MIME type follows the extension: m4a, m4v, mp4, mp3, mov, pdf, epub,
+# plus opus and ogg (published as audio/ogg)
 
 [feeds.my_feed.clean]
 keep_last = 10                         # Keep only N most recent episodes (deletes files, not DB records)
