@@ -20,7 +20,8 @@ func New(ctx context.Context, provider model.Provider, key string, downloader Do
 	case model.ProviderVimeo:
 		return NewVimeoBuilder(ctx, key)
 	case model.ProviderSoundcloud:
-		return NewSoundcloudBuilder()
+		// key is optional for SoundCloud. If empty, the SoundCloud client will scrape a valid client_id.
+		return NewSoundcloudBuilder(key)
 	case model.ProviderTwitch:
 		return NewTwitchBuilder(key)
 	default:

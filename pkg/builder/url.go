@@ -204,24 +204,38 @@ func parseVimeoURL(parsed *url.URL) (model.Type, string, error) {
 }
 
 func parseSoundcloudURL(parsed *url.URL) (model.Type, string, error) {
-	parts := strings.Split(parsed.EscapedPath(), "/")
-	if len(parts) <= 3 {
-		return "", "", errors.New("invald soundcloud link path")
+	// Supported formats:
+	// - https://soundcloud.com/<username>
+	// - https://soundcloud.com/<username>/tracks
+	// - https://soundcloud.com/<username>/sets/<playlist>
+	path := strings.Trim(parsed.EscapedPath(), "/")
+	if path == "" {
+		return "", "", errors.New("invalid soundcloud link path")
 	}
 
-	var kind model.Type
-
-	// - https://soundcloud.com/user/sets/example-set
-	switch parts[2] {
-	case "sets":
-		kind = model.TypePlaylist
-	default:
-		return "", "", errors.New("invalid soundcloud url, missing sets")
+	parts := strings.Split(path, "/")
+	username := parts[0]
+	if username == "" {
+		return "", "", errors.New("invalid soundcloud username")
 	}
 
-	id := parts[3]
+	// Avoid treating common site routes as usernames.
+	switch strings.ToLower(username) {
+	case "discover", "stream", "charts", "you", "search", "signup", "login", "logout":
+		return "", "", errors.New("soundcloud url is not a user profile or playlist")
+	}
 
-	return kind, id, nil
+	// User profile feed (uploads)
+	if len(parts) == 1 || (len(parts) == 2 && parts[1] == "tracks") {
+		return model.TypeUser, username, nil
+	}
+
+	// Playlist (sets)
+	if len(parts) >= 3 && parts[1] == "sets" && parts[2] != "" {
+		return model.TypePlaylist, parts[2], nil
+	}
+
+	return "", "", errors.New("unsupported soundcloud link format")
 }
 
 func parseTwitchURL(parsed *url.URL) (model.Type, string, error) {
